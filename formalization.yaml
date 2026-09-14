@@ -17,6 +17,8 @@ project:
   authors: ["Seewoo Lee"]
   responsible_maintainers: ["Seewoo Lee"]
   license: "Apache-2.0"
+  repository: "https://github.com/seewoo5/cohn-elkies-refactor"
+  blueprint: "https://seewoo5.github.io/cohn-elkies-refactor/"
 
 sources:
   - title: "Ten advances in mathematics and theoretical computer science (Chapter 1: sharp asymptotics of the Cohn–Elkies bound and sign uncertainty)"
@@ -178,7 +180,10 @@ review:
     no sorry and only the standard axioms; the five main statements were checked against the
     Mathlib-only challenge ComparatorChallenges/CohnElkies.lean with leanprover/comparator (Lean
     kernel replay accepted; landrun sandbox only in CI). The informal blueprint (CohnElkiesBlueprint/)
-    links every formalized node to its declaration. No human line-by-line review yet.
+    links every formalized node to its declaration, and its summary page reports which nodes are
+    formalized. GitHub Actions builds the two libraries, the challenge and the single-file
+    assembly on every push, runs the comparator, and deploys the blueprint to GitHub Pages.
+    No human line-by-line review yet.
 
 alignment:
   namespace: "CohnElkies"
