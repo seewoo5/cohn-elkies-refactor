@@ -67,17 +67,17 @@ theorem exists_abs_h_ℓ_le_natCast_add_half (k : ℕ) (R : ℝ) :
   have hx0 : (0 : ℝ) < x := by linarith
   have hsum := abs_sum_log_sqrtFactor_le (k := k) (c := fun j : ℕ ↦ (j : ℝ) + 1 / 2)
     (fun j ↦ by positivity) hx
-  have hcorr : |1 / 2 * Real.log (coth (π * (x / 2)) / (x / 2))| ≤
+  have hcorr : |1 / 2 * Real.log (Real.coth (π * (x / 2)) / (x / 2))| ≤
       (π * x + |Real.log π| + x) / 2 := by
     rw [abs_mul, abs_of_nonneg (by norm_num : (0 : ℝ) ≤ 1 / 2)]
-    linarith [lower_abs_log_coth_div_le (show 0 < x / 2 by linarith), abs_log_half_le_half hx]
+    linarith [Real.abs_log_coth_div_le (show 0 < x / 2 by linarith), abs_log_half_le_half hx]
   rw [lowerGammaBoundaryLog_halfInteger k R hx0.ne', abs_of_pos hx0,
     show π * x / 2 = π * (x / 2) by ring]
   have hmain := abs_sub (((k : ℝ) + 1 / 2) * Real.log (π * R ^ 2))
     (∑ j ∈ Finset.range k, Real.log (√(((j : ℝ) + 1 / 2) ^ 2 + (x / 2) ^ 2)))
   have htotal := abs_add_le (((k : ℝ) + 1 / 2) * Real.log (π * R ^ 2) -
       ∑ j ∈ Finset.range k, Real.log (√(((j : ℝ) + 1 / 2) ^ 2 + (x / 2) ^ 2)))
-    (1 / 2 * Real.log (coth (π * (x / 2)) / (x / 2)))
+    (1 / 2 * Real.log (Real.coth (π * (x / 2)) / (x / 2)))
   nlinarith [mul_nonneg hL hx0.le, mul_nonneg hS hx0.le, mul_nonneg hQ hx0.le,
     mul_nonneg (Nat.cast_nonneg (α := ℝ) k) hx0.le, mul_nonneg Real.pi_pos.le hx0.le]
 

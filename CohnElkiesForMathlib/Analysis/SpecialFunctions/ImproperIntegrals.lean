@@ -4,7 +4,8 @@ import Mathlib
 # Integrability of `e^{-a|x|}` and related functions on `ℝ`
 
 An even function integrable on `(0, ∞)` is integrable on `ℝ` (`MeasureTheory.integrable_of_even`);
-`e^{-a|x|}`, `|x|^n e^{-a|x|}` and `e^{-a|x|} |log |x||` are integrable on `ℝ` for `a > 0`.
+`e^{-a|x|}`, `|x|^n e^{-a|x|}` and `e^{-a|x|} |log |x||` are integrable on `ℝ` for `a > 0`,
+and `e^{-ax} |log x|`, `e^{-ax} |log (x / 2)|` are integrable on `(0, ∞)`.
 -/
 
 open Filter MeasureTheory Real Set
@@ -72,6 +73,28 @@ theorem integrableOn_exp_neg_mul_mul_abs_log_Ioi {a : ℝ} (ha : 0 < a) :
     _ ≤ exp ((-a) * x) * (x + 2 * x ^ (-(1 / 2 : ℝ))) :=
         mul_le_mul_of_nonneg_left (hbound x (mem_Ioi.mp hx)) (exp_pos _).le
     _ = x * exp ((-a) * x) + 2 * (x ^ (-(1 / 2 : ℝ)) * exp ((-a) * x)) := by ring
+
+/-- `e^{-ax} |log (x / 2)|` is integrable on `(0, ∞)` for `a > 0`. -/
+theorem integrableOn_exp_neg_mul_mul_abs_log_div_two_Ioi {a : ℝ} (ha : 0 < a) :
+    IntegrableOn (fun y : ℝ ↦ exp ((-a) * y) * |log (y / 2)|) (Ioi (0 : ℝ)) := by
+  have hmajorant : IntegrableOn
+      (fun y : ℝ ↦ exp ((-a) * y) * |log y| + |log (2 : ℝ)| * exp ((-a) * y)) (Ioi (0 : ℝ)) :=
+    (integrableOn_exp_neg_mul_mul_abs_log_Ioi ha).add
+      ((integrableOn_exp_mul_Ioi (neg_lt_zero.mpr ha) 0).const_mul |log (2 : ℝ)|)
+  have hcontinuous : ContinuousOn (fun y : ℝ ↦ exp ((-a) * y) * |log (y / 2)|)
+      (Ioi (0 : ℝ)) := by
+    refine ContinuousOn.mul (by fun_prop) (ContinuousOn.abs (ContinuousOn.log (by fun_prop) ?_))
+    exact fun y hy ↦ div_ne_zero (mem_Ioi.mp hy).ne' two_ne_zero
+  refine hmajorant.mono' (hcontinuous.aestronglyMeasurable measurableSet_Ioi) ?_
+  filter_upwards [ae_restrict_mem measurableSet_Ioi] with y hy
+  have hlog : |log (y / 2)| ≤ |log y| + |log (2 : ℝ)| := by
+    rw [Real.log_div (mem_Ioi.mp hy).ne' two_ne_zero]
+    exact abs_sub _ _
+  calc ‖exp ((-a) * y) * |log (y / 2)|‖ = exp ((-a) * y) * |log (y / 2)| := by
+        rw [Real.norm_eq_abs, abs_mul, abs_of_pos (exp_pos _), abs_abs]
+    _ ≤ exp ((-a) * y) * (|log y| + |log (2 : ℝ)|) :=
+        mul_le_mul_of_nonneg_left hlog (exp_pos _).le
+    _ = exp ((-a) * y) * |log y| + |log (2 : ℝ)| * exp ((-a) * y) := by ring
 
 /-- `e^{-a|x|} |log |x||` is integrable on `ℝ` for `a > 0`. -/
 theorem integrable_exp_neg_mul_abs_mul_abs_log_abs {a : ℝ} (ha : 0 < a) :

@@ -34,7 +34,7 @@ iterated recurrences $`\Gamma(z+k) = \Gamma(z)\prod_{j<k}(z+j)` at $`z = iy/2` a
 $`z = 1/2 + iy/2`, which the lower bound uses in even and odd dimension, are
 `Complex.Gamma_add_nat_eq_mul_prod`, `CohnElkies.integer_gamma_product` and
 `CohnElkies.half_integer_gamma_product`, and the quotient of the two modulus identities is
-`CohnElkies.gamma_log_coth_ratio`.
+`Complex.log_norm_Gamma_I_mul_sub_log_norm_Gamma_one_half_add_I_mul`.
 :::
 
 :::proof "eq_7_gamma_identities"

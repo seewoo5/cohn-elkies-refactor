@@ -394,11 +394,12 @@ in `Asymptotics/Main`; the sphere-packing modules depend only on `Basic` and `As
 | module | content |
 |---|---|
 | `Analysis/Complex/PhragmenLindelof` | maximum principle in a horizontal strip for a function whose *modulus* extends continuously (`PhragmenLindelof.horizontal_strip_norm_extension`) |
+| `Analysis/Complex/Trigonometric` | the hyperbolic cotangent `Real.coth = cosh / sinh`, which Mathlib lacks (it has `tanh`, `artanh`, `cot`): positivity, derivative, antitonicity of `coth` and of `log ∘ coth`, the bounds `log (coth x) ≤ 4 exp (-2x)` and `abs_log_coth_div_le`, and the integrability of `log (coth (π|y|/2))` and of its damped quotient |
 | `Analysis/Fourier/FourierTransform` | `Real.fourier_comp_linearEquiv` |
 | `Analysis/Fourier/FourierTransformDeriv` | `𝓕 g ∈ L¹` when `g` has two integrable derivatives |
 | `Analysis/Fourier/PoissonSummation` | Poisson summation for lattices in `ℝ^d` and Schwartz functions (from the Sphere-Packing-Lean project) |
 | `Analysis/SpecialFunctions/FrullaniIntegral` | real and complex exponential Frullani integrals, the Wallis product as a Laplace integral (`Frullani.*`, `Real.Wallis.*`) |
-| `Analysis/SpecialFunctions/Gamma/{Basic, Beta, Digamma}` | `Γ(z+k)`, `‖Γ z‖ ≤ Γ(Re z)`, residues, `‖Γ(½+ix)‖²`, `‖Γ(ix)‖²`; `Real.digamma := logDeriv Real.Gamma` with recurrence, `log(x−1) ≤ ψ ≤ log x`, `ψ − log → 0`, the harmonic representation and `Real.digamma_eq_complex_re` |
+| `Analysis/SpecialFunctions/Gamma/{Basic, Beta, Digamma}` | `Γ(z+k)`, `‖Γ z‖ ≤ Γ(Re z)`, residues, `‖Γ(½+ix)‖²`, `‖Γ(ix)‖²`, the `coth` form of their quotient (`Complex.log_norm_Gamma_I_mul_sub_log_norm_Gamma_one_half_add_I_mul`); `Real.digamma := logDeriv Real.Gamma` with recurrence, `log(x−1) ≤ ψ ≤ log x`, `ψ − log → 0`, the harmonic representation and `Real.digamma_eq_complex_re` |
 | `Analysis/SpecialFunctions/ImproperIntegrals` | integrability of even functions, `e^{-a|x|}`, `|x|^n e^{-a|x|}`, `e^{-a|x|}|log|x||` |
 | `Analysis/SpecialFunctions/Stirling` | `log k!/k − log k → −1` |
 | `Topology/Algebra/InfiniteSum/ENat` | the `ℕ∞`-valued `tsum` API |

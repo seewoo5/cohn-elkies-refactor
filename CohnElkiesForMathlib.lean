@@ -1,4 +1,5 @@
 import CohnElkiesForMathlib.Analysis.Complex.PhragmenLindelof
+import CohnElkiesForMathlib.Analysis.Complex.Trigonometric
 import CohnElkiesForMathlib.Analysis.Fourier.FourierTransform
 import CohnElkiesForMathlib.Analysis.Fourier.FourierTransformDeriv
 import CohnElkiesForMathlib.Analysis.Fourier.PoissonSummation

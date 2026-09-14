@@ -1,11 +1,13 @@
 import Mathlib
+import CohnElkiesForMathlib.Analysis.Complex.Trigonometric
 
 /-!
 # The Gamma function on the imaginary axis and the line `Re z = 1/2`
 
 From the reflection formula `Γ(z) Γ(1 - z) = π / sin (π z)`:
 `‖Γ(1/2 + ix)‖² = π / cosh (π x)`, `‖Γ(ix)‖² = π / (x sinh (π x))` and
-`Γ(1 + ix) Γ(1 - ix) = π x / sinh (π x)`.
+`Γ(1 + ix) Γ(1 - ix) = π x / sinh (π x)`; the quotient of the first two reads
+`log ‖Γ(ix)‖ - log ‖Γ(1/2 + ix)‖ = ½ log (coth (π|x|) / |x|)`.
 -/
 
 open Real
@@ -91,3 +93,30 @@ theorem Complex.Gamma_one_add_I_mul_mul_Gamma_one_sub_I_mul {x : ℝ} (hx : x �
     z * -z * (Complex.Gamma z * Complex.Gamma (-z)) by ring, hneg, hprod, hnormsq]
   norm_cast
   field_simp
+
+/-- The quotient of the two modulus identities on the critical line, as a `coth` quotient:
+`log ‖Γ(ix)‖ - log ‖Γ(1/2 + ix)‖ = ½ log (coth (π|x|) / |x|)`; report Lemma 3.2. -/
+theorem Complex.log_norm_Gamma_I_mul_sub_log_norm_Gamma_one_half_add_I_mul {x : ℝ} (hx : x ≠ 0) :
+    Real.log ‖Complex.Gamma (I * (x : ℂ))‖ -
+        Real.log ‖Complex.Gamma ((1 / 2 : ℂ) + I * (x : ℂ))‖ =
+      1 / 2 * Real.log (Real.coth (π * |x|) / |x|) := by
+  have hsinh : Real.sinh (π * x) ≠ 0 := Real.sinh_ne_zero.mpr (mul_ne_zero Real.pi_ne_zero hx)
+  have hden : x * Real.sinh (π * x) ≠ 0 := mul_ne_zero hx hsinh
+  have hcosh : Real.cosh (π * x) ≠ 0 := (Real.cosh_pos _).ne'
+  have key : ∀ (w : ℂ) (v : ℝ), v ≠ 0 → ‖Complex.Gamma w‖ ^ 2 = π / v →
+      2 * Real.log ‖Complex.Gamma w‖ = Real.log π - Real.log v := fun w v hv hw ↦ by
+    rw [show 2 * Real.log ‖Complex.Gamma w‖ = Real.log (‖Complex.Gamma w‖ ^ 2) by
+      rw [Real.log_pow]; norm_num, hw, Real.log_div Real.pi_ne_zero hv]
+  have himaginary := key _ _ hden (Complex.norm_Gamma_I_mul_sq hx)
+  have hhalf := key _ _ hcosh (Complex.norm_Gamma_one_half_add_I_mul_sq x)
+  have hcoth : Real.coth (π * |x|) / |x| = Real.cosh (π * x) / (x * Real.sinh (π * x)) := by
+    rcases lt_or_gt_of_ne hx with hneg | hpos
+    · rw [abs_of_neg hneg, show π * -x = -(π * x) by ring]
+      unfold Real.coth
+      rw [Real.cosh_neg, Real.sinh_neg]
+      field_simp
+    · rw [abs_of_pos hpos]
+      unfold Real.coth
+      field_simp
+  rw [hcoth, Real.log_div hcosh hden]
+  linarith
