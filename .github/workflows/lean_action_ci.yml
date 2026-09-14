@@ -15,7 +15,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      LEAN_NUM_THREADS: 2   # cap concurrent Lean processes (the module DAG allows up to 8)
     steps:
       - uses: actions/checkout@v5
       - uses: leanprover/lean-action@v1
-      - uses: leanprover-community/docgen-action@v1
+      # The GitHub Pages site is owned by the blueprint workflow (`pages.yml`); re-enable
+      # docgen only if you move one of the two to a different publishing target.
+      # - uses: leanprover-community/docgen-action@v1

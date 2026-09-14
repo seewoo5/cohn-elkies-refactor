@@ -1,0 +1,242 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/main/schema/formalization.schema.json
+# formalization.yaml (v0.4): repo-root metadata for formalization projects.
+
+version: "v0.4"
+
+project:
+  name: "CohnElkies"
+  description: >-
+    Lean 4 + Mathlib formalization of Chapter 1 of OpenAI's report "Ten proofs": the exact
+    exponential rate of the Cohn–Elkies linear programming bound for sphere packings,
+    LP_d^{1/d} → sqrt(e/(2π)) (Theorem 1.1, with the packing consequence Δ_d ≤ (sqrt(e/(2π)) + o(1))^d),
+    and the asymptotics A_±(d)/√d → 1/π of the sign-uncertainty constants of L¹ Fourier
+    eigenfunctions (Theorem 1.2). A readable reformalization (module DAG, Mathlib-ready library,
+    blueprint, comparator challenge) of OpenAI's single-file formalization, extended by the results
+    that file did not contain (both Fourier eigenvalues in the lower bound, the self-Fourier
+    function f₀, the L¹ radial reduction and Schwartz approximation, Theorem 1.2).
+  authors: ["Seewoo Lee"]
+  responsible_maintainers: ["Seewoo Lee"]
+  license: "Apache-2.0"
+
+sources:
+  - title: "Ten advances in mathematics and theoretical computer science (Chapter 1: sharp asymptotics of the Cohn–Elkies bound and sign uncertainty)"
+    authors: ["OpenAI"]
+    id: "https://cdn.openai.com/pdf/ten-proofs-oai.pdf"
+    type: "report"
+    location: "Chapter 1 (Sections 1–4, Appendix A)"
+    relationship: "formalizes"
+    note: >-
+      Sections 1–4 are formalized in full; Appendix A (A₊(d) < A₋(d)) is deliberately not
+      formalized (its strict inequality needs the extremizer theorem of Cohn–Gonçalves 2019).
+    license: ""
+    author_endorsement: "not-contacted"
+  - title: "SpherePacking.lean of the repository openai/ten-proofs (the original single-file formalization)"
+    authors: ["OpenAI"]
+    id: "https://github.com/openai/ten-proofs/blob/main/SpherePacking.lean"
+    type: "formalization"
+    location: "SpherePacking.lean (55,616 lines)"
+    relationship: "adapts"
+    note: >-
+      Refactored (renamed, golfed, split into modules), the numeric certificate removed, and
+      extended; the definitions of the comparator challenge are kept verbatim.
+    license: "Apache-2.0"
+    author_endorsement: "not-contacted"
+  - title: "Sphere-Packing-Lean (sphere packings, periodic packings and the Cohn–Elkies bound via Poisson summation)"
+    authors: ["Sidharth Hariharan", "Gareth Ma", "Christopher Birkbeck", "Maryna Viazovska", "Bhavik Mehta", "et al."]
+    id: "https://github.com/thefundamentaltheor3m/Sphere-Packing-Lean"
+    type: "formalization"
+    relationship: "background"
+    note: "The packing-density and Poisson-summation material of the original file comes from this project."
+    license: "Apache-2.0"
+    author_endorsement: "not-contacted"
+  - title: "Cohn, Elkies: New upper bounds on sphere packings I"
+    authors: ["Henry Cohn", "Noam Elkies"]
+    id: "https://doi.org/10.4007/annals.2003.157.689"
+    type: "article"
+    relationship: "background"
+    author_endorsement: "n/a"
+  - title: "Cohn, Gonçalves: An optimal uncertainty principle in twelve dimensions via modular forms"
+    authors: ["Henry Cohn", "Felipe Gonçalves"]
+    id: "https://doi.org/10.1007/s00222-019-00875-4"
+    type: "article"
+    location: "Theorem 1.4 (existence of extremizers), cited by Appendix A of the report"
+    relationship: "background"
+    note: "Not formalized (Appendix A is out of scope)."
+    author_endorsement: "n/a"
+
+related_formalizations:
+  - id: "https://github.com/openai/ten-proofs"
+    note: "The original formalization this project refactors and extends."
+  - id: "https://github.com/thefundamentaltheor3m/Sphere-Packing-Lean"
+    note: "Sphere packings in Lean (Viazovska's theorem project)."
+
+classification:
+  arxiv: ["math.MG", "math.CA", "math.NT"]
+  msc2020: ["52C17", "42B10", "11H31", "90C05"]
+
+status:
+  scope: >-
+    Theorem 1.1 in both forms, the packing bounds Δ_d ≤ LP_d (proved, not assumed) and
+    Δ_d ≤ (sqrt(e/(2π)) + o(1))^d, Propositions 3.1 and 3.7 for both Fourier eigenvalues (Schwartz
+    and L¹ classes), the saddle-point construction of f₊, f₋, f₀ (Theorem 4.1, Lemmas 4.2–4.10),
+    the radial reduction and Schwartz approximation of Section 2.1, and Theorem 1.2. Appendix A is
+    stated in the blueprint but not formalized.
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms: ["propext", "Classical.choice", "Quot.sound"]
+  main_results:
+  - declaration: "PackingBounds.FullMain.exact_limit"
+    file: "CohnElkies/PackingBound.lean"
+    sorry_count: 0
+    axioms: ["propext", "Classical.choice", "Quot.sound"]
+    comparator_config: "ComparatorChallenges/CohnElkies.json"
+    literature_dependencies: []
+  - declaration: "PackingBounds.FullMain.exact_binary_exponent"
+    file: "CohnElkies/PackingBound.lean"
+    sorry_count: 0
+    axioms: ["propext", "Classical.choice", "Quot.sound"]
+    comparator_config: "ComparatorChallenges/CohnElkies.json"
+    literature_dependencies: []
+  - declaration: "PackingBounds.PackingBridge.sphere_packing_le_linear_program"
+    file: "CohnElkies/PackingBound.lean"
+    sorry_count: 0
+    axioms: ["propext", "Classical.choice", "Quot.sound"]
+    comparator_config: "ComparatorChallenges/CohnElkies.json"
+    literature_dependencies: []
+  - declaration: "PackingBounds.PackingBridge.sphere_packing_sharp_asymptotic_upper"
+    file: "CohnElkies/PackingBound.lean"
+    sorry_count: 0
+    axioms: ["propext", "Classical.choice", "Quot.sound"]
+    comparator_config: "ComparatorChallenges/CohnElkies.json"
+    literature_dependencies: []
+  - declaration: "CohnElkies.signUncertaintyConstant_div_sqrt_tendsto"
+    file: "CohnElkies/SignUncertainty/Main.lean"
+    sorry_count: 0
+    axioms: ["propext", "Classical.choice", "Quot.sound"]
+    comparator_config: "ComparatorChallenges/CohnElkies.json"
+    literature_dependencies: []
+
+automation:
+  methods:
+    - method: "agent"
+      models: ["Astra (OpenAI)"]
+      framework: "Codex"
+      tool_setup: "OpenAI's original formalization SpherePacking.lean (see sources)"
+      cost:
+        wall_time: "1 week (as reported in openai/ten-proofs)"
+        spend_usd: ""
+        hardware: ""
+      prompting_notes: "See https://openai.com/index/ten-advances-in-mathematics/"
+    - method: "agent"
+      models: ["claude-fable-5-1", "claude-opus-5", "claude-sonnet-5"]
+      framework: "Claude Code (desktop app), one coordinating session with background subagents"
+      tool_setup: >-
+        lean4-skills plugin and lean-lsp MCP server; scripts for the mechanical split, reformatting
+        and renaming; per-module golfing agents under an "exports contract"; semantic tasks
+        (two-sign lower bound, generic saddle polynomial and f₀, L¹ theory and Theorem 1.2) as
+        single agents; module reorganization and cleanup agents; leanprover/comparator as the
+        independent check of the main statements; verso-blueprint for the blueprint.
+      cost:
+        wall_time: "≈ 2 days (2026-09-12 to 2026-09-14) of largely unattended agent work"
+        spend_usd: "subscription-based usage"
+        hardware: "one laptop (16 GB RAM), Lean 4.33.1 + Mathlib v4.33.1; API-only models"
+      prompting_notes: >-
+        Task specifications in natural language with the report's statements, hard rules
+        (default maxHeartbeats, no sorry, standard axioms, verification with `lake env lean`,
+        names/statements frozen for downstream modules) and required reports; see
+        RefactoringPlan.md and RefactoringResult.md.
+  spend_usd: "subscription-based usage"
+  notes: >-
+    The refactoring followed RefactoringPlan.md: mechanical split of the original file, global
+    renaming to the report's notation, per-module golfing (≈ 40 % shorter per module), the new
+    theorems, reorganization into an import DAG with a Mathlib-ready library, a cleanup pass, the
+    comparator challenge and the blueprint. Human involvement: the plan, review of intermediate
+    reports, and design decisions (dropping the numeric certificate, the L¹ formulation of the
+    sign-uncertainty constants, not formalizing Appendix A).
+
+fidelity:
+  divergences: >-
+    Proof arguments kept from the original formalization where they differ from the report: the
+    interior bound of Lemma 3.2 by a Phragmén–Lindelöf principle on the strip (with a capped
+    majorant) instead of the Poisson principle; one-sided Lemma 3.3; the limit of Lemma 3.4 via a
+    Frullani/Wallis-kernel integral instead of the digamma log-moment identity (22); a single
+    inverse-quadratic majorant in Lemma 3.5; Lemma 4.8 in strict-inequality form and Lemma 4.10 in
+    positivity form; the upper half of Theorem 1.1 fused into a sandwich argument. The parameters
+    of Section 4 are the report's (a₀ = ε², A = log(1/ε), b(a) = 1 − 2ε(1+a), N = ⌈log λ⌉); the
+    absolute constant of Lemma 4.2 is c = 2. The Schwartz approximation of Section 2.1 convolves with a compactly
+    supported bump instead of the Gaussian κ_n. The sign-uncertainty class is represented by
+    continuous Fourier-inversion representatives (𝓕 g = ς g pointwise). The rotational average is
+    written ∫ f(U⁻¹x) dU rather than the report's ∫ f(Ux) dU (the same function; only left
+    invariance of the Haar measure is then needed). The Cohn–Elkies bound Δ_d ≤ LP_d, cited by the
+    report, is proved. Details: RefactoringResult.md §1.3–1.6 and §5.
+
+review:
+  status: "agent-reviewed"
+  reviewers: []
+  notes: >-
+    Every module compiles with Mathlib's standard linter set and the default maxHeartbeats, with
+    no sorry and only the standard axioms; the five main statements were checked against the
+    Mathlib-only challenge ComparatorChallenges/CohnElkies.lean with leanprover/comparator (Lean
+    kernel replay accepted; landrun sandbox only in CI). The informal blueprint (CohnElkiesBlueprint/)
+    links every formalized node to its declaration. No human line-by-line review yet.
+
+alignment:
+  namespace: "CohnElkies"
+  statements:
+    - source: "Theorem 1.1 (LP_d^{1/d} → sqrt(e/(2π)))"
+      lean: "PackingBounds.FullMain.exact_limit"
+      module: "CohnElkies/PackingBound.lean"
+      status: "proved"
+      note: "base-2 form: PackingBounds.FullMain.exact_binary_exponent"
+    - source: "Equation (4), Δ_d ≤ LP_d, and the sharp packing bound"
+      lean: "PackingBounds.PackingBridge.sphere_packing_le_linear_program"
+      module: "CohnElkies/PackingBound.lean"
+      status: "proved"
+      note: "Δ_d ≤ (sqrt(e/(2π)) + o(1))^d: PackingBounds.PackingBridge.sphere_packing_sharp_asymptotic_upper"
+    - source: "Theorem 1.2 (A_±(d)/√d → 1/π)"
+      lean: "CohnElkies.signUncertaintyConstant_div_sqrt_tendsto"
+      module: "CohnElkies/SignUncertainty/Main.lean"
+      status: "proved"
+      note: "definitions (5)–(6): CohnElkies.SignEigenfunction, signRadius, signUncertaintyConstant (CohnElkies/Basic.lean)"
+    - source: "Proposition 3.1"
+      lean: "CohnElkies.exists_interior_mass_bound"
+      module: "CohnElkies/LowerBound/Main.lean"
+      status: "proved"
+    - source: "Proposition 3.7 (L¹ class; Schwartz case)"
+      lean: "CohnElkies.eventually_not_nonneg_outside_signEigenfunction"
+      module: "CohnElkies/SignUncertainty/LowerBound.lean"
+      status: "proved"
+      note: "Schwartz case: CohnElkies.eventually_not_nonneg_outside"
+    - source: "Theorem 3.8"
+      lean: "CohnElkies.manuscriptUniversalQuotientBound"
+      module: "CohnElkies/Asymptotics/Manuscript.lean"
+      status: "proved"
+    - source: "Theorem 4.1 / Lemma 4.3 / Corollary 4.9 (f₋, f₊, f₀ and the radius R_{ε,d})"
+      lean: "CohnElkies.saddleSourceEventualSigns"
+      module: "CohnElkies/UpperBound/Signs.lean"
+      status: "proved"
+      note: "f₀: CohnElkies.fZero, fourier_zeroSaddleSchwartz, eventually_fZero_re_pos_of_radius (CohnElkies/UpperBound/SelfFourier.lean)"
+    - source: "Section 2.1 (radial reduction of the linear program)"
+      lean: "CohnElkies.LP_eq_radial"
+      module: "CohnElkies/Admissible/Radialization.lean"
+      status: "proved"
+      note: "from CohnElkies.Admissible.radialize; the normalized program is normalizedProgram_eq_radial"
+    - source: "Section 2.1 (radial reduction of the sign-uncertainty constants)"
+      lean: "CohnElkies.signUncertaintyConstant_eq_radial"
+      module: "CohnElkies/SignUncertainty/Radialization.lean"
+      status: "proved"
+    - source: "Section 2.1 (rotational average, Schwartz approximation)"
+      lean: "CohnElkies.SignEigenfunction.radialize"
+      module: "CohnElkies/SignUncertainty/Radialization.lean"
+      status: "proved"
+      note: "CohnElkies.exists_schwartz_approximation (CohnElkies/SignUncertainty/SchwartzApproximation.lean)"
+    - source: "Appendix A (Proposition A.1, A₊(d) < A₋(d))"
+      lean: ""
+      module: ""
+      status: "not-formalized"
+      note: "Deliberately out of scope; stated informally in the blueprint chapter Appendix A."
+
+acknowledgements: >-
+  OpenAI's original formalization (openai/ten-proofs) and the Sphere-Packing-Lean project, whose
+  packing-density and Poisson-summation material the original file reused; leanprover/comparator
+  and verso-blueprint.

@@ -1,0 +1,17 @@
+{
+  "challenge_module": "ComparatorChallenges.CohnElkies",
+  "solution_module": "CohnElkies",
+  "theorem_names": [
+    "PackingBounds.FullMain.exact_limit",
+    "PackingBounds.FullMain.exact_binary_exponent",
+    "PackingBounds.PackingBridge.sphere_packing_le_linear_program",
+    "PackingBounds.PackingBridge.sphere_packing_sharp_asymptotic_upper",
+    "CohnElkies.signUncertaintyConstant_div_sqrt_tendsto"
+  ],
+  "permitted_axioms": [
+    "propext",
+    "Quot.sound",
+    "Classical.choice"
+  ],
+  "enable_nanoda": true
+}

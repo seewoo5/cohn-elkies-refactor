@@ -1,0 +1,63 @@
+name: Comparator
+
+# Independent verification of the main theorems with leanprover/comparator
+# (https://github.com/leanprover/comparator). The statements in
+# `ComparatorChallenges/CohnElkies.lean` (which imports only Mathlib) are compared with the
+# proofs of the `CohnElkies` library, the proofs are checked for permitted axioms and replayed
+# through the Lean kernel and the nanoda kernel. `landrun` needs Linux (Landlock), hence CI only.
+# `lean4export` is built from the revision pinned by the Comparator package, with the project's
+# own toolchain (it must load the project's `.olean` files).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  comparator:
+    runs-on: ubuntu-latest
+    env:
+      LEAN_NUM_THREADS: 2   # cap concurrent Lean processes (the module DAG allows up to 8)
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: Zouuup/landrun
+          path: .tools/landrun
+
+      - uses: actions/checkout@v4
+        with:
+          repository: ammkrn/nanoda_lib
+          path: .tools/nanoda
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - name: Build landrun
+        working-directory: .tools/landrun
+        run: go build -o landrun cmd/landrun/main.go
+
+      - name: Build nanoda
+        working-directory: .tools/nanoda
+        run: cargo build --release
+
+      - name: Install elan
+        run: |
+          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf \
+            | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Build the project, the challenge, comparator and lean4export
+        run: |
+          lake exe cache get
+          lake build CohnElkies ComparatorChallenges
+          lake build comparator lean4export/lean4export
+
+      - name: Run comparator
+        run: |
+          export PATH="$GITHUB_WORKSPACE/.tools/nanoda/target/release:$GITHUB_WORKSPACE/.tools/landrun:$PATH"
+          export COMPARATOR_LEAN4EXPORT="$GITHUB_WORKSPACE/.lake/packages/lean4export/.lake/build/bin/lean4export"
+          lake exe comparator ComparatorChallenges/CohnElkies.json

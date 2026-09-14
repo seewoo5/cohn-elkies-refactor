@@ -1,21 +1,62 @@
 name = "CohnElkies"
 version = "0.1.0"
 keywords = ["math"]
-defaultTargets = ["CohnElkies", "SpherePacking"]
+defaultTargets = ["CohnElkiesForMathlib", "CohnElkies", "ComparatorChallenges", "SpherePackingRefactored"]
 
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
 relaxedAutoImplicit = false
 weak.linter.mathlibStandardSet = true
+# No copyright headers in this project (the code derives from OpenAI's Apache-2.0 `SpherePacking.lean`;
+# license and headers are the repository owner's decision), so the header linter is off.
+weak.linter.style.header = false
 maxSynthPendingDepth = 3
 
+
+# Independent checker for the main theorems (see `ComparatorChallenges/`).
+[[require]]
+name = "Comparator"
+git = "https://github.com/leanprover/comparator.git"
+rev = "v4.33.0"
+
+# The blueprint (natural-language statements and proofs linked to the Lean declarations);
+# rendered with `lake exe vbp build` (see `scripts/ci-pages.sh`).
+[[require]]
+name = "VersoBlueprint"
+git = "https://github.com/leanprover/verso-blueprint"
+rev = "v4.33.0"
+
+# Mathlib last, so that its pins of shared dependencies (proofwidgets, batteries, …) take
+# precedence over those of Comparator and VersoBlueprint (needed for `lake exe cache get`).
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
 rev = "v4.33.1"
 
+# Material with no project-specific content, ready for Mathlib (mirrors Mathlib's tree).
+[[lean_lib]]
+name = "CohnElkiesForMathlib"
+
 [[lean_lib]]
 name = "CohnElkies"
 
+# The original single-file formalization (untouched reference) and the refactored single file
+# assembled from `CohnElkiesForMathlib/` and `CohnElkies/` (Step 1 of the plan).
 [[lean_lib]]
 name = "SpherePacking"
+
+[[lean_lib]]
+name = "SpherePackingRefactored"
+
+# Self-contained statements (importing only Mathlib) of the main theorems, checked against the
+# `CohnElkies` library by `lake exe comparator ComparatorChallenges/CohnElkies.json`.
+[[lean_lib]]
+name = "ComparatorChallenges"
+roots = ["ComparatorChallenges.CohnElkies"]
+
+[[lean_lib]]
+name = "CohnElkiesBlueprint"
+# Verso documents are one long command per chapter: Mathlib's style linters do not apply.
+[lean_lib.leanOptions]
+weak.linter.mathlibStandardSet = false
+weak.linter.style.longLine = false

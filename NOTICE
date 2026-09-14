@@ -1,0 +1,8 @@
+CohnElkies
+Copyright 2026 Seewoo Lee
+
+This project is a refactoring and extension of `SpherePacking.lean` from
+https://github.com/openai/ten-proofs (Copyright OpenAI, licensed under the
+Apache License, Version 2.0), which itself reuses material from the
+Sphere-Packing-Lean project, https://github.com/thefundamentaltheor3m/Sphere-Packing-Lean
+(Apache License, Version 2.0).
