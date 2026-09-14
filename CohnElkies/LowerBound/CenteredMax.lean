@@ -117,12 +117,12 @@ theorem even_antitone_poisson_convolution_max {σ : ℝ} (hbelow : -1 < σ) (hab
   exact mul_nonneg (stripPoissonKernel_pos hbelow habove (0 - x)).le (hfnonneg x)
 
 /-- For `|Y| ≥ 1` the half-integer correction `½ log coth (π|Y|/2)` is at most `1 / 2`. -/
-theorem lowerCoth_log_half_le_of_one_le_abs {Y : ℝ} (hY : 1 ≤ |Y|) :
-    1 / 2 * log (lowerCoth (π * |Y| / 2)) ≤ 1 / 2 := by
+theorem coth_log_half_le_of_one_le_abs {Y : ℝ} (hY : 1 ≤ |Y|) :
+    1 / 2 * log (coth (π * |Y| / 2)) ≤ 1 / 2 := by
   have hpiabs : 3 ≤ π * |Y| := by
     nlinarith [Real.pi_gt_three, mul_nonneg (by linarith [Real.pi_gt_three] : (0 : ℝ) ≤ π - 3)
       (sub_nonneg.mpr hY)]
-  have hcoth := lowerCoth_log_le_four_exp_neg_two (by linarith : (1 : ℝ) ≤ π * |Y| / 2)
+  have hcoth := coth_log_le_four_exp_neg_two (by linarith : (1 : ℝ) ≤ π * |Y| / 2)
   have hexpthree : (4 : ℝ) ≤ exp 3 := by nlinarith [Real.add_one_le_exp (3 : ℝ)]
   have hexpsmall : exp (-2 * (π * |Y| / 2)) ≤ 1 / 4 := by
     calc exp (-2 * (π * |Y| / 2)) ≤ exp (-3 : ℝ) := Real.exp_le_exp.mpr (by linarith)
@@ -161,7 +161,7 @@ theorem lowerGammaBoundaryLog_dimension_scaled_le_neg_of_large {d : ℕ} (hd : 2
     linarith [mul_le_mul_of_nonneg_left hlogratio (by positivity : (0 : ℝ) ≤ (d : ℝ) / 2),
       mul_nonneg (sub_nonneg.mpr hℓ) (by linarith : (0 : ℝ) ≤ log 2 + n)]
   linarith [lowerGammaBoundaryLog_dimension_scaled_log_tail_uniform hd hc hY,
-    lowerCoth_log_half_le_of_one_le_abs hyone]
+    coth_log_half_le_of_one_le_abs hyone]
 
 /-- The scaled capped majorant, shifted up by `n` and clipped at `0`: an even, nonnegative,
 compactly supported weight. -/
@@ -447,10 +447,10 @@ theorem lowerGammaBoundaryLog_halfInteger_scaled (k : ℕ) {ℓ R T : ℝ} (hℓ
     (hR : 0 < R) (hT : T ≠ 0) :
     h_ℓ ℓ R (ℓ * T) = ℓ * log (π * R ^ 2 / ℓ) -
         ∑ j ∈ Finset.range k, f_T T (((j : ℝ) + 1 / 2) / ℓ) +
-        1 / 2 * log (lowerCoth (π * ℓ * |T| / 2)) - 1 / 2 * log (|T| / 2) := by
+        1 / 2 * log (coth (π * ℓ * |T| / 2)) - 1 / 2 * log (|T| / 2) := by
   have hℓ : 0 < ℓ := by rw [hℓeq]; positivity
   have ht : 0 < |T| / 2 := by positivity
-  have hcoth : 0 < lowerCoth (π * ℓ * |T| / 2) := lowerCoth_pos (by positivity)
+  have hcoth : 0 < coth (π * ℓ * |T| / 2) := coth_pos (by positivity)
   have hraw := lowerGammaBoundaryLog_halfInteger k R (mul_ne_zero hℓ.ne' hT)
   rw [← hℓeq] at hraw
   rw [hraw]
@@ -470,7 +470,7 @@ theorem lowerRiemannLog_continuous {T : ℝ} (hT : T ≠ 0) : Continuous (f_T T)
 
 /-- The error majorant `3|f_T T 0| + 2|f_T T 1| + ½ log coth(π|T|/2)` of report Lemma 3.3. -/
 def lowerRiemannErrorMajorant (T : ℝ) : ℝ :=
-  3 * |f_T T 0| + 2 * |f_T T 1| + 1 / 2 * log (lowerCoth (π * |T| / 2))
+  3 * |f_T T 0| + 2 * |f_T T 1| + 1 / 2 * log (coth (π * |T| / 2))
 
 theorem lowerGammaBoundaryLog_integer_riemann_le {k : ℕ} (hk : 0 < k) {R T : ℝ} (hR : 0 < R)
     (hT : T ≠ 0) :
@@ -480,7 +480,7 @@ theorem lowerGammaBoundaryLog_integer_riemann_le {k : ℕ} (hk : 0 < k) {R T : �
   rw [lowerGammaBoundaryLog_integer_scaled hk hR hT]
   unfold lowerRiemannErrorMajorant
   nlinarith [(lower_integer_leftRiemann_error hT hk).2, integral_lowerRiemannLog hT,
-    lowerCoth_log_nonneg (show 0 < π * |T| / 2 by positivity), le_abs_self (f_T T 1),
+    coth_log_nonneg (show 0 < π * |T| / 2 by positivity), le_abs_self (f_T T 1),
     neg_le_abs (f_T T 0), abs_nonneg (f_T T 0), abs_nonneg (f_T T 1)]
 
 theorem lowerRiemannLog_halfInteger_tail_integral_le (k : ℕ) {ℓ T : ℝ}
@@ -527,7 +527,7 @@ theorem lowerGammaBoundaryLog_halfInteger_riemann_le (k : ℕ) {ℓ R T : ℝ}
     nlinarith
   have hqk : f_T T ((k : ℝ) / ℓ) ≤ f_T T 1 := lowerRiemannLog_monotoneOn hT
     (mem_Ici.mpr hratio_nonneg) (mem_Ici.mpr zero_le_one) hratio_le
-  have hcoth := lowerCoth_log_antitoneOn (mem_Ioi.mpr (by positivity : 0 < π * |T| / 2))
+  have hcoth := coth_log_antitoneOn (mem_Ioi.mpr (by positivity : 0 < π * |T| / 2))
     (mem_Ioi.mpr (by positivity : 0 < π * ℓ * |T| / 2))
     (by nlinarith [mul_nonneg (sub_nonneg.mpr hℓone) (mul_nonneg Real.pi_pos.le (abs_nonneg T))])
   have hphase := integral_lowerRiemannLog hT
@@ -652,16 +652,16 @@ theorem lowerRiemannErrorMajorant_poisson_integrable {σ : ℝ} (hzero : 0 ≤ �
     refine (stripPoissonKernel_mul_lowerRiemannLog_zero_integrable hbelow habove).abs.congr ?_
     filter_upwards with T
     rw [abs_mul, abs_of_pos (stripPoissonKernel_pos hbelow habove T)]
-  have hcoth : Integrable fun T : ℝ ↦ P_σ σ T * log (lowerCoth (π * |T| / 2)) := by
+  have hcoth : Integrable fun T : ℝ ↦ P_σ σ T * log (coth (π * |T| / 2)) := by
     refine (stripPoissonKernel_weighted_product_integrable hbelow habove
-      lowerCoth_log_abs_integrable 0).congr ?_
+      coth_log_abs_integrable 0).congr ?_
     filter_upwards with T
     rw [zero_sub, stripPoissonKernel_neg]
   refine ((hlog.const_mul 3).add (((stripPoissonKernel_mul_abs_lowerRiemannLog_one_integrable
     hzero habove).const_mul 2).add (hcoth.const_mul (1 / 2)))).congr ?_
   filter_upwards with T
   change 3 * (P_σ σ T * |f_T T 0|) + (2 * (P_σ σ T * |f_T T 1|) +
-      1 / 2 * (P_σ σ T * log (lowerCoth (π * |T| / 2)))) = P_σ σ T * lowerRiemannErrorMajorant T
+      1 / 2 * (P_σ σ T * log (coth (π * |T| / 2)))) = P_σ σ T * lowerRiemannErrorMajorant T
   unfold lowerRiemannErrorMajorant
   ring
 
@@ -771,7 +771,7 @@ theorem lowerGammaBoundaryLog_dimension_scaled_log_tail_simple {d : ℕ} (hd : 2
       field_simp [abs_ne_zero.mpr hyzero],
     Real.log_mul (by positivity) (Real.exp_ne_zero 1), Real.log_exp]
   nlinarith [lowerGammaBoundaryLog_dimension_scaled_log_tail_uniform hd hc hyzero,
-    lowerCoth_log_half_le_of_one_le_abs hY]
+    coth_log_half_le_of_one_le_abs hY]
 
 /-- The Poisson mass `∫_{-1}^{1} P_σ` of the core interval. -/
 def stripPoissonCoreMass (σ : ℝ) : ℝ := ∫ T in Icc (-1 : ℝ) 1, P_σ σ T

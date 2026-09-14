@@ -6166,40 +6166,40 @@ theorem lowerGammaBoundaryLog_halfInteger_factorized (k : ℕ) (R : ℝ) {y : �
   ring
 
 /-- `coth x = cosh x / sinh x`, the gamma endpoint correction of report (7). -/
-def lowerCoth (x : ℝ) : ℝ := cosh x / sinh x
+def coth (x : ℝ) : ℝ := cosh x / sinh x
 
-theorem lowerCoth_pos {x : ℝ} (hx : 0 < x) : 0 < lowerCoth x :=
+theorem coth_pos {x : ℝ} (hx : 0 < x) : 0 < coth x :=
   div_pos (cosh_pos x) (Real.sinh_pos_iff.mpr hx)
 
-theorem lowerCoth_log_nonneg {x : ℝ} (hx : 0 < x) : 0 ≤ log (lowerCoth x) := by
+theorem coth_log_nonneg {x : ℝ} (hx : 0 < x) : 0 ≤ log (coth x) := by
   refine Real.log_nonneg ?_
   have hsinh : 0 < sinh x := Real.sinh_pos_iff.mpr hx
-  unfold lowerCoth
+  unfold coth
   rw [le_div_iff₀ hsinh, one_mul, Real.sinh_eq, Real.cosh_eq]
   linarith [exp_pos (-x)]
 
-theorem lowerCoth_hasDerivAt {x : ℝ} (hx : 0 < x) : HasDerivAt lowerCoth (-(sinh x)⁻¹ ^ 2) x := by
+theorem coth_hasDerivAt {x : ℝ} (hx : 0 < x) : HasDerivAt coth (-(sinh x)⁻¹ ^ 2) x := by
   have hsinh : sinh x ≠ 0 := (Real.sinh_pos_iff.mpr hx).ne'
-  unfold lowerCoth
+  unfold coth
   convert! (Real.hasDerivAt_cosh x).div (Real.hasDerivAt_sinh x) hsinh using 1
   rw [div_eq_mul_inv]
   have hidentity := Real.cosh_sq_sub_sinh_sq x
   field_simp [hsinh]
   nlinarith
 
-theorem lowerCoth_antitoneOn : AntitoneOn lowerCoth (Ioi (0 : ℝ)) := by
+theorem coth_antitoneOn : AntitoneOn coth (Ioi (0 : ℝ)) := by
   refine antitoneOn_of_deriv_nonpos (convex_Ioi 0)
-    (fun x hx ↦ (lowerCoth_hasDerivAt hx).continuousAt.continuousWithinAt)
-    (fun x hx ↦ (lowerCoth_hasDerivAt (by simpa using hx)).differentiableAt.differentiableWithinAt)
+    (fun x hx ↦ (coth_hasDerivAt hx).continuousAt.continuousWithinAt)
+    (fun x hx ↦ (coth_hasDerivAt (by simpa using hx)).differentiableAt.differentiableWithinAt)
     fun x hx ↦ ?_
-  rw [(lowerCoth_hasDerivAt (by simpa using hx)).deriv]
+  rw [(coth_hasDerivAt (by simpa using hx)).deriv]
   exact neg_nonpos.mpr (sq_nonneg _)
 
-theorem lowerCoth_log_antitoneOn : AntitoneOn (fun x : ℝ ↦ log (lowerCoth x)) (Ioi (0 : ℝ)) :=
-  fun _x hx _y hy hxy ↦ Real.log_le_log (lowerCoth_pos hy) (lowerCoth_antitoneOn hx hy hxy)
+theorem coth_log_antitoneOn : AntitoneOn (fun x : ℝ ↦ log (coth x)) (Ioi (0 : ℝ)) :=
+  fun _x hx _y hy hxy ↦ Real.log_le_log (coth_pos hy) (coth_antitoneOn hx hy hxy)
 
 theorem lower_abs_log_coth_div_le {x : ℝ} (hx : 0 < x) :
-    |log (lowerCoth (π * x) / x)| ≤ 2 * (π * x) + |log π| + 2 * |log x| := by
+    |log (coth (π * x) / x)| ≤ 2 * (π * x) + |log π| + 2 * |log x| := by
   have ht : 0 < π * x := mul_pos pi_pos hx
   have hsinh : 0 < sinh (π * x) := Real.sinh_pos_iff.mpr ht
   have hcosh : 0 < cosh (π * x) := cosh_pos _
@@ -6224,23 +6224,23 @@ theorem lower_abs_log_coth_div_le {x : ℝ} (hx : 0 < x) :
   have hlogpi : |log (π * x)| ≤ |log π| + |log x| := by
     rw [Real.log_mul pi_ne_zero hx.ne']
     simpa [sub_neg_eq_add] using abs_sub (log π) (-(log x))
-  unfold lowerCoth
+  unfold coth
   rw [Real.log_div (div_ne_zero hcosh.ne' hsinh.ne') hx.ne', Real.log_div hcosh.ne' hsinh.ne']
   have h1 := abs_sub (log (cosh (π * x))) (log (sinh (π * x)))
   have h2 := abs_sub (log (cosh (π * x)) - log (sinh (π * x))) (log x)
   linarith
 
-theorem lowerCoth_log_le_four_exp_neg_two {x : ℝ} (hx : 1 ≤ x) :
-    log (lowerCoth x) ≤ 4 * exp (-2 * x) := by
+theorem coth_log_le_four_exp_neg_two {x : ℝ} (hx : 1 ≤ x) :
+    log (coth x) ≤ 4 * exp (-2 * x) := by
   have hxpos : 0 < x := by linarith
   have hsinh : 0 < sinh x := Real.sinh_pos_iff.mpr hxpos
   have hquarter : exp x / 4 ≤ sinh x := by
     have hbig : 2 ≤ exp x := by nlinarith [Real.add_one_le_exp x]
     rw [Real.sinh_eq]
     linarith [Real.exp_le_one_iff.mpr (by linarith : -x ≤ 0)]
-  calc log (lowerCoth x) ≤ lowerCoth x - 1 := Real.log_le_sub_one_of_pos (lowerCoth_pos hxpos)
+  calc log (coth x) ≤ coth x - 1 := Real.log_le_sub_one_of_pos (coth_pos hxpos)
     _ = exp (-x) / sinh x := by
-        unfold lowerCoth
+        unfold coth
         field_simp [hsinh.ne']
         rw [Real.cosh_eq, Real.sinh_eq]
         ring
@@ -6250,25 +6250,25 @@ theorem lowerCoth_log_le_four_exp_neg_two {x : ℝ} (hx : 1 ≤ x) :
         rw [show -2 * x = -x - x by ring, Real.exp_sub]
         field_simp
 
-theorem lowerCoth_log_small_abs_bound {y : ℝ} (hy : y ≠ 0) (hsmall : |y| ≤ 1) :
-    log (lowerCoth (π * |y| / 2)) ≤
+theorem coth_log_small_abs_bound {y : ℝ} (hy : y ≠ 0) (hsmall : |y| ≤ 1) :
+    log (coth (π * |y| / 2)) ≤
       π + |log π| + 3 * (|log (|y|)| + |log (2 : ℝ)|) := by
   have hu : 0 < |y| / 2 := by positivity
-  have hcoth : 0 < lowerCoth (π * (|y| / 2)) := lowerCoth_pos (mul_pos pi_pos hu)
+  have hcoth : 0 < coth (π * (|y| / 2)) := coth_pos (mul_pos pi_pos hu)
   have hloghalf : |log (|y| / 2)| ≤ |log (|y|)| + |log (2 : ℝ)| := by
     rw [Real.log_div (abs_ne_zero.mpr hy) two_ne_zero]
     exact abs_sub _ _
   have hpibound : 2 * (π * (|y| / 2)) ≤ π := by
     nlinarith [mul_nonneg pi_pos.le (sub_nonneg.mpr hsmall)]
   rw [show π * |y| / 2 = π * (|y| / 2) by ring,
-    show log (lowerCoth (π * (|y| / 2))) =
-      log (lowerCoth (π * (|y| / 2)) / (|y| / 2)) + log (|y| / 2) by
+    show log (coth (π * (|y| / 2))) =
+      log (coth (π * (|y| / 2)) / (|y| / 2)) + log (|y| / 2) by
       rw [Real.log_div hcoth.ne' hu.ne']; ring]
-  linarith [lower_abs_log_coth_div_le hu, le_abs_self (log (lowerCoth (π * (|y| / 2)) / (|y| / 2))),
+  linarith [lower_abs_log_coth_div_le hu, le_abs_self (log (coth (π * (|y| / 2)) / (|y| / 2))),
     le_abs_self (log (|y| / 2))]
 
-theorem lowerCoth_log_abs_integrable :
-    Integrable (fun y : ℝ ↦ log (lowerCoth (π * |y| / 2))) := by
+theorem coth_log_abs_integrable :
+    Integrable (fun y : ℝ ↦ log (coth (π * |y| / 2))) := by
   set A : ℝ := π + |log π| + 3 * |log (2 : ℝ)| with hA
   have hAnonneg : 0 ≤ A := by rw [hA]; positivity
   have hnear : Integrable (fun y : ℝ ↦ A * exp ((-1 : ℝ) * |y|) +
@@ -6280,8 +6280,8 @@ theorem lowerCoth_log_abs_integrable :
     (hnear.const_mul (exp 1)).add ((integrable_exp_neg_mul_abs pi_pos).const_mul 4)
   refine hmajor.mono' ?_ ?_
   · have harg : Measurable fun y : ℝ ↦ π * |y| / 2 := by fun_prop
-    have hcoth : Measurable fun y : ℝ ↦ lowerCoth (π * |y| / 2) := by
-      unfold lowerCoth
+    have hcoth : Measurable fun y : ℝ ↦ coth (π * |y| / 2) := by
+      unfold coth
       exact (Real.continuous_cosh.measurable.comp harg).div
         (Real.continuous_sinh.measurable.comp harg)
     exact hcoth.log.aestronglyMeasurable
@@ -6291,10 +6291,10 @@ theorem lowerCoth_log_abs_integrable :
         3 * (exp ((-1 : ℝ) * |y|) * |log (|y|)|)) := by positivity
     by_cases hy : y = 0
     · subst y
-      simp only [lowerCoth, abs_zero, mul_zero, zero_div, cosh_zero, sinh_zero, div_zero, log_zero,
+      simp only [coth, abs_zero, mul_zero, zero_div, cosh_zero, sinh_zero, div_zero, log_zero,
         norm_zero, hA, exp_zero, mul_one, add_zero, ge_iff_le]
       positivity
-    rw [Real.norm_eq_abs, abs_of_nonneg (lowerCoth_log_nonneg (by positivity))]
+    rw [Real.norm_eq_abs, abs_of_nonneg (coth_log_nonneg (by positivity))]
     by_cases hsmall : |y| ≤ 1
     · have hfactor : 1 ≤ exp 1 * exp ((-1 : ℝ) * |y|) := by
         rw [← Real.exp_add]
@@ -6306,15 +6306,15 @@ theorem lowerCoth_log_abs_integrable :
       have hrewrite : (exp 1 * exp ((-1 : ℝ) * |y|)) * (A + 3 * |log (|y|)|) =
           exp 1 * (A * exp ((-1 : ℝ) * |y|) +
             3 * (exp ((-1 : ℝ) * |y|) * |log (|y|)|)) := by ring
-      have hsb : log (lowerCoth (π * |y| / 2)) ≤ A + 3 * |log (|y|)| := by
+      have hsb : log (coth (π * |y| / 2)) ≤ A + 3 * |log (|y|)| := by
         rw [hA]
-        linarith [lowerCoth_log_small_abs_bound hy hsmall]
+        linarith [coth_log_small_abs_bound hy hsmall]
       linarith
     · have harg : 1 ≤ π * |y| / 2 := by
         nlinarith [Real.pi_gt_three, lt_of_not_ge hsmall,
           mul_nonneg (by linarith [Real.pi_gt_three] : (0 : ℝ) ≤ π - 2)
             (sub_nonneg.mpr (lt_of_not_ge hsmall).le)]
-      have hbound := lowerCoth_log_le_four_exp_neg_two harg
+      have hbound := coth_log_le_four_exp_neg_two harg
       rw [show -2 * (π * |y| / 2) = (-π) * |y| by ring] at hbound
       linarith
 
@@ -6333,7 +6333,7 @@ theorem natCast_div_two_cases (d : ℕ) :
 
 /-- The damped weight `exp (-a y) * log (coth (πy/2) / (y/2))` is integrable on `(0, ∞)`. -/
 private theorem lower_exp_log_coth_div_integrableOn_Ioi {a : ℝ} (ha : 0 < a) :
-    IntegrableOn (fun y : ℝ ↦ exp ((-a) * y) * log (lowerCoth (π * y / 2) / (y / 2)))
+    IntegrableOn (fun y : ℝ ↦ exp ((-a) * y) * log (coth (π * y / 2) / (y / 2)))
       (Ioi (0 : ℝ)) := by
   have hlinear : IntegrableOn (fun y : ℝ ↦ y * exp ((-a) * y)) (Ioi (0 : ℝ)) := by
     simpa [Real.rpow_one] using integrableOn_rpow_mul_exp_neg_mul_rpow (p := (1 : ℝ))
@@ -6342,11 +6342,11 @@ private theorem lower_exp_log_coth_div_integrableOn_Ioi {a : ℝ} (ha : 0 < a) :
       2 * (exp ((-a) * y) * |log (y / 2)|)) (Ioi (0 : ℝ)) :=
     ((hlinear.const_mul π).add ((integrableOn_exp_mul_Ioi (neg_lt_zero.mpr ha) 0).const_mul
       |log π|)).add ((lower_exp_abs_log_div_two_integrableOn_Ioi ha).const_mul 2)
-  have hratio : ∀ y ∈ Ioi (0 : ℝ), 0 < lowerCoth (π * y / 2) / (y / 2) := fun y hy ↦ by
+  have hratio : ∀ y ∈ Ioi (0 : ℝ), 0 < coth (π * y / 2) / (y / 2) := fun y hy ↦ by
     have hy' : 0 < y := hy
-    exact div_pos (lowerCoth_pos (by positivity)) (by positivity)
-  have hcont : ContinuousOn (fun y : ℝ ↦ lowerCoth (π * y / 2) / (y / 2)) (Ioi (0 : ℝ)) := by
-    unfold lowerCoth
+    exact div_pos (coth_pos (by positivity)) (by positivity)
+  have hcont : ContinuousOn (fun y : ℝ ↦ coth (π * y / 2) / (y / 2)) (Ioi (0 : ℝ)) := by
+    unfold coth
     exact ContinuousOn.div (ContinuousOn.div (by fun_prop) (by fun_prop)
       (fun y hy ↦ Real.sinh_ne_zero.mpr (by have hy' : 0 < y := hy; positivity)))
       (by fun_prop) fun y hy ↦ by have hy' : 0 < y := hy; positivity
@@ -6354,10 +6354,10 @@ private theorem lower_exp_log_coth_div_integrableOn_Ioi {a : ℝ} (ha : 0 < a) :
     (hcont.log fun y hy ↦ (hratio y hy).ne')).aestronglyMeasurable measurableSet_Ioi) ?_
   filter_upwards [ae_restrict_mem measurableSet_Ioi] with y hy
   have hy' : 0 < y := hy
-  have hlog : |log (lowerCoth (π * y / 2) / (y / 2))| ≤ π * y + |log π| + 2 * |log (y / 2)| := by
+  have hlog : |log (coth (π * y / 2) / (y / 2))| ≤ π * y + |log π| + 2 * |log (y / 2)| := by
     convert lower_abs_log_coth_div_le (half_pos hy') using 1 <;> ring_nf
-  calc ‖exp ((-a) * y) * log (lowerCoth (π * y / 2) / (y / 2))‖
-      = exp ((-a) * y) * |log (lowerCoth (π * y / 2) / (y / 2))| := by
+  calc ‖exp ((-a) * y) * log (coth (π * y / 2) / (y / 2))‖
+      = exp ((-a) * y) * |log (coth (π * y / 2) / (y / 2))| := by
         rw [Real.norm_eq_abs, abs_mul, abs_of_pos (exp_pos _)]
     _ ≤ exp ((-a) * y) * (π * y + |log π| + 2 * |log (y / 2)|) :=
         mul_le_mul_of_nonneg_left hlog (exp_pos _).le
@@ -6366,9 +6366,9 @@ private theorem lower_exp_log_coth_div_integrableOn_Ioi {a : ℝ} (ha : 0 < a) :
 
 /-- The damped weight `exp (-a|y|) * log (coth (π|y|/2) / (|y|/2))` is integrable on the line. -/
 theorem lower_exp_log_coth_div_integrable {a : ℝ} (ha : 0 < a) :
-    Integrable fun y : ℝ ↦ exp ((-a) * |y|) * log (lowerCoth (π * |y| / 2) / (|y| / 2)) := by
+    Integrable fun y : ℝ ↦ exp ((-a) * |y|) * log (coth (π * |y| / 2) / (|y| / 2)) := by
   have hright : IntegrableOn (fun y : ℝ ↦ exp ((-a) * |y|) *
-      log (lowerCoth (π * |y| / 2) / (|y| / 2))) (Ioi (0 : ℝ)) :=
+      log (coth (π * |y| / 2) / (|y| / 2))) (Ioi (0 : ℝ)) :=
     (lower_exp_log_coth_div_integrableOn_Ioi ha).congr_fun
       (fun y hy ↦ by simp only [abs_of_pos (mem_Ioi.mp hy)]) measurableSet_Ioi
   rw [← integrableOn_univ, ← @Iio_union_Ici _ _ (0 : ℝ), integrableOn_union,
@@ -6380,7 +6380,7 @@ theorem lower_exp_log_coth_div_integrable {a : ℝ} (ha : 0 < a) :
 /-- The Gamma quotient on the critical line as a `coth` quotient; report Lemma 3.2. -/
 theorem gamma_log_coth_ratio {x : ℝ} (hx : x ≠ 0) :
     log ‖Complex.Gamma (I * (x : ℂ))‖ - log ‖Complex.Gamma ((1 / 2 : ℂ) + I * (x : ℂ))‖ =
-      1 / 2 * log (lowerCoth (π * |x|) / |x|) := by
+      1 / 2 * log (coth (π * |x|) / |x|) := by
   have hsinh : sinh (π * x) ≠ 0 := Real.sinh_ne_zero.mpr (mul_ne_zero Real.pi_ne_zero hx)
   have hden : x * sinh (π * x) ≠ 0 := mul_ne_zero hx hsinh
   have hcosh : cosh (π * x) ≠ 0 := (Real.cosh_pos _).ne'
@@ -6390,14 +6390,14 @@ theorem gamma_log_coth_ratio {x : ℝ} (hx : x ≠ 0) :
       rw [Real.log_pow]; norm_num, hw, Real.log_div Real.pi_ne_zero hv]
   have himaginary := key _ _ hden (Complex.norm_Gamma_I_mul_sq hx)
   have hhalf := key _ _ hcosh (Complex.norm_Gamma_one_half_add_I_mul_sq x)
-  have hcoth : lowerCoth (π * |x|) / |x| = cosh (π * x) / (x * sinh (π * x)) := by
+  have hcoth : coth (π * |x|) / |x| = cosh (π * x) / (x * sinh (π * x)) := by
     rcases lt_or_gt_of_ne hx with hneg | hpos
     · rw [abs_of_neg hneg, show π * -x = -(π * x) by ring]
-      unfold lowerCoth
+      unfold coth
       rw [Real.cosh_neg, Real.sinh_neg]
       field_simp
     · rw [abs_of_pos hpos]
-      unfold lowerCoth
+      unfold coth
       field_simp
   rw [hcoth, Real.log_div hcosh hden]
   linarith
@@ -6405,7 +6405,7 @@ theorem gamma_log_coth_ratio {x : ℝ} (hx : x ≠ 0) :
 theorem lowerGammaBoundaryLog_halfInteger (k : ℕ) (R : ℝ) {y : ℝ} (hy : y ≠ 0) :
     h_ℓ ((k : ℝ) + 1 / 2) R y = ((k : ℝ) + 1 / 2) * log (π * R ^ 2) -
         ∑ j ∈ Finset.range k, log (√(((j : ℝ) + 1 / 2) ^ 2 + (y / 2) ^ 2)) +
-        1 / 2 * log (lowerCoth (π * |y| / 2) / (|y| / 2)) := by
+        1 / 2 * log (coth (π * |y| / 2) / (|y| / 2)) := by
   rw [lowerGammaBoundaryLog_halfInteger_factorized k R hy]
   congr 1
   simpa [abs_div, mul_div_assoc] using gamma_log_coth_ratio (x := y / 2)
@@ -6413,7 +6413,7 @@ theorem lowerGammaBoundaryLog_halfInteger (k : ℕ) (R : ℝ) {y : ℝ} (hy : y 
 
 theorem lowerGammaBoundaryLog_halfInteger_log_tail (k : ℕ) {R y : ℝ} (hR : 0 < R) (hy : y ≠ 0) :
     h_ℓ ((k : ℝ) + 1 / 2) R y ≤ ((k : ℝ) + 1 / 2) * log (2 * π * R ^ 2 / |y|) +
-      1 / 2 * log (lowerCoth (π * |y| / 2)) := by
+      1 / 2 * log (coth (π * |y| / 2)) := by
   have hyhalf : 0 < |y| / 2 := by positivity
   have hsum : (k : ℝ) * log (|y| / 2) ≤
       ∑ j ∈ Finset.range k, log (√(((j : ℝ) + 1 / 2) ^ 2 + (y / 2) ^ 2)) := by
@@ -6425,14 +6425,14 @@ theorem lowerGammaBoundaryLog_halfInteger_log_tail (k : ℕ) {R y : ℝ} (hR : 0
     congr 1
     field_simp [abs_ne_zero.mpr hy]
   rw [lowerGammaBoundaryLog_halfInteger k R hy,
-    Real.log_div (lowerCoth_pos (by positivity)).ne' hyhalf.ne', ← hlogratio]
+    Real.log_div (coth_pos (by positivity)).ne' hyhalf.ne', ← hlogratio]
   linarith
 
 theorem lowerGammaBoundaryLog_dimension_log_tail {d : ℕ} (_hd : 0 < d) {R y : ℝ} (hR : 0 < R)
     (hy : y ≠ 0) :
     h_ℓ ((d : ℝ) / 2) R y ≤ (d : ℝ) / 2 * log (2 * π * R ^ 2 / |y|) +
-      1 / 2 * log (lowerCoth (π * |y| / 2)) := by
-  have hcoth : 0 ≤ log (lowerCoth (π * |y| / 2)) := lowerCoth_log_nonneg (by positivity)
+      1 / 2 * log (coth (π * |y| / 2)) := by
+  have hcoth : 0 ≤ log (coth (π * |y| / 2)) := coth_log_nonneg (by positivity)
   obtain ⟨k, hk⟩ | ⟨k, hk⟩ := natCast_div_two_cases d <;> rw [hk]
   · linarith [lowerGammaBoundaryLog_integer_log_tail k hR hy]
   · exact lowerGammaBoundaryLog_halfInteger_log_tail k hR hy
@@ -6440,7 +6440,7 @@ theorem lowerGammaBoundaryLog_dimension_log_tail {d : ℕ} (_hd : 0 < d) {R y : 
 theorem lowerGammaBoundaryLog_dimension_scaled_log_tail {d : ℕ} (hd : 0 < d) {c Y : ℝ}
     (hc : 0 < c) (hY : Y ≠ 0) :
     h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * Y) ≤ (d : ℝ) / 2 * log (4 * π * c ^ 2 / |Y|) +
-      1 / 2 * log (lowerCoth (π * |(d : ℝ) / 2 * Y| / 2)) := by
+      1 / 2 * log (coth (π * |(d : ℝ) / 2 * Y| / 2)) := by
   have hdreal : 0 < (d : ℝ) := Nat.cast_pos.mpr hd
   have hℓ : 0 < (d : ℝ) / 2 := half_pos hdreal
   have hratio : 2 * π * (c * √d) ^ 2 / |(d : ℝ) / 2 * Y| = 4 * π * c ^ 2 / |Y| := by
@@ -6454,13 +6454,13 @@ theorem lowerGammaBoundaryLog_dimension_scaled_log_tail {d : ℕ} (hd : 0 < d) {
 theorem lowerGammaBoundaryLog_dimension_scaled_log_tail_uniform {d : ℕ} (hd : 2 ≤ d) {c Y : ℝ}
     (hc : 0 < c) (hY : Y ≠ 0) :
     h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * Y) ≤ (d : ℝ) / 2 * log (4 * π * c ^ 2 / |Y|) +
-      1 / 2 * log (lowerCoth (π * |Y| / 2)) := by
+      1 / 2 * log (coth (π * |Y| / 2)) := by
   have hdpos : 0 < d := by omega
   have hℓ : 1 ≤ (d : ℝ) / 2 := (le_div_iff₀ (by norm_num : (0 : ℝ) < 2)).2 (by exact_mod_cast hd)
   have hcompare : π * |Y| / 2 ≤ π * |(d : ℝ) / 2 * Y| / 2 := by
     rw [abs_mul, abs_of_nonneg (by linarith : (0 : ℝ) ≤ (d : ℝ) / 2)]
     nlinarith [mul_nonneg Real.pi_pos.le (abs_nonneg Y)]
-  have hcoth := lowerCoth_log_antitoneOn (by positivity : (0 : ℝ) < π * |Y| / 2)
+  have hcoth := coth_log_antitoneOn (by positivity : (0 : ℝ) < π * |Y| / 2)
     (by positivity : (0 : ℝ) < π * |(d : ℝ) / 2 * Y| / 2) hcompare
   linarith [lowerGammaBoundaryLog_dimension_scaled_log_tail hdpos hc hY]
 
@@ -6503,8 +6503,8 @@ def lowerGammaScaledPositivePart (d : ℕ) (c Y : ℝ) : ℝ :=
 
 theorem lowerGammaScaledPositivePart_le {d : ℕ} (hd : 2 ≤ d) {c Y : ℝ} (hc : 0 < c) (hY : Y ≠ 0) :
     lowerGammaScaledPositivePart d c Y ≤ (d : ℝ) / 2 * max (log (4 * π * c ^ 2 / |Y|)) 0 +
-      1 / 2 * log (lowerCoth (π * |Y| / 2)) := by
-  have hcoth : 0 ≤ log (lowerCoth (π * |Y| / 2)) := lowerCoth_log_nonneg (by positivity)
+      1 / 2 * log (coth (π * |Y| / 2)) := by
+  have hcoth : 0 ≤ log (coth (π * |Y| / 2)) := coth_log_nonneg (by positivity)
   have hlog : (d : ℝ) / 2 * log (4 * π * c ^ 2 / |Y|) ≤
       (d : ℝ) / 2 * max (log (4 * π * c ^ 2 / |Y|)) 0 :=
     mul_le_mul_of_nonneg_left (le_max_left _ _) (by positivity)
@@ -6517,7 +6517,7 @@ theorem lowerGammaScaledPositivePart_integrable {d : ℕ} (hd : 2 ≤ d) {c : �
   have hdpos : 0 < d := by omega
   have hℓ : 0 < (d : ℝ) / 2 := by positivity
   refine (((lower_positiveLogRatio_integrable (by positivity : (0 : ℝ) < 4 * π * c ^ 2)).const_mul
-    ((d : ℝ) / 2)).add (lowerCoth_log_abs_integrable.const_mul (1 / 2))).mono'
+    ((d : ℝ) / 2)).add (coth_log_abs_integrable.const_mul (1 / 2))).mono'
     ((((lowerGammaBoundaryLog_measurable hℓ (c * √d)).comp
       (by fun_prop : Measurable fun Y : ℝ ↦ (d : ℝ) / 2 * Y)).max
         measurable_const).aestronglyMeasurable) ?_
@@ -6529,12 +6529,12 @@ theorem lowerGammaScaledPositivePart_integrable {d : ℕ} (hd : 2 ≤ d) {c : �
 theorem lowerGammaScaledPositivePart_integral_le {d : ℕ} (hd : 2 ≤ d) {c : ℝ} (hc : 0 < c) :
     (∫ Y : ℝ, lowerGammaScaledPositivePart d c Y) ≤
       (d : ℝ) / 2 * (∫ Y : ℝ, max (log (4 * π * c ^ 2 / |Y|)) 0) +
-        1 / 2 * ∫ Y : ℝ, log (lowerCoth (π * |Y| / 2)) := by
+        1 / 2 * ∫ Y : ℝ, log (coth (π * |Y| / 2)) := by
   have hpositive := lower_positiveLogRatio_integrable (by positivity : (0 : ℝ) < 4 * π * c ^ 2)
-  have hcoth := lowerCoth_log_abs_integrable
+  have hcoth := coth_log_abs_integrable
   calc (∫ Y : ℝ, lowerGammaScaledPositivePart d c Y)
       ≤ ∫ Y : ℝ, ((d : ℝ) / 2 * max (log (4 * π * c ^ 2 / |Y|)) 0 +
-          1 / 2 * log (lowerCoth (π * |Y| / 2))) := by
+          1 / 2 * log (coth (π * |Y| / 2))) := by
         refine integral_mono_ae (lowerGammaScaledPositivePart_integrable hd hc)
           ((hpositive.const_mul _).add (hcoth.const_mul _)) ?_
         filter_upwards [Measure.ae_ne (volume : Measure ℝ) 0] with Y hY
@@ -6558,8 +6558,8 @@ theorem lowerGammaBoundaryLog_dimension_scaled_nonpos_of_large {d : ℕ} (hd : 2
   have hpiabs : 3 ≤ π * |Y| := by
     nlinarith [Real.pi_gt_three, mul_nonneg (by linarith [Real.pi_gt_three] : (0 : ℝ) ≤ π - 3)
       (sub_nonneg.mpr hyone)]
-  have hcorrection : 1 / 2 * log (lowerCoth (π * |Y| / 2)) ≤ 1 / 2 := by
-    have hcoth := lowerCoth_log_le_four_exp_neg_two (by linarith : (1 : ℝ) ≤ π * |Y| / 2)
+  have hcorrection : 1 / 2 * log (coth (π * |Y| / 2)) ≤ 1 / 2 := by
+    have hcoth := coth_log_le_four_exp_neg_two (by linarith : (1 : ℝ) ≤ π * |Y| / 2)
     have hexp : exp (-2 * (π * |Y| / 2)) ≤ 1 / 4 := by
       calc exp (-2 * (π * |Y| / 2)) ≤ exp (-3 : ℝ) := Real.exp_le_exp.2 (by linarith)
         _ = (exp 3)⁻¹ := Real.exp_neg 3
@@ -6590,8 +6590,8 @@ theorem exists_lowerGammaScaledPositivePart_uniform_bound {c : ℝ} (hc : 0 < c)
     refine ⟨_, _, ?_, fun d hd ↦ lowerGammaScaledPositivePart_integral_le hd hc⟩
     refine integral_nonneg fun Y ↦ ?_
     rcases eq_or_ne Y 0 with rfl | hY
-    · simp [lowerCoth]
-    · exact lowerCoth_log_nonneg (by positivity)
+    · simp [coth]
+    · exact coth_log_nonneg (by positivity)
   refine ⟨max (max 1 (8 * π * c ^ 2)) (J + 1 / 2 * K), lt_of_lt_of_le zero_lt_one
     ((le_max_left 1 _).trans (le_max_left _ _)), fun d hd ↦ ⟨fun Y hY ↦ ?_, ?_⟩⟩
   · exact Icc_subset_Icc (neg_le_neg (le_max_left _ _)) (le_max_left _ _)
@@ -6631,11 +6631,11 @@ theorem lowerGammaBoundaryLog_halfInteger_antitoneOn (k : ℕ) (R : ℝ) :
   intro x hx y hy hxy
   have hx' : 0 < x := hx
   have hy' : 0 < y := hy
-  have hratio : lowerCoth (π * y / 2) / (y / 2) ≤ lowerCoth (π * x / 2) / (x / 2) :=
-    (div_le_div_of_nonneg_right (lowerCoth_antitoneOn (by positivity : (0 : ℝ) < π * x / 2)
+  have hratio : coth (π * y / 2) / (y / 2) ≤ coth (π * x / 2) / (x / 2) :=
+    (div_le_div_of_nonneg_right (coth_antitoneOn (by positivity : (0 : ℝ) < π * x / 2)
       (by positivity : (0 : ℝ) < π * y / 2) (by gcongr)) (half_pos hy').le).trans
-      (div_le_div_of_nonneg_left (lowerCoth_pos (by positivity)).le (half_pos hx') (by linarith))
-  have hcoth := Real.log_le_log (div_pos (lowerCoth_pos (by positivity)) (half_pos hy')) hratio
+      (div_le_div_of_nonneg_left (coth_pos (by positivity)).le (half_pos hx') (by linarith))
+  have hcoth := Real.log_le_log (div_pos (coth_pos (by positivity)) (half_pos hy')) hratio
   rw [lowerGammaBoundaryLog_halfInteger k R hy'.ne', lowerGammaBoundaryLog_halfInteger k R hx'.ne',
     abs_of_pos hx', abs_of_pos hy']
   linarith [Finset.sum_le_sum fun j (_ : j ∈ Finset.range k) ↦
@@ -6680,7 +6680,7 @@ theorem lowerGammaBoundaryLog_halfInteger_exp_integrable {a : ℝ} (ha : 0 < a) 
     integrable_finsetSum _ fun j _ ↦ lower_exp_log_sqrtFactor_integrable ha (by positivity)
   have hbase : Integrable fun y : ℝ ↦ ((k : ℝ) + 1 / 2) * log (π * R ^ 2) * exp ((-a) * |y|) -
       (∑ j ∈ Finset.range k, exp ((-a) * |y|) * log (√(((j : ℝ) + 1 / 2) ^ 2 + (y / 2) ^ 2))) +
-      1 / 2 * (exp ((-a) * |y|) * log (lowerCoth (π * |y| / 2) / (|y| / 2))) :=
+      1 / 2 * (exp ((-a) * |y|) * log (coth (π * |y| / 2) / (|y| / 2))) :=
     (((integrable_exp_neg_mul_abs ha).const_mul (((k : ℝ) + 1 / 2) * log (π * R ^ 2))).sub hsum).add
       ((lower_exp_log_coth_div_integrable ha).const_mul (1 / 2))
   refine hbase.congr ?_
@@ -8052,7 +8052,7 @@ theorem exists_abs_h_ℓ_le_natCast_add_half (k : ℕ) (R : ℝ) :
   have hx0 : (0 : ℝ) < x := by linarith
   have hsum := abs_sum_log_sqrtFactor_le (k := k) (c := fun j : ℕ ↦ (j : ℝ) + 1 / 2)
     (fun j ↦ by positivity) hx
-  have hcorr : |1 / 2 * Real.log (lowerCoth (π * (x / 2)) / (x / 2))| ≤
+  have hcorr : |1 / 2 * Real.log (coth (π * (x / 2)) / (x / 2))| ≤
       (π * x + |Real.log π| + x) / 2 := by
     rw [abs_mul, abs_of_nonneg (by norm_num : (0 : ℝ) ≤ 1 / 2)]
     linarith [lower_abs_log_coth_div_le (show 0 < x / 2 by linarith), abs_log_half_le_half hx]
@@ -8062,7 +8062,7 @@ theorem exists_abs_h_ℓ_le_natCast_add_half (k : ℕ) (R : ℝ) :
     (∑ j ∈ Finset.range k, Real.log (√(((j : ℝ) + 1 / 2) ^ 2 + (x / 2) ^ 2)))
   have htotal := abs_add_le (((k : ℝ) + 1 / 2) * Real.log (π * R ^ 2) -
       ∑ j ∈ Finset.range k, Real.log (√(((j : ℝ) + 1 / 2) ^ 2 + (x / 2) ^ 2)))
-    (1 / 2 * Real.log (lowerCoth (π * (x / 2)) / (x / 2)))
+    (1 / 2 * Real.log (coth (π * (x / 2)) / (x / 2)))
   nlinarith [mul_nonneg hL hx0.le, mul_nonneg hS hx0.le, mul_nonneg hQ hx0.le,
     mul_nonneg (Nat.cast_nonneg (α := ℝ) k) hx0.le, mul_nonneg Real.pi_pos.le hx0.le]
 
@@ -8891,12 +8891,12 @@ theorem even_antitone_poisson_convolution_max {σ : ℝ} (hbelow : -1 < σ) (hab
   exact mul_nonneg (stripPoissonKernel_pos hbelow habove (0 - x)).le (hfnonneg x)
 
 /-- For `|Y| ≥ 1` the half-integer correction `½ log coth (π|Y|/2)` is at most `1 / 2`. -/
-theorem lowerCoth_log_half_le_of_one_le_abs {Y : ℝ} (hY : 1 ≤ |Y|) :
-    1 / 2 * log (lowerCoth (π * |Y| / 2)) ≤ 1 / 2 := by
+theorem coth_log_half_le_of_one_le_abs {Y : ℝ} (hY : 1 ≤ |Y|) :
+    1 / 2 * log (coth (π * |Y| / 2)) ≤ 1 / 2 := by
   have hpiabs : 3 ≤ π * |Y| := by
     nlinarith [Real.pi_gt_three, mul_nonneg (by linarith [Real.pi_gt_three] : (0 : ℝ) ≤ π - 3)
       (sub_nonneg.mpr hY)]
-  have hcoth := lowerCoth_log_le_four_exp_neg_two (by linarith : (1 : ℝ) ≤ π * |Y| / 2)
+  have hcoth := coth_log_le_four_exp_neg_two (by linarith : (1 : ℝ) ≤ π * |Y| / 2)
   have hexpthree : (4 : ℝ) ≤ exp 3 := by nlinarith [Real.add_one_le_exp (3 : ℝ)]
   have hexpsmall : exp (-2 * (π * |Y| / 2)) ≤ 1 / 4 := by
     calc exp (-2 * (π * |Y| / 2)) ≤ exp (-3 : ℝ) := Real.exp_le_exp.mpr (by linarith)
@@ -8935,7 +8935,7 @@ theorem lowerGammaBoundaryLog_dimension_scaled_le_neg_of_large {d : ℕ} (hd : 2
     linarith [mul_le_mul_of_nonneg_left hlogratio (by positivity : (0 : ℝ) ≤ (d : ℝ) / 2),
       mul_nonneg (sub_nonneg.mpr hℓ) (by linarith : (0 : ℝ) ≤ log 2 + n)]
   linarith [lowerGammaBoundaryLog_dimension_scaled_log_tail_uniform hd hc hY,
-    lowerCoth_log_half_le_of_one_le_abs hyone]
+    coth_log_half_le_of_one_le_abs hyone]
 
 /-- The scaled capped majorant, shifted up by `n` and clipped at `0`: an even, nonnegative,
 compactly supported weight. -/
@@ -9221,10 +9221,10 @@ theorem lowerGammaBoundaryLog_halfInteger_scaled (k : ℕ) {ℓ R T : ℝ} (hℓ
     (hR : 0 < R) (hT : T ≠ 0) :
     h_ℓ ℓ R (ℓ * T) = ℓ * log (π * R ^ 2 / ℓ) -
         ∑ j ∈ Finset.range k, f_T T (((j : ℝ) + 1 / 2) / ℓ) +
-        1 / 2 * log (lowerCoth (π * ℓ * |T| / 2)) - 1 / 2 * log (|T| / 2) := by
+        1 / 2 * log (coth (π * ℓ * |T| / 2)) - 1 / 2 * log (|T| / 2) := by
   have hℓ : 0 < ℓ := by rw [hℓeq]; positivity
   have ht : 0 < |T| / 2 := by positivity
-  have hcoth : 0 < lowerCoth (π * ℓ * |T| / 2) := lowerCoth_pos (by positivity)
+  have hcoth : 0 < coth (π * ℓ * |T| / 2) := coth_pos (by positivity)
   have hraw := lowerGammaBoundaryLog_halfInteger k R (mul_ne_zero hℓ.ne' hT)
   rw [← hℓeq] at hraw
   rw [hraw]
@@ -9244,7 +9244,7 @@ theorem lowerRiemannLog_continuous {T : ℝ} (hT : T ≠ 0) : Continuous (f_T T)
 
 /-- The error majorant `3|f_T T 0| + 2|f_T T 1| + ½ log coth(π|T|/2)` of report Lemma 3.3. -/
 def lowerRiemannErrorMajorant (T : ℝ) : ℝ :=
-  3 * |f_T T 0| + 2 * |f_T T 1| + 1 / 2 * log (lowerCoth (π * |T| / 2))
+  3 * |f_T T 0| + 2 * |f_T T 1| + 1 / 2 * log (coth (π * |T| / 2))
 
 theorem lowerGammaBoundaryLog_integer_riemann_le {k : ℕ} (hk : 0 < k) {R T : ℝ} (hR : 0 < R)
     (hT : T ≠ 0) :
@@ -9254,7 +9254,7 @@ theorem lowerGammaBoundaryLog_integer_riemann_le {k : ℕ} (hk : 0 < k) {R T : �
   rw [lowerGammaBoundaryLog_integer_scaled hk hR hT]
   unfold lowerRiemannErrorMajorant
   nlinarith [(lower_integer_leftRiemann_error hT hk).2, integral_lowerRiemannLog hT,
-    lowerCoth_log_nonneg (show 0 < π * |T| / 2 by positivity), le_abs_self (f_T T 1),
+    coth_log_nonneg (show 0 < π * |T| / 2 by positivity), le_abs_self (f_T T 1),
     neg_le_abs (f_T T 0), abs_nonneg (f_T T 0), abs_nonneg (f_T T 1)]
 
 theorem lowerRiemannLog_halfInteger_tail_integral_le (k : ℕ) {ℓ T : ℝ}
@@ -9301,7 +9301,7 @@ theorem lowerGammaBoundaryLog_halfInteger_riemann_le (k : ℕ) {ℓ R T : ℝ}
     nlinarith
   have hqk : f_T T ((k : ℝ) / ℓ) ≤ f_T T 1 := lowerRiemannLog_monotoneOn hT
     (mem_Ici.mpr hratio_nonneg) (mem_Ici.mpr zero_le_one) hratio_le
-  have hcoth := lowerCoth_log_antitoneOn (mem_Ioi.mpr (by positivity : 0 < π * |T| / 2))
+  have hcoth := coth_log_antitoneOn (mem_Ioi.mpr (by positivity : 0 < π * |T| / 2))
     (mem_Ioi.mpr (by positivity : 0 < π * ℓ * |T| / 2))
     (by nlinarith [mul_nonneg (sub_nonneg.mpr hℓone) (mul_nonneg Real.pi_pos.le (abs_nonneg T))])
   have hphase := integral_lowerRiemannLog hT
@@ -9426,16 +9426,16 @@ theorem lowerRiemannErrorMajorant_poisson_integrable {σ : ℝ} (hzero : 0 ≤ �
     refine (stripPoissonKernel_mul_lowerRiemannLog_zero_integrable hbelow habove).abs.congr ?_
     filter_upwards with T
     rw [abs_mul, abs_of_pos (stripPoissonKernel_pos hbelow habove T)]
-  have hcoth : Integrable fun T : ℝ ↦ P_σ σ T * log (lowerCoth (π * |T| / 2)) := by
+  have hcoth : Integrable fun T : ℝ ↦ P_σ σ T * log (coth (π * |T| / 2)) := by
     refine (stripPoissonKernel_weighted_product_integrable hbelow habove
-      lowerCoth_log_abs_integrable 0).congr ?_
+      coth_log_abs_integrable 0).congr ?_
     filter_upwards with T
     rw [zero_sub, stripPoissonKernel_neg]
   refine ((hlog.const_mul 3).add (((stripPoissonKernel_mul_abs_lowerRiemannLog_one_integrable
     hzero habove).const_mul 2).add (hcoth.const_mul (1 / 2)))).congr ?_
   filter_upwards with T
   change 3 * (P_σ σ T * |f_T T 0|) + (2 * (P_σ σ T * |f_T T 1|) +
-      1 / 2 * (P_σ σ T * log (lowerCoth (π * |T| / 2)))) = P_σ σ T * lowerRiemannErrorMajorant T
+      1 / 2 * (P_σ σ T * log (coth (π * |T| / 2)))) = P_σ σ T * lowerRiemannErrorMajorant T
   unfold lowerRiemannErrorMajorant
   ring
 
@@ -9545,7 +9545,7 @@ theorem lowerGammaBoundaryLog_dimension_scaled_log_tail_simple {d : ℕ} (hd : 2
       field_simp [abs_ne_zero.mpr hyzero],
     Real.log_mul (by positivity) (Real.exp_ne_zero 1), Real.log_exp]
   nlinarith [lowerGammaBoundaryLog_dimension_scaled_log_tail_uniform hd hc hyzero,
-    lowerCoth_log_half_le_of_one_le_abs hY]
+    coth_log_half_le_of_one_le_abs hY]
 
 /-- The Poisson mass `∫_{-1}^{1} P_σ` of the core interval. -/
 def stripPoissonCoreMass (σ : ℝ) : ℝ := ∫ T in Icc (-1 : ℝ) 1, P_σ σ T
@@ -26953,4 +26953,3 @@ end
 end CohnElkies
 
 end CohnElkies_SignUncertainty_Main
-
