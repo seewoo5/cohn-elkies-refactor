@@ -49,11 +49,15 @@ theorem beta_pos {ε : ℝ} (hε : 0 < ε) : 0 < β ε := div_pos hε (by norm_n
 /-- `P₊(iu) = β + (1 - u)² (1 + u)` is real. -/
 theorem plusPolynomial_imaginary (ε u : ℝ) :
     PPlus ε (I * u) = β ε + (1 - u) ^ 2 * (1 + u) := by
+  -- `simp` closes the imaginary-part goal, so the `<;>` (not `;`) is needed here; the
+  -- `linter.unnecessarySeqFocus` suggestion does not apply.
   apply Complex.ext <;> simp [PPlus, pow_two] <;> ring
 
 /-- `P₋(iu) = β + (1 - u) (1 + u)²` is real. -/
 theorem minusPolynomial_imaginary (ε u : ℝ) :
     PMinus ε (I * u) = β ε + (1 - u) * (1 + u) ^ 2 := by
+  -- `simp` closes the imaginary-part goal, so the `<;>` (not `;`) is needed here; the
+  -- `linter.unnecessarySeqFocus` suggestion does not apply.
   apply Complex.ext <;> simp [PMinus, pow_two] <;> ring
 
 theorem plusPolynomial_imaginary_re_pos {ε u : ℝ} (hε : 0 < ε) (hu : -1 < u) :
@@ -91,6 +95,8 @@ theorem differentiable_PZero : Differentiable ℂ PZero := by unfold PZero; fun_
 
 /-- `P₀(iu) = u² - 1` is real. -/
 theorem PZero_imaginary (u : ℝ) : PZero (I * u) = u ^ 2 - 1 := by
+  -- `simp` closes the imaginary-part goal, so the `<;>` (not `;`) is needed here; the
+  -- `linter.unnecessarySeqFocus` suggestion does not apply.
   apply Complex.ext <;> simp [PZero, pow_two] <;> ring
 
 /-- `P₀(iu) = u² - 1 ≥ (ε/4)(2 + ε/4)` for `u ≥ 1 + ε/4` (report §4.3). -/

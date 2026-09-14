@@ -1659,7 +1659,7 @@ theorem Complex.tendsto_add_natCast_mul_Gamma_nhdsNE (n : ℕ) :
     rw [Nat.cast_succ]
     have hnonzero : -((n : ℂ) + 1) ≠ 0 := neg_ne_zero.2 (by exact_mod_cast n.succ_ne_zero)
     have hshift : Tendsto (fun z : ℂ ↦ z + 1) (𝓝[≠] (-((n : ℂ) + 1))) (𝓝[≠] (-(n : ℂ))) := by
-      refine tendsto_nhdsWithin_iff.2 ⟨((continuous_add_right (1 : ℂ)).tendsto' _ _
+      refine tendsto_nhdsWithin_iff.2 ⟨((continuous_add_const (1 : ℂ)).tendsto' _ _
         (by show -((n : ℂ) + 1) + 1 = -(n : ℂ); ring)).mono_left nhdsWithin_le_nhds, ?_⟩
       filter_upwards [self_mem_nhdsWithin] with z hz
       simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at hz ⊢
@@ -1690,7 +1690,7 @@ theorem Complex.tendsto_add_two_mul_natCast_mul_Gamma_div_two_nhdsNE (n : ℕ) :
       (𝓝 (2 * (-1 : ℂ) ^ n / (n.factorial : ℂ))) := by
   have hscale : Tendsto (fun z : ℂ ↦ z / 2) (𝓝[≠] (-(2 * n : ℂ))) (𝓝[≠] (-(n : ℂ))) := by
     refine tendsto_nhdsWithin_iff.2 ⟨((continuous_id.div_const (2 : ℂ)).tendsto' _ _
-      (by show -(2 * (n : ℂ)) / 2 = -(n : ℂ); ring)).mono_left nhdsWithin_le_nhds, ?_⟩
+      (by change -(2 * (n : ℂ)) / 2 = -(n : ℂ); ring)).mono_left nhdsWithin_le_nhds, ?_⟩
     filter_upwards [self_mem_nhdsWithin] with z hz
     simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at hz ⊢
     intro heq
@@ -1792,11 +1792,13 @@ theorem Complex.Gamma_one_add_I_mul_mul_Gamma_one_sub_I_mul {x : ℝ} (hx : x �
   have hneg : z * -z = (x ^ 2 : ℂ) := by
     rw [show z * -z = -(I ^ 2) * (x : ℂ) ^ 2 by rw [hzdef]; ring, Complex.I_sq]
     ring
+  have hnormsq : (‖Complex.Gamma z‖ : ℂ) ^ 2 = ((π / (x * Real.sinh (π * x)) : ℝ) : ℂ) := by
+    rw [← Complex.ofReal_pow, hzdef, Complex.norm_Gamma_I_mul_sq hx]
+  have hsinh : Real.sinh (π * x) ≠ 0 := Real.sinh_ne_zero.mpr (mul_ne_zero Real.pi_ne_zero hx)
   rw [hplus, hminus, show z * Complex.Gamma z * (-z * Complex.Gamma (-z)) =
-    z * -z * (Complex.Gamma z * Complex.Gamma (-z)) by ring, hneg, hprod, ← Complex.ofReal_pow,
-    hzdef, Complex.norm_Gamma_I_mul_sq hx]
+    z * -z * (Complex.Gamma z * Complex.Gamma (-z)) by ring, hneg, hprod, hnormsq]
   norm_cast
-  field_simp [Real.sinh_ne_zero.mpr (mul_ne_zero Real.pi_ne_zero hx)]
+  field_simp
 
 end CohnElkiesForMathlib_Analysis_SpecialFunctions_Gamma_Beta
 
@@ -7072,8 +7074,9 @@ theorem poissonLogistic_characteristic (t : ℝ) :
           (by rw [hw]; norm_num), show 1 + w + (1 - w) = (2 : ℂ) by ring]
         norm_num
     _ = (π * (t / π) / sinh (π * (t / π)) : ℝ) := by
-        rw [hw]
-        exact Complex.Gamma_one_add_I_mul_mul_Gamma_one_sub_I_mul (div_ne_zero ht pi_ne_zero)
+        rw [hw, Complex.Gamma_one_add_I_mul_mul_Gamma_one_sub_I_mul (div_ne_zero ht pi_ne_zero)]
+        push_cast
+        ring
     _ = (t / sinh t : ℂ) := by
         rw [show π * (t / π) = t by field_simp, Complex.ofReal_div]
 
@@ -10264,11 +10267,15 @@ theorem beta_pos {ε : ℝ} (hε : 0 < ε) : 0 < β ε := div_pos hε (by norm_n
 /-- `P₊(iu) = β + (1 - u)² (1 + u)` is real. -/
 theorem plusPolynomial_imaginary (ε u : ℝ) :
     PPlus ε (I * u) = β ε + (1 - u) ^ 2 * (1 + u) := by
+  -- `simp` closes the imaginary-part goal, so the `<;>` (not `;`) is needed here; the
+  -- `linter.unnecessarySeqFocus` suggestion does not apply.
   apply Complex.ext <;> simp [PPlus, pow_two] <;> ring
 
 /-- `P₋(iu) = β + (1 - u) (1 + u)²` is real. -/
 theorem minusPolynomial_imaginary (ε u : ℝ) :
     PMinus ε (I * u) = β ε + (1 - u) * (1 + u) ^ 2 := by
+  -- `simp` closes the imaginary-part goal, so the `<;>` (not `;`) is needed here; the
+  -- `linter.unnecessarySeqFocus` suggestion does not apply.
   apply Complex.ext <;> simp [PMinus, pow_two] <;> ring
 
 theorem plusPolynomial_imaginary_re_pos {ε u : ℝ} (hε : 0 < ε) (hu : -1 < u) :
@@ -10306,6 +10313,8 @@ theorem differentiable_PZero : Differentiable ℂ PZero := by unfold PZero; fun_
 
 /-- `P₀(iu) = u² - 1` is real. -/
 theorem PZero_imaginary (u : ℝ) : PZero (I * u) = u ^ 2 - 1 := by
+  -- `simp` closes the imaginary-part goal, so the `<;>` (not `;`) is needed here; the
+  -- `linter.unnecessarySeqFocus` suggestion does not apply.
   apply Complex.ext <;> simp [PZero, pow_two] <;> ring
 
 /-- `P₀(iu) = u² - 1 ≥ (ε/4)(2 + ε/4)` for `u ≥ 1 + ε/4` (report §4.3). -/

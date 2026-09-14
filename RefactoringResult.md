@@ -39,7 +39,10 @@ Excluding the newly formalized material (≈ 2,700 lines), the refactored code i
 than the original. The whole library compiles with the lakefile options
 (`maxSynthPendingDepth = 3`, Mathlib's standard linter set) under the default `maxHeartbeats`,
 with no `set_option backward.*`, no `sorry`, no axiom beyond `propext`, `Classical.choice`,
-`Quot.sound`, and zero linter warnings after the cleanup pass (§2.3). The lakefile option
+`Quot.sound`. After the cleanup pass (§2.3) the only warnings left are the five `sorry`s of the
+comparator challenge file (by design) and three `linter.unnecessarySeqFocus` hits in
+`Parameters.lean`, where the suggested `(tac1; tac2)` does not work because `simp` already closes
+one of the two `Complex.ext` goals. The lakefile option
 `maxSynthPendingDepth = 3` (inherited from the original project) is still needed by at least one
 proof (`SignUncertainty/SchwartzFamily.lean`); it is applied by `lake build` but not by a bare
 `lake env lean <file>`. The single file is the library `SpherePackingRefactored`

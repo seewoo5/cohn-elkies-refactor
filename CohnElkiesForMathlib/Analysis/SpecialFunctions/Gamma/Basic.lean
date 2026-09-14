@@ -74,7 +74,7 @@ theorem Complex.tendsto_add_natCast_mul_Gamma_nhdsNE (n : ℕ) :
     rw [Nat.cast_succ]
     have hnonzero : -((n : ℂ) + 1) ≠ 0 := neg_ne_zero.2 (by exact_mod_cast n.succ_ne_zero)
     have hshift : Tendsto (fun z : ℂ ↦ z + 1) (𝓝[≠] (-((n : ℂ) + 1))) (𝓝[≠] (-(n : ℂ))) := by
-      refine tendsto_nhdsWithin_iff.2 ⟨((continuous_add_right (1 : ℂ)).tendsto' _ _
+      refine tendsto_nhdsWithin_iff.2 ⟨((continuous_add_const (1 : ℂ)).tendsto' _ _
         (by show -((n : ℂ) + 1) + 1 = -(n : ℂ); ring)).mono_left nhdsWithin_le_nhds, ?_⟩
       filter_upwards [self_mem_nhdsWithin] with z hz
       simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at hz ⊢
@@ -105,7 +105,7 @@ theorem Complex.tendsto_add_two_mul_natCast_mul_Gamma_div_two_nhdsNE (n : ℕ) :
       (𝓝 (2 * (-1 : ℂ) ^ n / (n.factorial : ℂ))) := by
   have hscale : Tendsto (fun z : ℂ ↦ z / 2) (𝓝[≠] (-(2 * n : ℂ))) (𝓝[≠] (-(n : ℂ))) := by
     refine tendsto_nhdsWithin_iff.2 ⟨((continuous_id.div_const (2 : ℂ)).tendsto' _ _
-      (by show -(2 * (n : ℂ)) / 2 = -(n : ℂ); ring)).mono_left nhdsWithin_le_nhds, ?_⟩
+      (by change -(2 * (n : ℂ)) / 2 = -(n : ℂ); ring)).mono_left nhdsWithin_le_nhds, ?_⟩
     filter_upwards [self_mem_nhdsWithin] with z hz
     simp only [Set.mem_compl_iff, Set.mem_singleton_iff] at hz ⊢
     intro heq

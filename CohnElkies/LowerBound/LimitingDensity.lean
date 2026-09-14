@@ -245,8 +245,9 @@ theorem poissonLogistic_characteristic (t : ℝ) :
           (by rw [hw]; norm_num), show 1 + w + (1 - w) = (2 : ℂ) by ring]
         norm_num
     _ = (π * (t / π) / sinh (π * (t / π)) : ℝ) := by
-        rw [hw]
-        exact Complex.Gamma_one_add_I_mul_mul_Gamma_one_sub_I_mul (div_ne_zero ht pi_ne_zero)
+        rw [hw, Complex.Gamma_one_add_I_mul_mul_Gamma_one_sub_I_mul (div_ne_zero ht pi_ne_zero)]
+        push_cast
+        ring
     _ = (t / sinh t : ℂ) := by
         rw [show π * (t / π) = t by field_simp, Complex.ofReal_div]
 

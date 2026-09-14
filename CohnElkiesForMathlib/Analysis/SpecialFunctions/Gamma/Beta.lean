@@ -84,8 +84,10 @@ theorem Complex.Gamma_one_add_I_mul_mul_Gamma_one_sub_I_mul {x : ℝ} (hx : x �
   have hneg : z * -z = (x ^ 2 : ℂ) := by
     rw [show z * -z = -(I ^ 2) * (x : ℂ) ^ 2 by rw [hzdef]; ring, Complex.I_sq]
     ring
+  have hnormsq : (‖Complex.Gamma z‖ : ℂ) ^ 2 = ((π / (x * Real.sinh (π * x)) : ℝ) : ℂ) := by
+    rw [← Complex.ofReal_pow, hzdef, Complex.norm_Gamma_I_mul_sq hx]
+  have hsinh : Real.sinh (π * x) ≠ 0 := Real.sinh_ne_zero.mpr (mul_ne_zero Real.pi_ne_zero hx)
   rw [hplus, hminus, show z * Complex.Gamma z * (-z * Complex.Gamma (-z)) =
-    z * -z * (Complex.Gamma z * Complex.Gamma (-z)) by ring, hneg, hprod, ← Complex.ofReal_pow,
-    hzdef, Complex.norm_Gamma_I_mul_sq hx]
+    z * -z * (Complex.Gamma z * Complex.Gamma (-z)) by ring, hneg, hprod, hnormsq]
   norm_cast
-  field_simp [Real.sinh_ne_zero.mpr (mul_ne_zero Real.pi_ne_zero hx)]
+  field_simp
