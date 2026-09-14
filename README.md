@@ -13,13 +13,6 @@ The Proposition A.1 of the report ($\mathsf A_+(d) < \mathsf A_-(d)$) is also mi
 Every code is written by Claude (mostly Fable 5.1 and Opus 5), where the details can be found under `formalization.yaml`.
 It was asked to follow `RefactoringPlan.md` (which is completely human-written) with the original OpenAI's report, original Lean file, and my two blog posts as references, and the result is summarized in `RefactoringResult.md`.
 
-## License
-
-Apache License 2.0 (see `LICENSE` and `NOTICE`). The development started from `SpherePacking.lean`
-of [`openai/ten-proofs`](https://github.com/openai/ten-proofs) (Apache-2.0), which itself reuses
-material from [Sphere-Packing-Lean](https://github.com/thefundamentaltheor3m/Sphere-Packing-Lean)
-(Apache-2.0).
-
 ### Comparator
 
 The statements in `ComparatorChallenges/CohnElkies.lean` are compared with the proofs in the
@@ -33,3 +26,9 @@ with `landrun` (Linux only), `lean4export` (built with this project's toolchain:
 `lake build @lean4export/lean4export`) and optionally `nanoda_bin` on `PATH`; the workflow
 `.github/workflows/comparator.yml` runs this in CI. See `ComparatorChallenges/README.md`.
 
+### License
+
+Apache License 2.0 (see `LICENSE` and `NOTICE`). The development started from `SpherePacking.lean`
+of [`openai/ten-proofs`](https://github.com/openai/ten-proofs) (Apache-2.0), which itself reuses
+material from [Sphere-Packing-Lean](https://github.com/thefundamentaltheor3m/Sphere-Packing-Lean)
+(Apache-2.0).

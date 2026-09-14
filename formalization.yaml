@@ -7,7 +7,7 @@ project:
   name: "CohnElkies"
   description: >-
     Lean 4 + Mathlib formalization of Chapter 1 of OpenAI's report "Ten proofs": the exact
-    exponential rate of the Cohn–Elkies linear programming bound for sphere packings,
+    exponential rate of the Cohn-Elkies linear programming bound for sphere packings,
     LP_d^{1/d} → sqrt(e/(2π)) (Theorem 1.1, with the packing consequence Δ_d ≤ (sqrt(e/(2π)) + o(1))^d),
     and the asymptotics A_±(d)/√d → 1/π of the sign-uncertainty constants of L¹ Fourier
     eigenfunctions (Theorem 1.2). A readable reformalization (module DAG, Mathlib-ready library,
@@ -21,15 +21,15 @@ project:
   blueprint: "https://seewoo5.github.io/cohn-elkies-refactor/"
 
 sources:
-  - title: "Ten advances in mathematics and theoretical computer science (Chapter 1: sharp asymptotics of the Cohn–Elkies bound and sign uncertainty)"
+  - title: "Ten advances in mathematics and theoretical computer science (Chapter 1: sharp asymptotics of the Cohn-Elkies bound and sign uncertainty)"
     authors: ["OpenAI"]
     id: "https://cdn.openai.com/pdf/ten-proofs-oai.pdf"
     type: "report"
-    location: "Chapter 1 (Sections 1–4, Appendix A)"
+    location: "Chapter 1 (Sections 1-4, Appendix A)"
     relationship: "formalizes"
     note: >-
-      Sections 1–4 are formalized in full; Appendix A (A₊(d) < A₋(d)) is deliberately not
-      formalized (its strict inequality needs the extremizer theorem of Cohn–Gonçalves 2019).
+      Sections 1-4 are formalized in full; Appendix A (A₊(d) < A₋(d)) is deliberately not
+      formalized (its strict inequality needs the extremizer theorem of Cohn-Gonçalves 2019).
     license: ""
     author_endorsement: "not-contacted"
   - title: "SpherePacking.lean of the repository openai/ten-proofs (the original single-file formalization)"
@@ -80,7 +80,7 @@ status:
   scope: >-
     Theorem 1.1 in both forms, the packing bounds Δ_d ≤ LP_d (proved, not assumed) and
     Δ_d ≤ (sqrt(e/(2π)) + o(1))^d, Propositions 3.1 and 3.7 for both Fourier eigenvalues (Schwartz
-    and L¹ classes), the saddle-point construction of f₊, f₋, f₀ (Theorem 4.1, Lemmas 4.2–4.10),
+    and L¹ classes), the saddle-point construction of f₊, f₋, f₀ (Theorem 4.1, Lemmas 4.2-4.10),
     the radial reduction and Schwartz approximation of Section 2.1, and Theorem 1.2. Appendix A is
     stated in the blueprint but not formalized.
   sorry_count: 0
@@ -159,18 +159,18 @@ automation:
 fidelity:
   divergences: >-
     Proof arguments kept from the original formalization where they differ from the report: the
-    interior bound of Lemma 3.2 by a Phragmén–Lindelöf principle on the strip (with a capped
+    interior bound of Lemma 3.2 by a Phragmén-Lindelöf principle on the strip (with a capped
     majorant) instead of the Poisson principle; one-sided Lemma 3.3; the limit of Lemma 3.4 via a
     Frullani/Wallis-kernel integral instead of the digamma log-moment identity (22); a single
     inverse-quadratic majorant in Lemma 3.5; Lemma 4.8 in strict-inequality form and Lemma 4.10 in
     positivity form; the upper half of Theorem 1.1 fused into a sandwich argument. The parameters
-    of Section 4 are the report's (a₀ = ε², A = log(1/ε), b(a) = 1 − 2ε(1+a), N = ⌈log λ⌉); the
+    of Section 4 are the report's (a₀ = ε², A = log(1/ε), b(a) = 1 - 2ε(1+a), N = ⌈log λ⌉); the
     absolute constant of Lemma 4.2 is c = 2. The Schwartz approximation of Section 2.1 convolves with a compactly
     supported bump instead of the Gaussian κ_n. The sign-uncertainty class is represented by
     continuous Fourier-inversion representatives (𝓕 g = ς g pointwise). The rotational average is
     written ∫ f(U⁻¹x) dU rather than the report's ∫ f(Ux) dU (the same function; only left
-    invariance of the Haar measure is then needed). The Cohn–Elkies bound Δ_d ≤ LP_d, cited by the
-    report, is proved. Details: RefactoringResult.md §1.3–1.6 and §5.
+    invariance of the Haar measure is then needed). The Cohn-Elkies bound Δ_d ≤ LP_d, cited by the
+    report, is proved. Details: RefactoringResult.md §1.3-1.6 and §5.
 
 review:
   status: "agent-reviewed"
@@ -202,7 +202,7 @@ alignment:
       lean: "CohnElkies.signUncertaintyConstant_div_sqrt_tendsto"
       module: "CohnElkies/SignUncertainty/Main.lean"
       status: "proved"
-      note: "definitions (5)–(6): CohnElkies.SignEigenfunction, signRadius, signUncertaintyConstant (CohnElkies/Basic.lean)"
+      note: "definitions (5)-(6): CohnElkies.SignEigenfunction, signRadius, signUncertaintyConstant (CohnElkies/Basic.lean)"
     - source: "Proposition 3.1"
       lean: "CohnElkies.exists_interior_mass_bound"
       module: "CohnElkies/LowerBound/Main.lean"
