@@ -323,9 +323,10 @@ report's statements:
   comparator statements of the main theorems (`ComparatorChallenges/CohnElkies.lean`).
 
 Appendix A is formalized in $`L^1` generality ({bpref "prop_a_1"}[],
-{bpref "cor_a_plus_le_a_minus"}[]); the strict inequality ({bpref "cor_a_plus_lt_a_minus"}[]) is
-formalized conditionally on the extremizer assumption ({bpref "assumption_cg19_extremizer"}[]),
-which is the only statement left informal.
+{bpref "cor_a_plus_le_a_minus"}[]); the strict inequality ({bpref "cor_a_plus_lt_a_minus"}[])
+rests on the existence of extremizers for $`\mathsf{A}_-(d)` ({bpref "thm_cg19_1_4_existence"}[]),
+proved after Cohn–Gonçalves 2019 with their quantitative uncertainty principle (Nazarov–Jaming)
+replaced by a compactness argument ({bpref "lemma_fourier_eigenfunction_no_concentration"}[]).
 
 # Schwartz approximation with a bump mollifier
 

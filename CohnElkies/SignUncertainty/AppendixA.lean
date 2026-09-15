@@ -14,7 +14,10 @@ and, when `r(g) < ∞`, `r(T_d g) < r(g)` (`SignEigenfunction.signRadius_tailInt
 Combined with the radial reduction `signUncertaintyConstant_eq_radial`, this gives the comparison
 `A₊(d) ≤ A₋(d)` of the sign-uncertainty constants (`signUncertaintyConstant_one_le_neg_one`). The
 strict inequality `A₊(d) < A₋(d)` of the report needs an extremizer attaining `A₋(d)`
-(Cohn–Gonçalves 2019, Theorem 1.4) and is not formalized. -/
+(Cohn–Gonçalves 2019, Theorem 1.4): it is proved here from that hypothesis
+(`signUncertaintyConstant_one_lt_neg_one_of_exists_extremizer`), and the extremizer is
+constructed in `CohnElkies.SignUncertainty.Extremizer`, which states the unconditional
+`signUncertaintyConstant_one_lt_neg_one`. -/
 
 namespace CohnElkies
 open scoped Real
@@ -259,7 +262,9 @@ def SignEigenfunction.tailIntegral (hd : 0 < d) (g : SignEigenfunction d (-1))
 `T_d g ∈ E₊(d)` with `r(T_d g) ≤ r(g)` (Proposition A.1), and the infimum defining `A₋(d)` may
 be taken over radial eigenfunctions (`signUncertaintyConstant_eq_radial`). The strict inequality
 `A₊(d) < A₋(d)` stated in the report needs an extremizer attaining `A₋(d)` (Cohn–Gonçalves 2019,
-Theorem 1.4, not proved in the report) and is not formalized. -/
+Theorem 1.4, not proved in the report): see
+`signUncertaintyConstant_one_lt_neg_one_of_exists_extremizer` below and the unconditional
+`signUncertaintyConstant_one_lt_neg_one` in `CohnElkies.SignUncertainty.Extremizer`. -/
 theorem signUncertaintyConstant_one_le_neg_one (hd : 0 < d) :
     signUncertaintyConstant 1 d ≤ signUncertaintyConstant (-1) d := by
   rw [signUncertaintyConstant_eq_radial hd (-1)]
@@ -270,8 +275,10 @@ theorem signUncertaintyConstant_one_le_neg_one (hd : 0 < d) :
 extremizer: if some `g ∈ 𝓔₋(d)` attains `A₋(d) < ∞`, then `A₊(d) < A₋(d)`. The existence of such
 an extremizer is Theorem 1.4 of Cohn–Gonçalves (2019), whose proof (weak `L²` compactness, Mazur's
 lemma, Fatou, and a uniform negative-mass bound from Jaming's form of Nazarov's uncertainty
-principle) is not part of the report and is not formalized here, so it enters as a hypothesis. -/
-theorem signUncertaintyConstant_one_lt_neg_one (hd : 0 < d)
+principle) is not part of the report; it is formalized as
+`exists_signRadius_eq_signUncertaintyConstant_neg_one` in `SignUncertainty/Extremizer.lean`,
+which turns this into the unconditional `signUncertaintyConstant_one_lt_neg_one`. -/
+theorem signUncertaintyConstant_one_lt_neg_one_of_exists_extremizer (hd : 0 < d)
     (hfin : signUncertaintyConstant (-1) d < ⊤)
     (hext : ∃ g : SignEigenfunction d (-1),
       signRadius (g : Euclidean d → ℝ) = signUncertaintyConstant (-1) d) :

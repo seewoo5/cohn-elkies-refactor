@@ -143,6 +143,72 @@ theorem le_signUncertaintyConstant {ς : ℤˣ} {R : ℝ}
 
 end signRadius
 
+namespace SignEigenfunction
+
+variable {d : ℕ} {ς : ℤˣ}
+
+/-! ### Scaling and `L¹`-normalization
+
+The class `𝓔_ς(d)` is a cone: `c g ∈ 𝓔_ς(d)` for `c > 0`, with `r(c g) = r(g)` and
+`‖c g‖₁ = c ‖g‖₁`; in particular `g / ‖g‖₁ ∈ 𝓔_ς(d)` has unit `L¹` norm (the normalization
+`‖f_n‖₁ = 1` of the extremizing sequences of Cohn–Gonçalves 2019, §3.2). -/
+
+/-- `c g` for `c > 0`: `𝓕 (c g) = c 𝓕 g = ς (c g)`. -/
+def smul (g : SignEigenfunction d ς) {c : ℝ} (hc : 0 < c) : SignEigenfunction d ς where
+  toFun x := c * g x
+  integrable := g.integrable.const_mul c
+  fourier_eq ξ := by
+    have h : (fun x ↦ ((c * g x : ℝ) : ℂ)) = fun x ↦ (c : ℂ) * g.toComplex x := by
+      funext x
+      push_cast
+      rfl
+    have h2 : 𝓕 (fun x ↦ (c : ℂ) * g.toComplex x) ξ = (c : ℂ) * 𝓕 g.toComplex ξ := by
+      rw [Real.fourier_eq', Real.fourier_eq', ← integral_const_mul]
+      refine integral_congr_ae (.of_forall fun x ↦ ?_)
+      simp only [smul_eq_mul]
+      ring
+    rw [h, h2, g.fourier_toComplex]
+    push_cast
+    ring
+  ne_zero h := g.ne_zero (funext fun x ↦
+    (mul_eq_zero.1 (congrFun h x)).resolve_left hc.ne')
+  zero := by simp [g.zero]
+
+@[simp] theorem smul_apply (g : SignEigenfunction d ς) {c : ℝ} (hc : 0 < c) (x : Euclidean d) :
+    g.smul hc x = c * g x :=
+  rfl
+
+/-- `r(c g) = r(g)` for `c > 0`. -/
+theorem signRadius_smul (g : SignEigenfunction d ς) {c : ℝ} (hc : 0 < c) :
+    signRadius (g.smul hc) = signRadius g :=
+  le_antisymm (signRadius_le_signRadius fun _ hR x hx ↦ mul_nonneg hc.le (hR x hx))
+    (signRadius_le_signRadius fun _ hR x hx ↦ (mul_nonneg_iff_of_pos_left hc).1 (hR x hx))
+
+/-- `‖c g‖₁ = c ‖g‖₁` for `c > 0`. -/
+theorem integral_norm_smul (g : SignEigenfunction d ς) {c : ℝ} (hc : 0 < c) :
+    ∫ x, ‖g.smul hc x‖ = c * ∫ x, ‖g x‖ := by
+  simp_rw [smul_apply, norm_mul, Real.norm_of_nonneg hc.le]
+  exact integral_const_mul c _
+
+/-- The `L¹`-normalization `g / ‖g‖₁` of a sign eigenfunction. -/
+def normalize (g : SignEigenfunction d ς) : SignEigenfunction d ς :=
+  g.smul (inv_pos.2 g.integral_norm_pos)
+
+theorem normalize_apply (g : SignEigenfunction d ς) (x : Euclidean d) :
+    g.normalize x = (∫ y, ‖g y‖)⁻¹ * g x :=
+  rfl
+
+/-- `‖g / ‖g‖₁‖₁ = 1`. -/
+theorem integral_norm_normalize (g : SignEigenfunction d ς) : ∫ x, ‖g.normalize x‖ = 1 := by
+  rw [normalize, integral_norm_smul, inv_mul_cancel₀ g.integral_norm_pos.ne']
+
+/-- `r(g / ‖g‖₁) = r(g)`. -/
+theorem signRadius_normalize (g : SignEigenfunction d ς) :
+    signRadius g.normalize = signRadius g :=
+  signRadius_smul g _
+
+end SignEigenfunction
+
 end
 
 end CohnElkies
