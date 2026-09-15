@@ -29,8 +29,8 @@ sources:
     relationship: "formalizes"
     note: >-
       Sections 1-4 are formalized in full; of Appendix A, Proposition A.1 and A₊(d) ≤ A₋(d) are
-      formalized, while the strict inequality A₊(d) < A₋(d) (which needs the extremizer theorem of
-      Cohn–Gonçalves 2019) is not.
+      formalized, and the strict inequality A₊(d) < A₋(d) is proved under the extremizer
+      hypothesis of Cohn–Gonçalves 2019 (Theorem 1.4), which is not formalized.
     license: ""
     author_endorsement: "not-contacted"
   - title: "SpherePacking.lean of the repository openai/ten-proofs (the original single-file formalization)"
@@ -83,8 +83,8 @@ status:
     Δ_d ≤ (sqrt(e/(2π)) + o(1))^d, Propositions 3.1 and 3.7 for both Fourier eigenvalues (Schwartz
     and L¹ classes), the saddle-point construction of f₊, f₋, f₀ (Theorem 4.1, Lemmas 4.2-4.10),
     the radial reduction and Schwartz approximation of Section 2.1, Theorem 1.2, and Appendix A's
-    Proposition A.1 with A₊(d) ≤ A₋(d) (the strict inequality, needing an extremizer, is not
-    formalized).
+    Proposition A.1 with A₊(d) ≤ A₋(d), and A₊(d) < A₋(d) under the extremizer hypothesis of
+    Cohn–Gonçalves (the hypothesis itself is not formalized).
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: ["propext", "Classical.choice", "Quot.sound"]
@@ -247,10 +247,10 @@ alignment:
       module: "CohnElkies/SignUncertainty/AppendixA.lean"
       status: "proved"
     - source: "Appendix A, A₊(d) < A₋(d)"
-      lean: ""
-      module: ""
-      status: "not-formalized"
-      note: "Needs an extremizer attaining A₋(d) (Cohn–Gonçalves 2019, Theorem 1.4), not proved in the report; stated informally in the blueprint."
+      lean: "CohnElkies.signUncertaintyConstant_one_lt_neg_one"
+      module: "CohnElkies/SignUncertainty/AppendixA.lean"
+      status: "literature-dependency"
+      note: "Proved under the hypothesis that A₋(d) < ∞ is attained by some g ∈ E₋(d) (Cohn–Gonçalves 2019, Theorem 1.4, cited by the report and not formalized); the hypothesis is an explicit argument of the theorem, not an axiom."
 
 acknowledgements: >-
   OpenAI's original formalization (openai/ten-proofs) and the Sphere-Packing-Lean project, whose

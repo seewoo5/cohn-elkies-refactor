@@ -323,9 +323,9 @@ report's statements:
   comparator statements of the main theorems (`ComparatorChallenges/CohnElkies.lean`).
 
 Appendix A is formalized in $`L^1` generality ({bpref "prop_a_1"}[],
-{bpref "cor_a_plus_le_a_minus"}[]) except for the extremizer assumption
-({bpref "assumption_cg19_extremizer"}[]) and the strict inequality that depends on it
-({bpref "cor_a_plus_lt_a_minus"}[]).
+{bpref "cor_a_plus_le_a_minus"}[]); the strict inequality ({bpref "cor_a_plus_lt_a_minus"}[]) is
+formalized conditionally on the extremizer assumption ({bpref "assumption_cg19_extremizer"}[]),
+which is the only statement left informal.
 
 # Schwartz approximation with a bump mollifier
 

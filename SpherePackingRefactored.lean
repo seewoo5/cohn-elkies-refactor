@@ -1,7 +1,8 @@
 /-
 Refactored single-file version of `SpherePacking.lean` (OpenAI, ten-proofs).
 Assembled automatically from the modules of `CohnElkiesForMathlib/` and `CohnElkies/`
-(each module wrapped in a section named after it); see `RefactoringResult.md`.
+(each module wrapped in a section named after it) by `scripts/assemble_single_file.py`;
+see `RefactoringResult.md`.
 -/
 import Mathlib
 
@@ -26882,6 +26883,29 @@ theorem signUncertaintyConstant_one_le_neg_one (hd : 0 < d) :
   rw [signUncertaintyConstant_eq_radial hd (-1)]
   exact le_iInf₂ fun g hg ↦ (signUncertaintyConstant_le (g.tailIntegral hd hg)).trans
     (g.signRadius_tailIntegral_le hd hg)
+
+/-- The strict inequality `A₊(d) < A₋(d)` of Appendix A, conditional on the existence of an
+extremizer: if some `g ∈ 𝓔₋(d)` attains `A₋(d) < ∞`, then `A₊(d) < A₋(d)`. The existence of such
+an extremizer is Theorem 1.4 of Cohn–Gonçalves (2019), whose proof (weak `L²` compactness, Mazur's
+lemma, Fatou, and a uniform negative-mass bound from Jaming's form of Nazarov's uncertainty
+principle) is not part of the report and is not formalized here, so it enters as a hypothesis. -/
+theorem signUncertaintyConstant_one_lt_neg_one (hd : 0 < d)
+    (hfin : signUncertaintyConstant (-1) d < ⊤)
+    (hext : ∃ g : SignEigenfunction d (-1),
+      signRadius (g : Euclidean d → ℝ) = signUncertaintyConstant (-1) d) :
+    signUncertaintyConstant 1 d < signUncertaintyConstant (-1) d := by
+  obtain ⟨g, hg⟩ := hext
+  obtain ⟨R, hR⟩ := exists_nonneg_outside_of_signRadius_lt_top (hg ▸ hfin)
+  have hrad : IsRadial (g.radialize hd hR : Euclidean d → ℝ) := g.radialize_eq_of_norm_eq hd hR
+  have heq : signRadius (g.radialize hd hR : Euclidean d → ℝ) = signUncertaintyConstant (-1) d :=
+    le_antisymm ((g.signRadius_radialize_le hd hR).trans hg.le)
+      (signUncertaintyConstant_le (g.radialize hd hR))
+  calc signUncertaintyConstant 1 d
+      ≤ signRadius ((g.radialize hd hR).tailIntegral hd hrad : Euclidean d → ℝ) :=
+        signUncertaintyConstant_le _
+    _ < signRadius (g.radialize hd hR : Euclidean d → ℝ) :=
+        (g.radialize hd hR).signRadius_tailIntegral_lt hd hrad (heq ▸ hfin)
+    _ = signUncertaintyConstant (-1) d := heq
 
 end
 

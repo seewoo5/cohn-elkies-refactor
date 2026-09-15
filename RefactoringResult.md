@@ -361,7 +361,12 @@ lattice with Schwartz functions.
   Conclusion `signUncertaintyConstant_one_le_neg_one (hd : 0 < d) : signUncertaintyConstant 1 d ≤
   signUncertaintyConstant (-1) d` by the radial reduction and the infimum. The report's strict
   `A₊(d) < A₋(d)` needs an extremizer for `A₋(d)` (Cohn–Gonçalves 2019, Theorem 1.4, not proved in
-  the report) and stays informal; Schwartz preservation by `T_d` is not needed and not formalized.
+  the report): it is formalized *conditionally* as `signUncertaintyConstant_one_lt_neg_one (hd)
+  (hfin : A₋(d) < ⊤) (hext : ∃ g : SignEigenfunction d (-1), signRadius g = A₋(d))`, the
+  extremizer entering as a hypothesis (radialize it, apply `signRadius_tailIntegral_lt`). Proving
+  the hypothesis would need Nazarov–Jaming's quantitative uncertainty principle (or Amrein–Berthier
+  for balls), weak `L²` compactness and Mazur's lemma, none of which are in Mathlib; Schwartz
+  preservation by `T_d` is not needed and not formalized.
   The compact-support theorem this rests on, "`f` and `𝓕 f` compactly supported (or vanishing
   outside balls) ⇒ `f = 0` a.e.", is not in Mathlib and now lives in
   `CohnElkiesForMathlib/Analysis/Fourier/CompactSupport.lean` for any nontrivial finite-dimensional

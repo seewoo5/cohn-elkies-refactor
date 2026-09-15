@@ -16,9 +16,10 @@ $`\mathsf{A}_+(d) \le \mathsf{A}_-(d)` are formalized in $`L^1` generality (modu
 $`\mathsf{A}_+(d) < \mathsf{A}_-(d)` needs, in addition, an extremizer attaining
 $`\mathsf{A}_-(d)` (Cohn–Gonçalves 2019, Theorem 1.4), whose proof (weak compactness in $`L^2`,
 Mazur's lemma, Fatou's lemma and a uniform negative-mass bound from Nazarov's uncertainty
-principle in Jaming's form) is not part of the report; that assumption and the strict inequality
-are the only nodes left informal, tagged `not-formalized`. The nodes depend on the definitions of
-the introduction and on the radial reduction of the preliminaries.
+principle in Jaming's form) is not part of the report; that assumption is the only node left
+informal, tagged `not-formalized`, and the strict inequality is formalized conditionally on it.
+The nodes depend on the definitions of the introduction and on the radial reduction of the
+preliminaries.
 
 For an anti-self-Fourier radial function $`g`, the central Mellin moment $`M_g(d/2)` vanishes.
 Integrating the radial tail of $`g` therefore produces a self-Fourier function with a strictly
@@ -168,9 +169,11 @@ $`\mathsf{A}_+(d) \le r(g)` for every such $`g`, and taking the infimum over $`g
 decrease is what an extremizer would turn into $`\mathsf{A}_+(d) < \mathsf{A}_-(d)`.)
 :::
 
-:::theorem "cor_a_plus_lt_a_minus" (tags := "not-formalized")
+:::theorem "cor_a_plus_lt_a_minus" (lean := "CohnElkies.signUncertaintyConstant_one_lt_neg_one")
 Let $`d \ge 1` and assume {uses "assumption_cg19_extremizer"}[] for this $`d`. Then
-$`\mathsf{A}_+(d) < \mathsf{A}_-(d)`.
+$`\mathsf{A}_+(d) < \mathsf{A}_-(d)`. Formalized as
+`CohnElkies.signUncertaintyConstant_one_lt_neg_one`, with the extremizer assumption as an explicit
+hypothesis (`A₋(d) < ⊤` and some `g` with `r(g) = A₋(d)`).
 :::
 
 :::proof "cor_a_plus_lt_a_minus"
