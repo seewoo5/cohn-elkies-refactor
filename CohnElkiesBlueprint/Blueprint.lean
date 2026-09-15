@@ -24,7 +24,8 @@ sign-uncertainty constants (Theorem 1.2). Every node links to its Lean counterpa
 `CohnElkies` library. The chapter *The Cohn–Elkies bound* proves the linear-programming bound
 $`\Delta_d \le \mathrm{LP}_d`, which the report cites as an external input; the chapter *Report
 versus formalization* records where the formal proofs deviate from the report; Appendix A is
-formalized except for its strict inequality, which needs an extremizer.
+formalized in full, including the existence of extremizers (Cohn–Gonçalves 2019, Theorem 1.4)
+that its strict inequality needs.
 
 {include 0 CohnElkiesBlueprint.Chapters.Introduction}
 {include 0 CohnElkiesBlueprint.Chapters.CohnElkiesBound}

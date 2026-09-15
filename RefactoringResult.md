@@ -25,18 +25,20 @@ Proposition 3.7 for `L¹` functions, the self-Fourier function `f₀`, the const
 
 (filled in as the work progresses)
 
-### 1.0 Result in numbers (final state, 2026-09-14)
+### 1.0 Result in numbers (final state, 2026-09-15)
 
 | | lines |
 |---|---|
 | original `SpherePacking.lean` | 55,616 |
 | `CohnElkies/` after golfing, before the new theorems (Step 1, 52 modules) | 24,242 (−56 %) |
-| final `CohnElkies/` (53 modules, including the new material: `SignUncertainty/*` ≈ 2,350 lines, `UpperBound/SelfFourier` ≈ 220, Propositions 3.1/3.7) | 24,647 |
-| final `CohnElkiesForMathlib/` (12 modules) | 2,169 |
-| total (single file `SpherePackingRefactored.lean`, assembled from both) | 26,816 (−52 %) |
+| `CohnElkies/` at the end of Step 3 (53 modules, including the new material: `SignUncertainty/*` ≈ 2,350 lines, `UpperBound/SelfFourier` ≈ 220, Propositions 3.1/3.7; 2026-09-14) | 24,647 |
+| final `CohnElkies/` (59 modules; adds Appendix A ≈ 890 lines and the Cohn–Gonçalves existence theorem ≈ 1,340 lines, §1.6) | 26,405 |
+| final `CohnElkiesForMathlib/` (16 modules; adds `coth`, the compact-support theorem, weak sequential compactness, the no-concentration lemma) | 3,089 |
+| total (single file `SpherePackingRefactored.lean`, assembled from both) | 29,814 (−46 %) |
 
-Excluding the newly formalized material (≈ 2,700 lines), the refactored code is ≈ 57 % shorter
-than the original. The whole library compiles with the lakefile options
+Excluding the newly formalized material (≈ 5,500 lines: both signs of Propositions 3.1/3.7, `f₀`,
+the `L¹` theory, Appendix A and the existence of extremizers), the refactored code is ≈ 56 %
+shorter than the original. The whole library compiles with the lakefile options
 (`maxSynthPendingDepth = 3`, Mathlib's standard linter set) under the default `maxHeartbeats`,
 with no `set_option backward.*`, no `sorry`, no axiom beyond `propext`, `Classical.choice`,
 `Quot.sound`. After the cleanup pass (§2.3) the only warnings left are the five `sorry`s of the
@@ -361,7 +363,12 @@ lattice with Schwartz functions.
   Conclusion `signUncertaintyConstant_one_le_neg_one (hd : 0 < d) : signUncertaintyConstant 1 d ≤
   signUncertaintyConstant (-1) d` by the radial reduction and the infimum. The report's strict
   `A₊(d) < A₋(d)` needs an extremizer for `A₋(d)` (Cohn–Gonçalves 2019, Theorem 1.4, not proved in
-  the report) and stays informal; Schwartz preservation by `T_d` is not needed and not formalized.
+  the report): the reduction is `signUncertaintyConstant_one_lt_neg_one_of_exists_extremizer (hd)
+  (hfin : A₋(d) < ⊤) (hext : ∃ g : SignEigenfunction d (-1), signRadius g = A₋(d))` (radialize the
+  extremizer, apply `signRadius_tailIntegral_lt`), and the existence theorem is formalized below,
+  so that `signUncertaintyConstant_one_lt_neg_one (hd : 0 < d) : A₊(d) < A₋(d)` holds
+  unconditionally (`CohnElkies/SignUncertainty/Extremizer.lean`). Schwartz preservation by `T_d`
+  is not needed and not formalized.
   The compact-support theorem this rests on, "`f` and `𝓕 f` compactly supported (or vanishing
   outside balls) ⇒ `f = 0` a.e.", is not in Mathlib and now lives in
   `CohnElkiesForMathlib/Analysis/Fourier/CompactSupport.lean` for any nontrivial finite-dimensional
@@ -369,6 +376,63 @@ lattice with Schwartz functions.
   `Real.eq_zero_of_hasCompactSupport_fourierIntegral` for continuous `f`,
   `Real.fourierIntegral_eq_zero_of_eq_zero_outside_ball`, via the entire Fourier–Laplace transform
   along a ray, `Real.fourierLaplaceRay`).
+
+- **Existence of extremizers for `A₋(d)` (Cohn–Gonçalves 2019, Theorem 1.4) and the unconditional
+  `A₊(d) < A₋(d)`** (2026-09-15, at the owner's request: "I still prefer unconditional result",
+  following the Cohn–Gonçalves paper, arXiv:1712.04438). Their §3.2 proof extracts a weak `L²`
+  limit of an `L¹`-normalized minimizing sequence and uses Mazur's lemma, Fatou, and a uniform
+  negative-mass bound from Nazarov's uncertainty principle in Jaming's form (or the
+  Amrein–Berthier inequality). None of these is in Mathlib; the formalization replaces the
+  quantitative input by a *qualitative* compactness lemma and avoids Mazur's lemma altogether by
+  testing the weak limit against explicit `L²` functions. The pieces:
+  - `CohnElkies/SignUncertainty/OriginCorrection.lean` (408 lines): Cohn–Gonçalves (3.1), the
+    Gaussian difference `φ_t = (e^{-tπ|x|²} - e^{-2tπ|x|²})/(t^{-d/2} - (2t)^{-d/2})`
+    (`gaussianDifference`) with `φ_t ≥ 0`, `φ_t(0) = 0`, `𝓕φ_t(0) = 1`, `𝓕𝓕φ_t = φ_t` and
+    `𝓕φ_t(ξ) < 0` for `|ξ|² > t d log 2/π` (`fourierGaussianDifference_neg_of_lt`), the
+    perturbation `ψ_t = φ_t - 𝓕φ_t` (`gaussianPerturbation`, `𝓕ψ_t = -ψ_t`, `ψ_t(0) = -1`), and
+    the last paragraph of their Lemma 3.1: for integrable `g` with `𝓕 g = -g`, `g ≠ 0`, `g ≥ 0`
+    outside the ball of radius `R > 0` and `g(0) ≥ 0`, `h = g + g(0) ψ_t` with
+    `t = πR²/(d log 2)` is in `𝓔₋(d)` with `r(h) ≤ R` (`originCorrection`,
+    `signRadius_originCorrection_le`). Also the cone structure of `𝓔_ς(d)`
+    (`SignEigenfunction.smul`, `normalize` with `‖g/‖g‖₁‖₁ = 1`, in `SignUncertainty/Basic.lean`).
+  - `CohnElkies/SignUncertainty/Finiteness.lean` (297 lines): `0 < A_ς(d) < ∞` for every `d ≥ 1`
+    and both signs (`signUncertaintyConstant_pos`, `signUncertaintyConstant_lt_top`). Positivity is
+    the half-mass argument of Cohn–Gonçalves §3.1 (`½ ≤ vol(B_ρ)` whenever some `g ∈ 𝓔_ς(d)` is
+    nonnegative outside `B_ρ`, `SignEigenfunction.half_le_volume_ball`); finiteness of `A₋(d)` uses
+    the explicit element `ψ_{1/4} - ψ_{1/2} ∈ 𝓔₋(d)` (`explicitSignEigenfunction`: it vanishes at
+    the origin, is anti-self-Fourier, and is positive outside an explicit ball since its slowest
+    Gaussian `e^{-π|x|²/4}` has positive coefficient), and `A₊(d) ≤ A₋(d)` gives the other sign.
+    Before this, finiteness was only known for large `d` (from Theorem 1.2's upper bound).
+  - `CohnElkiesForMathlib/Analysis/InnerProductSpace/WeakSequentialCompactness.lean` (135 lines):
+    every bounded sequence in a separable Hilbert space has a weakly convergent subsequence
+    (`InnerProductSpace.tendsto_subseq_inner_left_of_norm_le`,
+    `isSeqCompact_toWeakSpace_image_closedBall`), obtained from Mathlib's sequential
+    Banach–Alaoglu theorem `WeakDual.isSeqCompact_closedBall` through the Riesz isometry; also the
+    characterization of weak convergence by inner products
+    (`tendsto_toWeakSpace_iff_forall_tendsto_inner_left/right`, `tendsto_toWeakSpace_iff_forall_tendsto`).
+  - `CohnElkiesForMathlib/Analysis/Fourier/EigenfunctionConcentration.lean` (277 lines): for
+    `c ≠ 0` and `R`, there is `κ > 0` such that every integrable `f` with `𝓕 f = c f` pointwise and
+    `‖f‖₁ = 1` has mass `≥ κ` outside the closed ball of radius `R`
+    (`Real.exists_pos_le_setIntegral_norm_compl_closedBall_of_fourier_eq_mul`). Proof by
+    contradiction: if the tail masses of such `f_n` tend to `0`, the truncations `1_B f_n` are
+    bounded in `L²`, a weak limit `g` exists, testing against `1_B e^{2πi⟨x,ξ⟩}` gives pointwise
+    convergence `𝓕(1_B f_n) → 𝓕(1_B g)`, hence `f_n = c⁻¹𝓕 f_n → G := c⁻¹𝓕(1_B g)` pointwise;
+    bounded convergence on `B` and Fatou on `Bᶜ` give `∫_B |G| = 1`, `G = 0` off `B`, and
+    `𝓕 G = c G`, contradicting the compact-support theorem. Also `memLp_indicator_of_ae_norm_le`,
+    `Integrable.continuous_fourier`, `Real.norm_fourier_sub_fourier_indicator_le`.
+  - `CohnElkies/SignUncertainty/Extremizer.lean` (567 lines): `IsMinimizingSequence a f` (normalized
+    `f_n ∈ 𝓔₋(d)` with `r(f_n) ≤ a + 1/(n+1)`), the uniform bound `∫_{B_{a+1}} f_n ≤ -κ` from the
+    concentration lemma, the weak `L²` limit `g` (`‖f_n‖₂ ≤ 1`), and its properties by testing:
+    `g ∈ L¹` (against `1_K sign g`), `∫_{B_{a+1}} g ≤ -κ` so `g ≠ 0`, `∫ g ≤ 0`, `g ≥ 0` a.e. on
+    `{|x| > a}`, and `𝓕 g = -g` a.e. (against smooth compactly supported functions, via
+    `∫ (𝓕u) ϕ = ∫ u (𝓕ϕ)` and `ae_eq_zero_of_integral_contDiff_smul_eq_zero`); the continuous
+    representative `G = -Re 𝓕 g` satisfies `𝓕 G = -G` everywhere, `G(0) = -∫ g ≥ 0` and `G ≥ 0` on
+    `{|x| ≥ a}`, and the origin correction yields `h ∈ 𝓔₋(d)` with `r(h) ≤ a`, hence `r(h) = A₋(d)`
+    (`exists_signRadius_eq_signUncertaintyConstant_neg_one`). Conclusion:
+    `signUncertaintyConstant_one_lt_neg_one (hd : 0 < d) : signUncertaintyConstant 1 d <
+    signUncertaintyConstant (-1) d`.
+  All new declarations depend only on `propext`, `Classical.choice`, `Quot.sound`. The
+  infinitely-many-roots part of Theorem 1.4 is not formalized (not needed).
 
 ## 2. Step 2 — module layout
 
@@ -398,6 +462,8 @@ modules, 2,193 lines.
 | `SpherePacking/{Basic, Periodic, PeriodicApproximation, CohnElkiesBound, Radialization}` | packings, periodic packings, the Cohn–Elkies bound via Poisson summation, the `O(d)` radial symmetrization of test functions |
 | `PackingBound`, `Manuscript` | `Δ_d ≤ LP_d` and Theorem 1.1 in the form of the comparator (`PackingBounds.*`), the manuscript conclusions |
 | `SignUncertainty/{Basic, Radialization, L1Approximation, SchwartzFamily, Mollifiers, SchwartzApproximation, LowerBound, UpperBound, Main}` | report §2.1 and Theorem 1.2 (§1.6) |
+| `SignUncertainty/{MellinCancellation, TailIntegral, AppendixA}` | Appendix A: `T_d`, Proposition A.1, `A₊(d) ≤ A₋(d)` and the reduction of `A₊(d) < A₋(d)` to an extremizer (§1.6) |
+| `SignUncertainty/{OriginCorrection, Finiteness, Extremizer}` | Cohn–Gonçalves 2019: Lemma 3.1, `0 < A_ς(d) < ∞`, Theorem 1.4 (existence of extremizers) and the unconditional `A₊(d) < A₋(d)` (§1.6) |
 
 Root `CohnElkies.lean` imports `PackingBound`, `Manuscript` and `SignUncertainty.Main`. Import graph (scratchpad
 `depgraph_after.txt`): shared infrastructure `Basic`, `Parameters`, `Radial`, `MellinFourier`,
@@ -410,9 +476,12 @@ in `Asymptotics/Main`; the sphere-packing modules depend only on `Basic` and `As
 |---|---|
 | `Analysis/Complex/PhragmenLindelof` | maximum principle in a horizontal strip for a function whose *modulus* extends continuously (`PhragmenLindelof.horizontal_strip_norm_extension`) |
 | `Analysis/Complex/Trigonometric` | the hyperbolic cotangent `Real.coth = cosh / sinh`, which Mathlib lacks (it has `tanh`, `artanh`, `cot`): positivity, derivative, antitonicity of `coth` and of `log ∘ coth`, the bounds `log (coth x) ≤ 4 exp (-2x)` and `abs_log_coth_div_le`, and the integrability of `log (coth (π|y|/2))` and of its damped quotient |
+| `Analysis/Fourier/CompactSupport` | a function and its Fourier transform cannot both be compactly supported (`Real.ae_eq_zero_of_hasCompactSupport_fourierIntegral`), via the entire Fourier–Laplace transform along a ray |
+| `Analysis/Fourier/EigenfunctionConcentration` | eigenfunctions of the Fourier transform do not concentrate on a ball (`Real.exists_pos_le_setIntegral_norm_compl_closedBall_of_fourier_eq_mul`), by weak compactness and the compact-support theorem |
 | `Analysis/Fourier/FourierTransform` | `Real.fourier_comp_linearEquiv` |
 | `Analysis/Fourier/FourierTransformDeriv` | `𝓕 g ∈ L¹` when `g` has two integrable derivatives |
 | `Analysis/Fourier/PoissonSummation` | Poisson summation for lattices in `ℝ^d` and Schwartz functions (from the Sphere-Packing-Lean project) |
+| `Analysis/InnerProductSpace/WeakSequentialCompactness` | weak sequential compactness of bounded sequences in separable Hilbert spaces (`InnerProductSpace.tendsto_subseq_inner_left_of_norm_le`), from Mathlib's sequential Banach–Alaoglu via the Riesz isometry |
 | `Analysis/SpecialFunctions/FrullaniIntegral` | real and complex exponential Frullani integrals, the Wallis product as a Laplace integral (`Frullani.*`, `Real.Wallis.*`) |
 | `Analysis/SpecialFunctions/Gamma/{Basic, Beta, Digamma}` | `Γ(z+k)`, `‖Γ z‖ ≤ Γ(Re z)`, residues, `‖Γ(½+ix)‖²`, `‖Γ(ix)‖²`, the `coth` form of their quotient (`Complex.log_norm_Gamma_I_mul_sub_log_norm_Gamma_one_half_add_I_mul`); `Real.digamma := logDeriv Real.Gamma` with recurrence, `log(x−1) ≤ ψ ≤ log x`, `ψ − log → 0`, the harmonic representation and `Real.digamma_eq_complex_re` |
 | `Analysis/SpecialFunctions/ImproperIntegrals` | integrability of even functions, `e^{-a|x|}`, `|x|^n e^{-a|x|}`, `e^{-a|x|}|log|x||` |
@@ -475,19 +544,21 @@ statements and proofs in natural language):
 | Preliminaries | 19 | Gamma identities, digamma, Stirling, radial reduction (Schwartz and `L¹`), Schwartz approximation, radial Mellin transform, (9)–(10) |
 | Lower bound | 17 | (12)–(13), Lemmas 3.2–3.6, Propositions 3.1, 3.7, Theorem 3.8 |
 | Upper bound | 28 | Theorem 4.1, the ansatz (34)–(39), saddle geometry (43)–(49), Lemmas 4.2–4.10, the upper halves of Theorems 1.1 and 1.2 |
-| Appendix A | 7 | `T_d`, Proposition A.1, `A₊(d) ≤ A₋(d)` (formalized, §1.6) and the strict version with its extremizer assumption (informal) |
+| Appendix A | 13 | `T_d`, Proposition A.1, `A₊(d) ≤ A₋(d)`, and the existence of extremizers for `A₋(d)` (Cohn–Gonçalves 2019: (3.1), Lemma 3.1, `0 < A_ς(d) < ∞`, weak sequential compactness, the no-concentration lemma, Theorem 1.4) with the unconditional `A₊(d) < A₋(d)` (§1.6) |
 | Report versus formalization | 7 | the Phragmén–Lindelöf replacement of the Poisson principle, capped Lemma 3.2, one-sided Lemma 3.3, the Frullani route for Lemma 3.4, the inverse-quadratic Lemma 3.5, the fused Theorem 1.1, the bump-mollifier Schwartz approximation, the parameter table |
 
 Every node names its Lean counterpart (checked by the scratchpad scripts `check_bp.py` and
-`check_names.py` against the sources; the rename table of Step 2 was applied). The rendered
-summary page reports 95 entries (groups excluded): 86 fully closed (statement and proof
-formalized, no `sorry` anywhere), 0 with incomplete dependencies, and 8 informal-only nodes (the
-seven of Appendix A and the report's Poisson-principle and digamma log-moment lemmas, which the
-formalization replaces by other arguments). The site builds with
-`LEAN_NUM_THREADS=2 ./scripts/ci-pages.sh` (`_out/site/html-multi/`, ~21 MB). Verso `v4.33.0`
+`check_names.py` against the sources; the rename table of Step 2 was applied), except the two
+informal-only nodes tagged `not-formalized`: the report's Poisson-principle and digamma
+log-moment lemmas, which the formalization replaces by other arguments. Appendix A, initially
+left informal (2026-09-13), was formalized on 2026-09-15 including the existence of extremizers
+(six new nodes); all its nodes now carry a `lean` attribute. The rendered summary page reports
+102 entries (groups excluded): 100 fully closed (statement and proof formalized, no `sorry`
+anywhere), 0 with incomplete dependencies, and the 2 informal-only lemmas. The site builds with
+`LEAN_NUM_THREADS=2 ./scripts/ci-pages.sh` (`_out/site/html-multi/`, ~30 MB). Verso `v4.33.0`
 specifics learned: the lemma directive is `:::lemma_`, directive arguments must sit on one line
-(so a few headers exceed 100 characters), there is no `notReady`/status flag (Appendix A nodes
-are tagged `not-formalized` and carry no `lean`).
+(so a few headers exceed 100 characters), there is no `notReady`/status flag (informal nodes are
+tagged `not-formalized` and carry no `lean`).
 
 ### Per-module golfing notes
 
