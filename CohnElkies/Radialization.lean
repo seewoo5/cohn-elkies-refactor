@@ -314,8 +314,8 @@ theorem rotationalAverage_re {g : Euclidean d → ℂ} (hg : Continuous g) (x : 
   (integral_re (integrable_comp_orthogonalAction_inv hg x)).symm
 
 /-- Rotational averaging preserves real values. -/
-theorem rotationalAverage_im_eq_zero {g : Euclidean d → ℂ} (hg : IsRealValued g)
-    (x : Euclidean d) : (rotationalAverage g x).im = 0 := by
+theorem rotationalAverage_im_eq_zero {g : Euclidean d → ℂ} (hg : IsRealValued g) :
+    IsRealValued (rotationalAverage g) := fun x ↦ by
   have h : (fun y ↦ (((g y).re : ℝ) : ℂ)) = g := funext fun y ↦ Complex.ext rfl (hg y).symm
   calc (rotationalAverage g x).im
       = (rotationalAverage (fun y ↦ (((g y).re : ℝ) : ℂ)) x).im := by rw [h]
