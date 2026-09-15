@@ -9,22 +9,23 @@ open Informal
 
 #doc (Manual) "Comparison of the sign-uncertainty constants" =>
 
-This chapter reproduces Appendix A of the report as informal mathematics. It is *deliberately not
-formalized*, by decision of the project owner: the appendix's conclusion, the strict inequality
-$`\mathsf{A}_+(d) < \mathsf{A}_-(d)`, requires the existence of an extremizer attaining
+This chapter follows Appendix A of the report. Proposition A.1 and the comparison
+$`\mathsf{A}_+(d) \le \mathsf{A}_-(d)` are formalized in $`L^1` generality (modules
+`CohnElkies.SignUncertainty.MellinCancellation`, `CohnElkies.SignUncertainty.TailIntegral`,
+`CohnElkies.SignUncertainty.AppendixA`). The appendix's strict conclusion
+$`\mathsf{A}_+(d) < \mathsf{A}_-(d)` needs, in addition, an extremizer attaining
 $`\mathsf{A}_-(d)` (Cohn–Gonçalves 2019, Theorem 1.4), whose proof (weak compactness in $`L^2`,
 Mazur's lemma, Fatou's lemma and a uniform negative-mass bound from Nazarov's uncertainty
-principle in Jaming's form) is not part of the report; without it only the weak inequality
-$`\mathsf{A}_+(d) \le \mathsf{A}_-(d)` would follow. The nodes below therefore carry no Lean
-declaration and are tagged `not-formalized`; they depend on the definitions of the introduction
-and on the radial reduction of the preliminaries.
+principle in Jaming's form) is not part of the report; that assumption and the strict inequality
+are the only nodes left informal, tagged `not-formalized`. The nodes depend on the definitions of
+the introduction and on the radial reduction of the preliminaries.
 
 For an anti-self-Fourier radial function $`g`, the central Mellin moment $`M_g(d/2)` vanishes.
 Integrating the radial tail of $`g` therefore produces a self-Fourier function with a strictly
 smaller last-sign radius. Throughout, $`d \ge 1`, $`\lambda = d/2`, and $`g` denotes the continuous
 Fourier-inversion representative, as in {bpref "def_sign_eigenfunction_class"}[].
 
-:::definition "eq_87_tail_integration" (tags := "not-formalized")
+:::definition "eq_87_tail_integration" (lean := "CohnElkies.tailIntegral")
 Let $`g \in \mathcal{E}_-(d)` ({uses "def_sign_eigenfunction_class"}[]) be radial, i.e.
 $`0 \ne g \in L^1_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})` with $`\widehat g = -g` and $`g(0) = 0`.
 Define $`T_dg(0) = 0` and, for $`x \ne 0` (equation (87)),
@@ -34,7 +35,7 @@ $`(T_dg)(r) = \dfrac{\lambda}{2}r^{-\lambda}\int_r^\infty s^{\lambda-1}g(s)\,ds`
 (large-scale representation).
 :::
 
-:::lemma_ "eq_88_central_mellin_cancellation" (tags := "not-formalized")
+:::lemma_ "eq_88_central_mellin_cancellation" (lean := "CohnElkies.SignEigenfunction.integral_mul_norm_rpow_eq_zero")
 Let $`g` be as in {uses "eq_87_tail_integration"}[]. Then $`g` is bounded and continuous,
 $`\int_{\mathbb{R}^d}|g(x)||x|^{-\lambda}\,dx < \infty`, and the central Mellin moment vanishes
 (equation (88)): $`M_g(\lambda) = \int_0^\infty g(r)\,r^{\lambda-1}\,dr = 0`, the integral
@@ -64,7 +65,7 @@ $`\dfrac{\Gamma(\lambda/2)}{\pi^{\lambda/2}}S_d\int_0^\infty g(r)r^{\lambda-1}\,
 (88).
 :::
 
-:::lemma_ "eq_89_small_scale_representation" (tags := "not-formalized")
+:::lemma_ "eq_89_small_scale_representation" (lean := "CohnElkies.SignEigenfunction.tailIntegral_eq_neg_integral_Ioo")
 Let $`g` be as in {uses "eq_87_tail_integration"}[]. The integral defining $`T_dg(x)` converges
 absolutely for $`x \ne 0`, $`T_dg` is integrable with $`\|T_dg\|_1 \le \tfrac12\|g\|_1`, and
 (equation (89))
@@ -94,13 +95,25 @@ convergence, $`g` being bounded and continuous, and its value at $`0` is
 $`-\tfrac\lambda2g(0)\int_0^1s^{\lambda-1}ds = -g(0)/2 = 0`.
 :::
 
-:::proposition "prop_a_1" (tags := "not-formalized")
+:::proposition "prop_a_1" (lean := "CohnElkies.SignEigenfunction.tailIntegral")
 Let $`d \ge 1`, $`\lambda = d/2`, and let $`0 \ne g \in L^1_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})`
 satisfy $`\widehat g = -g` and $`g(0) = 0`, with $`T_dg` as in {uses "eq_87_tail_integration"}[].
 Then $`T_dg` is nonzero, continuous, radial and integrable, with
 $`\widehat{T_dg} = T_dg`, $`T_dg(0) = 0`, $`\|T_dg\|_1 \le \tfrac12\|g\|_1`;
 in particular $`T_dg \in \mathcal{E}_+(d)`. If $`r(g) < \infty` then $`r(T_dg) < r(g)`
 ({uses "def_sign_radius"}[]); if $`g` is Schwartz, so is $`T_dg`.
+Formalized as the bundled eigenfunction `CohnElkies.SignEigenfunction.tailIntegral` (with
+`CohnElkies.SignEigenfunction.continuous_tailIntegral`,
+`CohnElkies.SignEigenfunction.integrable_tailIntegral`,
+`CohnElkies.SignEigenfunction.integral_norm_tailIntegral_le`,
+`CohnElkies.SignEigenfunction.fourier_tailIntegral`,
+`CohnElkies.SignEigenfunction.tailIntegral_ne_zero`, `CohnElkies.IsRadial.tailIntegral`) and the
+radius comparison `CohnElkies.SignEigenfunction.signRadius_tailIntegral_le` with its strict form
+`CohnElkies.SignEigenfunction.signRadius_tailIntegral_lt`. The nonvanishing uses the compact-support
+theorem `Real.ae_eq_zero_of_hasCompactSupport_fourierIntegral`
+({uses "lemma_compactly_supported_eigenfunction_zero"}[]) through the positivity
+`CohnElkies.SignEigenfunction.tailIntegral_pos` outside the ball of radius $`r(g)`. Schwartz
+preservation is not formalized (it is not needed for the comparison).
 :::
 
 :::proof "prop_a_1"
@@ -137,9 +150,10 @@ compactness in $`L^2`, Mazur's lemma, Fatou's lemma and a uniform negative-mass 
 from Nazarov's uncertainty principle in Jaming's form.
 :::
 
-:::theorem "cor_a_plus_le_a_minus" (tags := "not-formalized")
+:::theorem "cor_a_plus_le_a_minus" (lean := "CohnElkies.signUncertaintyConstant_one_le_neg_one")
 For every $`d \ge 1`, $`\mathsf{A}_+(d) \le \mathsf{A}_-(d)` (see
-{uses "def_sign_uncertainty_constant"}[]).
+{uses "def_sign_uncertainty_constant"}[]). Formalized as
+`CohnElkies.signUncertaintyConstant_one_le_neg_one`, in $`[0,\infty]`.
 :::
 
 :::proof "cor_a_plus_le_a_minus"
@@ -149,6 +163,9 @@ with $`r(g) < \infty`. By {uses "lemma_rotational_average_properties"}[] and
 $`h = \mathcal{R}g` is a nonzero radial element of $`\mathcal{E}_-(d)` with $`r(h) \le r(g)`. By
 {uses "prop_a_1"}[], $`T_dh \in \mathcal{E}_+(d)` and $`r(T_dh) < r(h) \le r(g)`. Hence
 $`\mathsf{A}_+(d) \le r(g)` for every such $`g`, and taking the infimum over $`g` gives the claim.
+(In the formalization the infimum is first restricted to radial $`g` by
+{uses "lemma_sign_uncertainty_radial_reduction"}[], and only $`r(T_dh) \le r(h)` is used; the strict
+decrease is what an extremizer would turn into $`\mathsf{A}_+(d) < \mathsf{A}_-(d)`.)
 :::
 
 :::theorem "cor_a_plus_lt_a_minus" (tags := "not-formalized")

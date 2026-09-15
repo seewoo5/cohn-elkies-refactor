@@ -322,9 +322,10 @@ report's statements:
 * the nonemptiness of $`\mathcal{A}_d` ({bpref "lemma_admissible_nonempty"}[]) and the
   comparator statements of the main theorems (`ComparatorChallenges/CohnElkies.lean`).
 
-Appendix A ({bpref "prop_a_1"}[], {bpref "cor_a_plus_le_a_minus"}[],
-{bpref "cor_a_plus_lt_a_minus"}[], {bpref "assumption_cg19_extremizer"}[]) is deliberately not
-formalized.
+Appendix A is formalized in $`L^1` generality ({bpref "prop_a_1"}[],
+{bpref "cor_a_plus_le_a_minus"}[]) except for the extremizer assumption
+({bpref "assumption_cg19_extremizer"}[]) and the strict inequality that depends on it
+({bpref "cor_a_plus_lt_a_minus"}[]).
 
 # Schwartz approximation with a bump mollifier
 

@@ -345,15 +345,30 @@ lattice with Schwartz functions.
   `tendsto_toReal_signUncertaintyConstant_div_sqrt : (A_ς(d)).toReal / √d → π⁻¹`.
   All four new results depend only on `propext`, `Classical.choice`, `Quot.sound`.
 
-**Appendix A is deliberately not formalized** (decision of the project owner, 2026-09-13).
-Proposition A.1 constructs, from an anti-self-Fourier `L¹` function `g` with `g(0) = 0`, the
-self-Fourier function `T_d g(x) = (λ/2)∫_1^∞ t^{λ-1} g(tx) dt` with a strictly smaller last-sign
-radius, and deduces `A₊(d) < A₋(d)`. The deduction of the strict inequality uses the existence of
-an extremizer for `A₋(d)` (Cohn–Gonçalves 2019, Theorem 1.4), whose proof (weak compactness in
-`L²`, Mazur's lemma, Fatou, and a uniform negative-mass bound from Jaming's form of Nazarov's
-uncertainty principle) is not part of the report; without it only `A₊(d) ≤ A₋(d)` would follow.
-Neither Proposition A.1 nor the inequality is stated in Lean; the blueprint keeps the appendix
-as informal text marked as not formalized.
+- **Appendix A: Proposition A.1 and `A₊(d) ≤ A₋(d)`** (first left out on 2026-09-13, then
+  formalized on 2026-09-15 at the owner's request, in `L¹` generality). For a radial
+  `g : SignEigenfunction d (-1)` the tail integral `tailIntegral d g x = (λ/2)∫_1^∞ t^{λ-1} g(tx) dt`
+  (`x ≠ 0`, value `0` at `0`; report (87)) is the `toFun` of `SignEigenfunction.tailIntegral :
+  SignEigenfunction d 1`: continuous, integrable with `‖T_d g‖₁ ≤ ½‖g‖₁`, self-Fourier pointwise,
+  nonzero, and `signRadius (T_d g) ≤ signRadius g`, strictly when `signRadius g < ⊤`
+  (`CohnElkies/SignUncertainty/{MellinCancellation, TailIntegral, AppendixA}.lean`). The route:
+  the central Mellin cancellation `∫ g(x)‖x‖^{-λ} dx = 0` (report (88)) from the Gaussian duality
+  `J(t) = -t^{-λ} J(1/t)` and the Gamma integral; absolute convergence of `∫_0^∞ s^{λ-1} g(sx) ds`
+  along rays for radial `g`, which gives the small-scale representation
+  `T_d g x = -(λ/2)∫_0^1 s^{λ-1} g(sx) ds` (report (89)), continuity and the self-Fourier identity by
+  Fubini and Fourier scaling; positivity of `T_d g` outside the ball of radius `r(g)`, where the
+  vanishing of `T_d g` at one point would make `g` and `𝓕 g = -g` compactly supported, hence zero.
+  Conclusion `signUncertaintyConstant_one_le_neg_one (hd : 0 < d) : signUncertaintyConstant 1 d ≤
+  signUncertaintyConstant (-1) d` by the radial reduction and the infimum. The report's strict
+  `A₊(d) < A₋(d)` needs an extremizer for `A₋(d)` (Cohn–Gonçalves 2019, Theorem 1.4, not proved in
+  the report) and stays informal; Schwartz preservation by `T_d` is not needed and not formalized.
+  The compact-support theorem this rests on, "`f` and `𝓕 f` compactly supported (or vanishing
+  outside balls) ⇒ `f = 0` a.e.", is not in Mathlib and now lives in
+  `CohnElkiesForMathlib/Analysis/Fourier/CompactSupport.lean` for any nontrivial finite-dimensional
+  real inner product space (`Real.ae_eq_zero_of_hasCompactSupport_fourierIntegral`,
+  `Real.eq_zero_of_hasCompactSupport_fourierIntegral` for continuous `f`,
+  `Real.fourierIntegral_eq_zero_of_eq_zero_outside_ball`, via the entire Fourier–Laplace transform
+  along a ray, `Real.fourierLaplaceRay`).
 
 ## 2. Step 2 — module layout
 
@@ -460,7 +475,7 @@ statements and proofs in natural language):
 | Preliminaries | 19 | Gamma identities, digamma, Stirling, radial reduction (Schwartz and `L¹`), Schwartz approximation, radial Mellin transform, (9)–(10) |
 | Lower bound | 17 | (12)–(13), Lemmas 3.2–3.6, Propositions 3.1, 3.7, Theorem 3.8 |
 | Upper bound | 28 | Theorem 4.1, the ansatz (34)–(39), saddle geometry (43)–(49), Lemmas 4.2–4.10, the upper halves of Theorems 1.1 and 1.2 |
-| Appendix A | 7 | `T_d`, Proposition A.1, `A₊(d) ≤ A₋(d)` and the strict version — informal only, deliberately not formalized (see §1.6) |
+| Appendix A | 7 | `T_d`, Proposition A.1, `A₊(d) ≤ A₋(d)` (formalized, §1.6) and the strict version with its extremizer assumption (informal) |
 | Report versus formalization | 7 | the Phragmén–Lindelöf replacement of the Poisson principle, capped Lemma 3.2, one-sided Lemma 3.3, the Frullani route for Lemma 3.4, the inverse-quadratic Lemma 3.5, the fused Theorem 1.1, the bump-mollifier Schwartz approximation, the parameter table |
 
 Every node names its Lean counterpart (checked by the scratchpad scripts `check_bp.py` and

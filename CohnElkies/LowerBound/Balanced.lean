@@ -1,4 +1,5 @@
 import CohnElkies.SchwartzTools
+import CohnElkiesForMathlib.Analysis.Fourier.CompactSupport
 
 /-!
 # The balanced function and the anti-self-Fourier witness (report §3, (29)–(30))
@@ -134,19 +135,6 @@ theorem complexMGF_nnMeasure {d : ℕ} (g : TestFunction d) (hreal : IsRealValue
   push_cast
   ring
 
-/-- An entire function vanishing on a ray of the imaginary axis vanishes identically. -/
-theorem eq_zero_of_forall_imaginary_ray (F : ℂ → ℂ) (hF : AnalyticOnNhd ℂ F univ) (T : ℝ)
-    (hvanish : ∀ t : ℝ, T < t → F (t * I) = 0) : F = 0 := by
-  have hclosure : (T + 1 : ℝ) * I ∈ closure ({z | F z = 0} \ {(T + 1 : ℝ) * I}) := by
-    refine mem_closure_of_tendsto (b := 𝓝[>] (T + 1)) (f := fun t : ℝ ↦ (t : ℂ) * I)
-      (tendsto_nhdsWithin_of_tendsto_nhds
-        (by fun_prop : Continuous fun t : ℝ ↦ (t : ℂ) * I).continuousAt) ?_
-    filter_upwards [self_mem_nhdsWithin] with t ht
-    refine ⟨hvanish t (by linarith [mem_Ioi.1 ht]), fun h ↦ (mem_Ioi.1 ht).ne' ?_⟩
-    exact Complex.ofReal_injective (mul_left_injective₀ Complex.I_ne_zero h)
-  exact funext fun z ↦ hF.eqOn_zero_of_preconnected_of_mem_closure isPreconnected_univ (mem_univ _)
-    hclosure (mem_univ z)
-
 /-- A nonnegative real compactly supported test function with `𝓕 g = g` vanishes (Fourier
 analyticity; report, proof of Theorem 3.8). -/
 theorem eq_zero_of_fourier_eq_self {d : ℕ} (hd : 0 < d) (g : TestFunction d)
@@ -163,8 +151,8 @@ theorem eq_zero_of_fourier_eq_self {d : ℕ} (hd : 0 < d) (g : TestFunction d)
     have hball := mem_closedBall_zero_iff.1 (hR (subset_tsupport _ hne))
     rw [norm_smul, he, mul_one, Real.norm_of_nonneg ((le_max_right R 0).trans ht.le)] at hball
     linarith [le_max_left R 0]
-  have hzero := eq_zero_of_forall_imaginary_ray _
-    (analyticOnNhd_complexMGF_nnMeasure g hg hcompact _ (by fun_prop)) _ hvanish
+  have hzero := (analyticOnNhd_complexMGF_nnMeasure g hg hcompact _
+    (by fun_prop)).eq_zero_of_forall_ofReal_mul_I_eq_zero _ hvanish
   have hg0 : ∫ x, g x = 0 := by
     simpa [SchwartzMap.fourier_coe, Real.fourier_eq'] using
       (complexMGF_nnMeasure g hreal hg e 0).symm.trans (congrFun hzero _)

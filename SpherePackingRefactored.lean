@@ -594,6 +594,210 @@ end Real
 
 end CohnElkiesForMathlib_Analysis_Complex_Trigonometric
 
+/-! ## Module `CohnElkiesForMathlib.Analysis.Fourier.CompactSupport` -/
+
+section CohnElkiesForMathlib_Analysis_Fourier_CompactSupport
+
+/-!
+# A function and its Fourier transform cannot both be compactly supported
+
+Let `V` be a nontrivial finite-dimensional real inner product space and `f : V → ℂ` an integrable
+function. The Fourier–Laplace transform `z ↦ ∫ f x * exp (z * ⟪x, ξ⟫)` of `f` along a direction
+`ξ` (`Real.fourierLaplaceRay`) restricts on the imaginary axis to the Fourier transform of `f`
+along the ray `ℝ ξ`: `𝓕 f (t • ξ) = fourierLaplaceRay f ξ (-2 * π * t * I)`. If `f` vanishes
+outside a ball, this transform is entire (`Real.differentiable_fourierLaplaceRay`, differentiation
+under the integral sign); an entire function vanishing on a ray of the imaginary axis vanishes
+identically (`AnalyticOnNhd.eq_zero_of_forall_ofReal_mul_I_eq_zero`). Hence if `𝓕 f` also vanishes
+outside a ball, then `𝓕 f = 0` (`Real.fourierIntegral_eq_zero_of_eq_zero_outside_ball`), and `f`
+vanishes almost everywhere (`Real.ae_eq_zero_of_hasCompactSupport_fourierIntegral`), everywhere if
+`f` is continuous (`Real.eq_zero_of_hasCompactSupport_fourierIntegral`).
+
+The last step uses the injectivity of the Fourier transform on `L¹`
+(`MeasureTheory.Integrable.ae_eq_zero_of_fourierIntegral_eq_zero`): if `𝓕 f = 0` then `f` pairs to
+zero against every Schwartz function, hence against every smooth compactly supported function.
+
+## Main results
+
+* `AnalyticOnNhd.eq_zero_of_forall_ofReal_mul_I_eq_zero`: an entire function vanishing on
+  `{t * I | T < t}` vanishes identically.
+* `Real.fourierIntegral_eq_zero_of_eq_zero_outside_ball`: if an integrable `f` and `𝓕 f` both
+  vanish outside the ball of radius `R`, then `𝓕 f = 0`.
+* `MeasureTheory.Integrable.ae_eq_zero_of_fourierIntegral_eq_zero`: `𝓕 f = 0 → f =ᵐ[volume] 0`.
+* `Real.ae_eq_zero_of_hasCompactSupport_fourierIntegral`,
+  `Real.eq_zero_of_hasCompactSupport_fourierIntegral`: an integrable function with compactly
+  supported Fourier transform and compact support vanishes (a.e., resp. everywhere if continuous).
+-/
+
+open MeasureTheory Set
+open scoped FourierTransform Real RealInnerProductSpace Topology
+open Complex (I)
+
+noncomputable section
+
+/-- An entire function vanishing on a ray `{t * I | T < t}` of the imaginary axis vanishes
+identically (identity theorem). -/
+theorem AnalyticOnNhd.eq_zero_of_forall_ofReal_mul_I_eq_zero {F : ℂ → ℂ}
+    (hF : AnalyticOnNhd ℂ F univ) (T : ℝ) (hvanish : ∀ t : ℝ, T < t → F (t * I) = 0) : F = 0 := by
+  have hclosure : (T + 1 : ℝ) * I ∈ closure ({z | F z = 0} \ {(T + 1 : ℝ) * I}) := by
+    refine mem_closure_of_tendsto (b := 𝓝[>] (T + 1)) (f := fun t : ℝ ↦ (t : ℂ) * I)
+      (tendsto_nhdsWithin_of_tendsto_nhds
+        (by fun_prop : Continuous fun t : ℝ ↦ (t : ℂ) * I).continuousAt) ?_
+    filter_upwards [self_mem_nhdsWithin] with t ht
+    refine ⟨hvanish t (by linarith [mem_Ioi.1 ht]), fun h ↦ (mem_Ioi.1 ht).ne' ?_⟩
+    exact Complex.ofReal_injective (mul_left_injective₀ Complex.I_ne_zero h)
+  exact funext fun z ↦ hF.eqOn_zero_of_preconnected_of_mem_closure isPreconnected_univ (mem_univ _)
+    hclosure (mem_univ z)
+
+namespace Real
+
+variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [FiniteDimensional ℝ V]
+  [MeasurableSpace V] [BorelSpace V]
+
+/-- `F(z) = ∫ f(x) e^{z ⟪x, ξ⟫} dx`: the Fourier–Laplace transform of `f` along the direction `ξ`;
+`𝓕 f (t • ξ) = F(-2πit)` (`Real.fourierIntegral_smul_eq_fourierLaplaceRay`). -/
+def fourierLaplaceRay (f : V → ℂ) (ξ : V) (z : ℂ) : ℂ :=
+  ∫ x, f x * Complex.exp (z * ⟪x, ξ⟫)
+
+theorem fourierIntegral_smul_eq_fourierLaplaceRay (f : V → ℂ) (ξ : V) (t : ℝ) :
+    𝓕 f (t • ξ) = fourierLaplaceRay f ξ (-2 * π * t * I) := by
+  rw [Real.fourier_eq', fourierLaplaceRay]
+  refine integral_congr_ae (.of_forall fun x ↦ ?_)
+  simp only [real_inner_smul_right, smul_eq_mul]
+  rw [mul_comm (Complex.exp _)]
+  congr 2
+  push_cast
+  ring
+
+/-- For an integrable `f` vanishing outside a ball, the Fourier–Laplace transform along any
+direction is entire (differentiation under the integral sign). -/
+theorem differentiable_fourierLaplaceRay {f : V → ℂ} (hf : Integrable f) {R : ℝ}
+    (hsupp : ∀ x : V, R < ‖x‖ → f x = 0) (ξ : V) :
+    Differentiable ℂ (fourierLaplaceRay f ξ) := by
+  intro z₀
+  set M : ℝ := max R 0 * ‖ξ‖ with hM
+  have hM0 : 0 ≤ M := by positivity
+  have hinner : ∀ x : V, f x ≠ 0 → |⟪x, ξ⟫| ≤ M := fun x hx ↦ by
+    have hxR : ‖x‖ ≤ max R 0 := le_max_of_le_left (le_of_not_gt fun h ↦ hx (hsupp x h))
+    exact (abs_real_inner_le_norm x ξ).trans (mul_le_mul_of_nonneg_right hxR (norm_nonneg ξ))
+  have hre : ∀ (z : ℂ) (x : V), f x ≠ 0 → (z * ⟪x, ξ⟫).re ≤ ‖z‖ * M := fun z x hx ↦
+    calc (z * ⟪x, ξ⟫).re ≤ ‖z * ⟪x, ξ⟫‖ := Complex.re_le_norm _
+      _ = ‖z‖ * |⟪x, ξ⟫| := by rw [norm_mul, Complex.norm_real, Real.norm_eq_abs]
+      _ ≤ ‖z‖ * M := by gcongr; exact hinner x hx
+  have hmeas : ∀ z : ℂ, AEStronglyMeasurable
+      (fun x : V ↦ f x * Complex.exp (z * ⟪x, ξ⟫)) volume := fun z ↦
+    hf.aestronglyMeasurable.mul
+      (by fun_prop : Continuous fun x : V ↦ Complex.exp (z * ⟪x, ξ⟫)).aestronglyMeasurable
+  refine (hasDerivAt_integral_of_dominated_loc_of_deriv_le (μ := volume) (𝕜 := ℂ)
+    (F := fun z x ↦ f x * Complex.exp (z * ⟪x, ξ⟫))
+    (F' := fun z x ↦ f x * ((⟪x, ξ⟫ : ℂ) * Complex.exp (z * ⟪x, ξ⟫)))
+    (bound := fun x ↦ ‖f x‖ * (M * Real.exp ((‖z₀‖ + 1) * M)))
+    (Metric.ball_mem_nhds z₀ one_pos) (.of_forall hmeas) ?_ ?_ ?_ ?_ ?_).2.differentiableAt
+  · refine (hf.norm.mul_const (Real.exp (‖z₀‖ * M))).mono' (hmeas z₀) (.of_forall fun x ↦ ?_)
+    by_cases hx : f x = 0
+    · simp [hx]
+    · rw [norm_mul, Complex.norm_exp]
+      gcongr
+      exact hre z₀ x hx
+  · exact hf.aestronglyMeasurable.mul (by fun_prop : Continuous fun x : V ↦
+      (⟪x, ξ⟫ : ℂ) * Complex.exp (z₀ * ⟪x, ξ⟫)).aestronglyMeasurable
+  · refine .of_forall fun x z hz ↦ ?_
+    by_cases hx : f x = 0
+    · simp [hx]
+    · have hz' : ‖z‖ ≤ ‖z₀‖ + 1 :=
+        (norm_le_norm_add_norm_sub' z z₀).trans (by linarith [mem_ball_iff_norm.1 hz])
+      rw [norm_mul, norm_mul, Complex.norm_exp, Complex.norm_real, Real.norm_eq_abs]
+      have h1 := hinner x hx
+      have h2 : (z * ⟪x, ξ⟫).re ≤ (‖z₀‖ + 1) * M := (hre z x hx).trans (by gcongr)
+      gcongr
+  · exact hf.norm.mul_const _
+  · refine .of_forall fun x z _ ↦ ?_
+    have h := (((hasDerivAt_id z).mul_const (⟪x, ξ⟫ : ℂ)).cexp).const_mul (f x)
+    simpa [mul_comm, mul_left_comm, mul_assoc] using h
+
+/-- An integrable function vanishing outside a ball whose Fourier transform also vanishes outside
+a ball has identically vanishing Fourier transform, since `𝓕 f` is entire along every ray through
+the origin. -/
+theorem fourierIntegral_eq_zero_of_eq_zero_outside_ball [Nontrivial V] {f : V → ℂ}
+    (hf : Integrable f) {R : ℝ} (hsupp : ∀ x : V, R < ‖x‖ → f x = 0)
+    (hfourier : ∀ x : V, R < ‖x‖ → 𝓕 f x = 0) : 𝓕 f = 0 := by
+  have key : ∀ ξ : V, ξ ≠ 0 → ∀ t : ℝ, 𝓕 f (t • ξ) = 0 := by
+    intro ξ hξ t
+    have hξ' : 0 < ‖ξ‖ := norm_pos_iff.2 hξ
+    set G : ℂ → ℂ := fun z ↦ fourierLaplaceRay f ξ (-2 * π * z) with hG
+    have hGa : AnalyticOnNhd ℂ G univ := Complex.analyticOnNhd_univ_iff_differentiable.2
+      ((differentiable_fourierLaplaceRay hf hsupp ξ).comp (differentiable_id.const_mul _))
+    have hvanish : ∀ s : ℝ, max R 0 / ‖ξ‖ < s → G (s * I) = 0 := fun s hs ↦ by
+      have hs0 : 0 < s := lt_of_le_of_lt (by positivity) hs
+      have hnorm : R < ‖s • ξ‖ := by
+        rw [norm_smul, Real.norm_of_nonneg hs0.le]
+        exact lt_of_le_of_lt (le_max_left R 0) ((div_lt_iff₀ hξ').1 hs)
+      have h := hfourier _ hnorm
+      rw [fourierIntegral_smul_eq_fourierLaplaceRay] at h
+      simpa [hG, mul_assoc] using h
+    have hG0 := congrFun (hGa.eq_zero_of_forall_ofReal_mul_I_eq_zero _ hvanish) (t * I)
+    rw [fourierIntegral_smul_eq_fourierLaplaceRay]
+    simpa [hG, mul_assoc] using hG0
+  funext ξ
+  by_cases hξ : ξ = 0
+  · obtain ⟨e, he⟩ := exists_ne (0 : V)
+    simpa [hξ] using key e he 0
+  · simpa using key ξ hξ 1
+
+end Real
+
+/-- The Fourier transform is injective on `L¹`: an integrable function with vanishing Fourier
+transform vanishes almost everywhere. -/
+theorem MeasureTheory.Integrable.ae_eq_zero_of_fourierIntegral_eq_zero
+    {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [FiniteDimensional ℝ V]
+    [MeasurableSpace V] [BorelSpace V] {f : V → ℂ} (hf : Integrable f) (h : 𝓕 f = 0) :
+    f =ᵐ[volume] 0 := by
+  refine ae_eq_zero_of_integral_contDiff_smul_eq_zero hf.locallyIntegrable fun g hg hgsupp ↦ ?_
+  have hG : HasCompactSupport (Complex.ofRealCLM ∘ g) := hgsupp.comp_left rfl
+  set G : SchwartzMap V ℂ := hG.toSchwartzMap (Complex.ofRealCLM.contDiff.comp hg) with hGdef
+  set H : SchwartzMap V ℂ := 𝓕⁻ G with hHdef
+  have hpair := VectorFourier.integral_fourierIntegral_smul_eq_flip (L := innerₗ V)
+    Real.continuous_fourierChar continuous_inner (H.integrable (μ := volume)) hf
+  have hGG : 𝓕 (H : V → ℂ) = G := by
+    rw [← SchwartzMap.fourier_coe, hHdef, FourierTransform.fourier_fourierInv_eq]
+  simp only [flip_innerₗ] at hpair
+  change ∫ ξ, 𝓕 (H : V → ℂ) ξ • f ξ = ∫ x, H x • 𝓕 f x at hpair
+  rw [hGG, h] at hpair
+  simp only [Pi.zero_apply, smul_zero, integral_zero] at hpair
+  rw [← hpair]
+  refine integral_congr_ae (.of_forall fun x ↦ ?_)
+  simp [hGdef, Complex.real_smul]
+
+namespace Real
+
+variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [FiniteDimensional ℝ V]
+  [MeasurableSpace V] [BorelSpace V]
+
+/-- An integrable function with compact support whose Fourier transform has compact support
+vanishes almost everywhere. -/
+theorem ae_eq_zero_of_hasCompactSupport_fourierIntegral [Nontrivial V] {f : V → ℂ}
+    (hf : Integrable f) (hsupp : HasCompactSupport f) (hfourier : HasCompactSupport (𝓕 f)) :
+    f =ᵐ[volume] 0 := by
+  obtain ⟨R₁, -, hR₁⟩ := hsupp.exists_pos_le_norm
+  obtain ⟨R₂, -, hR₂⟩ := hfourier.exists_pos_le_norm
+  refine hf.ae_eq_zero_of_fourierIntegral_eq_zero
+    (fourierIntegral_eq_zero_of_eq_zero_outside_ball hf (R := max R₁ R₂) ?_ ?_)
+  · exact fun x hx ↦ hR₁ x ((le_max_left _ _).trans hx.le)
+  · exact fun x hx ↦ hR₂ x ((le_max_right _ _).trans hx.le)
+
+/-- A continuous integrable function with compact support whose Fourier transform has compact
+support vanishes. -/
+theorem eq_zero_of_hasCompactSupport_fourierIntegral [Nontrivial V] {f : V → ℂ}
+    (hcont : Continuous f) (hf : Integrable f) (hsupp : HasCompactSupport f)
+    (hfourier : HasCompactSupport (𝓕 f)) : f = 0 :=
+  (hcont.ae_eq_iff_eq volume continuous_const).1
+    (ae_eq_zero_of_hasCompactSupport_fourierIntegral hf hsupp hfourier)
+
+end Real
+
+end
+
+end CohnElkiesForMathlib_Analysis_Fourier_CompactSupport
+
 /-! ## Module `CohnElkiesForMathlib.Analysis.Fourier.FourierTransform` -/
 
 section CohnElkiesForMathlib_Analysis_Fourier_FourierTransform
@@ -10199,19 +10403,6 @@ theorem complexMGF_nnMeasure {d : ℕ} (g : TestFunction d) (hreal : IsRealValue
   push_cast
   ring
 
-/-- An entire function vanishing on a ray of the imaginary axis vanishes identically. -/
-theorem eq_zero_of_forall_imaginary_ray (F : ℂ → ℂ) (hF : AnalyticOnNhd ℂ F univ) (T : ℝ)
-    (hvanish : ∀ t : ℝ, T < t → F (t * I) = 0) : F = 0 := by
-  have hclosure : (T + 1 : ℝ) * I ∈ closure ({z | F z = 0} \ {(T + 1 : ℝ) * I}) := by
-    refine mem_closure_of_tendsto (b := 𝓝[>] (T + 1)) (f := fun t : ℝ ↦ (t : ℂ) * I)
-      (tendsto_nhdsWithin_of_tendsto_nhds
-        (by fun_prop : Continuous fun t : ℝ ↦ (t : ℂ) * I).continuousAt) ?_
-    filter_upwards [self_mem_nhdsWithin] with t ht
-    refine ⟨hvanish t (by linarith [mem_Ioi.1 ht]), fun h ↦ (mem_Ioi.1 ht).ne' ?_⟩
-    exact Complex.ofReal_injective (mul_left_injective₀ Complex.I_ne_zero h)
-  exact funext fun z ↦ hF.eqOn_zero_of_preconnected_of_mem_closure isPreconnected_univ (mem_univ _)
-    hclosure (mem_univ z)
-
 /-- A nonnegative real compactly supported test function with `𝓕 g = g` vanishes (Fourier
 analyticity; report, proof of Theorem 3.8). -/
 theorem eq_zero_of_fourier_eq_self {d : ℕ} (hd : 0 < d) (g : TestFunction d)
@@ -10228,8 +10419,8 @@ theorem eq_zero_of_fourier_eq_self {d : ℕ} (hd : 0 < d) (g : TestFunction d)
     have hball := mem_closedBall_zero_iff.1 (hR (subset_tsupport _ hne))
     rw [norm_smul, he, mul_one, Real.norm_of_nonneg ((le_max_right R 0).trans ht.le)] at hball
     linarith [le_max_left R 0]
-  have hzero := eq_zero_of_forall_imaginary_ray _
-    (analyticOnNhd_complexMGF_nnMeasure g hg hcompact _ (by fun_prop)) _ hvanish
+  have hzero := (analyticOnNhd_complexMGF_nnMeasure g hg hcompact _
+    (by fun_prop)).eq_zero_of_forall_ofReal_mul_I_eq_zero _ hvanish
   have hg0 : ∫ x, g x = 0 := by
     simpa [SchwartzMap.fourier_coe, Real.fourier_eq'] using
       (complexMGF_nnMeasure g hreal hg e 0).symm.trans (congrFun hzero _)
@@ -24777,6 +24968,244 @@ end CohnElkies
 
 end CohnElkies_SignUncertainty_Basic
 
+/-! ## Module `CohnElkies.SignUncertainty.SchwartzFamily` -/
+
+section CohnElkies_SignUncertainty_SchwartzFamily
+
+/-! # Integrals of families of test functions; mollifications are test functions
+
+`x ↦ ∫ g a x ∂μ` is a test function whenever `a ↦ g a` is a family of test functions whose
+Schwartz seminorms are dominated by integrable functions of `a` (differentiation under the
+integral sign; this generalizes the probability average `CohnElkies.schwartzAverage` of
+`CohnElkies.Radialization`). Applied to the family `a ↦ h(a) f(· - a)` this shows that `h ⋆ f` is
+a test function for every test function `f` and every measurable `h` with
+`(1 + ‖a‖)^k h(a) ∈ L¹` for all `k` — the mechanism behind `q_n ∈ S_rad(ℝ^d)` in report §2.1. -/
+
+namespace CohnElkies
+open scoped Real
+open Complex (I)
+
+noncomputable section
+
+open Filter MeasureTheory Set
+open scoped ContDiff Topology Convolution
+
+section IntegrableFamily
+
+variable {α : Type*} [MeasurableSpace α] (μ : Measure α) {d : ℕ} (g : α → TestFunction d)
+  (B : ℕ → ℕ → α → ℝ)
+
+theorem integrable_iteratedFDeriv_family
+    (hmeas : ∀ (n : ℕ) (x : Euclidean d),
+      AEStronglyMeasurable (fun a ↦ iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x) μ)
+    (hbound : ∀ (a : α) (k n : ℕ), SchwartzMap.seminorm ℂ k n (g a) ≤ B k n a)
+    (hB : ∀ k n, Integrable (B k n) μ) (n : ℕ) (x : Euclidean d) :
+    Integrable (fun a ↦ iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x) μ :=
+  (hB 0 n).mono' (hmeas n x) (.of_forall fun a ↦
+    (SchwartzMap.norm_iteratedFDeriv_le_seminorm ℂ (g a) n x).trans (hbound a 0 n))
+
+theorem hasFDerivAt_integral_iteratedFDeriv_family
+    (hmeas : ∀ (n : ℕ) (x : Euclidean d),
+      AEStronglyMeasurable (fun a ↦ iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x) μ)
+    (hbound : ∀ (a : α) (k n : ℕ), SchwartzMap.seminorm ℂ k n (g a) ≤ B k n a)
+    (hB : ∀ k n, Integrable (B k n) μ) (n : ℕ) (x : Euclidean d) :
+    HasFDerivAt (fun y : Euclidean d ↦ ∫ a, iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) y ∂μ)
+      (∫ a, fderiv ℝ (iteratedFDeriv ℝ n (g a : Euclidean d → ℂ)) x ∂μ) x := by
+  have hderiv_meas : AEStronglyMeasurable
+      (fun a ↦ fderiv ℝ (iteratedFDeriv ℝ n (g a : Euclidean d → ℂ)) x) μ := by
+    simpa only [fderiv_iteratedFDeriv, Function.comp_apply] using
+      (continuousMultilinearCurryLeftEquiv ℝ (fun _ : Fin (n + 1) ↦ Euclidean d)
+        ℂ).continuous.comp_aestronglyMeasurable (hmeas (n + 1) x)
+  apply hasFDerivAt_integral_of_dominated_of_fderiv_le (𝕜 := ℝ)
+    (F := fun y : Euclidean d ↦ fun a ↦ iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) y)
+    (F' := fun y : Euclidean d ↦ fun a ↦ fderiv ℝ (iteratedFDeriv ℝ n (g a : Euclidean d → ℂ)) y)
+    (bound := B 0 (n + 1)) (s := Set.univ) Filter.univ_mem
+    (.of_forall fun y ↦ hmeas n y) (integrable_iteratedFDeriv_family μ g B hmeas hbound hB n x)
+    hderiv_meas (.of_forall fun a y _ ↦ ?_) (hB 0 (n + 1))
+  · exact .of_forall fun a y _ ↦ (((g a).smooth ⊤).differentiable_iteratedFDeriv
+      (ENat.natCast_lt_of_coe_top_le_withTop (le_refl _) n)).differentiableAt.hasFDerivAt
+  · calc ‖fderiv ℝ (iteratedFDeriv ℝ n (g a : Euclidean d → ℂ)) y‖
+        = ‖iteratedFDeriv ℝ (n + 1) (g a : Euclidean d → ℂ) y‖ := norm_fderiv_iteratedFDeriv
+      _ ≤ SchwartzMap.seminorm ℂ 0 (n + 1) (g a) :=
+          SchwartzMap.norm_iteratedFDeriv_le_seminorm ℂ (g a) (n + 1) y
+      _ ≤ B 0 (n + 1) a := hbound a 0 (n + 1)
+
+/-- Differentiation under the integral sign: iterated derivatives of a family of test functions
+with integrable seminorm bounds commute with integration in the parameter. -/
+theorem iteratedFDeriv_integral_family
+    (hmeas : ∀ (n : ℕ) (x : Euclidean d),
+      AEStronglyMeasurable (fun a ↦ iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x) μ)
+    (hbound : ∀ (a : α) (k n : ℕ), SchwartzMap.seminorm ℂ k n (g a) ≤ B k n a)
+    (hB : ∀ k n, Integrable (B k n) μ) (n : ℕ) (x : Euclidean d) :
+    iteratedFDeriv ℝ n (fun y : Euclidean d ↦ ∫ a, (g a) y ∂μ) x =
+      ∫ a, iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x ∂μ := by
+  induction n generalizing x with
+  | zero =>
+      ext v
+      rw [ContinuousMultilinearMap.integral_apply
+        (integrable_iteratedFDeriv_family μ g B hmeas hbound hB 0 x)]
+      simp
+  | succ n ih =>
+      rw [iteratedFDeriv_succ_eq_comp_left, Function.comp_apply,
+        show iteratedFDeriv ℝ n (fun y : Euclidean d ↦ ∫ a, (g a) y ∂μ) =
+          fun y : Euclidean d ↦ ∫ a, iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) y ∂μ from
+          funext ih,
+        (hasFDerivAt_integral_iteratedFDeriv_family μ g B hmeas hbound hB n x).fderiv]
+      calc (continuousMultilinearCurryLeftEquiv ℝ (fun _ : Fin (n + 1) ↦ Euclidean d) ℂ).symm
+            (∫ a, fderiv ℝ (iteratedFDeriv ℝ n (g a : Euclidean d → ℂ)) x ∂μ)
+          = ∫ a,
+              (continuousMultilinearCurryLeftEquiv ℝ (fun _ : Fin (n + 1) ↦ Euclidean d) ℂ).symm
+                (fderiv ℝ (iteratedFDeriv ℝ n (g a : Euclidean d → ℂ)) x) ∂μ :=
+            (LinearIsometry.integral_comp_comm (𝕜 := ℝ)
+              (LinearIsometryEquiv.toLinearIsometry
+                ((continuousMultilinearCurryLeftEquiv ℝ
+                  (fun _ : Fin (n + 1) ↦ Euclidean d) ℂ).symm))
+              fun a ↦ fderiv ℝ (iteratedFDeriv ℝ n (g a : Euclidean d → ℂ)) x).symm
+        _ = ∫ a, iteratedFDeriv ℝ (n + 1) (g a : Euclidean d → ℂ) x ∂μ := by
+            apply integral_congr_ae
+            filter_upwards [] with a
+            rw [iteratedFDeriv_succ_eq_comp_left]
+            rfl
+
+theorem pow_mul_norm_iteratedFDeriv_integral_le_family
+    (hmeas : ∀ (n : ℕ) (x : Euclidean d),
+      AEStronglyMeasurable (fun a ↦ iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x) μ)
+    (hbound : ∀ (a : α) (k n : ℕ), SchwartzMap.seminorm ℂ k n (g a) ≤ B k n a)
+    (hB : ∀ k n, Integrable (B k n) μ) (k n : ℕ) (x : Euclidean d) :
+    ‖x‖ ^ k * ‖iteratedFDeriv ℝ n (fun y : Euclidean d ↦ ∫ a, g a y ∂μ) x‖ ≤
+      ∫ a, B k n a ∂μ := by
+  rw [iteratedFDeriv_integral_family μ g B hmeas hbound hB n x]
+  calc ‖x‖ ^ k * ‖∫ a, iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x ∂μ‖
+      ≤ ‖x‖ ^ k * ∫ a, ‖iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x‖ ∂μ :=
+        mul_le_mul_of_nonneg_left (norm_integral_le_integral_norm _) (by positivity)
+    _ = ∫ a, ‖x‖ ^ k * ‖iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x‖ ∂μ := by
+        rw [integral_const_mul]
+    _ ≤ ∫ a, B k n a ∂μ :=
+        integral_mono_of_nonneg (.of_forall fun _ ↦ by positivity) (hB k n)
+          (.of_forall fun a ↦ (SchwartzMap.le_seminorm ℂ k n (g a) x).trans (hbound a k n))
+
+/-- The integral `x ↦ ∫ g a x ∂μ` of a family of test functions whose Schwartz seminorms are
+dominated by integrable functions of the parameter, as a test function. -/
+def schwartzIntegral
+    (hmeas : ∀ (n : ℕ) (x : Euclidean d),
+      AEStronglyMeasurable (fun a ↦ iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x) μ)
+    (hbound : ∀ (a : α) (k n : ℕ), SchwartzMap.seminorm ℂ k n (g a) ≤ B k n a)
+    (hB : ∀ k n, Integrable (B k n) μ) : TestFunction d where
+  toFun x := ∫ a, g a x ∂μ
+  smooth' := by
+    refine contDiff_of_differentiable_iteratedFDeriv fun n _ ↦ ?_
+    rw [funext fun x ↦ iteratedFDeriv_integral_family μ g B hmeas hbound hB n x]
+    exact fun x ↦
+      (hasFDerivAt_integral_iteratedFDeriv_family μ g B hmeas hbound hB n x).differentiableAt
+  decay' k n :=
+    ⟨∫ a, B k n a ∂μ, pow_mul_norm_iteratedFDeriv_integral_le_family μ g B hmeas hbound hB k n⟩
+
+@[simp] theorem schwartzIntegral_apply
+    (hmeas : ∀ (n : ℕ) (x : Euclidean d),
+      AEStronglyMeasurable (fun a ↦ iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x) μ)
+    (hbound : ∀ (a : α) (k n : ℕ), SchwartzMap.seminorm ℂ k n (g a) ≤ B k n a)
+    (hB : ∀ k n, Integrable (B k n) μ) (x : Euclidean d) :
+    schwartzIntegral μ g B hmeas hbound hB x = ∫ a, g a x ∂μ :=
+  rfl
+
+end IntegrableFamily
+
+/-! ### Translates of test functions -/
+
+section Translate
+
+variable {d : ℕ}
+
+theorem translate_decay_bound (f : TestFunction d) (y : Euclidean d) (k n : ℕ) (x : Euclidean d) :
+    ‖x‖ ^ k * ‖iteratedFDeriv ℝ n (fun z ↦ f (z - y)) x‖ ≤
+      (1 + ‖y‖) ^ k *
+        (2 ^ k * (Finset.Iic (k, n)).sup (fun m ↦ SchwartzMap.seminorm ℂ m.1 m.2) f) := by
+  rw [iteratedFDeriv_comp_sub]
+  have hx : ‖x‖ ≤ (1 + ‖y‖) * (1 + ‖x - y‖) := by
+    have h1 : ‖x‖ ≤ ‖x - y‖ + ‖y‖ := by simpa using norm_add_le (x - y) y
+    nlinarith [norm_nonneg y, norm_nonneg (x - y)]
+  calc ‖x‖ ^ k * ‖iteratedFDeriv ℝ n f (x - y)‖
+      ≤ ((1 + ‖y‖) * (1 + ‖x - y‖)) ^ k * ‖iteratedFDeriv ℝ n f (x - y)‖ := by gcongr
+    _ = (1 + ‖y‖) ^ k * ((1 + ‖x - y‖) ^ k * ‖iteratedFDeriv ℝ n f (x - y)‖) := by
+        rw [mul_pow, mul_assoc]
+    _ ≤ (1 + ‖y‖) ^ k *
+          (2 ^ k * (Finset.Iic (k, n)).sup (fun m ↦ SchwartzMap.seminorm ℂ m.1 m.2) f) :=
+        mul_le_mul_of_nonneg_left
+          (SchwartzMap.one_add_le_sup_seminorm_apply (𝕜 := ℂ) (m := (k, n)) le_rfl le_rfl f (x - y))
+          (by positivity)
+
+/-- The translate `x ↦ f (x - y)` of a test function. -/
+def translate (f : TestFunction d) (y : Euclidean d) : TestFunction d where
+  toFun x := f (x - y)
+  smooth' := (f.smooth ⊤).comp (contDiff_id.sub contDiff_const)
+  decay' k n := ⟨_, translate_decay_bound f y k n⟩
+
+@[simp] theorem translate_apply (f : TestFunction d) (y x : Euclidean d) :
+    translate f y x = f (x - y) :=
+  rfl
+
+theorem iteratedFDeriv_translate (f : TestFunction d) (y : Euclidean d) (n : ℕ) (x : Euclidean d) :
+    iteratedFDeriv ℝ n (translate f y : Euclidean d → ℂ) x =
+      iteratedFDeriv ℝ n (f : Euclidean d → ℂ) (x - y) :=
+  iteratedFDeriv_comp_sub n y x
+
+theorem seminorm_translate_le (f : TestFunction d) (y : Euclidean d) (k n : ℕ) :
+    SchwartzMap.seminorm ℂ k n (translate f y) ≤
+      (1 + ‖y‖) ^ k *
+        (2 ^ k * (Finset.Iic (k, n)).sup (fun m ↦ SchwartzMap.seminorm ℂ m.1 m.2) f) :=
+  SchwartzMap.seminorm_le_bound ℂ k n _
+    (mul_nonneg (by positivity) (mul_nonneg (by positivity) (apply_nonneg _ _)))
+    (translate_decay_bound f y k n)
+
+end Translate
+
+/-! ### Mollification by a test function -/
+
+section Mollify
+
+variable {d : ℕ}
+
+/-- `h ⋆ f`, for a test function `f` and a measurable `h` with `(1 + ‖a‖)^k h(a) ∈ L¹` for all
+`k`, as a test function (the family `a ↦ h(a) f(· - a)` has integrable seminorm bounds). -/
+def schwartzConvolution (h : Euclidean d → ℂ) (hh : AEStronglyMeasurable h volume)
+    (hmom : ∀ k : ℕ, Integrable fun a ↦ (1 + ‖a‖) ^ k * ‖h a‖) (f : TestFunction d) :
+    TestFunction d :=
+  schwartzIntegral volume (fun a ↦ h a • translate f a)
+    (fun k n a ↦ ‖h a‖ * ((1 + ‖a‖) ^ k *
+      (2 ^ k * (Finset.Iic (k, n)).sup (fun m ↦ SchwartzMap.seminorm ℂ m.1 m.2) f)))
+    (fun n x ↦ by
+      have heq : ∀ a, iteratedFDeriv ℝ n ((h a • translate f a : TestFunction d) :
+          Euclidean d → ℂ) x = h a • iteratedFDeriv ℝ n (f : Euclidean d → ℂ) (x - a) := fun a ↦ by
+        change iteratedFDeriv ℝ n (h a • (translate f a : Euclidean d → ℂ)) x = _
+        rw [iteratedFDeriv_const_smul_apply (((translate f a).smooth ⊤).of_le
+          (mod_cast le_top)).contDiffAt, iteratedFDeriv_translate]
+      simp_rw [heq]
+      exact hh.smul (((f.smooth ⊤).continuous_iteratedFDeriv (mod_cast le_top)).comp
+        (continuous_const.sub continuous_id)).aestronglyMeasurable)
+    (fun a k n ↦ by
+      rw [map_smul_eq_mul]
+      exact mul_le_mul_of_nonneg_left (seminorm_translate_le f a k n) (norm_nonneg _))
+    (fun k n ↦ by
+      refine ((hmom k).mul_const
+        (2 ^ k * (Finset.Iic (k, n)).sup (fun m ↦ SchwartzMap.seminorm ℂ m.1 m.2) f)).congr
+        (.of_forall fun a ↦ ?_)
+      ring)
+
+theorem schwartzConvolution_apply (h : Euclidean d → ℂ) (hh : AEStronglyMeasurable h volume)
+    (hmom : ∀ k : ℕ, Integrable fun a ↦ (1 + ‖a‖) ^ k * ‖h a‖) (f : TestFunction d)
+    (x : Euclidean d) :
+    schwartzConvolution h hh hmom f x = (h ⋆[ContinuousLinearMap.mul ℂ ℂ] f) x := by
+  simp only [schwartzConvolution, schwartzIntegral_apply, convolution_def,
+    ContinuousLinearMap.mul_apply', smul_apply, translate_apply, smul_eq_mul]
+
+end Mollify
+
+end
+
+end CohnElkies
+
+end CohnElkies_SignUncertainty_SchwartzFamily
+
 /-! ## Module `CohnElkies.SignUncertainty.L1Approximation` -/
 
 section CohnElkies_SignUncertainty_L1Approximation
@@ -25099,244 +25528,6 @@ end
 end CohnElkies
 
 end CohnElkies_SignUncertainty_L1Approximation
-
-/-! ## Module `CohnElkies.SignUncertainty.SchwartzFamily` -/
-
-section CohnElkies_SignUncertainty_SchwartzFamily
-
-/-! # Integrals of families of test functions; mollifications are test functions
-
-`x ↦ ∫ g a x ∂μ` is a test function whenever `a ↦ g a` is a family of test functions whose
-Schwartz seminorms are dominated by integrable functions of `a` (differentiation under the
-integral sign; this generalizes the probability average `CohnElkies.schwartzAverage` of
-`CohnElkies.Radialization`). Applied to the family `a ↦ h(a) f(· - a)` this shows that `h ⋆ f` is
-a test function for every test function `f` and every measurable `h` with
-`(1 + ‖a‖)^k h(a) ∈ L¹` for all `k` — the mechanism behind `q_n ∈ S_rad(ℝ^d)` in report §2.1. -/
-
-namespace CohnElkies
-open scoped Real
-open Complex (I)
-
-noncomputable section
-
-open Filter MeasureTheory Set
-open scoped ContDiff Topology Convolution
-
-section IntegrableFamily
-
-variable {α : Type*} [MeasurableSpace α] (μ : Measure α) {d : ℕ} (g : α → TestFunction d)
-  (B : ℕ → ℕ → α → ℝ)
-
-theorem integrable_iteratedFDeriv_family
-    (hmeas : ∀ (n : ℕ) (x : Euclidean d),
-      AEStronglyMeasurable (fun a ↦ iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x) μ)
-    (hbound : ∀ (a : α) (k n : ℕ), SchwartzMap.seminorm ℂ k n (g a) ≤ B k n a)
-    (hB : ∀ k n, Integrable (B k n) μ) (n : ℕ) (x : Euclidean d) :
-    Integrable (fun a ↦ iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x) μ :=
-  (hB 0 n).mono' (hmeas n x) (.of_forall fun a ↦
-    (SchwartzMap.norm_iteratedFDeriv_le_seminorm ℂ (g a) n x).trans (hbound a 0 n))
-
-theorem hasFDerivAt_integral_iteratedFDeriv_family
-    (hmeas : ∀ (n : ℕ) (x : Euclidean d),
-      AEStronglyMeasurable (fun a ↦ iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x) μ)
-    (hbound : ∀ (a : α) (k n : ℕ), SchwartzMap.seminorm ℂ k n (g a) ≤ B k n a)
-    (hB : ∀ k n, Integrable (B k n) μ) (n : ℕ) (x : Euclidean d) :
-    HasFDerivAt (fun y : Euclidean d ↦ ∫ a, iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) y ∂μ)
-      (∫ a, fderiv ℝ (iteratedFDeriv ℝ n (g a : Euclidean d → ℂ)) x ∂μ) x := by
-  have hderiv_meas : AEStronglyMeasurable
-      (fun a ↦ fderiv ℝ (iteratedFDeriv ℝ n (g a : Euclidean d → ℂ)) x) μ := by
-    simpa only [fderiv_iteratedFDeriv, Function.comp_apply] using
-      (continuousMultilinearCurryLeftEquiv ℝ (fun _ : Fin (n + 1) ↦ Euclidean d)
-        ℂ).continuous.comp_aestronglyMeasurable (hmeas (n + 1) x)
-  apply hasFDerivAt_integral_of_dominated_of_fderiv_le (𝕜 := ℝ)
-    (F := fun y : Euclidean d ↦ fun a ↦ iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) y)
-    (F' := fun y : Euclidean d ↦ fun a ↦ fderiv ℝ (iteratedFDeriv ℝ n (g a : Euclidean d → ℂ)) y)
-    (bound := B 0 (n + 1)) (s := Set.univ) Filter.univ_mem
-    (.of_forall fun y ↦ hmeas n y) (integrable_iteratedFDeriv_family μ g B hmeas hbound hB n x)
-    hderiv_meas (.of_forall fun a y _ ↦ ?_) (hB 0 (n + 1))
-  · exact .of_forall fun a y _ ↦ (((g a).smooth ⊤).differentiable_iteratedFDeriv
-      (ENat.natCast_lt_of_coe_top_le_withTop (le_refl _) n)).differentiableAt.hasFDerivAt
-  · calc ‖fderiv ℝ (iteratedFDeriv ℝ n (g a : Euclidean d → ℂ)) y‖
-        = ‖iteratedFDeriv ℝ (n + 1) (g a : Euclidean d → ℂ) y‖ := norm_fderiv_iteratedFDeriv
-      _ ≤ SchwartzMap.seminorm ℂ 0 (n + 1) (g a) :=
-          SchwartzMap.norm_iteratedFDeriv_le_seminorm ℂ (g a) (n + 1) y
-      _ ≤ B 0 (n + 1) a := hbound a 0 (n + 1)
-
-/-- Differentiation under the integral sign: iterated derivatives of a family of test functions
-with integrable seminorm bounds commute with integration in the parameter. -/
-theorem iteratedFDeriv_integral_family
-    (hmeas : ∀ (n : ℕ) (x : Euclidean d),
-      AEStronglyMeasurable (fun a ↦ iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x) μ)
-    (hbound : ∀ (a : α) (k n : ℕ), SchwartzMap.seminorm ℂ k n (g a) ≤ B k n a)
-    (hB : ∀ k n, Integrable (B k n) μ) (n : ℕ) (x : Euclidean d) :
-    iteratedFDeriv ℝ n (fun y : Euclidean d ↦ ∫ a, (g a) y ∂μ) x =
-      ∫ a, iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x ∂μ := by
-  induction n generalizing x with
-  | zero =>
-      ext v
-      rw [ContinuousMultilinearMap.integral_apply
-        (integrable_iteratedFDeriv_family μ g B hmeas hbound hB 0 x)]
-      simp
-  | succ n ih =>
-      rw [iteratedFDeriv_succ_eq_comp_left, Function.comp_apply,
-        show iteratedFDeriv ℝ n (fun y : Euclidean d ↦ ∫ a, (g a) y ∂μ) =
-          fun y : Euclidean d ↦ ∫ a, iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) y ∂μ from
-          funext ih,
-        (hasFDerivAt_integral_iteratedFDeriv_family μ g B hmeas hbound hB n x).fderiv]
-      calc (continuousMultilinearCurryLeftEquiv ℝ (fun _ : Fin (n + 1) ↦ Euclidean d) ℂ).symm
-            (∫ a, fderiv ℝ (iteratedFDeriv ℝ n (g a : Euclidean d → ℂ)) x ∂μ)
-          = ∫ a,
-              (continuousMultilinearCurryLeftEquiv ℝ (fun _ : Fin (n + 1) ↦ Euclidean d) ℂ).symm
-                (fderiv ℝ (iteratedFDeriv ℝ n (g a : Euclidean d → ℂ)) x) ∂μ :=
-            (LinearIsometry.integral_comp_comm (𝕜 := ℝ)
-              (LinearIsometryEquiv.toLinearIsometry
-                ((continuousMultilinearCurryLeftEquiv ℝ
-                  (fun _ : Fin (n + 1) ↦ Euclidean d) ℂ).symm))
-              fun a ↦ fderiv ℝ (iteratedFDeriv ℝ n (g a : Euclidean d → ℂ)) x).symm
-        _ = ∫ a, iteratedFDeriv ℝ (n + 1) (g a : Euclidean d → ℂ) x ∂μ := by
-            apply integral_congr_ae
-            filter_upwards [] with a
-            rw [iteratedFDeriv_succ_eq_comp_left]
-            rfl
-
-theorem pow_mul_norm_iteratedFDeriv_integral_le_family
-    (hmeas : ∀ (n : ℕ) (x : Euclidean d),
-      AEStronglyMeasurable (fun a ↦ iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x) μ)
-    (hbound : ∀ (a : α) (k n : ℕ), SchwartzMap.seminorm ℂ k n (g a) ≤ B k n a)
-    (hB : ∀ k n, Integrable (B k n) μ) (k n : ℕ) (x : Euclidean d) :
-    ‖x‖ ^ k * ‖iteratedFDeriv ℝ n (fun y : Euclidean d ↦ ∫ a, g a y ∂μ) x‖ ≤
-      ∫ a, B k n a ∂μ := by
-  rw [iteratedFDeriv_integral_family μ g B hmeas hbound hB n x]
-  calc ‖x‖ ^ k * ‖∫ a, iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x ∂μ‖
-      ≤ ‖x‖ ^ k * ∫ a, ‖iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x‖ ∂μ :=
-        mul_le_mul_of_nonneg_left (norm_integral_le_integral_norm _) (by positivity)
-    _ = ∫ a, ‖x‖ ^ k * ‖iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x‖ ∂μ := by
-        rw [integral_const_mul]
-    _ ≤ ∫ a, B k n a ∂μ :=
-        integral_mono_of_nonneg (.of_forall fun _ ↦ by positivity) (hB k n)
-          (.of_forall fun a ↦ (SchwartzMap.le_seminorm ℂ k n (g a) x).trans (hbound a k n))
-
-/-- The integral `x ↦ ∫ g a x ∂μ` of a family of test functions whose Schwartz seminorms are
-dominated by integrable functions of the parameter, as a test function. -/
-def schwartzIntegral
-    (hmeas : ∀ (n : ℕ) (x : Euclidean d),
-      AEStronglyMeasurable (fun a ↦ iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x) μ)
-    (hbound : ∀ (a : α) (k n : ℕ), SchwartzMap.seminorm ℂ k n (g a) ≤ B k n a)
-    (hB : ∀ k n, Integrable (B k n) μ) : TestFunction d where
-  toFun x := ∫ a, g a x ∂μ
-  smooth' := by
-    refine contDiff_of_differentiable_iteratedFDeriv fun n _ ↦ ?_
-    rw [funext fun x ↦ iteratedFDeriv_integral_family μ g B hmeas hbound hB n x]
-    exact fun x ↦
-      (hasFDerivAt_integral_iteratedFDeriv_family μ g B hmeas hbound hB n x).differentiableAt
-  decay' k n :=
-    ⟨∫ a, B k n a ∂μ, pow_mul_norm_iteratedFDeriv_integral_le_family μ g B hmeas hbound hB k n⟩
-
-@[simp] theorem schwartzIntegral_apply
-    (hmeas : ∀ (n : ℕ) (x : Euclidean d),
-      AEStronglyMeasurable (fun a ↦ iteratedFDeriv ℝ n (g a : Euclidean d → ℂ) x) μ)
-    (hbound : ∀ (a : α) (k n : ℕ), SchwartzMap.seminorm ℂ k n (g a) ≤ B k n a)
-    (hB : ∀ k n, Integrable (B k n) μ) (x : Euclidean d) :
-    schwartzIntegral μ g B hmeas hbound hB x = ∫ a, g a x ∂μ :=
-  rfl
-
-end IntegrableFamily
-
-/-! ### Translates of test functions -/
-
-section Translate
-
-variable {d : ℕ}
-
-theorem translate_decay_bound (f : TestFunction d) (y : Euclidean d) (k n : ℕ) (x : Euclidean d) :
-    ‖x‖ ^ k * ‖iteratedFDeriv ℝ n (fun z ↦ f (z - y)) x‖ ≤
-      (1 + ‖y‖) ^ k *
-        (2 ^ k * (Finset.Iic (k, n)).sup (fun m ↦ SchwartzMap.seminorm ℂ m.1 m.2) f) := by
-  rw [iteratedFDeriv_comp_sub]
-  have hx : ‖x‖ ≤ (1 + ‖y‖) * (1 + ‖x - y‖) := by
-    have h1 : ‖x‖ ≤ ‖x - y‖ + ‖y‖ := by simpa using norm_add_le (x - y) y
-    nlinarith [norm_nonneg y, norm_nonneg (x - y)]
-  calc ‖x‖ ^ k * ‖iteratedFDeriv ℝ n f (x - y)‖
-      ≤ ((1 + ‖y‖) * (1 + ‖x - y‖)) ^ k * ‖iteratedFDeriv ℝ n f (x - y)‖ := by gcongr
-    _ = (1 + ‖y‖) ^ k * ((1 + ‖x - y‖) ^ k * ‖iteratedFDeriv ℝ n f (x - y)‖) := by
-        rw [mul_pow, mul_assoc]
-    _ ≤ (1 + ‖y‖) ^ k *
-          (2 ^ k * (Finset.Iic (k, n)).sup (fun m ↦ SchwartzMap.seminorm ℂ m.1 m.2) f) :=
-        mul_le_mul_of_nonneg_left
-          (SchwartzMap.one_add_le_sup_seminorm_apply (𝕜 := ℂ) (m := (k, n)) le_rfl le_rfl f (x - y))
-          (by positivity)
-
-/-- The translate `x ↦ f (x - y)` of a test function. -/
-def translate (f : TestFunction d) (y : Euclidean d) : TestFunction d where
-  toFun x := f (x - y)
-  smooth' := (f.smooth ⊤).comp (contDiff_id.sub contDiff_const)
-  decay' k n := ⟨_, translate_decay_bound f y k n⟩
-
-@[simp] theorem translate_apply (f : TestFunction d) (y x : Euclidean d) :
-    translate f y x = f (x - y) :=
-  rfl
-
-theorem iteratedFDeriv_translate (f : TestFunction d) (y : Euclidean d) (n : ℕ) (x : Euclidean d) :
-    iteratedFDeriv ℝ n (translate f y : Euclidean d → ℂ) x =
-      iteratedFDeriv ℝ n (f : Euclidean d → ℂ) (x - y) :=
-  iteratedFDeriv_comp_sub n y x
-
-theorem seminorm_translate_le (f : TestFunction d) (y : Euclidean d) (k n : ℕ) :
-    SchwartzMap.seminorm ℂ k n (translate f y) ≤
-      (1 + ‖y‖) ^ k *
-        (2 ^ k * (Finset.Iic (k, n)).sup (fun m ↦ SchwartzMap.seminorm ℂ m.1 m.2) f) :=
-  SchwartzMap.seminorm_le_bound ℂ k n _
-    (mul_nonneg (by positivity) (mul_nonneg (by positivity) (apply_nonneg _ _)))
-    (translate_decay_bound f y k n)
-
-end Translate
-
-/-! ### Mollification by a test function -/
-
-section Mollify
-
-variable {d : ℕ}
-
-/-- `h ⋆ f`, for a test function `f` and a measurable `h` with `(1 + ‖a‖)^k h(a) ∈ L¹` for all
-`k`, as a test function (the family `a ↦ h(a) f(· - a)` has integrable seminorm bounds). -/
-def schwartzConvolution (h : Euclidean d → ℂ) (hh : AEStronglyMeasurable h volume)
-    (hmom : ∀ k : ℕ, Integrable fun a ↦ (1 + ‖a‖) ^ k * ‖h a‖) (f : TestFunction d) :
-    TestFunction d :=
-  schwartzIntegral volume (fun a ↦ h a • translate f a)
-    (fun k n a ↦ ‖h a‖ * ((1 + ‖a‖) ^ k *
-      (2 ^ k * (Finset.Iic (k, n)).sup (fun m ↦ SchwartzMap.seminorm ℂ m.1 m.2) f)))
-    (fun n x ↦ by
-      have heq : ∀ a, iteratedFDeriv ℝ n ((h a • translate f a : TestFunction d) :
-          Euclidean d → ℂ) x = h a • iteratedFDeriv ℝ n (f : Euclidean d → ℂ) (x - a) := fun a ↦ by
-        change iteratedFDeriv ℝ n (h a • (translate f a : Euclidean d → ℂ)) x = _
-        rw [iteratedFDeriv_const_smul_apply (((translate f a).smooth ⊤).of_le
-          (mod_cast le_top)).contDiffAt, iteratedFDeriv_translate]
-      simp_rw [heq]
-      exact hh.smul (((f.smooth ⊤).continuous_iteratedFDeriv (mod_cast le_top)).comp
-        (continuous_const.sub continuous_id)).aestronglyMeasurable)
-    (fun a k n ↦ by
-      rw [map_smul_eq_mul]
-      exact mul_le_mul_of_nonneg_left (seminorm_translate_le f a k n) (norm_nonneg _))
-    (fun k n ↦ by
-      refine ((hmom k).mul_const
-        (2 ^ k * (Finset.Iic (k, n)).sup (fun m ↦ SchwartzMap.seminorm ℂ m.1 m.2) f)).congr
-        (.of_forall fun a ↦ ?_)
-      ring)
-
-theorem schwartzConvolution_apply (h : Euclidean d → ℂ) (hh : AEStronglyMeasurable h volume)
-    (hmom : ∀ k : ℕ, Integrable fun a ↦ (1 + ‖a‖) ^ k * ‖h a‖) (f : TestFunction d)
-    (x : Euclidean d) :
-    schwartzConvolution h hh hmom f x = (h ⋆[ContinuousLinearMap.mul ℂ ℂ] f) x := by
-  simp only [schwartzConvolution, schwartzIntegral_apply, convolution_def,
-    ContinuousLinearMap.mul_apply', smul_apply, translate_apply, smul_eq_mul]
-
-end Mollify
-
-end
-
-end CohnElkies
-
-end CohnElkies_SignUncertainty_SchwartzFamily
 
 /-! ## Module `CohnElkies.SignUncertainty.Mollifiers` -/
 
@@ -25673,6 +25864,1030 @@ end
 end CohnElkies
 
 end CohnElkies_SignUncertainty_Mollifiers
+
+/-! ## Module `CohnElkies.SignUncertainty.Radialization` -/
+
+section CohnElkies_SignUncertainty_Radialization
+
+/-! # Rotational averages of sign eigenfunctions (report §2.1)
+
+The rotational average `ℛg(x) = ∫_{O(d)} g(U⁻¹x) dU` and its `L¹` theory are in
+`CohnElkies.Radialization`. Here is what is specific to sign eigenfunctions: `ℛg ≠ 0` whenever `g`
+is a nonzero eventually nonnegative Fourier eigenfunction, since otherwise `g` vanishes outside a
+ball, its Fourier transform is entire along every ray
+(`Real.fourierIntegral_eq_zero_of_eq_zero_outside_ball`, specialized to `ℝ^d` as
+`fourier_eq_zero_of_eq_zero_outside`), and `𝓕 g = ς g` forces `g = 0`. The upshot is
+`SignEigenfunction.radialize`: a radial sign eigenfunction with the same exterior sign condition,
+and with `r(ℛg) ≤ r(g)` and `‖ℛg‖₁ ≤ ‖g‖₁`; hence the infimum defining `A_ς(d)` may be restricted
+to radial eigenfunctions (`signUncertaintyConstant_eq_radial`).
+-/
+
+namespace CohnElkies
+open scoped Real
+open Complex (I)
+
+noncomputable section
+
+open Filter MeasureTheory Set
+open scoped ENNReal FourierTransform Topology RealInnerProductSpace
+
+variable {d : ℕ}
+
+/-! ### Nonvanishing of the average of an eventually nonnegative eigenfunction
+
+Report §2.1: if `ℛg = 0` and `g ≥ 0` outside a ball, then `g` vanishes outside that ball
+(nonnegative continuous functions with zero spherical averages vanish); the Fourier transform of a
+compactly supported integrable function is entire along every ray
+(`CohnElkiesForMathlib.Analysis.Fourier.CompactSupport`), so `𝓕 g = ς g` vanishing outside the same
+ball forces `𝓕 g = 0` and `g = 0`. -/
+
+theorem eq_zero_of_rotationalAverage_eq_zero {g : Euclidean d → ℝ} (hg : Continuous g) {R : ℝ}
+    (hR : ∀ x : Euclidean d, R ≤ ‖x‖ → 0 ≤ g x) (h0 : rotationalAverage g = 0)
+    {x : Euclidean d} (hx : R ≤ ‖x‖) : g x = 0 := by
+  set φ : OrthogonalGroup d → ℝ := fun U ↦ g (orthogonalAction U⁻¹ x) with hφdef
+  have hφ : Continuous φ := hg.comp ((continuous_orthogonalAction x).comp continuous_inv)
+  have hφ0 : 0 ≤ φ := fun U ↦ hR _ (by rw [norm_orthogonalAction]; exact hx)
+  have hint : Integrable φ (radialOrthogonalHaar d) := integrable_comp_orthogonalAction_inv hg x
+  have hzero : ∫ U, φ U ∂radialOrthogonalHaar d = 0 := congrFun h0 x
+  have heq : φ = 0 := (hφ.ae_eq_iff_eq (radialOrthogonalHaar d) continuous_const).1
+    ((integral_eq_zero_iff_of_nonneg hφ0 hint).1 hzero)
+  simpa [hφdef] using congrFun heq 1
+
+/-- `ℝ^d` is nontrivial for `d > 0`. -/
+theorem nontrivial_euclidean (hd : 0 < d) : Nontrivial (Euclidean d) :=
+  ⟨⟨radialUnitDirection hd, 0, fun h ↦ by simpa [h] using norm_radialUnitDirection hd⟩⟩
+
+/-- Report §2.1: an integrable function vanishing outside a ball whose Fourier transform also
+vanishes outside a ball has identically vanishing Fourier transform (`d ≥ 1`), since `𝓕 f` is
+entire along every ray through the origin: the specialization to `ℝ^d` of
+`Real.fourierIntegral_eq_zero_of_eq_zero_outside_ball`. -/
+theorem fourier_eq_zero_of_eq_zero_outside (hd : 0 < d) {f : Euclidean d → ℂ} (hf : Integrable f)
+    {R : ℝ} (hsupp : ∀ x : Euclidean d, R < ‖x‖ → f x = 0)
+    (hfourier : ∀ x : Euclidean d, R < ‖x‖ → 𝓕 f x = 0) : 𝓕 f = 0 :=
+  haveI := nontrivial_euclidean hd
+  Real.fourierIntegral_eq_zero_of_eq_zero_outside_ball hf hsupp hfourier
+
+/-- Report §2.1: the rotational average of a sign eigenfunction that is nonnegative outside a
+ball does not vanish. -/
+theorem SignEigenfunction.rotationalAverage_ne_zero (hd : 0 < d) {ς : ℤˣ}
+    (g : SignEigenfunction d ς) {R : ℝ} (hR : ∀ x : Euclidean d, R ≤ ‖x‖ → 0 ≤ g x) :
+    rotationalAverage (g : Euclidean d → ℝ) ≠ 0 := by
+  intro h0
+  have hvan : ∀ x : Euclidean d, R ≤ ‖x‖ → g x = 0 := fun x hx ↦
+    eq_zero_of_rotationalAverage_eq_zero g.continuous hR h0 hx
+  have hsupp : ∀ x : Euclidean d, R < ‖x‖ → g.toComplex x = 0 := fun x hx ↦ by
+    simp [hvan x hx.le]
+  have hfour : ∀ x : Euclidean d, R < ‖x‖ → 𝓕 g.toComplex x = 0 := fun x hx ↦ by
+    rw [g.fourier_toComplex, hvan x hx.le]
+    simp
+  have hzero := fourier_eq_zero_of_eq_zero_outside hd g.integrable_toComplex hsupp hfour
+  exact g.ne_zero (funext fun x ↦ by simpa [congrFun hzero x] using g.coe_eq_fourier x)
+
+/-- The rotational average `ℛg` of a sign eigenfunction `g` nonnegative outside a ball, as a sign
+eigenfunction (report §2.1: `𝓕(ℛg) = ς ℛg`, `ℛg(0) = g(0) = 0`, `ℛg ≠ 0`). -/
+def SignEigenfunction.radialize (hd : 0 < d) {ς : ℤˣ} (g : SignEigenfunction d ς) {R : ℝ}
+    (hR : ∀ x : Euclidean d, R ≤ ‖x‖ → 0 ≤ g x) : SignEigenfunction d ς where
+  toFun := rotationalAverage (g : Euclidean d → ℝ)
+  integrable := integrable_rotationalAverage g.continuous g.integrable
+  fourier_eq ξ := by
+    have h : (fun x ↦ ((rotationalAverage (g : Euclidean d → ℝ) x : ℝ) : ℂ)) =
+        rotationalAverage g.toComplex :=
+      funext fun x ↦ (rotationalAverage_ofReal g x).symm
+    rw [h, fourier_rotationalAverage g.continuous_toComplex g.integrable_toComplex]
+    unfold rotationalAverage
+    simp only [g.fourier_toComplex]
+    rw [integral_const_mul, integral_complex_ofReal]
+  ne_zero := g.rotationalAverage_ne_zero hd hR
+  zero := by rw [rotationalAverage_zero, g.zero]
+
+namespace SignEigenfunction
+
+variable (hd : 0 < d) {ς : ℤˣ} (g : SignEigenfunction d ς) {R : ℝ}
+  (hR : ∀ x : Euclidean d, R ≤ ‖x‖ → 0 ≤ g x)
+
+@[simp] theorem radialize_apply (x : Euclidean d) :
+    g.radialize hd hR x = rotationalAverage (g : Euclidean d → ℝ) x :=
+  rfl
+
+theorem radialize_eq_of_norm_eq : IsRadial (g.radialize hd hR) :=
+  rotationalAverage_eq_of_norm_eq _
+
+theorem radialize_nonneg {x : Euclidean d} (hx : R ≤ ‖x‖) : 0 ≤ g.radialize hd hR x :=
+  rotationalAverage_nonneg_of_norm_le hR hx
+
+/-- `r(ℛg) ≤ r(g)`. -/
+theorem signRadius_radialize_le : signRadius (g.radialize hd hR) ≤ signRadius g :=
+  signRadius_le_signRadius fun _ hR' _ hx ↦ rotationalAverage_nonneg_of_norm_le hR' hx
+
+/-- `‖ℛg‖₁ ≤ ‖g‖₁`. -/
+theorem integral_norm_radialize_le : ∫ x, ‖g.radialize hd hR x‖ ≤ ∫ x, ‖g x‖ :=
+  integral_norm_rotationalAverage_le g.continuous g.integrable
+
+end SignEigenfunction
+
+/-! ### Radial reduction for the sign-uncertainty constants -/
+
+/-- A function with a finite last-sign radius really is nonnegative outside some ball: the
+infimum defining `r(g)` is over a nonempty set of radii. -/
+theorem exists_nonneg_outside_of_signRadius_lt_top {g : Euclidean d → ℝ} (h : signRadius g < ⊤) :
+    ∃ R : ℝ, ∀ x : Euclidean d, R ≤ ‖x‖ → 0 ≤ g x := by
+  by_contra hcon
+  exact h.ne (top_le_iff.1 (le_signRadius fun R hR ↦ absurd ⟨(R : ℝ), hR⟩ hcon))
+
+/-- Report §2.1: the infimum defining `A_ς(d)` may be taken over radial eigenfunctions only. -/
+theorem signUncertaintyConstant_eq_radial (hd : 0 < d) (ς : ℤˣ) :
+    signUncertaintyConstant ς d =
+      ⨅ (g : SignEigenfunction d ς) (_ : IsRadial (g : Euclidean d → ℝ)), signRadius g := by
+  refine le_antisymm (le_iInf₂ fun g _ ↦ signUncertaintyConstant_le g) (le_iInf fun g ↦ ?_)
+  rcases eq_or_ne (signRadius (g : Euclidean d → ℝ)) ⊤ with htop | hne
+  · rw [htop]
+    exact le_top
+  · obtain ⟨R, hR⟩ := exists_nonneg_outside_of_signRadius_lt_top (lt_top_iff_ne_top.2 hne)
+    exact (iInf₂_le (g.radialize hd hR) (g.radialize_eq_of_norm_eq hd hR)).trans
+      (g.signRadius_radialize_le hd hR)
+
+end
+
+end CohnElkies
+
+end CohnElkies_SignUncertainty_Radialization
+
+/-! ## Module `CohnElkies.SignUncertainty.MellinCancellation` -/
+
+section CohnElkies_SignUncertainty_MellinCancellation
+
+/-! # The central Mellin cancellation (report Appendix A, equation (88))
+
+For an anti-self-Fourier sign eigenfunction `g ∈ E₋(d)` (report (5)–(6)) the central Mellin moment
+vanishes: `∫ g(x) ‖x‖^{-λ} dx = 0`, `λ = d/2` (`SignEigenfunction.integral_mul_norm_rpow_eq_zero`).
+Following the report, the Gaussian moment `J(t) = ∫ g(x) e^{-πt‖x‖²} dx` satisfies the Gaussian
+duality `J(t) = -t^{-λ} J(1/t)` (the pairing `∫ 𝓕g · φ = ∫ g · 𝓕φ`, `𝓕 g = -g`, and the Fourier
+transform of the Gaussian), so that `∫_0^∞ t^{λ/2-1} J(t) dt` is its own negative under the
+substitution `t ↦ 1/t`; on the other hand Fubini and the Gamma integral evaluate this integral to
+`Γ(λ/2) π^{-λ/2} ∫ g(x) ‖x‖^{-λ} dx`, which therefore vanishes. For radial `g`, polar coordinates
+turn this into the vanishing of the profile moment `∫_0^∞ r^{λ-1} g(r e₁) dr` (report (88)) and,
+along every ray, of `∫_0^∞ s^{λ-1} g(s x) ds` (`x ≠ 0`), the integrals converging absolutely. -/
+
+namespace CohnElkies
+open scoped Real
+open Complex (I)
+
+noncomputable section
+
+open Filter MeasureTheory Set
+open scoped ENNReal FourierTransform Topology
+
+variable {d : ℕ}
+
+/-! ### The substitution `t ↦ 1/t` -/
+
+/-- The change of variables `t ↦ t⁻¹` on a measurable set of nonzero reals. -/
+theorem integral_inv_sq_smul_comp_inv {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    (G : ℝ → E) {s : Set ℝ} (hs : MeasurableSet s) (h0 : (0 : ℝ) ∉ s) :
+    ∫ t in s, (t ^ 2)⁻¹ • G t⁻¹ = ∫ u in s⁻¹, G u := by
+  rw [← Set.image_inv_eq_inv, integral_image_eq_integral_abs_deriv_smul hs
+    (f' := fun t ↦ -(t ^ 2)⁻¹)
+    (fun t ht ↦ (hasDerivAt_inv (ne_of_mem_of_not_mem ht h0)).hasDerivWithinAt)
+    inv_injective.injOn G]
+  refine setIntegral_congr_fun hs fun t _ ↦ ?_
+  simp [abs_of_nonneg (sq_nonneg t)]
+
+theorem integral_inv_sq_smul_comp_inv_Ioi_zero {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] (G : ℝ → E) :
+    ∫ t in Ioi (0 : ℝ), (t ^ 2)⁻¹ • G t⁻¹ = ∫ u in Ioi (0 : ℝ), G u := by
+  have h : (Ioi (0 : ℝ))⁻¹ = Ioi 0 := by
+    ext u
+    simp
+  rw [integral_inv_sq_smul_comp_inv G measurableSet_Ioi (by simp), h]
+
+theorem integral_inv_sq_smul_comp_inv_Ioi_one {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] (G : ℝ → E) :
+    ∫ t in Ioi (1 : ℝ), (t ^ 2)⁻¹ • G t⁻¹ = ∫ u in Ioo (0 : ℝ) 1, G u := by
+  rw [integral_inv_sq_smul_comp_inv G measurableSet_Ioi (by simp), Set.inv_Ioi₀ one_pos, inv_one]
+
+/-! ### Gaussian duality for the Gaussian moment `J(t)` -/
+
+/-- The Gaussian moment `J(t) = ∫ g(x) e^{-πt‖x‖²} dx` of report Appendix A (proof of
+Proposition A.1). -/
+def gaussianMoment (g : Euclidean d → ℝ) (t : ℝ) : ℝ := ∫ x, g x * gaussianReal t x
+
+/-- The Fourier transform is self-adjoint: `∫ 𝓕 f · φ = ∫ f · 𝓕 φ` for integrable `f`, `φ`. -/
+theorem integral_fourier_mul_eq_integral_mul_fourier {f φ : Euclidean d → ℂ} (hf : Integrable f)
+    (hφ : Integrable φ) : ∫ ξ, 𝓕 f ξ * φ ξ = ∫ x, f x * 𝓕 φ x := by
+  have h := VectorFourier.integral_fourierIntegral_smul_eq_flip (L := innerₗ (Euclidean d))
+    Real.continuous_fourierChar continuous_inner hf hφ
+  simp only [flip_innerₗ, smul_eq_mul] at h
+  exact h
+
+/-- Gaussian duality for `g ∈ E₋(d)`: `J(t) = -t^{-λ} J(1/t)`, `λ = d/2` (report, proof of
+Proposition A.1). -/
+theorem SignEigenfunction.gaussianMoment_eq (g : SignEigenfunction d (-1)) {t : ℝ} (ht : 0 < t) :
+    gaussianMoment g t = -(t ^ (d / 2 : ℝ))⁻¹ * gaussianMoment g t⁻¹ := by
+  have h := integral_fourier_mul_eq_integral_mul_fourier g.integrable_toComplex
+    (integrable_ofReal_gaussianReal (d := d) ht)
+  simp only [g.fourier_toComplex, fourier_gaussianReal ht, SignEigenfunction.toComplex_apply,
+    Units.val_neg, Units.val_one, Int.cast_neg, Int.cast_one, neg_mul, one_mul, integral_neg,
+    mul_left_comm _ ((((t ^ (d / 2 : ℝ))⁻¹ : ℝ) : ℂ)), integral_const_mul] at h
+  simp only [← Complex.ofReal_mul, integral_complex_ofReal] at h
+  push_cast at h
+  apply Complex.ofReal_injective
+  simp only [gaussianMoment]
+  push_cast
+  linear_combination -h
+
+/-! ### Fubini and the Gamma integral -/
+
+/-- `∫ |g(x)| ‖x‖^{-λ} dx < ∞` for a bounded integrable `g` on `ℝ^d`, since `λ = d/2 < d`. -/
+theorem integrable_mul_norm_rpow_neg_half (hd : 0 < d) {g : Euclidean d → ℝ} (hg : Integrable g)
+    {C : ℝ} (hC : ∀ x, ‖g x‖ ≤ C) :
+    Integrable fun x : Euclidean d ↦ g x * ‖x‖ ^ (-(d / 2 : ℝ)) := by
+  have hmeas : AEStronglyMeasurable (fun x : Euclidean d ↦ g x * ‖x‖ ^ (-(d / 2 : ℝ))) volume :=
+    hg.aestronglyMeasurable.mul (measurable_norm.pow_const (-(d / 2 : ℝ)) :
+      Measurable fun x : Euclidean d ↦ ‖x‖ ^ (-(d / 2 : ℝ))).aestronglyMeasurable
+  have hd' : (0 : ℝ) < d := Nat.cast_pos.2 hd
+  rw [← integrableOn_univ, ← Set.union_compl_self (Metric.ball (0 : Euclidean d) 1)]
+  refine IntegrableOn.union ?_ ?_
+  · refine integrableOn_ball_of_norm_le_rpow (μ := volume) (C := C) (α := d / 2)
+      (by rw [finrank_euclideanSpace_fin]; exact hd)
+      (by rw [finrank_euclideanSpace_fin]; linarith) (.of_forall fun x ↦ ?_) hmeas
+    rw [norm_mul, Real.norm_of_nonneg (Real.rpow_nonneg (norm_nonneg x) _)]
+    exact mul_le_mul_of_nonneg_right (hC x) (Real.rpow_nonneg (norm_nonneg x) _)
+  · refine hg.norm.integrableOn.mono' hmeas.restrict ?_
+    filter_upwards [ae_restrict_mem measurableSet_ball.compl] with x hx
+    rw [norm_mul]
+    refine mul_le_of_le_one_right (norm_nonneg (g x)) ?_
+    rw [Real.norm_of_nonneg (Real.rpow_nonneg (norm_nonneg x) _)]
+    exact Real.rpow_le_one_of_one_le_of_nonpos (by simpa using hx) (by linarith)
+
+/-- The Gamma integral: `∫_0^∞ t^{a-1} e^{-πt‖x‖²} dt = Γ(a) π^{-a} ‖x‖^{-2a}` for `x ≠ 0`. -/
+theorem integral_rpow_mul_gaussianReal {a : ℝ} (ha : 0 < a) {x : Euclidean d} (hx : x ≠ 0) :
+    ∫ t in Ioi (0 : ℝ), t ^ (a - 1) * gaussianReal t x =
+      Real.Gamma a * π ^ (-a) * ‖x‖ ^ (-(2 * a)) := by
+  have hx' : 0 < ‖x‖ := norm_pos_iff.2 hx
+  have hπ : 0 < π * ‖x‖ ^ 2 := by positivity
+  have h := Real.integral_rpow_mul_exp_neg_mul_Ioi ha hπ
+  have e : ∀ t : ℝ, gaussianReal t x = Real.exp (-(π * ‖x‖ ^ 2 * t)) := fun t ↦ by
+    simp only [gaussianReal]
+    ring_nf
+  simp_rw [e]
+  rw [h, one_div, Real.inv_rpow hπ.le, Real.mul_rpow Real.pi_pos.le (by positivity),
+    ← Real.rpow_natCast ‖x‖ 2, ← Real.rpow_mul (norm_nonneg x), mul_inv, ← Real.rpow_neg
+    Real.pi_pos.le, ← Real.rpow_neg (norm_nonneg x)]
+  push_cast
+  ring
+
+/-- Absolute convergence of the double integral `∫_0^∞ ∫ t^{λ/2-1} g(x) e^{-πt‖x‖²} dx dt`. -/
+theorem SignEigenfunction.integrable_gaussianMoment_kernel (hd : 0 < d) {ς : ℤˣ}
+    (g : SignEigenfunction d ς) :
+    Integrable (fun p : ℝ × Euclidean d ↦ p.1 ^ ((d / 4 : ℝ) - 1) * (g p.2 * gaussianReal p.1 p.2))
+      ((volume.restrict (Ioi 0)).prod volume) := by
+  have ha : (0 : ℝ) < d / 4 := by positivity
+  have hmeas : AEStronglyMeasurable
+      (fun p : ℝ × Euclidean d ↦ p.1 ^ ((d / 4 : ℝ) - 1) * (g p.2 * gaussianReal p.1 p.2))
+      ((volume.restrict (Ioi 0)).prod volume) :=
+    ((measurable_fst.pow_const _).mul ((g.continuous.measurable.comp measurable_snd).mul
+      (by unfold gaussianReal; fun_prop :
+        Continuous fun p : ℝ × Euclidean d ↦ gaussianReal p.1 p.2).measurable)).aestronglyMeasurable
+  rw [integrable_prod_iff' hmeas]
+  refine ⟨.of_forall fun x ↦ ?_, ?_⟩
+  · by_cases hx : x = 0
+    · simp [hx, g.zero]
+    · have hπ : 0 < π * ‖x‖ ^ 2 := by positivity
+      refine IntegrableOn.congr_fun ((integrableOn_rpow_mul_exp_neg_mul_rpow (p := 1)
+        (s := d / 4 - 1) (by linarith) one_pos hπ).const_mul (g x)) (fun t _ ↦ ?_) measurableSet_Ioi
+      simp only [gaussianReal, Real.rpow_one]
+      ring_nf
+  · have key : ∀ x : Euclidean d,
+        ∫ t in Ioi (0 : ℝ), ‖t ^ ((d / 4 : ℝ) - 1) * (g x * gaussianReal t x)‖ =
+          ‖g x‖ * (Real.Gamma (d / 4) * π ^ (-(d / 4 : ℝ)) * ‖x‖ ^ (-(d / 2 : ℝ))) := by
+      intro x
+      by_cases hx : x = 0
+      · simp [hx, g.zero]
+      · have h := integral_rpow_mul_gaussianReal (d := d) ha hx
+        rw [show (2 : ℝ) * (d / 4) = d / 2 by ring] at h
+        rw [← h, ← integral_const_mul]
+        refine setIntegral_congr_fun measurableSet_Ioi fun t ht ↦ ?_
+        rw [norm_mul, norm_mul, Real.norm_of_nonneg (Real.rpow_nonneg (le_of_lt ht) _),
+          Real.norm_of_nonneg (gaussianReal_pos t x).le]
+        ring
+    simp_rw [key]
+    have hint := integrable_mul_norm_rpow_neg_half hd g.integrable.norm
+      (C := ∫ y, ‖g y‖) fun x ↦ by simpa using g.norm_apply_le x
+    refine (hint.const_mul (Real.Gamma (d / 4) * π ^ (-(d / 4 : ℝ)))).congr (.of_forall fun x ↦ ?_)
+    ring
+
+/-- `∫_0^∞ t^{λ/2-1} J(t) dt = Γ(λ/2) π^{-λ/2} ∫ g(x) ‖x‖^{-λ} dx`, `λ = d/2` (Fubini and the Gamma
+integral). -/
+theorem SignEigenfunction.integral_rpow_mul_gaussianMoment (hd : 0 < d) {ς : ℤˣ}
+    (g : SignEigenfunction d ς) :
+    ∫ t in Ioi (0 : ℝ), t ^ ((d / 4 : ℝ) - 1) * gaussianMoment g t =
+      Real.Gamma (d / 4) * π ^ (-(d / 4 : ℝ)) * ∫ x, g x * ‖x‖ ^ (-(d / 2 : ℝ)) := by
+  have ha : (0 : ℝ) < d / 4 := by positivity
+  have h := integral_integral_swap (μ := volume.restrict (Ioi 0)) (ν := volume)
+    (f := fun (t : ℝ) (x : Euclidean d) ↦ t ^ ((d / 4 : ℝ) - 1) * (g x * gaussianReal t x))
+    (g.integrable_gaussianMoment_kernel hd)
+  simp only [integral_const_mul] at h
+  simp only [gaussianMoment]
+  rw [h, ← integral_const_mul]
+  refine integral_congr_ae (.of_forall fun x ↦ ?_)
+  simp only
+  by_cases hx : x = 0
+  · simp [hx, g.zero]
+  · have h := integral_rpow_mul_gaussianReal (d := d) ha hx
+    rw [show (2 : ℝ) * (d / 4) = d / 2 by ring] at h
+    simp_rw [mul_left_comm _ (g x)]
+    rw [integral_const_mul, h]
+
+/-! ### The central Mellin cancellation -/
+
+theorem rpow_sub_one_mul_rpow_neg_two_mul {t : ℝ} (ht : 0 < t) (a : ℝ) :
+    t ^ (a - 1) * (t ^ (2 * a))⁻¹ = (t ^ 2)⁻¹ * t⁻¹ ^ (a - 1) := by
+  rw [Real.inv_rpow ht.le, ← Real.rpow_neg ht.le, ← Real.rpow_neg ht.le, ← Real.rpow_add ht,
+    ← Real.rpow_two, ← Real.rpow_neg ht.le, ← Real.rpow_add ht]
+  congr 1
+  ring
+
+/-- The central Mellin cancellation for `g ∈ E₋(d)`: `∫ g(x) ‖x‖^{-λ} dx = 0`, `λ = d/2` (report,
+proof of Proposition A.1: Gaussian duality makes `∫_0^∞ t^{λ/2-1} J(t) dt` its own negative). -/
+theorem SignEigenfunction.integral_mul_norm_rpow_eq_zero (hd : 0 < d)
+    (g : SignEigenfunction d (-1)) : ∫ x, g x * ‖x‖ ^ (-(d / 2 : ℝ)) = 0 := by
+  have ha : (0 : ℝ) < d / 4 := by positivity
+  have hsub : ∫ t in Ioi (0 : ℝ), t ^ ((d / 4 : ℝ) - 1) * gaussianMoment g t =
+      -∫ t in Ioi (0 : ℝ), t ^ ((d / 4 : ℝ) - 1) * gaussianMoment g t := by
+    conv_rhs => rw [← integral_inv_sq_smul_comp_inv_Ioi_zero
+      (fun u ↦ u ^ ((d / 4 : ℝ) - 1) * gaussianMoment g u)]
+    rw [← integral_neg]
+    refine setIntegral_congr_fun measurableSet_Ioi fun t ht ↦ ?_
+    rw [g.gaussianMoment_eq ht, show (d / 2 : ℝ) = 2 * (d / 4) by ring, smul_eq_mul]
+    have := rpow_sub_one_mul_rpow_neg_two_mul ht (d / 4)
+    linear_combination (-gaussianMoment g t⁻¹) * this
+  have h0 : ∫ t in Ioi (0 : ℝ), t ^ ((d / 4 : ℝ) - 1) * gaussianMoment g t = 0 := by
+    linarith
+  rw [g.integral_rpow_mul_gaussianMoment hd] at h0
+  exact (mul_eq_zero.1 h0).resolve_left (by positivity)
+
+/-! ### Polar coordinates and the radial forms of the cancellation -/
+
+/-- Polar coordinates for a radial function on `ℝ^d`: `∫ F(x) dx = S_d ∫_0^∞ r^{d-1} F(r e₁) dr`
+(Mathlib's `integral_fun_norm_addHaar`). -/
+theorem integral_eq_sphereArea_mul_of_radial (hd : 0 < d) {F : Euclidean d → ℝ}
+    (hF : IsRadial F) :
+    ∫ x, F x = sphereArea d * ∫ r in Ioi (0 : ℝ), r ^ (d - 1) * F (r • radialUnitDirection hd) := by
+  have := nontrivial_euclidean hd
+  have hrad : ∀ x, F x = F (‖x‖ • radialUnitDirection hd) := fun x ↦
+    hF _ _ (by simp [norm_smul, norm_radialUnitDirection hd])
+  calc ∫ x, F x = ∫ x, (fun r : ℝ ↦ F (r • radialUnitDirection hd)) ‖x‖ :=
+        integral_congr_ae (.of_forall hrad)
+    _ = _ := by
+        rw [integral_fun_norm_addHaar volume (fun r : ℝ ↦ F (r • radialUnitDirection hd)),
+          finrank_euclideanSpace_fin, volume_real_unitBall hd]
+        simp [sphereArea, mul_assoc]
+
+/-- Integrability of a radial function on `ℝ^d` in polar coordinates. -/
+theorem integrable_iff_of_radial (hd : 0 < d) {F : Euclidean d → ℝ} (hF : IsRadial F) :
+    Integrable F ↔
+      IntegrableOn (fun r : ℝ ↦ r ^ (d - 1) * F (r • radialUnitDirection hd)) (Ioi 0) := by
+  have := nontrivial_euclidean hd
+  have hrad : F = fun x ↦ (fun r : ℝ ↦ F (r • radialUnitDirection hd)) ‖x‖ := funext fun x ↦
+    hF _ _ (by simp [norm_smul, norm_radialUnitDirection hd])
+  conv_lhs => rw [hrad]
+  rw [integrable_fun_norm_addHaar volume (f := fun r : ℝ ↦ F (r • radialUnitDirection hd)),
+    finrank_euclideanSpace_fin]
+  exact Iff.rfl
+
+theorem rpow_sub_one_mul_rpow_neg_half (hd : 0 < d) {r : ℝ} (hr : 0 < r) :
+    r ^ (d - 1) * r ^ (-(d / 2 : ℝ)) = r ^ ((d / 2 : ℝ) - 1) := by
+  rw [← Real.rpow_natCast, Nat.cast_pred hd, ← Real.rpow_add hr]
+  congr 1
+  ring
+
+namespace SignEigenfunction
+
+variable (hd : 0 < d) (g : SignEigenfunction d (-1)) (hg : IsRadial (g : Euclidean d → ℝ))
+include hd hg
+
+/-- The profile moment `∫_0^∞ r^{λ-1} g(r e₁) dr` of a radial `g ∈ E₋(d)` converges
+absolutely. -/
+theorem integrableOn_rpow_mul_profile :
+    IntegrableOn (fun r : ℝ ↦ r ^ ((d / 2 : ℝ) - 1) * g (r • radialUnitDirection hd)) (Ioi 0) := by
+  have hrad : IsRadial fun x : Euclidean d ↦ g x * ‖x‖ ^ (-(d / 2 : ℝ)) := fun x y hxy ↦ by
+    simp only [hg x y hxy, hxy]
+  have hint := (integrable_iff_of_radial hd hrad).1 (integrable_mul_norm_rpow_neg_half hd
+    g.integrable (C := ∫ y, ‖g y‖) fun x ↦ g.norm_apply_le x)
+  refine hint.congr_fun (fun r hr ↦ ?_) measurableSet_Ioi
+  simp only [norm_smul, norm_radialUnitDirection hd, mul_one,
+    Real.norm_of_nonneg (mem_Ioi.1 hr).le]
+  rw [← mul_assoc, mul_right_comm, rpow_sub_one_mul_rpow_neg_half hd hr]
+
+/-- The central Mellin cancellation, report (88): `∫_0^∞ r^{λ-1} g(r e₁) dr = 0` for a radial
+`g ∈ E₋(d)`. -/
+theorem integral_rpow_mul_profile :
+    ∫ r in Ioi (0 : ℝ), r ^ ((d / 2 : ℝ) - 1) * g (r • radialUnitDirection hd) = 0 := by
+  have hrad : IsRadial fun x : Euclidean d ↦ g x * ‖x‖ ^ (-(d / 2 : ℝ)) := fun x y hxy ↦ by
+    simp only [hg x y hxy, hxy]
+  have h := g.integral_mul_norm_rpow_eq_zero hd
+  rw [integral_eq_sphereArea_mul_of_radial hd hrad] at h
+  refine Eq.trans ?_ ((mul_eq_zero.1 h).resolve_left (radialSurfaceArea_pos hd).ne')
+  refine setIntegral_congr_fun measurableSet_Ioi fun r hr ↦ ?_
+  simp only [norm_smul, norm_radialUnitDirection hd, mul_one,
+    Real.norm_of_nonneg (mem_Ioi.1 hr).le]
+  rw [← mul_assoc, mul_right_comm, rpow_sub_one_mul_rpow_neg_half hd hr]
+
+variable {x : Euclidean d} (hx : x ≠ 0)
+include hx
+
+theorem rpow_mul_smul_eq (s : ℝ) (hs : 0 < s) :
+    s ^ ((d / 2 : ℝ) - 1) * g (s • x) = (‖x‖ ^ ((d / 2 : ℝ) - 1))⁻¹ *
+      ((‖x‖ * s) ^ ((d / 2 : ℝ) - 1) * g ((‖x‖ * s) • radialUnitDirection hd)) := by
+  have hx' : 0 < ‖x‖ := norm_pos_iff.2 hx
+  rw [hg (s • x) ((‖x‖ * s) • radialUnitDirection hd) (by
+    simp [norm_smul, norm_radialUnitDirection hd, abs_of_pos hs, mul_comm]),
+    Real.mul_rpow hx'.le hs.le, ← mul_assoc, ← mul_assoc,
+    inv_mul_cancel₀ (Real.rpow_pos_of_pos hx' _).ne', one_mul]
+
+/-- Absolute convergence along rays: `∫_0^∞ s^{λ-1} |g(s x)| ds < ∞` for radial `g ∈ E₋(d)` and
+`x ≠ 0`. -/
+theorem integrableOn_rpow_mul_smul :
+    IntegrableOn (fun s : ℝ ↦ s ^ ((d / 2 : ℝ) - 1) * g (s • x)) (Ioi 0) := by
+  have hx' : 0 < ‖x‖ := norm_pos_iff.2 hx
+  have h := (integrableOn_Ioi_comp_mul_left_iff
+    (fun r : ℝ ↦ r ^ ((d / 2 : ℝ) - 1) * g (r • radialUnitDirection hd)) 0 hx').2
+    (by simpa using g.integrableOn_rpow_mul_profile hd hg)
+  exact IntegrableOn.congr_fun (h.const_mul (‖x‖ ^ ((d / 2 : ℝ) - 1))⁻¹)
+    (fun s hs ↦ (g.rpow_mul_smul_eq hd hg hx s hs).symm) measurableSet_Ioi
+
+/-- The central Mellin cancellation along rays: `∫_0^∞ s^{λ-1} g(s x) ds = 0` for radial
+`g ∈ E₋(d)` and `x ≠ 0` (report (88)). -/
+theorem integral_rpow_mul_smul_eq_zero :
+    ∫ s in Ioi (0 : ℝ), s ^ ((d / 2 : ℝ) - 1) * g (s • x) = 0 := by
+  have hx' : 0 < ‖x‖ := norm_pos_iff.2 hx
+  rw [setIntegral_congr_fun measurableSet_Ioi fun s hs ↦ g.rpow_mul_smul_eq hd hg hx s hs,
+    integral_const_mul, integral_comp_mul_left_Ioi
+    (fun r : ℝ ↦ r ^ ((d / 2 : ℝ) - 1) * g (r • radialUnitDirection hd)) 0 hx', mul_zero,
+    g.integral_rpow_mul_profile hd hg, smul_zero, mul_zero]
+
+end SignEigenfunction
+
+end
+
+end CohnElkies
+
+end CohnElkies_SignUncertainty_MellinCancellation
+
+/-! ## Module `CohnElkies.SignUncertainty.TailIntegral` -/
+
+section CohnElkies_SignUncertainty_TailIntegral
+
+/-! # The tail-integration operator `T_d` (report Appendix A, (87) and (89))
+
+`T_d g (x) = (λ/2) ∫_1^∞ t^{λ-1} g(t x) dt` (`tailIntegral`, report (87)), `λ = d/2`, for a radial
+`g ∈ E₋(d)`. By the central Mellin cancellation along rays
+(`SignEigenfunction.integral_rpow_mul_smul_eq_zero`) it has the small-scale representation
+`T_d g (x) = -(λ/2) ∫_0^1 s^{λ-1} g(s x) ds` (report (89)), valid also at `x = 0`; hence `T_d g` is
+continuous (dominated convergence). Tonelli on the large-scale representation gives integrability
+and `‖T_d g‖₁ ≤ ½ ‖g‖₁`, and Fubini, Fourier scaling and the substitution `s = 1/t` give the
+self-Fourier property `𝓕 (T_d g) = T_d g` (report (89)). -/
+
+namespace CohnElkies
+open scoped Real
+open Complex (I)
+
+noncomputable section
+
+open Filter MeasureTheory Set
+open scoped ENNReal FourierTransform Topology RealInnerProductSpace
+
+variable {d : ℕ}
+
+/-- The tail-integration operator `T_d g (x) = (λ/2) ∫_1^∞ t^{λ-1} g(t x) dt` of report (87),
+`λ = d/2`, with `T_d g (0) = 0`. -/
+def tailIntegral (d : ℕ) (g : Euclidean d → ℝ) (x : Euclidean d) : ℝ :=
+  if x = 0 then 0 else (d / 2 : ℝ) / 2 * ∫ t in Ioi (1 : ℝ), t ^ ((d / 2 : ℝ) - 1) * g (t • x)
+
+@[simp] theorem tailIntegral_zero (g : Euclidean d → ℝ) : tailIntegral d g 0 = 0 := if_pos rfl
+
+theorem tailIntegral_of_ne_zero (g : Euclidean d → ℝ) {x : Euclidean d} (hx : x ≠ 0) :
+    tailIntegral d g x = (d / 2 : ℝ) / 2 * ∫ t in Ioi (1 : ℝ), t ^ ((d / 2 : ℝ) - 1) * g (t • x) :=
+  if_neg hx
+
+/-- For `g(0) = 0` the large-scale formula (87) also holds at `x = 0`. -/
+theorem tailIntegral_eq_of_zero (g : Euclidean d → ℝ) (hg : g 0 = 0) (x : Euclidean d) :
+    tailIntegral d g x =
+      (d / 2 : ℝ) / 2 * ∫ t in Ioi (1 : ℝ), t ^ ((d / 2 : ℝ) - 1) * g (t • x) := by
+  by_cases hx : x = 0
+  · simp [hx, hg]
+  · exact tailIntegral_of_ne_zero g hx
+
+/-- `T_d g` is radial when `g` is. -/
+theorem IsRadial.tailIntegral {g : Euclidean d → ℝ} (hg : IsRadial g) :
+    IsRadial (tailIntegral d g) := by
+  intro x y hxy
+  by_cases hx : x = 0
+  · have hy : y = 0 := norm_eq_zero.1 (by rw [← hxy, hx, norm_zero])
+    simp [hx, hy]
+  · have hy : y ≠ 0 := fun h ↦ hx (norm_eq_zero.1 (by rw [hxy, h, norm_zero]))
+    rw [tailIntegral_of_ne_zero g hx, tailIntegral_of_ne_zero g hy]
+    congr 1
+    refine setIntegral_congr_fun measurableSet_Ioi fun t _ ↦ ?_
+    rw [hg (t • x) (t • y) (by simp [norm_smul, hxy])]
+
+namespace SignEigenfunction
+
+variable (hd : 0 < d) (g : SignEigenfunction d (-1)) (hg : IsRadial (g : Euclidean d → ℝ))
+include hd hg
+
+/-! ### The small-scale representation and continuity -/
+
+/-- The small-scale representation of report (89): `T_d g (x) = -(λ/2) ∫_0^1 s^{λ-1} g(s x) ds`,
+for every `x` (both sides vanish at `x = 0`); from the central Mellin cancellation along the ray
+through `x`. -/
+theorem tailIntegral_eq_neg_integral_Ioo (x : Euclidean d) :
+    tailIntegral d g x =
+      -((d / 2 : ℝ) / 2) * ∫ s in Ioo (0 : ℝ) 1, s ^ ((d / 2 : ℝ) - 1) * g (s • x) := by
+  by_cases hx : x = 0
+  · simp [hx, g.zero]
+  · rw [tailIntegral_of_ne_zero _ hx, neg_mul, ← mul_neg]
+    congr 1
+    have hint := g.integrableOn_rpow_mul_smul hd hg hx
+    have h0 := g.integral_rpow_mul_smul_eq_zero hd hg hx
+    rw [← Ioc_union_Ioi_eq_Ioi zero_le_one, setIntegral_union (Ioc_disjoint_Ioi le_rfl)
+      measurableSet_Ioi (hint.mono_set Ioc_subset_Ioi_self)
+      (hint.mono_set (Ioi_subset_Ioi zero_le_one)), integral_Ioc_eq_integral_Ioo] at h0
+    linarith
+
+/-- `T_d g` is continuous (dominated convergence on the small-scale representation, `g` being
+bounded and continuous and `s^{λ-1}` integrable on `(0, 1)`). -/
+theorem continuous_tailIntegral : Continuous (tailIntegral d g) := by
+  have hd' : (0 : ℝ) < d := Nat.cast_pos.2 hd
+  have hrepr : tailIntegral d g = fun x ↦
+      -((d / 2 : ℝ) / 2) * ∫ s in Ioo (0 : ℝ) 1, s ^ ((d / 2 : ℝ) - 1) * g (s • x) :=
+    funext (g.tailIntegral_eq_neg_integral_Ioo hd hg)
+  rw [hrepr]
+  refine continuous_const.mul (continuous_of_dominated
+    (bound := fun s ↦ s ^ ((d / 2 : ℝ) - 1) * ∫ y, ‖g y‖) ?_ ?_ ?_ ?_)
+  · intro x
+    exact ((measurable_id.pow_const _).mul (g.continuous.comp
+      (continuous_id.smul continuous_const : Continuous fun s : ℝ ↦ s • x)).measurable
+      ).aestronglyMeasurable
+  · intro x
+    filter_upwards [ae_restrict_mem measurableSet_Ioo] with s hs
+    rw [norm_mul, Real.norm_of_nonneg (Real.rpow_nonneg hs.1.le _)]
+    exact mul_le_mul_of_nonneg_left (g.norm_apply_le _) (Real.rpow_nonneg hs.1.le _)
+  · exact ((intervalIntegral.integrableOn_Ioo_rpow_iff one_pos).2 (by linarith)).mul_const _
+  · exact .of_forall fun s ↦ continuous_const.mul (g.continuous.comp (continuous_const_smul s))
+
+/-! ### Integrability and the `L¹` bound `‖T_d g‖₁ ≤ ½ ‖g‖₁` -/
+
+omit hd hg in
+/-- `∫ |t^{λ-1} g(t x)| dx = t^{-λ-1} ‖g‖₁` for `t > 0` (the substitution `y = t x`, `d = 2λ`). -/
+theorem integral_norm_rpow_mul_smul {t : ℝ} (ht : 0 < t) :
+    ∫ x, ‖t ^ ((d / 2 : ℝ) - 1) * g (t • x)‖ = t ^ (-(d / 2 : ℝ) - 1) * ∫ x, ‖g x‖ := by
+  simp_rw [norm_mul, Real.norm_of_nonneg (Real.rpow_nonneg ht.le _)]
+  rw [integral_const_mul, Measure.integral_comp_smul_of_nonneg (volume : Measure (Euclidean d))
+    (fun x ↦ ‖g x‖) t (hR := ht.le), finrank_euclideanSpace_fin, smul_eq_mul, ← mul_assoc,
+    ← Real.rpow_natCast, ← Real.rpow_neg ht.le, ← Real.rpow_add ht]
+  congr 2
+  ring
+
+omit hg in
+/-- The integrand `(x, t) ↦ t^{λ-1} g(t x)` of (87) is absolutely integrable on `ℝ^d × (1, ∞)`
+(Tonelli: `∫ |g(t x)| dx = t^{-d} ‖g‖₁` and `∫_1^∞ t^{λ-1-d} dt < ∞`). -/
+theorem integrable_tailIntegral_kernel :
+    Integrable (fun p : Euclidean d × ℝ ↦ p.2 ^ ((d / 2 : ℝ) - 1) * g (p.2 • p.1))
+      (volume.prod (volume.restrict (Ioi 1))) := by
+  have hd' : (0 : ℝ) < d := Nat.cast_pos.2 hd
+  have hmeas : AEStronglyMeasurable
+      (fun p : Euclidean d × ℝ ↦ p.2 ^ ((d / 2 : ℝ) - 1) * g (p.2 • p.1))
+      (volume.prod (volume.restrict (Ioi 1))) :=
+    ((measurable_snd.pow_const _).mul (g.continuous.measurable.comp
+      (continuous_snd.smul continuous_fst).measurable)).aestronglyMeasurable
+  rw [integrable_prod_iff' hmeas]
+  refine ⟨?_, ?_⟩
+  · filter_upwards [ae_restrict_mem measurableSet_Ioi] with t ht
+    exact (g.integrable.comp_smul (zero_lt_one.trans ht).ne').const_mul _
+  · refine IntegrableOn.congr_fun ((integrableOn_Ioi_rpow_of_lt (a := -(d / 2 : ℝ) - 1)
+      (by linarith) one_pos).mul_const (∫ x, ‖g x‖)) (fun t ht ↦ ?_) measurableSet_Ioi
+    exact (g.integral_norm_rpow_mul_smul (zero_lt_one.trans ht)).symm
+
+omit hg in
+theorem integrable_integral_norm_tailIntegral_kernel :
+    Integrable fun x ↦ ∫ t in Ioi (1 : ℝ), ‖t ^ ((d / 2 : ℝ) - 1) * g (t • x)‖ :=
+  (g.integrable_tailIntegral_kernel hd).norm.integral_prod_left
+
+omit hg in
+/-- `∫ ∫_1^∞ t^{λ-1} |g(t x)| dt dx = ‖g‖₁ / λ` (Tonelli and `∫_1^∞ t^{-λ-1} dt = 1/λ`). -/
+theorem integral_integral_norm_tailIntegral_kernel :
+    ∫ x, ∫ t in Ioi (1 : ℝ), ‖t ^ ((d / 2 : ℝ) - 1) * g (t • x)‖ = (d / 2 : ℝ)⁻¹ * ∫ x, ‖g x‖ := by
+  have hd' : (0 : ℝ) < d := Nat.cast_pos.2 hd
+  rw [integral_integral_swap (f := fun (x : Euclidean d) (t : ℝ) ↦
+      ‖t ^ ((d / 2 : ℝ) - 1) * g (t • x)‖) (g.integrable_tailIntegral_kernel hd).norm,
+    setIntegral_congr_fun measurableSet_Ioi fun t ht ↦
+      g.integral_norm_rpow_mul_smul (zero_lt_one.trans ht),
+    integral_mul_const, integral_Ioi_rpow_of_lt (a := -(d / 2 : ℝ) - 1) (by linarith) one_pos,
+    Real.one_rpow]
+  congr 1
+  rw [show -(d / 2 : ℝ) - 1 + 1 = -(d / 2) by ring, div_neg, neg_div, neg_neg, one_div]
+
+omit hd hg in
+/-- `|T_d g (x)| ≤ (λ/2) ∫_1^∞ t^{λ-1} |g(t x)| dt`. -/
+theorem norm_tailIntegral_le (x : Euclidean d) :
+    ‖tailIntegral d g x‖ ≤
+      (d / 2 : ℝ) / 2 * ∫ t in Ioi (1 : ℝ), ‖t ^ ((d / 2 : ℝ) - 1) * g (t • x)‖ := by
+  rw [tailIntegral_eq_of_zero _ g.zero, norm_mul, Real.norm_of_nonneg (by positivity)]
+  exact mul_le_mul_of_nonneg_left (norm_integral_le_integral_norm _) (by positivity)
+
+/-- `T_d g` is integrable. -/
+theorem integrable_tailIntegral : Integrable (tailIntegral d g) :=
+  ((g.integrable_integral_norm_tailIntegral_kernel hd).const_mul ((d / 2 : ℝ) / 2)).mono'
+    (g.continuous_tailIntegral hd hg).aestronglyMeasurable (.of_forall g.norm_tailIntegral_le)
+
+/-- `‖T_d g‖₁ ≤ ½ ‖g‖₁` (report, proof of Proposition A.1). -/
+theorem integral_norm_tailIntegral_le : ∫ x, ‖tailIntegral d g x‖ ≤ 1 / 2 * ∫ x, ‖g x‖ := by
+  have hd' : (0 : ℝ) < d := Nat.cast_pos.2 hd
+  calc ∫ x, ‖tailIntegral d g x‖
+      ≤ ∫ x, (d / 2 : ℝ) / 2 * ∫ t in Ioi (1 : ℝ), ‖t ^ ((d / 2 : ℝ) - 1) * g (t • x)‖ :=
+        integral_mono (g.integrable_tailIntegral hd hg).norm
+          ((g.integrable_integral_norm_tailIntegral_kernel hd).const_mul _) g.norm_tailIntegral_le
+    _ = (d / 2 : ℝ) / 2 * ((d / 2 : ℝ)⁻¹ * ∫ x, ‖g x‖) := by
+        rw [integral_const_mul, g.integral_integral_norm_tailIntegral_kernel hd]
+    _ = 1 / 2 * ∫ x, ‖g x‖ := by
+        field_simp
+
+/-! ### The self-Fourier property `𝓕 (T_d g) = T_d g` -/
+
+end SignEigenfunction
+
+/-- Fourier scaling for plain functions: `𝓕 (f (t ·)) (ξ) = t^{-d} 𝓕 f (ξ / t)` for `t > 0`. -/
+theorem fourier_comp_smul (f : Euclidean d → ℂ) {t : ℝ} (ht : 0 < t) (ξ : Euclidean d) :
+    𝓕 (fun x ↦ f (t • x)) ξ = ((t ^ d)⁻¹ : ℝ) • 𝓕 f (t⁻¹ • ξ) := by
+  have h := Measure.integral_comp_smul_of_nonneg (volume : Measure (Euclidean d))
+    (fun y ↦ Complex.exp (↑(-2 * π * ⟪y, t⁻¹ • ξ⟫) * I) • f y) t (hR := ht.le)
+  rw [Real.fourier_eq', Real.fourier_eq']
+  simp only [finrank_euclideanSpace_fin, real_inner_smul_left, real_inner_smul_right,
+    inv_mul_cancel_left₀ ht.ne'] at h ⊢
+  exact h
+
+theorem rpow_sub_one_mul_inv_pow {t : ℝ} (ht : 0 < t) (d : ℕ) :
+    t ^ ((d / 2 : ℝ) - 1) * (t ^ d)⁻¹ = t ^ (-(d / 2 : ℝ) - 1) := by
+  rw [← Real.rpow_natCast, ← Real.rpow_neg ht.le, ← Real.rpow_add ht]
+  congr 1
+  ring
+
+namespace SignEigenfunction
+
+variable (hd : 0 < d) (g : SignEigenfunction d (-1)) (hg : IsRadial (g : Euclidean d → ℝ))
+include hd hg
+
+omit hd hg in
+/-- The substitution `s = 1/t` in the large-scale integral:
+`∫_1^∞ t^{-λ-1} g(ξ/t) dt = ∫_0^1 s^{λ-1} g(s ξ) ds`. -/
+theorem integral_rpow_mul_inv_smul (ξ : Euclidean d) :
+    ∫ t in Ioi (1 : ℝ), t ^ (-(d / 2 : ℝ) - 1) * g (t⁻¹ • ξ) =
+      ∫ s in Ioo (0 : ℝ) 1, s ^ ((d / 2 : ℝ) - 1) * g (s • ξ) := by
+  rw [← integral_inv_sq_smul_comp_inv_Ioi_one fun s ↦ s ^ ((d / 2 : ℝ) - 1) * g (s • ξ)]
+  refine setIntegral_congr_fun measurableSet_Ioi fun t ht ↦ ?_
+  have ht0 : 0 < t := zero_lt_one.trans ht
+  simp only [smul_eq_mul]
+  rw [← mul_assoc, Real.inv_rpow ht0.le, ← Real.rpow_neg ht0.le, ← Real.rpow_two,
+    ← Real.rpow_neg ht0.le, ← Real.rpow_add ht0]
+  congr 2
+  ring
+
+/-- The self-Fourier property `𝓕 (T_d g) = T_d g` of report (89): Fubini on the large-scale
+representation, Fourier scaling `𝓕(g(t ·))(ξ) = t^{-d} 𝓕 g (ξ/t) = -t^{-d} g(ξ/t)`, the
+substitution `s = 1/t`, and the small-scale representation. -/
+theorem fourier_tailIntegral (ξ : Euclidean d) :
+    𝓕 (fun x ↦ (tailIntegral d g x : ℂ)) ξ = tailIntegral d g ξ := by
+  set e : Euclidean d → ℂ := fun x ↦ Complex.exp (↑(-2 * π * ⟪x, ξ⟫) * I) with he
+  have he1 : ∀ x, ‖e x‖ = 1 := fun x ↦ Complex.norm_exp_ofReal_mul_I _
+  have hK : Integrable
+      (fun p : Euclidean d × ℝ ↦ e p.1 * ((p.2 ^ ((d / 2 : ℝ) - 1) * g (p.2 • p.1) : ℝ) : ℂ))
+      (volume.prod (volume.restrict (Ioi 1))) :=
+    (g.integrable_tailIntegral_kernel hd).ofReal.bdd_mul (c := 1)
+      ((by fun_prop : Continuous fun p : Euclidean d × ℝ ↦ e p.1).aestronglyMeasurable)
+      (.of_forall fun p ↦ (he1 p.1).le)
+  have hinner : ∀ t ∈ Ioi (1 : ℝ),
+      ∫ x, e x * ((t ^ ((d / 2 : ℝ) - 1) * g (t • x) : ℝ) : ℂ) =
+        -((t ^ (-(d / 2 : ℝ) - 1) * g (t⁻¹ • ξ) : ℝ) : ℂ) := by
+    intro t ht
+    have ht0 : 0 < t := zero_lt_one.trans ht
+    have h1 : ∫ x, e x * ((t ^ ((d / 2 : ℝ) - 1) * g (t • x) : ℝ) : ℂ) =
+        ((t ^ ((d / 2 : ℝ) - 1) : ℝ) : ℂ) * 𝓕 (fun x ↦ g.toComplex (t • x)) ξ := by
+      rw [Real.fourier_eq', ← integral_const_mul]
+      refine integral_congr_ae (.of_forall fun x ↦ ?_)
+      simp only [he, toComplex_apply, smul_eq_mul]
+      push_cast
+      ring
+    rw [h1, fourier_comp_smul g.toComplex ht0 ξ, g.fourier_toComplex, Complex.real_smul,
+      ← rpow_sub_one_mul_inv_pow ht0 d]
+    simp only [Units.val_neg, Units.val_one, Int.cast_neg, Int.cast_one]
+    push_cast
+    ring
+  calc 𝓕 (fun x ↦ (tailIntegral d g x : ℂ)) ξ
+      = ∫ x, e x • (tailIntegral d g x : ℂ) := Real.fourier_eq' _ _
+    _ = ∫ x, (((d / 2 : ℝ) / 2 : ℝ) : ℂ) *
+          ∫ t in Ioi (1 : ℝ), e x * ((t ^ ((d / 2 : ℝ) - 1) * g (t • x) : ℝ) : ℂ) := by
+        refine integral_congr_ae (.of_forall fun x ↦ ?_)
+        dsimp only
+        rw [tailIntegral_eq_of_zero _ g.zero, integral_const_mul, integral_complex_ofReal,
+          smul_eq_mul]
+        push_cast
+        ring
+    _ = (((d / 2 : ℝ) / 2 : ℝ) : ℂ) *
+          ∫ t in Ioi (1 : ℝ), ∫ x, e x * ((t ^ ((d / 2 : ℝ) - 1) * g (t • x) : ℝ) : ℂ) := by
+        rw [integral_const_mul, integral_integral_swap (f := fun (x : Euclidean d) (t : ℝ) ↦
+          e x * ((t ^ ((d / 2 : ℝ) - 1) * g (t • x) : ℝ) : ℂ)) hK]
+    _ = (((d / 2 : ℝ) / 2 : ℝ) : ℂ) *
+          -((∫ t in Ioi (1 : ℝ), t ^ (-(d / 2 : ℝ) - 1) * g (t⁻¹ • ξ) : ℝ) : ℂ) := by
+        rw [setIntegral_congr_fun measurableSet_Ioi hinner, integral_neg, integral_complex_ofReal]
+    _ = tailIntegral d g ξ := by
+        rw [g.integral_rpow_mul_inv_smul ξ, g.tailIntegral_eq_neg_integral_Ioo hd hg ξ]
+        push_cast
+        ring
+
+end SignEigenfunction
+
+end
+
+end CohnElkies
+
+end CohnElkies_SignUncertainty_TailIntegral
+
+/-! ## Module `CohnElkies.SignUncertainty.AppendixA` -/
+
+section CohnElkies_SignUncertainty_AppendixA
+
+/-! # Appendix A of the report: Proposition A.1 and `A₊(d) ≤ A₋(d)`
+
+For a radial `g ∈ E₋(d)`, `d ≥ 1`, the tail integral `T_d g` of report (87) is a self-Fourier sign
+eigenfunction `T_d g ∈ E₊(d)` (`SignEigenfunction.tailIntegral`, Proposition A.1): continuous,
+integrable, `𝓕 (T_d g) = T_d g`, `T_d g (0) = 0` (`CohnElkies.SignUncertainty.TailIntegral`), and
+nonzero (differentiating the small-scale representation along a ray recovers `g`). If `g ≥ 0`
+outside the ball of radius `R`, then `T_d g > 0` outside that ball: `T_d g (x) ≥ 0` by (87), and
+`T_d g (x) = 0` would force `g`, hence `𝓕 g = -g`, to vanish outside the ball of radius `‖x‖`,
+contradicting Fourier analyticity (`fourier_eq_zero_of_eq_zero_outside`). Hence `r(T_d g) ≤ r(g)`
+and, when `r(g) < ∞`, `r(T_d g) < r(g)` (`SignEigenfunction.signRadius_tailIntegral_lt`).
+
+Combined with the radial reduction `signUncertaintyConstant_eq_radial`, this gives the comparison
+`A₊(d) ≤ A₋(d)` of the sign-uncertainty constants (`signUncertaintyConstant_one_le_neg_one`). The
+strict inequality `A₊(d) < A₋(d)` of the report needs an extremizer attaining `A₋(d)`
+(Cohn–Gonçalves 2019, Theorem 1.4) and is not formalized. -/
+
+namespace CohnElkies
+open scoped Real
+open Complex (I)
+
+noncomputable section
+
+open Filter MeasureTheory Set
+open scoped ENNReal FourierTransform Topology
+
+variable {d : ℕ}
+
+/-! ### Sign radii -/
+
+/-- A sign eigenfunction nonnegative outside the ball of radius `R` has `R > 0`: otherwise `g ≥ 0`
+everywhere and `∫ g = 0` would force `g = 0` (report, proof of Proposition A.1). -/
+theorem SignEigenfunction.pos_of_nonneg_outside {ς : ℤˣ} (g : SignEigenfunction d ς) {R : ℝ}
+    (hR : ∀ x : Euclidean d, R ≤ ‖x‖ → 0 ≤ g x) : 0 < R := by
+  by_contra! hR0
+  have hnn : ∀ x, 0 ≤ g x := fun x ↦ hR x (hR0.trans (norm_nonneg x))
+  have h := (integral_eq_zero_iff_of_nonneg hnn g.integrable).1 g.integral_eq_zero
+  exact g.ne_zero ((g.continuous.ae_eq_iff_eq volume continuous_const).1 h)
+
+/-- A continuous function on `ℝ^d` (`d ≥ 1`) nonnegative outside the closed ball of radius `R` is
+nonnegative on its boundary sphere as well. -/
+theorem nonneg_of_forall_lt_norm (hd : 0 < d) {g : Euclidean d → ℝ} (hg : Continuous g) {R : ℝ}
+    (h : ∀ x : Euclidean d, R < ‖x‖ → 0 ≤ g x) (x : Euclidean d) (hx : R ≤ ‖x‖) : 0 ≤ g x := by
+  rcases hx.lt_or_eq with hlt | heq
+  · exact h x hlt
+  by_cases hx0 : x = 0
+  · subst hx0
+    rw [norm_zero] at heq
+    set e := radialUnitDirection hd
+    have hlim : Tendsto (fun t : ℝ ↦ g (t • e)) (𝓝[>] 0) (𝓝 (g 0)) := by
+      have hc : Continuous fun t : ℝ ↦ g (t • e) := hg.comp (continuous_id.smul continuous_const)
+      have := (hc.tendsto 0).mono_left (nhdsWithin_le_nhds (s := Ioi 0))
+      simpa using this
+    refine ge_of_tendsto hlim ?_
+    filter_upwards [self_mem_nhdsWithin] with t ht
+    refine h _ ?_
+    rw [norm_smul, norm_radialUnitDirection hd, mul_one, Real.norm_of_nonneg (le_of_lt ht), heq]
+    exact ht
+  · have hlim : Tendsto (fun t : ℝ ↦ g (t • x)) (𝓝[>] 1) (𝓝 (g x)) := by
+      have hc : Continuous fun t : ℝ ↦ g (t • x) := hg.comp (continuous_id.smul continuous_const)
+      have := (hc.tendsto 1).mono_left (nhdsWithin_le_nhds (s := Ioi 1))
+      simpa using this
+    refine ge_of_tendsto hlim ?_
+    filter_upwards [self_mem_nhdsWithin] with t ht
+    refine h _ ?_
+    rw [norm_smul, Real.norm_of_nonneg (zero_le_one.trans (le_of_lt ht)), heq]
+    exact lt_mul_of_one_lt_left (norm_pos_iff.2 hx0) ht
+
+/-- The last-sign radius `r(g)` of a continuous function with `r(g) < ⊤` is itself a sign radius
+(`d ≥ 1`). -/
+theorem nonneg_of_toReal_signRadius_le (hd : 0 < d) {g : Euclidean d → ℝ} (hg : Continuous g)
+    (hfin : signRadius g < ⊤) (x : Euclidean d) (hx : (signRadius g).toReal ≤ ‖x‖) : 0 ≤ g x := by
+  refine nonneg_of_forall_lt_norm hd hg (R := (signRadius g).toReal) (fun y hy ↦ ?_) x hx
+  by_contra hneg
+  have h := le_signRadius_of_not_nonneg_outside (g := g) (R := ‖y‖) fun hall ↦ hneg (hall y le_rfl)
+  rw [ENNReal.ofReal_le_iff_le_toReal hfin.ne] at h
+  exact hy.not_ge h
+
+namespace SignEigenfunction
+
+variable (hd : 0 < d) (g : SignEigenfunction d (-1)) (hg : IsRadial (g : Euclidean d → ℝ))
+include hd hg
+
+/-! ### Positivity of `T_d g` outside a sign radius of `g` -/
+
+/-- Report, proof of Proposition A.1: if `g ≥ 0` outside the ball of radius `R`, then `T_d g > 0`
+outside that ball. Nonnegativity is (87); if `T_d g (x) = 0`, then `g` vanishes on the ray beyond
+`x`, hence (radiality) outside the ball of radius `‖x‖`, and so does `𝓕 g = -g`, which forces
+`g = 0` by Fourier analyticity. -/
+theorem tailIntegral_pos {R : ℝ} (hR : ∀ x : Euclidean d, R ≤ ‖x‖ → 0 ≤ g x) {x : Euclidean d}
+    (hx : R ≤ ‖x‖) : 0 < tailIntegral d g x := by
+  have hR0 : 0 < R := g.pos_of_nonneg_outside hR
+  have hx' : 0 < ‖x‖ := hR0.trans_le hx
+  have hx0 : x ≠ 0 := norm_pos_iff.1 hx'
+  set Φ : ℝ → ℝ := fun t ↦ t ^ ((d / 2 : ℝ) - 1) * g (t • x) with hΦ
+  have hΦnn : ∀ t ∈ Ioi (1 : ℝ), 0 ≤ Φ t := fun t ht ↦ by
+    have ht0 : 0 < t := zero_lt_one.trans ht
+    refine mul_nonneg (Real.rpow_nonneg ht0.le _) (hR _ ?_)
+    rw [norm_smul, Real.norm_of_nonneg ht0.le]
+    exact hx.trans (le_mul_of_one_le_left (norm_nonneg x) (le_of_lt ht))
+  have hint : IntegrableOn Φ (Ioi 1) :=
+    (g.integrableOn_rpow_mul_smul hd hg hx0).mono_set (Ioi_subset_Ioi zero_le_one)
+  have hnn : 0 ≤ ∫ t in Ioi (1 : ℝ), Φ t := setIntegral_nonneg measurableSet_Ioi hΦnn
+  rw [tailIntegral_of_ne_zero _ hx0]
+  refine mul_pos (by positivity) (lt_of_le_of_ne hnn fun h0 ↦ ?_)
+  have hae : Φ =ᵐ[volume.restrict (Ioi 1)] 0 :=
+    (setIntegral_eq_zero_iff_of_nonneg_ae (ae_restrict_of_forall_mem measurableSet_Ioi hΦnn)
+      hint).1 h0.symm
+  have hcont : ContinuousOn Φ (Ioi 1) :=
+    (continuousOn_id.rpow_const fun t ht ↦ Or.inl (zero_lt_one.trans ht).ne').mul
+      (g.continuous.comp (continuous_id.smul continuous_const :
+        Continuous fun t : ℝ ↦ t • x)).continuousOn
+  have hzero : ∀ t ∈ Ioi (1 : ℝ), Φ t = 0 := fun t ht ↦ by
+    simpa using Measure.eqOn_open_of_ae_eq hae isOpen_Ioi hcont continuousOn_const ht
+  have hvan : ∀ y : Euclidean d, ‖x‖ < ‖y‖ → g y = 0 := by
+    intro y hy
+    have ht : 1 < ‖y‖ / ‖x‖ := (one_lt_div hx').2 hy
+    have hΦt := hzero _ ht
+    simp only [hΦ] at hΦt
+    have hgy : g y = g ((‖y‖ / ‖x‖) • x) := hg _ _ (by
+      rw [norm_smul, Real.norm_of_nonneg (by positivity), div_mul_cancel₀ _ hx'.ne'])
+    rw [hgy]
+    exact (mul_eq_zero.1 hΦt).resolve_left (Real.rpow_pos_of_pos (zero_lt_one.trans ht) _).ne'
+  have hsupp : ∀ y : Euclidean d, ‖x‖ < ‖y‖ → g.toComplex y = 0 := fun y hy ↦ by
+    simp [hvan y hy]
+  have hfour : ∀ y : Euclidean d, ‖x‖ < ‖y‖ → 𝓕 g.toComplex y = 0 := fun y hy ↦ by
+    rw [g.fourier_toComplex, hvan y hy]
+    simp
+  have hzero' := fourier_eq_zero_of_eq_zero_outside hd g.integrable_toComplex hsupp hfour
+  exact g.ne_zero (funext fun y ↦ by simpa [congrFun hzero' y] using g.coe_eq_fourier y)
+
+/-! ### Nonvanishing of `T_d g` -/
+
+/-- If all the small-scale integrals `∫_0^1 s^{λ-1} g(s x) ds` vanish, then `g = 0`: the profile
+`F(R) = ∫_0^R r^{λ-1} g(r e₁) dr` vanishes for all `R > 0`, so its derivative `R^{λ-1} g(R e₁)`
+vanishes too (this is `(x·∇ + λ) T_d g = -λ g/2` of the report, integrated along rays). -/
+theorem eq_zero_of_forall_integral_Ioo_eq_zero
+    (h : ∀ x : Euclidean d, ∫ s in Ioo (0 : ℝ) 1, s ^ ((d / 2 : ℝ) - 1) * g (s • x) = 0) :
+    (g : Euclidean d → ℝ) = 0 := by
+  set e := radialUnitDirection hd with he
+  set f : ℝ → ℝ := fun r ↦ r ^ ((d / 2 : ℝ) - 1) * g (r • e) with hf
+  have hF : ∀ R : ℝ, 0 < R → ∫ r in (0 : ℝ)..R, f r = 0 := by
+    intro R hR
+    have h1 := h (R • e)
+    rw [← integral_Ioc_eq_integral_Ioo,
+      ← intervalIntegral.integral_of_le (zero_le_one : (0 : ℝ) ≤ 1)] at h1
+    have h2 : ∫ s in (0 : ℝ)..1, s ^ ((d / 2 : ℝ) - 1) * g (s • R • e) =
+        (R ^ ((d / 2 : ℝ) - 1))⁻¹ * ∫ s in (0 : ℝ)..1, f (R * s) := by
+      rw [← intervalIntegral.integral_const_mul]
+      refine intervalIntegral.integral_congr fun s hs ↦ ?_
+      have hs0 : 0 ≤ s := by
+        rw [uIcc_of_le (zero_le_one : (0 : ℝ) ≤ 1)] at hs
+        exact hs.1
+      simp only [hf, smul_smul, Real.mul_rpow hR.le hs0]
+      field_simp
+    rw [h2, intervalIntegral.integral_comp_mul_left (f := f) hR.ne', mul_zero, mul_one,
+      smul_eq_mul] at h1
+    simpa [hR.ne', (Real.rpow_pos_of_pos hR _).ne'] using h1
+  have hderiv : ∀ R : ℝ, 0 < R → f R = 0 := by
+    intro R hR
+    have hfint : IntervalIntegrable f volume 0 R := by
+      rw [intervalIntegrable_iff_integrableOn_Ioc_of_le hR.le]
+      exact (g.integrableOn_rpow_mul_profile hd hg).mono_set Ioc_subset_Ioi_self
+    have hcont : ContinuousAt f R :=
+      (Real.continuousAt_rpow_const R _ (Or.inl hR.ne')).mul
+        (g.continuous.comp (continuous_id.smul continuous_const :
+          Continuous fun r : ℝ ↦ r • e)).continuousAt
+    have hmeas : StronglyMeasurableAtFilter f (𝓝 R) :=
+      ((measurable_id.pow_const _).mul (g.continuous.measurable.comp
+        (measurable_id.smul_const e))).aestronglyMeasurable.stronglyMeasurableAtFilter
+    have hD := intervalIntegral.integral_hasDerivAt_right hfint hmeas hcont
+    have hD0 : HasDerivAt (fun u ↦ ∫ r in (0 : ℝ)..u, f r) 0 R := by
+      refine (hasDerivAt_const R (0 : ℝ)).congr_of_eventuallyEq ?_
+      filter_upwards [Ioi_mem_nhds hR] with u hu
+      exact hF u hu
+    exact hD.unique hD0
+  funext x
+  by_cases hx : x = 0
+  · simp [hx, g.zero]
+  · have hx' : 0 < ‖x‖ := norm_pos_iff.2 hx
+    have hfx := hderiv ‖x‖ hx'
+    simp only [hf] at hfx
+    rw [Pi.zero_apply, hg x (‖x‖ • e) (by simp [norm_smul, he, norm_radialUnitDirection hd])]
+    exact (mul_eq_zero.1 hfx).resolve_left (Real.rpow_pos_of_pos hx' _).ne'
+
+/-- `T_d g ≠ 0` (Proposition A.1). -/
+theorem tailIntegral_ne_zero : tailIntegral d g ≠ 0 := fun h ↦
+  g.ne_zero (g.eq_zero_of_forall_integral_Ioo_eq_zero hd hg fun x ↦ by
+    have hx := congrFun h x
+    rw [g.tailIntegral_eq_neg_integral_Ioo hd hg x, Pi.zero_apply, neg_mul, neg_eq_zero,
+      mul_eq_zero] at hx
+    exact hx.resolve_left (by positivity))
+
+/-! ### Proposition A.1 -/
+
+/-- `r(T_d g) ≤ r(g)`: `T_d g ≥ 0` outside every ball outside which `g ≥ 0`. -/
+theorem signRadius_tailIntegral_le : signRadius (tailIntegral d g) ≤ signRadius g :=
+  signRadius_le_signRadius fun _ hR _ hx ↦ (g.tailIntegral_pos hd hg hR hx).le
+
+/-- Proposition A.1: if `r(g) < ∞` then `r(T_d g) < r(g)`. Indeed `r(g) > 0`, `T_d g > 0` on the
+sphere of radius `r(g)`, and the (radial, continuous) function `T_d g` stays positive on a slightly
+smaller sphere. -/
+theorem signRadius_tailIntegral_lt (hfin : signRadius (g : Euclidean d → ℝ) < ⊤) :
+    signRadius (tailIntegral d g) < signRadius g := by
+  set R := (signRadius (g : Euclidean d → ℝ)).toReal with hRdef
+  have hR : ∀ y : Euclidean d, R ≤ ‖y‖ → 0 ≤ g y :=
+    nonneg_of_toReal_signRadius_le hd g.continuous hfin
+  have hR0 : 0 < R := g.pos_of_nonneg_outside hR
+  set e := radialUnitDirection hd with he
+  have hpos : 0 < tailIntegral d g (R • e) := g.tailIntegral_pos hd hg hR
+    (by simp [norm_smul, he, norm_radialUnitDirection hd, abs_of_pos hR0])
+  have hcont : ContinuousAt (fun r : ℝ ↦ tailIntegral d g (r • e)) R :=
+    ((g.continuous_tailIntegral hd hg).comp (continuous_id.smul continuous_const :
+      Continuous fun r : ℝ ↦ r • e)).continuousAt
+  obtain ⟨δ, hδ, hδpos⟩ : ∃ δ > 0, ∀ r : ℝ, |r - R| < δ → 0 < tailIntegral d g (r • e) := by
+    obtain ⟨δ, hδ, hδ'⟩ := Metric.eventually_nhds_iff.1 (hcont.eventually (lt_mem_nhds hpos))
+    exact ⟨δ, hδ, fun r hr ↦ hδ' (by rwa [Real.dist_eq])⟩
+  have hsign : ∀ y : Euclidean d, R - δ / 2 ≤ ‖y‖ → 0 ≤ tailIntegral d g y := by
+    intro y hy
+    rcases le_or_gt R ‖y‖ with h | h
+    · exact (g.tailIntegral_pos hd hg hR h).le
+    · have h' := hδpos ‖y‖ (by rw [abs_sub_lt_iff]; constructor <;> linarith)
+      rw [hg.tailIntegral (‖y‖ • e) y (by simp [norm_smul, he, norm_radialUnitDirection hd])]
+        at h'
+      exact h'.le
+  calc signRadius (tailIntegral d g) ≤ ENNReal.ofReal (R - δ / 2) :=
+        signRadius_le (R := Real.toNNReal (R - δ / 2)) fun y hy ↦
+          hsign y ((Real.le_coe_toNNReal _).trans hy)
+    _ < ENNReal.ofReal R := (ENNReal.ofReal_lt_ofReal_iff hR0).2 (by linarith)
+    _ = signRadius g := ENNReal.ofReal_toReal hfin.ne
+
+end SignEigenfunction
+
+/-- Proposition A.1 of the report (Appendix A): for a radial `g ∈ E₋(d)`, `d ≥ 1`, the tail
+integral `T_d g` of (87) is a self-Fourier sign eigenfunction, `T_d g ∈ E₊(d)`: it is continuous
+and integrable, `𝓕 (T_d g) = T_d g`, `T_d g (0) = 0` and `T_d g ≠ 0`. Moreover `‖T_d g‖₁ ≤ ½ ‖g‖₁`
+(`SignEigenfunction.integral_norm_tailIntegral_le`), `r(T_d g) ≤ r(g)`
+(`SignEigenfunction.signRadius_tailIntegral_le`) and `r(T_d g) < r(g)` when `r(g) < ∞`
+(`SignEigenfunction.signRadius_tailIntegral_lt`). -/
+def SignEigenfunction.tailIntegral (hd : 0 < d) (g : SignEigenfunction d (-1))
+    (hg : IsRadial (g : Euclidean d → ℝ)) : SignEigenfunction d 1 where
+  toFun := _root_.CohnElkies.tailIntegral d g
+  integrable := g.integrable_tailIntegral hd hg
+  fourier_eq ξ := by
+    rw [g.fourier_tailIntegral hd hg ξ]
+    simp
+  ne_zero := g.tailIntegral_ne_zero hd hg
+  zero := tailIntegral_zero _
+
+@[simp] theorem SignEigenfunction.tailIntegral_apply (hd : 0 < d) (g : SignEigenfunction d (-1))
+    (hg : IsRadial (g : Euclidean d → ℝ)) (x : Euclidean d) :
+    g.tailIntegral hd hg x = _root_.CohnElkies.tailIntegral d g x :=
+  rfl
+
+/-! ### The comparison `A₊(d) ≤ A₋(d)` -/
+
+/-- Appendix A of the report: `A₊(d) ≤ A₋(d)` for `d ≥ 1`. Every radial `g ∈ E₋(d)` yields
+`T_d g ∈ E₊(d)` with `r(T_d g) ≤ r(g)` (Proposition A.1), and the infimum defining `A₋(d)` may
+be taken over radial eigenfunctions (`signUncertaintyConstant_eq_radial`). The strict inequality
+`A₊(d) < A₋(d)` stated in the report needs an extremizer attaining `A₋(d)` (Cohn–Gonçalves 2019,
+Theorem 1.4, not proved in the report) and is not formalized. -/
+theorem signUncertaintyConstant_one_le_neg_one (hd : 0 < d) :
+    signUncertaintyConstant 1 d ≤ signUncertaintyConstant (-1) d := by
+  rw [signUncertaintyConstant_eq_radial hd (-1)]
+  exact le_iInf₂ fun g hg ↦ (signUncertaintyConstant_le (g.tailIntegral hd hg)).trans
+    (g.signRadius_tailIntegral_le hd hg)
+
+end
+
+end CohnElkies
+
+end CohnElkies_SignUncertainty_AppendixA
 
 /-! ## Module `CohnElkies.SignUncertainty.SchwartzApproximation` -/
 
@@ -26122,228 +27337,6 @@ end
 end CohnElkies
 
 end CohnElkies_SignUncertainty_SchwartzApproximation
-
-/-! ## Module `CohnElkies.SignUncertainty.Radialization` -/
-
-section CohnElkies_SignUncertainty_Radialization
-
-/-! # Rotational averages of sign eigenfunctions (report §2.1)
-
-The rotational average `ℛg(x) = ∫_{O(d)} g(U⁻¹x) dU` and its `L¹` theory are in
-`CohnElkies.Radialization`. Here is what is specific to sign eigenfunctions: `ℛg ≠ 0` whenever `g`
-is a nonzero eventually nonnegative Fourier eigenfunction, since otherwise `g` vanishes outside a
-ball, its Fourier transform is entire along every ray
-(`differentiable_directionalLaplace`, `fourier_eq_zero_of_eq_zero_outside`), and `𝓕 g = ς g`
-forces `g = 0`. The upshot is `SignEigenfunction.radialize`: a radial sign eigenfunction with the
-same exterior sign condition, and with `r(ℛg) ≤ r(g)` and `‖ℛg‖₁ ≤ ‖g‖₁`; hence the infimum
-defining `A_ς(d)` may be restricted to radial eigenfunctions (`signUncertaintyConstant_eq_radial`).
--/
-
-namespace CohnElkies
-open scoped Real
-open Complex (I)
-
-noncomputable section
-
-open Filter MeasureTheory Set
-open scoped ENNReal FourierTransform Topology RealInnerProductSpace
-
-variable {d : ℕ}
-
-/-! ### Nonvanishing of the average of an eventually nonnegative eigenfunction
-
-Report §2.1: if `ℛg = 0` and `g ≥ 0` outside a ball, then `g` vanishes outside that ball
-(nonnegative continuous functions with zero spherical averages vanish); the Fourier transform of a
-compactly supported integrable function is entire along every ray, so `𝓕 g = ς g` vanishing outside
-the same ball forces `𝓕 g = 0` and `g = 0`. -/
-
-theorem eq_zero_of_rotationalAverage_eq_zero {g : Euclidean d → ℝ} (hg : Continuous g) {R : ℝ}
-    (hR : ∀ x : Euclidean d, R ≤ ‖x‖ → 0 ≤ g x) (h0 : rotationalAverage g = 0)
-    {x : Euclidean d} (hx : R ≤ ‖x‖) : g x = 0 := by
-  set φ : OrthogonalGroup d → ℝ := fun U ↦ g (orthogonalAction U⁻¹ x) with hφdef
-  have hφ : Continuous φ := hg.comp ((continuous_orthogonalAction x).comp continuous_inv)
-  have hφ0 : 0 ≤ φ := fun U ↦ hR _ (by rw [norm_orthogonalAction]; exact hx)
-  have hint : Integrable φ (radialOrthogonalHaar d) := integrable_comp_orthogonalAction_inv hg x
-  have hzero : ∫ U, φ U ∂radialOrthogonalHaar d = 0 := congrFun h0 x
-  have heq : φ = 0 := (hφ.ae_eq_iff_eq (radialOrthogonalHaar d) continuous_const).1
-    ((integral_eq_zero_iff_of_nonneg hφ0 hint).1 hzero)
-  simpa [hφdef] using congrFun heq 1
-
-/-- `F(z) = ∫ f(x) e^{z ⟪x, ξ⟫} dx`: the Fourier–Laplace transform of `f` along the direction
-`ξ`; `𝓕 f (t ξ) = F(-2πit)`. -/
-def directionalLaplace (f : Euclidean d → ℂ) (ξ : Euclidean d) (z : ℂ) : ℂ :=
-  ∫ x, f x * Complex.exp (z * ⟪x, ξ⟫)
-
-theorem fourier_smul_eq_directionalLaplace (f : Euclidean d → ℂ) (ξ : Euclidean d) (t : ℝ) :
-    𝓕 f (t • ξ) = directionalLaplace f ξ (-2 * π * t * I) := by
-  rw [Real.fourier_eq', directionalLaplace]
-  refine integral_congr_ae (.of_forall fun x ↦ ?_)
-  simp only [real_inner_smul_right, smul_eq_mul]
-  rw [mul_comm (Complex.exp _)]
-  congr 2
-  push_cast
-  ring
-
-/-- For an integrable `f` vanishing outside a ball, the Fourier–Laplace transform along any
-direction is entire (differentiation under the integral sign). -/
-theorem differentiable_directionalLaplace {f : Euclidean d → ℂ} (hf : Integrable f) {R : ℝ}
-    (hsupp : ∀ x : Euclidean d, R < ‖x‖ → f x = 0) (ξ : Euclidean d) :
-    Differentiable ℂ (directionalLaplace f ξ) := by
-  intro z₀
-  set M : ℝ := max R 0 * ‖ξ‖ with hM
-  have hM0 : 0 ≤ M := by positivity
-  have hinner : ∀ x : Euclidean d, f x ≠ 0 → |⟪x, ξ⟫| ≤ M := fun x hx ↦ by
-    have hxR : ‖x‖ ≤ max R 0 := le_max_of_le_left (le_of_not_gt fun h ↦ hx (hsupp x h))
-    exact (abs_real_inner_le_norm x ξ).trans (mul_le_mul_of_nonneg_right hxR (norm_nonneg ξ))
-  have hre : ∀ (z : ℂ) (x : Euclidean d), f x ≠ 0 → (z * ⟪x, ξ⟫).re ≤ ‖z‖ * M := fun z x hx ↦
-    calc (z * ⟪x, ξ⟫).re ≤ ‖z * ⟪x, ξ⟫‖ := Complex.re_le_norm _
-      _ = ‖z‖ * |⟪x, ξ⟫| := by rw [norm_mul, Complex.norm_real, Real.norm_eq_abs]
-      _ ≤ ‖z‖ * M := by gcongr; exact hinner x hx
-  have hmeas : ∀ z : ℂ, AEStronglyMeasurable
-      (fun x : Euclidean d ↦ f x * Complex.exp (z * ⟪x, ξ⟫)) volume := fun z ↦
-    hf.aestronglyMeasurable.mul
-      (by fun_prop : Continuous fun x : Euclidean d ↦ Complex.exp (z * ⟪x, ξ⟫)).aestronglyMeasurable
-  refine (hasDerivAt_integral_of_dominated_loc_of_deriv_le (μ := volume) (𝕜 := ℂ)
-    (F := fun z x ↦ f x * Complex.exp (z * ⟪x, ξ⟫))
-    (F' := fun z x ↦ f x * ((⟪x, ξ⟫ : ℂ) * Complex.exp (z * ⟪x, ξ⟫)))
-    (bound := fun x ↦ ‖f x‖ * (M * Real.exp ((‖z₀‖ + 1) * M)))
-    (Metric.ball_mem_nhds z₀ one_pos) (.of_forall hmeas) ?_ ?_ ?_ ?_ ?_).2.differentiableAt
-  · refine (hf.norm.mul_const (Real.exp (‖z₀‖ * M))).mono' (hmeas z₀) (.of_forall fun x ↦ ?_)
-    by_cases hx : f x = 0
-    · simp [hx]
-    · rw [norm_mul, Complex.norm_exp]
-      gcongr
-      exact hre z₀ x hx
-  · exact hf.aestronglyMeasurable.mul (by fun_prop : Continuous fun x : Euclidean d ↦
-      (⟪x, ξ⟫ : ℂ) * Complex.exp (z₀ * ⟪x, ξ⟫)).aestronglyMeasurable
-  · refine .of_forall fun x z hz ↦ ?_
-    by_cases hx : f x = 0
-    · simp [hx]
-    · have hz' : ‖z‖ ≤ ‖z₀‖ + 1 :=
-        (norm_le_norm_add_norm_sub' z z₀).trans (by linarith [mem_ball_iff_norm.1 hz])
-      rw [norm_mul, norm_mul, Complex.norm_exp, Complex.norm_real, Real.norm_eq_abs]
-      have h1 := hinner x hx
-      have h2 : (z * ⟪x, ξ⟫).re ≤ (‖z₀‖ + 1) * M := (hre z x hx).trans (by gcongr)
-      gcongr
-  · exact hf.norm.mul_const _
-  · refine .of_forall fun x z _ ↦ ?_
-    have h := (((hasDerivAt_id z).mul_const (⟪x, ξ⟫ : ℂ)).cexp).const_mul (f x)
-    simpa [mul_comm, mul_left_comm, mul_assoc] using h
-
-/-- Report §2.1: an integrable function vanishing outside a ball whose Fourier transform also
-vanishes outside a ball has identically vanishing Fourier transform (`d ≥ 1`), since `𝓕 f` is
-entire along every ray through the origin. -/
-theorem fourier_eq_zero_of_eq_zero_outside (hd : 0 < d) {f : Euclidean d → ℂ} (hf : Integrable f)
-    {R : ℝ} (hsupp : ∀ x : Euclidean d, R < ‖x‖ → f x = 0)
-    (hfourier : ∀ x : Euclidean d, R < ‖x‖ → 𝓕 f x = 0) : 𝓕 f = 0 := by
-  have key : ∀ ξ : Euclidean d, ξ ≠ 0 → ∀ t : ℝ, 𝓕 f (t • ξ) = 0 := by
-    intro ξ hξ t
-    have hξ' : 0 < ‖ξ‖ := norm_pos_iff.2 hξ
-    set G : ℂ → ℂ := fun z ↦ directionalLaplace f ξ (-2 * π * z) with hG
-    have hGa : AnalyticOnNhd ℂ G univ := Complex.analyticOnNhd_univ_iff_differentiable.2
-      ((differentiable_directionalLaplace hf hsupp ξ).comp (differentiable_id.const_mul _))
-    have hvanish : ∀ s : ℝ, max R 0 / ‖ξ‖ < s → G (s * I) = 0 := fun s hs ↦ by
-      have hs0 : 0 < s := lt_of_le_of_lt (by positivity) hs
-      have hnorm : R < ‖s • ξ‖ := by
-        rw [norm_smul, Real.norm_of_nonneg hs0.le]
-        exact lt_of_le_of_lt (le_max_left R 0) ((div_lt_iff₀ hξ').1 hs)
-      have h := hfourier _ hnorm
-      rw [fourier_smul_eq_directionalLaplace] at h
-      simpa [hG, mul_assoc] using h
-    have hG0 := congrFun (eq_zero_of_forall_imaginary_ray G hGa _ hvanish) (t * I)
-    rw [fourier_smul_eq_directionalLaplace]
-    simpa [hG, mul_assoc] using hG0
-  funext ξ
-  by_cases hξ : ξ = 0
-  · have he : radialUnitDirection hd ≠ 0 :=
-      norm_ne_zero_iff.1 (by rw [norm_radialUnitDirection hd]; exact one_ne_zero)
-    simpa [hξ] using key _ he 0
-  · simpa using key ξ hξ 1
-
-/-- Report §2.1: the rotational average of a sign eigenfunction that is nonnegative outside a
-ball does not vanish. -/
-theorem SignEigenfunction.rotationalAverage_ne_zero (hd : 0 < d) {ς : ℤˣ}
-    (g : SignEigenfunction d ς) {R : ℝ} (hR : ∀ x : Euclidean d, R ≤ ‖x‖ → 0 ≤ g x) :
-    rotationalAverage (g : Euclidean d → ℝ) ≠ 0 := by
-  intro h0
-  have hvan : ∀ x : Euclidean d, R ≤ ‖x‖ → g x = 0 := fun x hx ↦
-    eq_zero_of_rotationalAverage_eq_zero g.continuous hR h0 hx
-  have hsupp : ∀ x : Euclidean d, R < ‖x‖ → g.toComplex x = 0 := fun x hx ↦ by
-    simp [hvan x hx.le]
-  have hfour : ∀ x : Euclidean d, R < ‖x‖ → 𝓕 g.toComplex x = 0 := fun x hx ↦ by
-    rw [g.fourier_toComplex, hvan x hx.le]
-    simp
-  have hzero := fourier_eq_zero_of_eq_zero_outside hd g.integrable_toComplex hsupp hfour
-  exact g.ne_zero (funext fun x ↦ by simpa [congrFun hzero x] using g.coe_eq_fourier x)
-
-/-- The rotational average `ℛg` of a sign eigenfunction `g` nonnegative outside a ball, as a sign
-eigenfunction (report §2.1: `𝓕(ℛg) = ς ℛg`, `ℛg(0) = g(0) = 0`, `ℛg ≠ 0`). -/
-def SignEigenfunction.radialize (hd : 0 < d) {ς : ℤˣ} (g : SignEigenfunction d ς) {R : ℝ}
-    (hR : ∀ x : Euclidean d, R ≤ ‖x‖ → 0 ≤ g x) : SignEigenfunction d ς where
-  toFun := rotationalAverage (g : Euclidean d → ℝ)
-  integrable := integrable_rotationalAverage g.continuous g.integrable
-  fourier_eq ξ := by
-    have h : (fun x ↦ ((rotationalAverage (g : Euclidean d → ℝ) x : ℝ) : ℂ)) =
-        rotationalAverage g.toComplex :=
-      funext fun x ↦ (rotationalAverage_ofReal g x).symm
-    rw [h, fourier_rotationalAverage g.continuous_toComplex g.integrable_toComplex]
-    unfold rotationalAverage
-    simp only [g.fourier_toComplex]
-    rw [integral_const_mul, integral_complex_ofReal]
-  ne_zero := g.rotationalAverage_ne_zero hd hR
-  zero := by rw [rotationalAverage_zero, g.zero]
-
-namespace SignEigenfunction
-
-variable (hd : 0 < d) {ς : ℤˣ} (g : SignEigenfunction d ς) {R : ℝ}
-  (hR : ∀ x : Euclidean d, R ≤ ‖x‖ → 0 ≤ g x)
-
-@[simp] theorem radialize_apply (x : Euclidean d) :
-    g.radialize hd hR x = rotationalAverage (g : Euclidean d → ℝ) x :=
-  rfl
-
-theorem radialize_eq_of_norm_eq : IsRadial (g.radialize hd hR) :=
-  rotationalAverage_eq_of_norm_eq _
-
-theorem radialize_nonneg {x : Euclidean d} (hx : R ≤ ‖x‖) : 0 ≤ g.radialize hd hR x :=
-  rotationalAverage_nonneg_of_norm_le hR hx
-
-/-- `r(ℛg) ≤ r(g)`. -/
-theorem signRadius_radialize_le : signRadius (g.radialize hd hR) ≤ signRadius g :=
-  signRadius_le_signRadius fun _ hR' _ hx ↦ rotationalAverage_nonneg_of_norm_le hR' hx
-
-/-- `‖ℛg‖₁ ≤ ‖g‖₁`. -/
-theorem integral_norm_radialize_le : ∫ x, ‖g.radialize hd hR x‖ ≤ ∫ x, ‖g x‖ :=
-  integral_norm_rotationalAverage_le g.continuous g.integrable
-
-end SignEigenfunction
-
-/-! ### Radial reduction for the sign-uncertainty constants -/
-
-/-- A function with a finite last-sign radius really is nonnegative outside some ball: the
-infimum defining `r(g)` is over a nonempty set of radii. -/
-theorem exists_nonneg_outside_of_signRadius_lt_top {g : Euclidean d → ℝ} (h : signRadius g < ⊤) :
-    ∃ R : ℝ, ∀ x : Euclidean d, R ≤ ‖x‖ → 0 ≤ g x := by
-  by_contra hcon
-  exact h.ne (top_le_iff.1 (le_signRadius fun R hR ↦ absurd ⟨(R : ℝ), hR⟩ hcon))
-
-/-- Report §2.1: the infimum defining `A_ς(d)` may be taken over radial eigenfunctions only. -/
-theorem signUncertaintyConstant_eq_radial (hd : 0 < d) (ς : ℤˣ) :
-    signUncertaintyConstant ς d =
-      ⨅ (g : SignEigenfunction d ς) (_ : IsRadial (g : Euclidean d → ℝ)), signRadius g := by
-  refine le_antisymm (le_iInf₂ fun g _ ↦ signUncertaintyConstant_le g) (le_iInf fun g ↦ ?_)
-  rcases eq_or_ne (signRadius (g : Euclidean d → ℝ)) ⊤ with htop | hne
-  · rw [htop]
-    exact le_top
-  · obtain ⟨R, hR⟩ := exists_nonneg_outside_of_signRadius_lt_top (lt_top_iff_ne_top.2 hne)
-    exact (iInf₂_le (g.radialize hd hR) (g.radialize_eq_of_norm_eq hd hR)).trans
-      (g.signRadius_radialize_le hd hR)
-
-end
-
-end CohnElkies
-
-end CohnElkies_SignUncertainty_Radialization
 
 /-! ## Module `CohnElkies.SignUncertainty.LowerBound` -/
 

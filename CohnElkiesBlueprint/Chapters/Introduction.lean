@@ -18,10 +18,11 @@ development proves from Poisson summation. The chapter on preliminaries collects
 gamma-function identities, the radial reduction and the radial Mellin transform; the chapter on
 the lower bound proves the universal obstruction (Proposition 3.1) and the packing lower bound
 (Theorem 3.8); the chapter on the upper bound constructs the asymptotically optimal functions
-(Theorem 4.1). The appendix compares the two sign-uncertainty constants and is deliberately not
-formalized, and a final chapter records where the Lean formalization deviates from the report.
-Every node names its Lean counterpart in the `CohnElkies` library, except the nodes of
-Appendix A, which are deliberately not formalized.
+(Theorem 4.1). The appendix compares the two sign-uncertainty constants (Proposition A.1 and
+$`\mathsf{A}_+(d) \le \mathsf{A}_-(d)` are formalized; the strict inequality, which needs an
+extremizer, is not), and a final chapter records where the Lean formalization deviates from the
+report. Every node names its Lean counterpart in the `CohnElkies` library, except the extremizer
+assumption and the strict inequality of Appendix A.
 
 # The sphere-packing problem and the Cohn–Elkies linear program
 
@@ -289,7 +290,8 @@ $`\limsup_{d\to\infty} \mathsf{A}_\varsigma(d)/\sqrt d \le 1/\pi`.
 Although the two asymptotics coincide, the appendix of the report shows that
 $`\mathsf{A}_+(d) \le \mathsf{A}_-(d)` for every $`d`, with strict inequality whenever the infimum
 defining $`\mathsf{A}_-(d)` is attained ({bpref "cor_a_plus_le_a_minus"}[] and
-{bpref "cor_a_plus_lt_a_minus"}[]); this appendix is not formalized.
+{bpref "cor_a_plus_lt_a_minus"}[]); the non-strict inequality is formalized as
+`CohnElkies.signUncertaintyConstant_one_le_neg_one`.
 
 # Strategy
 

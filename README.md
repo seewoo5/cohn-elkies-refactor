@@ -8,7 +8,7 @@ More organized formalization are under `CohnElkies` and `CohnElkiesForMathlib`, 
 
 Some results in the original report were missing in their formalization, and we have added them here. In particular, we have formalized both signs of the uncertainty principle, the self-Fourier function $f_0$, $L^1$ to Schwartz reduction, and radial reduction.
 The 30-digits approximation of the Cohn-Elkies exponent is removed, since it is unnecessary.
-The Proposition A.1 of the report ($\mathsf A_+(d) < \mathsf A_-(d)$) is also missing in the original formalization, but we decided to not to formalized it here, too (see `RefactoringResult.md`, §1.6).
+The Proposition A.1 of the report (the tail-integration operator $T_d$) is also missing in the original formalization; here it is formalized in $L^1$ generality together with the comparison $\mathsf A_+(d) \le \mathsf A_-(d)$ (`CohnElkies.signUncertaintyConstant_one_le_neg_one`). The report's strict inequality $\mathsf A_+(d) < \mathsf A_-(d)$ needs an extremizer attaining $\mathsf A_-(d)$ (Cohn–Gonçalves 2019) and is not formalized (see `RefactoringResult.md`, §1.6).
 
 Every code is written by Claude (mostly Fable 5.1 and Opus 5), where the details can be found under `formalization.yaml`.
 It was asked to follow `RefactoringPlan.md` (which is completely human-written) with the original OpenAI's report, original Lean file, and my two blog posts as references, and the result is summarized in `RefactoringResult.md`.

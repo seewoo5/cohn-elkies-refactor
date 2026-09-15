@@ -244,12 +244,14 @@ Let $`g \in L^1(\mathbb{R}^d)` satisfy $`\widehat g = \varsigma g` almost everyw
 $`\varsigma \in \{-1,+1\}`, and suppose $`g` vanishes almost everywhere outside some ball. Then
 $`g = 0`.
 
-Formalized as `CohnElkies.fourier_eq_zero_of_eq_zero_outside` (module
-`CohnElkies.SignUncertainty.Radialization`): for integrable $`f` vanishing outside a ball whose
-Fourier transform also vanishes outside a ball, $`\widehat f = 0`; the proof shows that
-$`\widehat f` is entire along every ray (`CohnElkies.directionalLaplace`,
-`CohnElkies.differentiable_directionalLaplace`) and applies
-`CohnElkies.eq_zero_of_forall_imaginary_ray`. The special case used by Theorem 3.8, a real
+Formalized as `Real.ae_eq_zero_of_hasCompactSupport_fourierIntegral` (module
+`CohnElkiesForMathlib.Analysis.Fourier.CompactSupport`, on any nontrivial finite-dimensional real
+inner product space; `Real.eq_zero_of_hasCompactSupport_fourierIntegral` for continuous $`f`), from
+`Real.fourierIntegral_eq_zero_of_eq_zero_outside_ball`: the Fourier–Laplace transform along a ray
+(`Real.fourierLaplaceRay`) is entire (`Real.differentiable_fourierLaplaceRay`) and vanishes on a
+ray of the imaginary axis, so it vanishes identically
+(`AnalyticOnNhd.eq_zero_of_forall_ofReal_mul_I_eq_zero`); the $`\mathbb{R}^d` form is
+`CohnElkies.fourier_eq_zero_of_eq_zero_outside`. The special case used by Theorem 3.8, a real
 nonnegative compactly supported Schwartz function $`g` with $`\widehat g = g` vanishes
 (`CohnElkies.eq_zero_of_fourier_eq_self`), is proved by a moment-generating-function argument
 rather than by Fourier analyticity.

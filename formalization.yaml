@@ -28,8 +28,9 @@ sources:
     location: "Chapter 1 (Sections 1-4, Appendix A)"
     relationship: "formalizes"
     note: >-
-      Sections 1-4 are formalized in full; Appendix A (A₊(d) < A₋(d)) is deliberately not
-      formalized (its strict inequality needs the extremizer theorem of Cohn-Gonçalves 2019).
+      Sections 1-4 are formalized in full; of Appendix A, Proposition A.1 and A₊(d) ≤ A₋(d) are
+      formalized, while the strict inequality A₊(d) < A₋(d) (which needs the extremizer theorem of
+      Cohn–Gonçalves 2019) is not.
     license: ""
     author_endorsement: "not-contacted"
   - title: "SpherePacking.lean of the repository openai/ten-proofs (the original single-file formalization)"
@@ -63,7 +64,7 @@ sources:
     type: "article"
     location: "Theorem 1.4 (existence of extremizers), cited by Appendix A of the report"
     relationship: "background"
-    note: "Not formalized (Appendix A is out of scope)."
+    note: "Not formalized; only the strict inequality of Appendix A depends on it."
     author_endorsement: "n/a"
 
 related_formalizations:
@@ -81,8 +82,9 @@ status:
     Theorem 1.1 in both forms, the packing bounds Δ_d ≤ LP_d (proved, not assumed) and
     Δ_d ≤ (sqrt(e/(2π)) + o(1))^d, Propositions 3.1 and 3.7 for both Fourier eigenvalues (Schwartz
     and L¹ classes), the saddle-point construction of f₊, f₋, f₀ (Theorem 4.1, Lemmas 4.2-4.10),
-    the radial reduction and Schwartz approximation of Section 2.1, and Theorem 1.2. Appendix A is
-    stated in the blueprint but not formalized.
+    the radial reduction and Schwartz approximation of Section 2.1, Theorem 1.2, and Appendix A's
+    Proposition A.1 with A₊(d) ≤ A₋(d) (the strict inequality, needing an extremizer, is not
+    formalized).
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: ["propext", "Classical.choice", "Quot.sound"]
@@ -154,7 +156,7 @@ automation:
     theorems, reorganization into an import DAG with a Mathlib-ready library, a cleanup pass, the
     comparator challenge and the blueprint. Human involvement: the plan, review of intermediate
     reports, and design decisions (dropping the numeric certificate, the L¹ formulation of the
-    sign-uncertainty constants, not formalizing Appendix A).
+    sign-uncertainty constants, then reinstating Appendix A in its non-strict form).
 
 fidelity:
   divergences: >-
@@ -235,11 +237,20 @@ alignment:
       module: "CohnElkies/SignUncertainty/Radialization.lean"
       status: "proved"
       note: "CohnElkies.exists_schwartz_approximation (CohnElkies/SignUncertainty/SchwartzApproximation.lean)"
-    - source: "Appendix A (Proposition A.1, A₊(d) < A₋(d))"
+    - source: "Appendix A, Proposition A.1 (the tail-integration operator T_d)"
+      lean: "CohnElkies.SignEigenfunction.tailIntegral"
+      module: "CohnElkies/SignUncertainty/AppendixA.lean"
+      status: "proved"
+      note: "with signRadius_tailIntegral_lt; the compact-support theorem is Real.ae_eq_zero_of_hasCompactSupport_fourierIntegral (CohnElkiesForMathlib/Analysis/Fourier/CompactSupport.lean)"
+    - source: "Appendix A, A₊(d) ≤ A₋(d)"
+      lean: "CohnElkies.signUncertaintyConstant_one_le_neg_one"
+      module: "CohnElkies/SignUncertainty/AppendixA.lean"
+      status: "proved"
+    - source: "Appendix A, A₊(d) < A₋(d)"
       lean: ""
       module: ""
       status: "not-formalized"
-      note: "Deliberately out of scope; stated informally in the blueprint chapter Appendix A."
+      note: "Needs an extremizer attaining A₋(d) (Cohn–Gonçalves 2019, Theorem 1.4), not proved in the report; stated informally in the blueprint."
 
 acknowledgements: >-
   OpenAI's original formalization (openai/ten-proofs) and the Sphere-Packing-Lean project, whose
