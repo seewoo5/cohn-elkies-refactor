@@ -28,7 +28,7 @@ sources:
     location: "Chapter 1 (Sections 1-4, Appendix A)"
     relationship: "formalizes"
     note: >-
-      Sections 1-4 and Appendix A are formalized in full; the strict inequality A₊(d) < A₋(d) of
+      Sections 1-4 and Appendix A are formalized in full; the inequality A₊(d) < A₋(d) of
       Appendix A uses the existence of extremizers for A₋(d) (Cohn–Gonçalves 2019, Theorem 1.4),
       which is formalized as well (existence part).
     license: ""
@@ -89,8 +89,8 @@ status:
     Δ_d ≤ (sqrt(e/(2π)) + o(1))^d, Propositions 3.1 and 3.7 for both Fourier eigenvalues (Schwartz
     and L¹ classes), the saddle-point construction of f₊, f₋, f₀ (Theorem 4.1, Lemmas 4.2-4.10),
     the radial reduction and Schwartz approximation of Section 2.1, Theorem 1.2, and Appendix A's
-    Proposition A.1 with A₊(d) ≤ A₋(d) and A₊(d) < A₋(d) for every d ≥ 1, the latter through the
-    existence of extremizers for A₋(d) (Cohn–Gonçalves 2019, Theorem 1.4) and 0 < A_ς(d) < ∞.
+    Proposition A.1 and A₊(d) < A₋(d) for every d ≥ 1, through the existence of extremizers for
+    A₋(d) (Cohn–Gonçalves 2019, Theorem 1.4) and 0 < A_ς(d) < ∞.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: ["propext", "Classical.choice", "Quot.sound"]
@@ -126,13 +126,13 @@ status:
     comparator_config: "ComparatorChallenges/CohnElkies.json"
     literature_dependencies: []
   - declaration: "CohnElkies.signUncertaintyConstant_one_lt_neg_one"
-    file: "CohnElkies/SignUncertainty/Extremizer.lean"
+    file: "CohnElkies/SignUncertainty/AppendixA.lean"
     sorry_count: 0
     axioms: ["propext", "Classical.choice", "Quot.sound"]
     comparator_config: ""
     literature_dependencies: []
   - declaration: "CohnElkies.exists_signRadius_eq_signUncertaintyConstant_neg_one"
-    file: "CohnElkies/SignUncertainty/Extremizer.lean"
+    file: "CohnElkies/SignUncertainty/AppendixA.lean"
     sorry_count: 0
     axioms: ["propext", "Classical.choice", "Quot.sound"]
     comparator_config: ""
@@ -264,15 +264,21 @@ alignment:
       module: "CohnElkies/SignUncertainty/AppendixA.lean"
       status: "proved"
       note: "with signRadius_tailIntegral_lt; the compact-support theorem is Real.ae_eq_zero_of_hasCompactSupport_fourierIntegral (CohnElkiesForMathlib/Analysis/Fourier/CompactSupport.lean)"
-    - source: "Appendix A, A₊(d) ≤ A₋(d)"
-      lean: "CohnElkies.signUncertaintyConstant_one_le_neg_one"
-      module: "CohnElkies/SignUncertainty/AppendixA.lean"
-      status: "proved"
     - source: "Appendix A, A₊(d) < A₋(d)"
       lean: "CohnElkies.signUncertaintyConstant_one_lt_neg_one"
-      module: "CohnElkies/SignUncertainty/Extremizer.lean"
+      module: "CohnElkies/SignUncertainty/AppendixA.lean"
       status: "proved"
-      note: "unconditional, for every d ≥ 1; the reduction to an extremizer is signUncertaintyConstant_one_lt_neg_one_of_exists_extremizer (CohnElkies/SignUncertainty/AppendixA.lean)"
+      note: "unconditional, for every d ≥ 1 (the non-strict A₊(d) ≤ A₋(d) and the conditional strict version were removed as subsumed)"
+    - source: "Section 3, proof of Lemma 3.2 (the strip Poisson principle, cited from Ahlfors)"
+      lean: "CohnElkies.norm_le_exp_integral_P_σ_of_strip"
+      module: "CohnElkies/LowerBound/CappedMajorization.lean"
+      status: "proved"
+      note: "for continuous boundary data of linear growth and Z of Phragmén–Lindelöf growth, the form in which the report applies it; proved on the strip via the holomorphic Poisson integral and PhragmenLindelof.horizontal_strip_norm_extension"
+    - source: "Section 3, equation (22) (log-moment identity of the sech² density)"
+      lean: "CohnElkies.integral_poissonLogisticDensity_mul_log_sqrt"
+      module: "CohnElkies/LowerBound/LogMomentDigamma.lean"
+      status: "proved"
+      note: "not used by the main theorems (Lemma 3.4 is proved by a Frullani-type kernel); via Gauss's digamma integral Real.digamma_eq_integral (CohnElkiesForMathlib/Analysis/SpecialFunctions/Gamma/DigammaIntegral.lean, a Mathlib TODO)"
     - source: "Cohn–Gonçalves 2019, Lemma 3.1 (origin correction)"
       lean: "CohnElkies.originCorrection"
       module: "CohnElkies/SignUncertainty/OriginCorrection.lean"
@@ -285,7 +291,7 @@ alignment:
       note: "finiteness via the explicit eigenfunction ψ_{1/4} - ψ_{1/2} ∈ E₋(d)"
     - source: "Cohn–Gonçalves 2019, Theorem 1.4 (existence of extremizers for A₋(d))"
       lean: "CohnElkies.exists_signRadius_eq_signUncertaintyConstant_neg_one"
-      module: "CohnElkies/SignUncertainty/Extremizer.lean"
+      module: "CohnElkies/SignUncertainty/AppendixA.lean"
       status: "proved"
       note: "weak L² compactness (InnerProductSpace.tendsto_subseq_inner_left_of_norm_le, CohnElkiesForMathlib/Analysis/InnerProductSpace/WeakSequentialCompactness.lean) and the no-concentration lemma Real.exists_pos_le_setIntegral_norm_compl_closedBall_of_fourier_eq_mul (CohnElkiesForMathlib/Analysis/Fourier/EigenfunctionConcentration.lean) in place of Nazarov–Jaming and Mazur"
 

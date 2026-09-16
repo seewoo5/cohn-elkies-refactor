@@ -1,12 +1,11 @@
 import CohnElkies.SignUncertainty.OriginCorrection
-import CohnElkies.SignUncertainty.AppendixA
 
 /-! # Positivity and finiteness of the sign-uncertainty constants
 
-For every dimension `d ≥ 1` and both signs `ς = ±1`, the constants `A_ς(d) = inf r(g)` of report (6)
-satisfy `0 < A_ς(d) < ∞`, the two facts needed before extremizers of `A_ς(d)` can be discussed
-(Cohn–Gonçalves, *An optimal uncertainty principle in twelve dimensions via modular forms*, Invent.
-Math. 2019, §3.1 and Theorem 1.4).
+For every dimension `d ≥ 1`, the constants `A_ς(d) = inf r(g)` of report (6) satisfy
+`0 < A_ς(d)` for both signs `ς = ±1` and `A₋(d) < ∞`, the two facts needed before extremizers of
+`A₋(d)` can be discussed (Cohn–Gonçalves, *An optimal uncertainty principle in twelve dimensions
+via modular forms*, Invent. Math. 2019, §3.1 and Theorem 1.4).
 
 * `A_ς(d) > 0` (`signUncertaintyConstant_pos`): if `g ∈ 𝓔_ς(d)` is nonnegative outside the ball
   `B_ρ`, then, normalizing `‖g‖₁ = 1` and using `∫ g = 0`, the negative part `g₋ = (|g| - g)/2`
@@ -25,8 +24,8 @@ Math. 2019, §3.1 and Theorem 1.4).
   and dropping the positive `E_2`-terms, `E_{1/2} = E_{1/4} e^{-π|x|²/4}` and
   `E_4 ≤ E_{1/4} e^{-π|x|²/4}` give `G ≥ E_{1/4} (1 - e^{-π|x|²/4} (1 + D/D' + 2^d)) / D`, which
   is positive as soon as `|x|² > (4/π) log (1 + D/D' + 2^d)`.
-* `A₊(d) < ∞` (`signUncertaintyConstant_lt_top`) follows from `A₊(d) ≤ A₋(d)`
-  (`signUncertaintyConstant_one_le_neg_one`, Appendix A of the report). -/
+* `A₊(d) < ∞` follows from `A₊(d) < A₋(d)` (`signUncertaintyConstant_lt_top` in
+  `CohnElkies.SignUncertainty.Extremizer`). -/
 
 namespace CohnElkies
 open scoped Real
@@ -277,19 +276,6 @@ theorem signUncertaintyConstant_neg_one_lt_top (hd : 0 < d) :
     signUncertaintyConstant (-1) d < ⊤ :=
   (signUncertaintyConstant_le (explicitSignEigenfunction hd)).trans_lt
     (signRadius_explicitSignEigenfunction_lt_top hd)
-
-/-- `A_ς(d) < ∞` for `d ≥ 1` and both signs: `A₊(d) ≤ A₋(d) < ∞` (Appendix A of the report). -/
-theorem signUncertaintyConstant_lt_top (hd : 0 < d) (ς : ℤˣ) :
-    signUncertaintyConstant ς d < ⊤ := by
-  rcases Int.units_eq_one_or ς with rfl | rfl
-  · exact (signUncertaintyConstant_one_le_neg_one hd).trans_lt
-      (signUncertaintyConstant_neg_one_lt_top hd)
-  · exact signUncertaintyConstant_neg_one_lt_top hd
-
-/-- `0 < A_ς(d) < ∞` for `d ≥ 1` and both signs. -/
-theorem signUncertaintyConstant_pos_lt_top (hd : 0 < d) (ς : ℤˣ) :
-    0 < signUncertaintyConstant ς d ∧ signUncertaintyConstant ς d < ⊤ :=
-  ⟨signUncertaintyConstant_pos hd ς, signUncertaintyConstant_lt_top hd ς⟩
 
 end
 
