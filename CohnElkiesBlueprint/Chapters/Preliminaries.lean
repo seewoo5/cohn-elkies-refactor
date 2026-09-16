@@ -25,16 +25,8 @@ For all complex $`z` away from the poles, $`\Gamma(z+1) = z\Gamma(z)` and
 $`\Gamma(z)\Gamma(1-z) = \pi/\sin(\pi z)`; moreover $`\Gamma(\bar z) = \overline{\Gamma(z)}`.
 Consequently, for real $`b \ne 0` (equation (7)),
 $`|\Gamma(ib)|^2 = \dfrac{\pi}{b\sinh(\pi b)}`, $`|\Gamma(1/2 + ib)|^2 = \dfrac{\pi}{\cosh(\pi b)}`,
-and $`|\Gamma(-ib)| = |\Gamma(ib)|`.
-
-The recurrence, reflection and conjugation formulas are Mathlib's `Complex.Gamma_add_one`,
-`Complex.Gamma_mul_Gamma_one_sub` and `Complex.Gamma_conj`. The two modulus identities are
-`Complex.norm_Gamma_I_mul_sq` and `Complex.norm_Gamma_one_half_add_I_mul_sq`; the
-iterated recurrences $`\Gamma(z+k) = \Gamma(z)\prod_{j<k}(z+j)` at $`z = iy/2` and
-$`z = 1/2 + iy/2`, which the lower bound uses in even and odd dimension, are
-`Complex.Gamma_add_nat_eq_mul_prod`, `CohnElkies.integer_gamma_product` and
-`CohnElkies.half_integer_gamma_product`, and the quotient of the two modulus identities is
-`Complex.log_norm_Gamma_I_mul_sub_log_norm_Gamma_one_half_add_I_mul`.
+and $`|\Gamma(-ib)| = |\Gamma(ib)|`; and, iterating the recurrence,
+$`\Gamma(z+k) = \Gamma(z)\prod_{j<k}(z+j)` for $`k \in \mathbb{N}`.
 :::
 
 :::proof "eq_7_gamma_identities"
@@ -45,82 +37,52 @@ $`|\Gamma(1/2+ib)|^2 = \Gamma(1/2+ib)\Gamma(1/2-ib) = \pi/\sin(\pi/2 + i\pi b) =
 :::
 
 :::definition "def_digamma" (lean := "Real.digamma")
-The digamma function is $`\psi = \Gamma'/\Gamma`, with derivatives $`\psi^{(1)} = \psi'`
-(trigamma) and $`\psi^{(2)} = \psi''`. It has the series
-$`\psi(z) = -\gamma_{E} + \sum_{k \ge 0}\bigl(\tfrac{1}{k+1} - \tfrac{1}{k+z}\bigr)`,
-$`\psi'(z) = \sum_{k\ge 0} (k+z)^{-2}`, and in particular, for real $`a \ge 0` and $`b \ne 0`
-(with $`a + ib` not a pole),
-$`\operatorname{Im}\psi(a+ib) = \sum_{k \ge 0} \dfrac{b}{(k+a)^2 + b^2}`.
-
-The formalization only needs $`\psi` on the positive real axis. It is defined there as
-`Real.digamma`, the derivative of $`\log\circ\Gamma`, and identified with the real part of
-Mathlib's `Complex.digamma` (the logarithmic derivative of $`\Gamma`) by
-`Real.digamma_eq_complex_re`; it is continuous on $`(0,\infty)`
-(`Real.continuousOn_digamma_Ioi`). The series above are not formalized: the monotonicity
-statements that the report derives from the series of $`\operatorname{Im}\psi` are proved
-directly from the gamma product formulas of {bpref "eq_7_gamma_identities"}[]
-(`CohnElkies.lowerGammaBoundaryLog_dimension_antitoneOn`), and the trigamma and polygamma bounds
-appear as explicit moment bounds ({bpref "lemma_gamma_asymptotics"}[]). Replacing the local
-definition by a Mathlib `Real.digamma` is planned (see the final chapter).
+The digamma function is $`\psi = \Gamma'/\Gamma`, the logarithmic derivative of $`\Gamma`; on the
+positive real axis, $`\psi = (\log\Gamma)'`. Its derivatives are the trigamma function
+$`\psi'` and $`\psi''`.
 :::
 
 :::lemma_ "lemma_gamma_asymptotics" (lean := "Real.tendsto_digamma_sub_log_atTop")
-With $`\psi` as in {uses "def_digamma"}[]:
-
-(i) $`\psi(x) = \log x - \dfrac{1}{2x} + O(x^{-2})` as real $`x \to +\infty`, and
-$`\log\Gamma(x+1) = x\log x - x + O(\log(2+x))` for $`x \ge 1` (Stirling).
-
-(ii) There is an absolute constant $`C` such that for all real $`m \ge 1/2`:
-$`\dfrac1m \le \psi'(m) \le \dfrac{C}{m}` and $`0 \le -\psi''(m) \le \dfrac{C}{m^2}`.
-
-(iii) For $`\operatorname{Re} z > 0`: $`\psi'(z) = \int_0^\infty \dfrac{t e^{-zt}}{1-e^{-t}}\,dt`,
-and
-for $`\operatorname{Re} z > 0`, $`\operatorname{Re}(z+w) > 0`:
-$`\log\Gamma(z+w) - \log\Gamma(z) - w\psi(z)`
-$`= \int_0^\infty (e^{-ws} - 1 + ws)\,\dfrac{e^{-zs}}{s(1-e^{-s})}\,ds`
-(Binet-type representation; the branch of $`\log\Gamma` is the one real on the positive axis).
-
-(iv) For $`a` in a compact subset of $`\mathbb{R}` avoiding the poles and $`|b| \to \infty`:
-$`\log|\Gamma(a+ib)| = (a - \tfrac12)\log|b| - \tfrac{\pi|b|}{2} + O_a(1)`, uniformly in $`a`.
-
-The formalization proves weaker forms, sufficient for every use. For (i):
-$`\psi(x) - \log x \to 0` (`Real.tendsto_digamma_sub_log_atTop`) and
-$`\log(x-1) \le \psi(x) \le \log x` for $`x > 1` (`Real.log_sub_one_le_digamma_le_log`); Stirling's
-formula is used only through Mathlib's `Stirling.tendsto_stirlingSeq_sqrt_pi` for factorials
-(see {bpref "lemma_stirling_ball_volume"}[]). For (ii): the moments of the gamma damping
-density of {bpref "eq_37_gamma_damping_density"}[] are bounded explicitly
-(`CohnElkies.upperGammaMoment_bounds`, `CohnElkies.upperGammaVariance_bounds`,
-`CohnElkies.upperGammaThirdMoment_bounds`), which is (51)–(52) of Lemma 4.4. For (iii): the
-Binet-type representation in the form (45) is `CohnElkies.exp_G_ℓη`. For (iv): only polynomial
-decay along vertical lines is needed,
-$`|\operatorname{Im} z|^k|\Gamma(z)| \le \Gamma(\operatorname{Re} z + k)`
-(`Complex.abs_im_pow_mul_norm_Gamma_le`, `CohnElkies.gamma_shiftedLine_polynomial_bound`),
-together with the exact modulus identity $`|\Gamma(m - ib)| = \Gamma(m)e^{-D_\gamma}` of
-{bpref "eq_45_log_gamma_integral"}[].
+With $`\psi` as in {uses "def_digamma"}[]: $`\psi(x) - \log x \to 0` as real $`x \to +\infty`,
+and $`\log(x-1) \le \psi(x) \le \log x` for real $`x > 1`.
 :::
 
 :::proof "lemma_gamma_asymptotics"
-All items are standard consequences of Stirling's formula and of the Malmstén–Binet integral
-representation of $`\log\Gamma`; (iii) follows by subtracting the representations of
-$`\log\Gamma(z+w)`, $`\log\Gamma(z)` and $`w\psi(z)`. The bounds in (ii) follow from the series
-of {uses "def_digamma"}[] by comparison with integrals. In the formalization, the bounds of (i)
-follow from $`\log\Gamma` being convex with $`\log\Gamma(x+1) - \log\Gamma(x) = \log x`, the
-moment bounds of (ii) from $`x \le e^{x} - 1 \le x e^{x}` applied to the density
-$`e^{-\eta a}/(a(1 - e^{-2a/\lambda}))`, (iii) from the Mathlib integral representation of
-$`\log\Gamma`, and (iv) from the recurrence and $`|\Gamma(z)| \le \Gamma(\operatorname{Re} z)`.
+$`\log\Gamma` is convex on $`(0,\infty)` with $`\log\Gamma(x+1) - \log\Gamma(x) = \log x`, so its
+derivative $`\psi` satisfies $`\log(x-1) = \log\Gamma(x) - \log\Gamma(x-1) \le \psi(x) \le
+\log\Gamma(x+1) - \log\Gamma(x) = \log x` for $`x > 1`; since $`\log x - \log(x-1) \to 0`, this
+gives $`\psi(x) - \log x \to 0`. (The report uses the sharper Stirling expansion
+$`\psi(x) = \log x - 1/(2x) + O(x^{-2})`, together with trigamma and polygamma bounds and the
+Binet-type representation of $`\log\Gamma`; the formalization replaces these by explicit moment
+bounds for the gamma damping density, {bpref "lemma_4_4"}[], by the Binet-type representation
+{bpref "eq_45_log_gamma_integral"}[], and by polynomial decay of $`\Gamma` along vertical lines.)
+:::
+
+:::lemma_ "lemma_digamma_gauss_integral" (lean := "Real.digamma_eq_integral")
+(Gauss's integral.) For real $`m > 0`, with $`\psi` as in {uses "def_digamma"}[],
+$`\psi(m) = \int_0^\infty\Bigl(\dfrac{e^{-t}}{t} - \dfrac{e^{-mt}}{1 - e^{-t}}\Bigr)\,dt`,
+the integrand being integrable on $`(0,\infty)`.
+:::
+
+:::proof "lemma_digamma_gauss_integral"
+By the recurrence $`\psi(m+1) = \psi(m) + 1/m` and $`\psi(x) - \log x \to 0`
+({uses "lemma_gamma_asymptotics"}[]), $`\psi(m) = \lim_n\bigl(\log n - \sum_{k=0}^n (m+k)^{-1}\bigr)`.
+For $`n \ge 1`, Frullani's formula $`\log n = \int_0^\infty (e^{-t} - e^{-nt})/t\,dt` and
+$`(m+k)^{-1} = \int_0^\infty e^{-(m+k)t}\,dt` with the geometric sum
+$`\sum_{k=0}^n e^{-(m+k)t} = e^{-mt}(1 - e^{-(n+1)t})/(1 - e^{-t})` write the $`n`-th term as
+$`\int_0^\infty\bigl[(e^{-t}/t - e^{-mt}/(1-e^{-t})) - e^{-nt}g(t)\bigr]dt` with
+$`g(t) = 1/t - e^{-(m+1)t}/(1-e^{-t})`. Since $`0 \le g \le m + 1` on $`(0,\infty)`, the
+correction is at most $`(m+1)/n` in absolute value and tends to $`0`.
 :::
 
 :::lemma_ "lemma_stirling_ball_volume" (lean := "CohnElkies.tendsto_packingGeometricRoot")
 With $`v_d` from {uses "def_ball_volume"}[], $`v_d^{1/d}\sqrt d \to \sqrt{2\pi e}` as
-$`d \to \infty`; equivalently $`v_d^{1/d} = (1+o(1))\sqrt{2\pi e/d}`. Formalized with the factor
-$`2^{-d}` of the Cohn–Elkies bound already included, as
-$`(v_d/2^d)^{1/d}\sqrt d \to \sqrt{2\pi e}/2` (`CohnElkies.tendsto_packingGeometricRoot`); the
-underlying statement is $`\log v_d/d + \log d/2 \to (\log(2\pi) + 1)/2`
-(`CohnElkies.tendsto_normalizedVolumeLog`, `CohnElkies.exp_normalizedVolumeLog_limit`).
+$`d \to \infty`; equivalently $`v_d^{1/d} = (1+o(1))\sqrt{2\pi e/d}`, or
+$`\log v_d/d + \log d/2 \to (\log(2\pi) + 1)/2`.
 :::
 
 :::proof "lemma_stirling_ball_volume"
-By Stirling ({uses "lemma_gamma_asymptotics"}[]),
+By Stirling's formula,
 $`\log\Gamma(d/2+1) = (d/2)\log(d/2) - d/2 + O(\log d)`, so
 $`\tfrac1d\log v_d = \tfrac12\log\pi - \tfrac12\log(d/2) + \tfrac12 + O(\tfrac{\log d}{d})`, which
 is $`\tfrac12\log\tfrac{2\pi e}{d} + o(1)`. Since Mathlib has Stirling's formula for factorials
@@ -148,14 +110,6 @@ functions, and
 $`\mathcal{A}_d^{\mathrm{rad}}`
 $`= \mathcal{A}_d \cap \mathcal{S}_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})`
 (see {uses "def_admissible_class"}[]).
-
-Formalized, for Schwartz $`f`, as `CohnElkies.rotationalAverage` (the
-integral of $`f(U^{-1}x)` against the Haar probability measure
-`CohnElkies.radialOrthogonalHaar` of $`O(d)`), packaged as a Schwartz function
-by `CohnElkies.rotationalAverageSchwartz`. Radiality is the predicate
-`CohnElkies.IsRadial` (the value depends only on the norm); there are no separate types for
-$`\mathcal{S}_{\mathrm{rad}}` and $`L^1_{\mathrm{rad}}`, and $`\mathcal{A}_d^{\mathrm{rad}}` is
-`CohnElkies.RadialAdmissible` (the class `CohnElkies.Admissible` with the extra field `radial`).
 :::
 
 :::lemma_ "lemma_rotational_average_properties" (lean := "CohnElkies.fourier_rotationalAverage") (parent := "grp_radial_reduction")
@@ -168,27 +122,6 @@ $`\{|x| \ge R\}` then so is $`\mathcal{R}f`. Consequently: if $`f \in \mathcal{A
 $`\mathcal{R}f \in \mathcal{A}_d^{\mathrm{rad}}` with the same values $`f(0)` and $`\widehat f(0)`;
 if $`\widehat g = \varsigma g` then $`\widehat{\mathcal{R}g} = \varsigma\mathcal{R}g`; and
 $`r(\mathcal{R}g) \le r(g)` for $`r` as in {uses "def_sign_radius"}[].
-
-The formalization covers the Schwartz case. Commutation with the Fourier transform is
-`CohnElkies.fourier_rotationalAverage`; radiality, the value at the
-origin, realness and the sign conditions are
-`CohnElkies.rotationalAverage_eq_of_norm_eq`,
-`radialSymmetrizationAverage_zero`, `radialSymmetrizationAverage_im_eq_zero`,
-`radialSymmetrizationAverage_nonneg_of_nonneg` and
-`radialSymmetrizationAverage_nonpos_of_le_norm` (nonpositivity outside a ball of any radius is
-preserved); the Schwartz property is the construction
-`CohnElkies.rotationalAverageSchwartz`; the admissibility consequence is
-`CohnElkies.Admissible.radialize` with `CohnElkies.Admissible.quotient_radialize`,
-`CohnElkies.Admissible.radialize_apply_zero`, `CohnElkies.Admissible.fourier_radialize_apply_zero`
-and `CohnElkies.Admissible.radialize_nonpos_of_le_norm` (module
-`CohnElkies/Admissible/Radialization.lean`). For continuous integrable $`g` (the
-$`L^1` theory of Proposition 3.7, module `CohnElkies.SignUncertainty.Radialization`) the average
-is `CohnElkies.rotationalAverage`, with `CohnElkies.fourier_rotationalAverage`
-($`\widehat{\mathcal{R}g} = \mathcal{R}\widehat g`), `CohnElkies.continuous_rotationalAverage`,
-`CohnElkies.integrable_rotationalAverage`, `CohnElkies.integral_norm_rotationalAverage_le`
-($`\|\mathcal{R}g\|_1 \le \|g\|_1`) and, for an eigenfunction that is nonnegative outside a ball,
-the eigenfunction `CohnElkies.SignEigenfunction.radialize` with
-`CohnElkies.SignEigenfunction.signRadius_radialize_le` ($`r(\mathcal{R}g) \le r(g)`).
 :::
 
 :::proof "lemma_rotational_average_properties"
@@ -208,11 +141,7 @@ transitively on spheres (`CohnElkies.orthogonal_transitive`).
 $`\inf_{f \in \mathcal{A}_d} f(0)/\widehat f(0)`
 $`= \inf_{f \in \mathcal{A}_d^{\mathrm{rad}}} f(0)/\widehat f(0)`.
 Hence $`\mathrm{LP}_d` in {uses "def_lp"}[] is unchanged when $`\mathcal{A}_d` is replaced by
-$`\mathcal{A}_d^{\mathrm{rad}}`, as in the radial formulation of Cohn and Miller. Formalized as
-`CohnElkies.LP_eq_radial`, via the equality of the two sets of quotients
-`CohnElkies.quotientSet_eq_radial` (from `CohnElkies.range_radialAdmissible_eq` and the
-radialization `CohnElkies.Admissible.radialize`); likewise `CohnElkies.normalizedProgram_eq_radial`
-for the normalized program.
+$`\mathcal{A}_d^{\mathrm{rad}}`, as in the radial formulation of Cohn and Miller.
 :::
 
 :::proof "lemma_lp_radial_reduction"
@@ -225,9 +154,6 @@ $`\mathcal{R}f \in \mathcal{A}_d^{\mathrm{rad}}` with the same quotient $`f(0)/\
 The constants $`\mathsf{A}_\varsigma(d)` of {uses "def_sign_uncertainty_constant"}[] are unchanged
 when the infimum is restricted to radial eigenfunctions:
 $`\mathsf{A}_\varsigma(d) = \inf\{r(g) : g \in \mathcal{E}_\varsigma(d) \text{ radial}\}`.
-Formalized as `CohnElkies.signUncertaintyConstant_eq_radial` (module
-`CohnElkies.SignUncertainty.Radialization`), with the helper
-`CohnElkies.exists_nonneg_outside_of_signRadius_lt_top`.
 :::
 
 :::proof "lemma_sign_uncertainty_radial_reduction"
@@ -242,19 +168,9 @@ $`\mathcal{E}_\varsigma(d)` with $`r(\mathcal{R}g) \le r(g)`
 :::lemma_ "lemma_compactly_supported_eigenfunction_zero" (lean := "CohnElkies.fourier_eq_zero_of_eq_zero_outside") (parent := "grp_radial_reduction")
 Let $`g \in L^1(\mathbb{R}^d)` satisfy $`\widehat g = \varsigma g` almost everywhere for some
 $`\varsigma \in \{-1,+1\}`, and suppose $`g` vanishes almost everywhere outside some ball. Then
-$`g = 0`.
-
-Formalized as `Real.ae_eq_zero_of_hasCompactSupport_fourierIntegral` (module
-`CohnElkiesForMathlib.Analysis.Fourier.CompactSupport`, on any nontrivial finite-dimensional real
-inner product space; `Real.eq_zero_of_hasCompactSupport_fourierIntegral` for continuous $`f`), from
-`Real.fourierIntegral_eq_zero_of_eq_zero_outside_ball`: the Fourier–Laplace transform along a ray
-(`Real.fourierLaplaceRay`) is entire (`Real.differentiable_fourierLaplaceRay`) and vanishes on a
-ray of the imaginary axis, so it vanishes identically
-(`AnalyticOnNhd.eq_zero_of_forall_ofReal_mul_I_eq_zero`); the $`\mathbb{R}^d` form is
-`CohnElkies.fourier_eq_zero_of_eq_zero_outside`. The special case used by Theorem 3.8, a real
-nonnegative compactly supported Schwartz function $`g` with $`\widehat g = g` vanishes
-(`CohnElkies.eq_zero_of_fourier_eq_self`), is proved by a moment-generating-function argument
-rather than by Fourier analyticity.
+$`g = 0`. More generally, an integrable function on a finite-dimensional real inner product
+space which vanishes outside a ball and whose Fourier transform vanishes outside a ball is zero
+almost everywhere.
 :::
 
 :::proof "lemma_compactly_supported_eigenfunction_zero"
@@ -278,8 +194,6 @@ support, this entire function vanishes on the tail of every imaginary ray, hence
 :::lemma_ "lemma_rotational_average_nonzero" (lean := "CohnElkies.SignEigenfunction.rotationalAverage_ne_zero") (parent := "grp_radial_reduction")
 Let $`g` be continuous, integrable and real on $`\mathbb{R}^d` with $`\widehat g = \varsigma g`,
 $`g \ne 0`, and $`g(x) \ge 0` for all $`|x| \ge R`, for some $`R \ge 0`. Then $`\mathcal{R}g \ne 0`.
-Formalized as `CohnElkies.SignEigenfunction.rotationalAverage_ne_zero` (module
-`CohnElkies.SignUncertainty.Radialization`), via `CohnElkies.eq_zero_of_rotationalAverage_eq_zero`.
 :::
 
 :::proof "lemma_rotational_average_nonzero"
@@ -292,32 +206,24 @@ vanishes on every sphere of radius at least $`R`, i.e. outside $`B(0,R)`. Then
 
 :::definition "def_schwartz_approximation" (lean := "CohnElkies.approximant") (parent := "grp_radial_reduction")
 Let $`g \in L^1_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})` (continuous representative) satisfy
-$`\widehat g = \varsigma g` and $`g(0) = 0`, $`\varsigma \in \{-1,+1\}`. For $`n \ge 1` set
-$`\kappa_n(x) = n^d e^{-\pi n^2|x|^2}`, $`\eta_n(x) = e^{-\pi|x|^2/n^2}`,
-$`q_n = \eta_n\,(g * \kappa_n)`, $`p_n = \tfrac12(q_n + \varsigma\widehat{q_n})`,
-$`\psi_+(x) = e^{-\pi|x|^2}`, $`\psi_-(x) = \bigl(|x|^2 - \tfrac{d}{4\pi}\bigr)e^{-\pi|x|^2}`,
-and the corrected approximants
+$`\widehat g = \varsigma g` and $`g(0) = 0`, $`\varsigma \in \{-1,+1\}`. Let $`\varphi` be the
+normalized flat bump, $`\varphi(x) = c\,e^{-1/(1-4|x|^2)}` for $`|x| < 1/2` and $`\varphi(x) = 0`
+otherwise, with $`\int\varphi = 1`. For $`n \ge 1` set
+$`\varphi_n(x) = n^d\varphi(nx)`, $`\eta_n(x) = e^{-\pi|x|^2/n^2}`,
+$`q_n = (\eta_n g) * \varphi_n`, $`p_n = \tfrac12(q_n + \varsigma\widehat{q_n})`,
+let $`\psi_\varsigma \in \mathcal{S}_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})` satisfy
+$`\widehat{\psi_\varsigma} = \varsigma\psi_\varsigma` and $`\psi_\varsigma(0) \ne 0` (for instance
+$`\varphi + \varsigma\widehat\varphi` or its dilate $`x \mapsto \varphi(2x) + \varsigma\widehat{\varphi(2\cdot)}(x)`,
+one of which does not vanish at the origin), and define the corrected approximants
 $`g_n = p_n - \dfrac{p_n(0)}{\psi_\varsigma(0)}\,\psi_\varsigma`.
-The formalization (module `CohnElkies.SignUncertainty.SchwartzApproximation`) uses a compactly
-supported flat bump $`\varphi_n(x) = (n+1)^d\varphi((n+1)x)` in place of $`\kappa_n` for the
-convolution: `CohnElkies.approximant` is $`q_n = (\eta_n g) * \varphi_n`, a test function by
-`CohnElkies.schwartzConvolution`, whose Fourier transform is
-$`\varsigma\,(g * \kappa_n)\,\widehat{\varphi_n}` (`CohnElkies.fourier_approximant_apply`); the
-Gaussians $`\kappa_n, \eta_n` (`CohnElkies.Mollifiers`) enter only through this identity. The
-symmetrization is `CohnElkies.projected` ($`p_n`), and the corrector $`\psi_\varsigma` is
-`CohnElkies.eigenProjection` of a bump (`CohnElkies.exists_eigenTest`: one of $`P_\varsigma\varphi`,
-$`P_\varsigma\varphi(2\cdot)` with $`P_\varsigma\varphi = \varphi + \varsigma\widehat\varphi` has
-nonzero value at the origin).
+(The report convolves with the Gaussians $`\kappa_n(x) = n^de^{-\pi n^2|x|^2}` instead of
+$`\varphi_n`; see the final chapter.)
 :::
 
 :::lemma_ "lemma_schwartz_approximation" (lean := "CohnElkies.exists_schwartz_approximation") (parent := "grp_radial_reduction")
 In the situation of {uses "def_schwartz_approximation"}[], each $`g_n` lies in
 $`\mathcal{S}_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})`, satisfies $`\widehat{g_n} = \varsigma g_n`
 and $`g_n(0) = 0`, and $`g_n \to g` in $`L^1(\mathbb{R}^d)` as $`n \to \infty`.
-Formalized as `CohnElkies.exists_schwartz_approximation` (for radial $`g`, the case needed after
-{bpref "lemma_rotational_average_properties"}[]; the sequence is the one of
-{bpref "def_schwartz_approximation"}[], with `CohnElkies.tendsto_projected` for the $`L^1`
-convergence and `CohnElkies.fourier_eigenProjection` for the eigenvalue).
 :::
 
 :::proof "lemma_schwartz_approximation"
@@ -355,10 +261,9 @@ equation (Section 2.2 of the report).
 :::definition "def_sphere_area_polar" (lean := "CohnElkies.sphereArea") (parent := "grp_radial_mellin")
 Set $`\lambda = d/2` and $`S_d = 2\pi^{d/2}/\Gamma(d/2)`, the area of the unit sphere
 ($`S_d = d\,v_d` with $`v_d` from {uses "def_ball_volume"}[]). For radial integrable $`g`, polar
-integration gives $`\int_{\mathbb{R}^d} g(x)\,dx = S_d\int_0^\infty g(r)\,r^{d-1}\,dr`.
-Formalized as `CohnElkies.sphereArea`, defined as $`d\,v_d`; polar integration appears in the
-form $`\int f(x)|x|^{s-d}\,dx = S_d\,M_g(s)` for radial test functions $`f` with profile $`g`
-(`CohnElkies.integral_radialProfile_cpow`, Mellin transform `mellin` from Mathlib).
+integration gives $`\int_{\mathbb{R}^d} g(x)\,dx = S_d\int_0^\infty g(r)\,r^{d-1}\,dr`, and more
+generally $`\int_{\mathbb{R}^d} g(x)|x|^{s-d}\,dx = S_d\int_0^\infty g(r)\,r^{s-1}\,dr` for
+$`\operatorname{Re} s > 0`.
 :::
 
 For $`\rho > 0` the Fourier transform of a radial function has the Hankel representation
@@ -374,12 +279,6 @@ $`t \in \mathbb{R}`, define (equation (8)) the Mellin transform of the radial pr
 restriction to the critical line,
 $`M_g(z) = \int_0^\infty g(r)\,r^{z-1}\,dr`, $`X_g(t) = M_g(\lambda - it)`,
 and in the logarithmic radius $`v = \log r` the profile $`\Phi_g(v) = e^{\lambda v}g(e^v)`.
-
-Formalized in pieces: $`M_g` is Mathlib's `mellin` applied to the radial profile, $`X_g` on the
-critical line is `CohnElkies.X_fℝ` (and `CohnElkies.Xline` on a general line
-$`\operatorname{Re} z = \ell`, `CohnElkies.X_f` for complex $`t`), and the log-profile appears in
-the reflected variable $`u = -v` as `CohnElkies.radialCriticalLogProfile`,
-$`u \mapsto e^{-\lambda u}g(e^{-u})`.
 :::
 
 :::lemma_ "lemma_log_profile_schwartz" (lean := "CohnElkies.radialMellinFrequency_eq_fourier") (parent := "grp_radial_mellin")
@@ -390,16 +289,8 @@ $`X_g(t) = \int_{\mathbb{R}}\Phi_g(v)e^{-itv}\,dv`,
 $`\Phi_g(v) = \dfrac{1}{2\pi}\int_{\mathbb{R}}X_g(t)e^{itv}\,dt`,
 so that Mellin inversion reads
 $`g(r) = \dfrac{r^{-\lambda}}{2\pi}\int_{\mathbb{R}} X_g(t)\,r^{it}\,dt`
-for $`r > 0`. Moreover $`\widehat g(0) = \int_{\mathbb{R}^d} g = S_d\,M_g(d)`
-({uses "def_sphere_area_polar"}[]).
-
-Formalized as `CohnElkies.radialMellinFrequency_eq_fourier` (with
-`CohnElkies.mellinFrequency_eq_fourier`
-for a general line), which expresses $`X_g` as the Fourier transform of the reflected log-profile
-at $`-t/(2\pi)`; Mellin inversion is used in the form of injectivity,
-`CohnElkies.radialMellinFrequency_injective`; the Schwartz property of the profile is
-`CohnElkies.radialSchwartzProfile` with `CohnElkies.radialProfile_smooth`; and the value
-$`\widehat g(0) = S_d M_g(d)` is the case $`s = d` of `CohnElkies.integral_radialProfile_cpow`.
+for $`r > 0`; in particular $`g` is determined by $`X_g`. Moreover
+$`\widehat g(0) = \int_{\mathbb{R}^d} g = S_d\,M_g(d)` ({uses "def_sphere_area_polar"}[]).
 :::
 
 :::proof "lemma_log_profile_schwartz"
@@ -417,8 +308,6 @@ polar integration.
 $`g \in \mathcal{S}_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})`
 and $`0 < \operatorname{Re} z < d`, with $`M` as in {uses "def_radial_mellin"}[],
 $`M_{\widehat g}(z) = \pi^{\lambda - z}\,\dfrac{\Gamma(z/2)}{\Gamma((d-z)/2)}\,M_g(d-z)`.
-Formalized as `CohnElkies.radial_fourier_mellin_strip`, for the radial profiles of a radial test
-function and of its Fourier transform.
 :::
 
 :::proof "eq_9_mellin_hankel"
@@ -445,20 +334,13 @@ $`= \pi^{\lambda-s}\Gamma(s/2)\int f(x)|x|^{-s}\,dx`.
 
 :::lemma_ "lemma_mellin_continuation" (lean := "CohnElkies.radial_fourier_mellin_regularized_closed") (parent := "grp_radial_mellin")
 Let $`g \in \mathcal{S}_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})` with $`g(0) = 0`. Then
-$`g(r) = O(r^2)` as $`r \to 0`, and $`M_g` ({uses "def_radial_mellin"}[]) extends holomorphically
-to $`\operatorname{Re} z > -2`. If moreover $`\widehat g(0) = 0`, then both sides of
-{bpref "eq_9_mellin_hankel"}[] extend holomorphically to the strip $`-2 < \operatorname{Re} z < d+2`
-and the identity holds there; the apparent pole of $`\Gamma(z/2)` at $`z = 0` is cancelled by the
-zero $`M_g(d) = S_d^{-1}\widehat g(0) = 0`, since $`M_g(d-z) = -zM_g'(d) + O(z^2)` and
-$`\Gamma(z/2) = 2/z + O(1)`. In particular (9) holds on $`\operatorname{Re} z = 0`.
-
-Formalized as follows: $`M_g` converges and is holomorphic on $`\operatorname{Re} z > -2`
-(`CohnElkies.radialProfile_mellinConvergent`, `CohnElkies.radialProfile_mellin_differentiableAt`),
-and the functional equation, divided on both sides by the gamma functions so that no pole
-appears, extends by continuity to the closed strip $`0 \le \operatorname{Re} z \le d`:
-$`M_{\widehat g}(z)/\Gamma(z/2) = \pi^{\lambda-z}\,M_g(d-z)/\Gamma((d-z)/2)`
-(`CohnElkies.radial_fourier_mellin_regularized_closed`). The lower boundary of the strip of
-Lemma 3.2 only needs the line $`\operatorname{Re} z = 0`.
+$`g(r) = O(r^2)` as $`r \to 0`, and $`M_g` ({uses "def_radial_mellin"}[]) converges and is
+holomorphic on $`\operatorname{Re} z > -2`. Moreover the functional equation of
+{bpref "eq_9_mellin_hankel"}[], divided by the gamma factors, holds on the closed strip
+$`0 \le \operatorname{Re} z \le d`:
+$`\dfrac{M_{\widehat g}(z)}{\Gamma(z/2)} = \pi^{\lambda-z}\,\dfrac{M_g(d-z)}{\Gamma((d-z)/2)}`;
+on $`\operatorname{Re} z = 0` the apparent pole of $`\Gamma(z/2)` at $`z = 0` is thus harmless
+(if $`\widehat g(0) = 0`, it is cancelled by the zero $`M_g(d) = S_d^{-1}\widehat g(0) = 0`).
 :::
 
 :::proof "lemma_mellin_continuation"
@@ -478,11 +360,7 @@ The line $`\operatorname{Re} z = d/2` is fixed by the reflection $`z \mapsto d -
 $`g \in \mathcal{S}_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})` and $`t \in \mathbb{R}`,
 $`X_{\widehat g}(t) = m_\lambda(t)\,X_g(-t)`, where
 $`m_\lambda(t) = \pi^{it}\,\dfrac{\Gamma((\lambda - it)/2)}{\Gamma((\lambda + it)/2)}`
-(equation (10)). The multiplier satisfies
-$`m_\lambda(-t) = \overline{m_\lambda(t)} = m_\lambda(t)^{-1}`
-and $`|m_\lambda(t)| = 1` for real $`t`. Formalized as `CohnElkies.radialMellinMultiplier` with
-the multiplier `CohnElkies.m_ℓ`; the unimodularity and conjugation properties of $`m_\lambda` are
-not stated separately, only used implicitly.
+(equation (10)), a unimodular multiplier.
 :::
 
 :::proof "eq_10_critical_line"

@@ -18,11 +18,10 @@ development proves from Poisson summation. The chapter on preliminaries collects
 gamma-function identities, the radial reduction and the radial Mellin transform; the chapter on
 the lower bound proves the universal obstruction (Proposition 3.1) and the packing lower bound
 (Theorem 3.8); the chapter on the upper bound constructs the asymptotically optimal functions
-(Theorem 4.1). The appendix compares the two sign-uncertainty constants (Proposition A.1,
-$`\mathsf{A}_+(d) \le \mathsf{A}_-(d)`, and the strict inequality together with the existence of
-extremizers it needs, Cohn–Gonçalves 2019, Theorem 1.4), and a final chapter records where the
-Lean formalization deviates from the report. Every node names its Lean counterpart in the
-`CohnElkies` library.
+(Theorem 4.1). The appendix compares the two sign-uncertainty constants (Proposition A.1 and
+$`\mathsf{A}_+(d) < \mathsf{A}_-(d)`, through the existence of extremizers, Cohn–Gonçalves 2019,
+Theorem 1.4), and a final chapter records where the Lean formalization deviates from the report.
+Every node names its Lean counterpart in the `CohnElkies` library.
 
 # The sphere-packing problem and the Cohn–Elkies linear program
 
@@ -34,14 +33,6 @@ centers are pairwise separated by at least $`1`. Its *upper density* is the limi
 $`r \to \infty`, of the proportion of the ball $`B(0,r)` covered by the packing. The maximal
 sphere-packing density $`\Delta_d` is the supremum of the upper densities of all sphere packings
 in $`\mathbb{R}^d`.
-
-Formalized as `SpherePackingConstant`, built from the structure `SpherePacking` (a set of
-centers together with a separation $`s > 0` such that distinct centers are at distance at least
-$`s`), the proportion `SpherePacking.densityInsideRadius` of $`B(0,r)` covered by the balls of
-radius $`s/2` around the centers, and its limit superior `SpherePacking.upperPackingDensity`,
-all valued in $`[0,\infty]`. The formal constant is the supremum over packings of every
-separation; it agrees with the report's normalization because rescaling a packing to separation
-$`1` preserves its upper density ({bpref "lemma_packing_unit_separation"}[]).
 :::
 
 Throughout we use the following Fourier convention.
@@ -54,22 +45,11 @@ $`\widehat{f(a\,\cdot)}(\xi) = a^{-d}\widehat f(\xi/a)` for $`a > 0`, the transf
 function is real and even, Fourier inversion $`\widehat{\widehat f}(x) = f(-x)` holds for Schwartz
 functions and, almost everywhere, for $`f \in L^1` with $`\widehat f \in L^1`, and the Fourier
 transform of an integrable function is continuous and bounded.
-
-The formalization uses Mathlib's Fourier transform $`\mathcal{F}` on the inner product space
-`EuclideanSpace ℝ (Fin d)`, whose defining equation `Real.fourier_eq` is exactly (1). The
-listed properties are Mathlib lemmas (for instance `fourier_gaussian_innerProductSpace`
-for the Gaussian) or are proved where needed: inversion for Schwartz functions is
-`CohnElkies.fourier_sq_apply`, the scaling rule is `CohnElkies.fourier_dilate_apply` for the
-dilation `CohnElkies.dilate`, and the transform of a real radial Schwartz function is real by
-`CohnElkies.IsRealValued.fourier_of_radial` and
-`CohnElkies.IsRealValued.fourier_of_radial`.
 :::
 
 :::definition "def_ball_volume" (lean := "CohnElkies.unitBallVolume")
 The volume of the unit ball in $`\mathbb{R}^d` is $`v_d = \pi^{d/2}/\Gamma(d/2+1)` (equation (1)).
-A ball of radius $`1/2` has volume $`v_d/2^d`. Formalized as `CohnElkies.unitBallVolume`; the
-identification of $`v_d/2^d` with the Lebesgue measure of the ball of radius $`1/2` is
-`PackingBounds.PackingBridge.volume_half_ball`.
+A ball of radius $`1/2` has volume $`v_d/2^d`.
 :::
 
 :::definition "def_admissible_class" (lean := "PackingBounds.FullAdmissible")
@@ -78,22 +58,13 @@ is (equation (2))
 $`\mathcal{A}_d = \{ f \in \mathcal{S}(\mathbb{R}^d;\mathbb{R}) :`
 $`\widehat f(0) > 0,\ \widehat f \ge 0 \text{ on } \mathbb{R}^d,`
 $`f \le 0 \text{ on } \{|x| \ge 1\} \}`,
-with the Fourier transform of {uses "def_fourier_convention"}[].
-
-Formalized as the structure `PackingBounds.FullAdmissible` (the comparator's definition, of
-which `CohnElkies.Admissible` is an abbreviation): a complex Schwartz function with vanishing
-imaginary part, real nonnegative Fourier transform, positive Fourier transform at the origin, and
-nonpositive real part on $`\{|x| \ge 1\}`; no radiality is assumed. The radial subclass
-$`\mathcal{A}_d^{\mathrm{rad}}` of the preliminaries is the structure `CohnElkies.RadialAdmissible`
-(the same fields plus `radial`); the lower and upper bounds are proved for it and transferred to
-$`\mathcal{A}_d` by the radial reduction of {bpref "lemma_lp_radial_reduction"}[].
+with the Fourier transform of {uses "def_fourier_convention"}[]. No radial symmetry is assumed;
+$`\mathcal{A}_d^{\mathrm{rad}}` denotes the subclass of radial functions.
 :::
 
 :::lemma_ "lemma_admissible_origin_pos" (lean := "CohnElkies.admissible_zero_pos")
 Every $`f \in \mathcal{A}_d` (see {uses "def_admissible_class"}[]) satisfies
-$`f(0) = \int_{\mathbb{R}^d} \widehat f(\xi)\,d\xi > 0`. Formalized as
-`CohnElkies.admissible_zero_pos`; for an arbitrary Schwartz function with real nonnegative
-Fourier transform the same argument is `test_function_positive_at_origin`.
+$`f(0) = \int_{\mathbb{R}^d} \widehat f(\xi)\,d\xi > 0`.
 :::
 
 :::proof "lemma_admissible_origin_pos"
@@ -109,20 +80,13 @@ with $`v_d` from {uses "def_ball_volume"}[] and $`\mathcal{A}_d` from
 {uses "def_admissible_class"}[]. By {uses "lemma_admissible_origin_pos"}[] every quotient is
 positive, and by {uses "lemma_admissible_nonempty"}[] the infimum is taken over a nonempty set,
 so $`\mathrm{LP}_d \in [0,\infty)`.
-
-Formalized as `PackingBounds.fullLinearProgram` (abbreviated `CohnElkies.LP`), the infimum of
-the set of quotients `PackingBounds.fullQuotientSet` (`CohnElkies.quotientSet`) of
-`CohnElkies.quotient` over $`\mathcal{A}_d`; the infimum over the radial subclass is the same by
-`CohnElkies.LP_eq_radial` ({bpref "lemma_lp_radial_reduction"}[]).
 :::
 
 :::lemma_ "lemma_admissible_nonempty" (lean := "CohnElkies.admissible_nonempty")
 For every $`d \ge 1` the radial admissible class $`\mathcal{A}_d^{\mathrm{rad}}`, and hence
 $`\mathcal{A}_d` ({uses "def_admissible_class"}[]), is nonempty: the autocorrelation
 $`\varphi * \varphi` of the flat bump $`\varphi(x) = \exp(-1/(1 - 4|x|^2))` for $`|x| < 1/2`,
-$`\varphi(x) = 0` otherwise, is admissible. Formalized as `CohnElkies.admissible_nonempty` with
-the witness `CohnElkies.autocorrelationAdmissible`; consequently the set of quotients is nonempty
-(`CohnElkies.quotientSet_nonempty`), which makes the infimum in {bpref "def_lp"}[] well defined.
+$`\varphi(x) = 0` otherwise, is admissible.
 :::
 
 :::proof "lemma_admissible_nonempty"
@@ -141,13 +105,6 @@ value at the origin is $`(\int\varphi)^2 > 0`.
 density of {uses "def_packing_density"}[] satisfies
 $`\Delta_d \le \dfrac{v_d}{2^d}\,\dfrac{f(0)}{\widehat f(0)}`. Consequently (equation (4))
 $`\Delta_d \le \mathrm{LP}_d`, with $`\mathrm{LP}_d` as in {uses "def_lp"}[].
-
-The report cites this bound as an external input; the formalization proves it. The bound for a
-single function is `PackingBounds.PackingBridge.sphere_packing_le_admissible` for radial $`f`
-and `LinearProgrammingBound` for an arbitrary real Schwartz $`f` with
-real nonnegative Fourier transform; the consequence $`\Delta_d \le \mathrm{LP}_d` is
-`PackingBounds.PackingBridge.sphere_packing_le_linear_program`, with
-$`\Delta_d \in [0,\infty]` and the right-hand side coerced by `ENNReal.ofReal`.
 :::
 
 :::proof "thm_cohn_elkies_bound"
@@ -168,14 +125,10 @@ Afkhami-Jeddi, Cohn, Hartman, de Laat and Tajdini.
 
 :::theorem "thm_1_1" (lean := "CohnElkies.sharpPackingRootAsymptotic")
 As $`d \to \infty`, $`\mathrm{LP}_d^{1/d} \longrightarrow \sqrt{e/(2\pi)}`, where
-$`\mathrm{LP}_d` is defined in {uses "def_lp"}[]. Formalized as
-`CohnElkies.sharpPackingRootAsymptotic` and, in the comparator's form,
-`PackingBounds.FullMain.exact_limit`; the bundle
-`PackingBounds.SharpFullCohnElkiesManuscriptConclusions` collects the equivalent forms
+$`\mathrm{LP}_d` is defined in {uses "def_lp"}[]. Equivalently,
 $`\log \mathrm{LP}_d/d \to \tfrac12\log(e/(2\pi))`,
-$`\mathrm{LP}_d = (\sqrt{e/(2\pi)} + o(1))^d` and
-$`\inf_{f\in\mathcal{A}_d}(f(0)/\widehat f(0))^{1/d} = (1/\pi + o(1))\sqrt d`, with explicit
-error terms.
+$`\mathrm{LP}_d = (\sqrt{e/(2\pi)} + o(1))^d`, and
+$`\inf_{f\in\mathcal{A}_d}(f(0)/\widehat f(0))^{1/d} = (1/\pi + o(1))\sqrt d`.
 :::
 
 :::proof "thm_1_1"
@@ -194,18 +147,15 @@ $`\limsup_{d\to\infty}\mathrm{LP}_d^{1/d} \le \sqrt{e/(2\pi)}`. In the formaliza
 halves are not taken separately: the sandwich argument {uses "thm_1_1_sandwich"}[] combines the
 uniform lower bound with the $`\epsilon`-family of upper constructions and yields the limit
 $`\inf_{f\in\mathcal{A}_d}(f(0)/\widehat f(0))^{1/d}/\sqrt d \to 1/\pi` directly, from which
-`CohnElkies.sharpPackingRoot_of_sharpQuotient` and Stirling's formula give the claim.
+Stirling's formula gives the claim.
 :::
 
 :::theorem "cor_packing_exponent" (lean := "PackingBounds.PackingBridge.sphere_packing_sharp_asymptotic_upper")
 $`\Delta_d \le \mathrm{LP}_d = 2^{-(\alpha_* + o(1))d}` as $`d \to \infty`, where
-$`\alpha_* = \tfrac12 \log_2(2\pi/e) = 0.6044\ldots`. This improves the Kabatianskii–Levenshtein
+$`\alpha_* = \tfrac12 \log_2(2\pi/e) = 0.6044\ldots`; equivalently
+$`\Delta_d \le (\sqrt{e/(2\pi)} + o(1))^d`. This improves the Kabatianskii–Levenshtein
 exponent $`0.59905576\ldots`, and the matching lower bound in {uses "thm_1_1"}[] shows that no
-Cohn–Elkies auxiliary function can improve this exponent. Formalized as
-`PackingBounds.PackingBridge.sphere_packing_sharp_asymptotic_upper`, namely
-$`\Delta_d \le (\sqrt{e/(2\pi)} + o(1))^d`; the exponent is `CohnElkies.criticalBinaryExponent`,
-its positivity is `CohnElkies.criticalBinaryExponent_pos`, and the base-two form
-$`\log_2\mathrm{LP}_d/d \to -\alpha_*` is `PackingBounds.FullMain.exact_binary_exponent`.
+Cohn–Elkies auxiliary function can improve this exponent.
 :::
 
 :::proof "cor_packing_exponent"
@@ -237,19 +187,12 @@ functions that agree almost everywhere agree everywhere, and this representative
 $`\widehat g = \varsigma g` pointwise. Conversely, a continuous integrable $`g` with
 $`\widehat g = \varsigma g` pointwise defines such an $`L^1` class. All pointwise values and sign
 conditions below refer to this representative.
-
-Formalized as the structure `CohnElkies.SignEigenfunction d ς`, where the eigenvalue is a unit
-$`\varsigma` of $`\mathbb{Z}` (`ς : ℤˣ`): a real integrable function `toFun` on $`\mathbb{R}^d`,
-not identically zero, vanishing at the origin, whose Fourier transform equals $`\varsigma g` at
-every point. Requiring the identity everywhere rather than almost everywhere singles out the
-continuous representative, as explained above.
 :::
 
 :::definition "def_sign_radius" (lean := "CohnElkies.signRadius")
 For $`g : \mathbb{R}^d \to \mathbb{R}` define the *last-sign radius* (equation (5))
 $`r(g) = \inf\{ R \ge 0 : g(x) \ge 0 \text{ for all } |x| \ge R \} \in [0,\infty]`,
-with $`r(g) = \infty` when no such radius exists. Formalized as `CohnElkies.signRadius`, valued
-in `ℝ≥0∞` with $`\top` in the role of $`\infty`.
+with $`r(g) = \infty` when no such radius exists.
 :::
 
 :::definition "def_sign_uncertainty_constant" (lean := "CohnElkies.signUncertaintyConstant")
@@ -258,19 +201,12 @@ $`\mathsf{A}_\varsigma(d) = \inf\{ r(g) : g \in \mathcal{E}_\varsigma(d) \} \in 
 with $`r(g)` from {uses "def_sign_radius"}[] and $`\mathcal{E}_\varsigma(d)` from
 {uses "def_sign_eigenfunction_class"}[]. The signs $`+1` and $`-1` give the original
 (Bourgain–Clozel–Kahane) and the complementary (Cohn–Gonçalves) uncertainty problems.
-Formalized as `CohnElkies.signUncertaintyConstant ς d`, the infimum in `ℝ≥0∞` of the sign
-radii of all `g : SignEigenfunction d ς`.
 :::
 
 :::theorem "thm_1_2" (lean := "CohnElkies.signUncertaintyConstant_div_sqrt_tendsto")
 The sign-uncertainty constants of {uses "def_sign_uncertainty_constant"}[] satisfy
 $`\lim_{d\to\infty} \mathsf{A}_+(d)/\sqrt d = \lim_{d\to\infty} \mathsf{A}_-(d)/\sqrt d = 1/\pi`.
-In particular $`\mathsf{A}_\pm(d) < \infty` for all sufficiently large $`d`. Formalized as
-`CohnElkies.signUncertaintyConstant_div_sqrt_tendsto` (module `CohnElkies.SignUncertainty.Main`):
-the convergence in $`[0,\infty]` of `signUncertaintyConstant ς d / ENNReal.ofReal √d` to
-$`1/\pi`, which is the statement of the comparator challenge `ComparatorChallenges/CohnElkies.lean`;
-the finiteness is `CohnElkies.eventually_signUncertaintyConstant_lt_top` and the real-valued form
-is `CohnElkies.tendsto_toReal_signUncertaintyConstant_div_sqrt`.
+In particular $`\mathsf{A}_\pm(d) < \infty` for all sufficiently large $`d`.
 :::
 
 :::proof "thm_1_2"
@@ -288,11 +224,8 @@ $`\limsup_{d\to\infty} \mathsf{A}_\varsigma(d)/\sqrt d \le 1/\pi`.
 :::
 
 Although the two asymptotics coincide, the appendix of the report shows that
-$`\mathsf{A}_+(d) < \mathsf{A}_-(d)` for every $`d \ge 1` ({bpref "cor_a_plus_le_a_minus"}[] and
-{bpref "cor_a_plus_lt_a_minus"}[], the latter through the existence of extremizers,
-{bpref "thm_cg19_1_4_existence"}[]); formalized as
-`CohnElkies.signUncertaintyConstant_one_le_neg_one` and
-`CohnElkies.signUncertaintyConstant_one_lt_neg_one`.
+$`\mathsf{A}_+(d) < \mathsf{A}_-(d)` for every $`d \ge 1` ({bpref "cor_a_plus_lt_a_minus"}[],
+through the existence of extremizers, {bpref "thm_cg19_1_4_existence"}[]).
 
 # Strategy
 
@@ -307,9 +240,3 @@ $`1/a \ge (1/\pi - o(1))\sqrt d`. In the other direction, Theorem 4.1 modifies t
 of a Gaussian to construct a Fourier pair and a self-Fourier function whose required exterior sign
 conditions begin at $`(1/\pi + o(1))\sqrt d`. Stirling's formula converts the matching radius
 bounds into the packing exponent $`\sqrt{e/(2\pi)}`.
-
-In the formalization the lower bound is carried by the structure `CohnElkies.RadialEigenfunction`
-(nonzero real radial Schwartz functions with $`\widehat g = \varsigma g` and $`g(0) = 0`), the
-packing consequence by the scaling lemma `CohnElkies.normalizedCost_ge_of_no_antiFourierWitness`,
-and the upper bound by the saddle pair `CohnElkies.fMinusFun`, `CohnElkies.fPlusFun`; the two
-halves are assembled in `CohnElkies/Asymptotics/Framework.lean`.

@@ -20,23 +20,22 @@ what the formalization adds to the report (the Cohn–Elkies bound) and what is 
 # The Poisson principle: Phragmén–Lindelöf on a strip
 
 The report proves the interior bound of Lemma 3.2 by mapping the strip conformally onto the upper
-half-plane and applying the Poisson principle to the subharmonic function $`\log|Z|`
-({bpref "lemma_strip_poisson_principle"}[]). The formalization stays on the strip and uses a
-maximum-modulus (Phragmén–Lindelöf) argument instead. Mathlib's `PhragmenLindelof.horizontal_strip`
-cannot be applied directly, because it requires the function itself, not only its modulus, to
-extend continuously to the closed strip (`DiffContOnCl`).
+half-plane and applying the Poisson principle to the subharmonic function $`\log|Z|`. The
+formalization proves the Poisson principle for the strip ({bpref "lemma_strip_poisson_principle"}[])
+for continuous boundary data of linear growth, which is the form in which the report uses it,
+without leaving the strip: the holomorphic Poisson integral $`W` of the boundary datum is built
+directly from the strip kernel, and a maximum-modulus (Phragmén–Lindelöf) argument is applied to
+$`e^{-W}Z`. Mathlib's `PhragmenLindelof.horizontal_strip` cannot be applied directly, because it
+requires the function itself, not only its modulus, to extend continuously to the closed strip
+(`DiffContOnCl`); only $`\operatorname{Re}W`, not $`W`, extends continuously.
 
 :::lemma_ "lemma_phragmen_lindelof_strip" (lean := "PhragmenLindelof.horizontal_strip_norm_extension")
 Let $`a < b`, $`C > 0`, and let $`f : \mathbb{C} \to \mathbb{C}` be holomorphic on the open strip
 $`\{a < \operatorname{Im}z < b\}`. Suppose $`|f|` has a continuous extension $`N \ge 0` to the
-closed
-strip, that $`N \le C` on the two boundary lines, and that
+closed strip, that $`N \le C` on the two boundary lines, and that
 $`|f(z)| = O\bigl(\exp(B\exp(c|\operatorname{Re}z|))\bigr)` in the strip as
 $`|\operatorname{Re}z| \to \infty`,
 for some $`B` and some $`c < \pi/(b-a)`. Then $`N \le C` throughout the closed strip.
-Formalized as `PhragmenLindelof.horizontal_strip_norm_extension`, built on the
-maximum-modulus principle for a continuous extension of the modulus,
-`Complex.norm_extension_le_of_forall_mem_frontier_le`.
 :::
 
 :::proof "lemma_phragmen_lindelof_strip"
@@ -57,34 +56,16 @@ $`\le \exp\Bigl(\int_{\mathbb{R}}P_\sigma(T)\,h_{\lambda,D}(s - \lambda T)\,dT\B
 where $`h_{\lambda,D}(y) = \min\{h_\lambda(y), D\}` for $`y \ne 0` and $`h_{\lambda,D}(0) = D`
 ({uses "def_lower_boundary_majorant"}[], {uses "def_strip_poisson_kernel"}[]). Letting
 $`D \to \infty` (dominated convergence) recovers the uncapped bound (18) of {bpref "lemma_3_2"}[].
-Formalized as `CohnElkies.norm_Z_g_le_exp_integral_of_cap`, which assumes the capped boundary
-bound $`|Z(y - i\lambda)| \le e^{h_{\lambda,D}(y)}`, together with
-`CohnElkies.exists_norm_Z_g_bottom_le_exp_h_ℓD` (that bound holds for all $`D \ge D_0`) and
-`CohnElkies.exists_capped_poisson_majorization` (their combination); the capped majorant is
-`CohnElkies.h_ℓD`.
 :::
 
 :::proof "lemma_3_2_capped"
-For $`z \in \mathbb{C}` and $`y \in \mathbb{R}` the holomorphic Poisson kernel
-$`K_\lambda(z,y)`
-$`= \dfrac{i}{4\lambda}\,\dfrac{E + 1}{E - 1}`, $`E = e^{\pi(z-y+i\lambda)/(2\lambda)}`,
-has real part $`\lambda^{-1}P_\sigma((s-y)/\lambda)` at $`z = s + i\sigma\lambda`; its
-regularization $`\widetilde K_\lambda(z,y) = K_\lambda(z,y) \pm i/(4\lambda)` (sign according to
-$`y \ge 0` or $`y < 0`) tends to $`0` as $`|y| \to \infty` (`CohnElkies.K'_ℓ`). Put
-$`W_D(z) = \int\widetilde K_\lambda(z,y)h_{\lambda,D}(y)\,dy` (`CohnElkies.W_D`, an instance of
-the outer function `CohnElkies.W_b`), a holomorphic function on the open strip with
-$`\operatorname{Re}W_D(s + i\sigma\lambda) = \int P_\sigma(T)h_{\lambda,D}(s - \lambda T)\,dT`, and
-with a continuous real extension $`H_D` to the closed strip (`CohnElkies.W_D_reExtension`)
-satisfying $`H_D(s - i\lambda) = h_{\lambda,D}(s)` and $`H_D(s + i\lambda) = 0`
-(`CohnElkies.tendsto_W_D_re_bottom`, `CohnElkies.tendsto_W_D_re_top`). Apply
-{uses "lemma_phragmen_lindelof_strip"}[] to $`F_D = e^{-W_D}Z` with $`N_D = e^{-H_D}|Z|`: the
-boundary estimates (16)–(17) of {bpref "lemma_3_2"}[], which are proved before the interior bound
-(`CohnElkies.RadialEigenfunction.norm_Z_g_top_le_one`,
-`CohnElkies.RadialEigenfunction.norm_Z_g_bottom_le_exp_h_ℓ`), give $`N_D \le 1` on both boundary
-lines, and boundedness of $`Z` together with
-$`|\operatorname{Re}W_D(z)| \le B(1 + |\operatorname{Re}z|)`
-gives the growth condition (`CohnElkies.isBigO_exp_neg_W_D_mul_Z_g`). Hence $`N_D \le 1` on the
-strip, i.e. $`|Z(z)| \le e^{\operatorname{Re}W_D(z)}` in the interior.
+The bottom boundary values of $`Z` satisfy $`|Z(y - i\lambda)| \le e^{h_\lambda(y)}` for $`y \ne 0`
+({bpref "lemma_3_2"}[]) and $`Z` is bounded on the closed strip, so for $`D \ge D_0 :=
+\max\{0, \sup_y \log|Z(y - i\lambda)|\}` also $`|Z(y - i\lambda)| \le e^{h_{\lambda,D}(y)}` for all
+$`y`; the top boundary values satisfy $`|Z(y + i\lambda)| \le 1`. The capped majorant
+$`h_{\lambda,D}` is continuous with $`|h_{\lambda,D}(y)| \le A(1 + |y|)` (it is $`-\lambda\log|y| +
+O(1)` at infinity). The Poisson principle for the strip ({uses "lemma_strip_poisson_principle"}[],
+in its version for bounded $`Z`) gives the claim.
 :::
 
 # One-sided Riemann bound in Lemma 3.3
@@ -96,19 +77,17 @@ that is independent of the dimension.
 :::lemma_ "lemma_3_3_one_sided" (lean := "CohnElkies.lowerGammaBoundaryLog_dimension_scaled_riemann_le")
 For $`d \ge 2`, $`c > 0`, $`T \ne 0`, with $`f_T` as in {bpref "lemma_3_3"}[] and the endpoint phase
 $`\Lambda(T) = -\tfrac{\pi|T|}{4} - \tfrac12\log(1 + \tfrac{T^2}{4})`
-$`+ \tfrac{|T|}{2}\arctan\tfrac{|T|}{2}`
-(`CohnElkies.lowerEndpointPhase`), one has the exact identity
+$`+ \tfrac{|T|}{2}\arctan\tfrac{|T|}{2}`,
+one has the exact identity
 $`-\int_0^1f_T(x)\,dx = 1 + \Lambda(T)`
-(`CohnElkies.integral_lowerRiemannLog`) and the one-sided bound
+and the one-sided bound
 $`h_\lambda(\lambda T) \le \lambda\bigl(\log(2\pi ec^2) + \Lambda(T)\bigr) + E(T)`,
-$`E(T) = 3|f_T(0)| + 2|f_T(1)| + \tfrac12\log\coth\tfrac{\pi|T|}{2}`
-(`CohnElkies.lowerRiemannErrorMajorant`), for $`h_\lambda` as in
-{uses "def_lower_boundary_majorant"}[] with $`R = c\sqrt d`. Consequently, for $`0 \le \sigma < 1`,
-$`H_\sigma(0) \le \lambda M_\sigma\bigl(\log(2\pi ec^2) + J^{\mathrm{Lean}}_\sigma\bigr) + E_\sigma`
-with $`J^{\mathrm{Lean}}_\sigma = \int(P_\sigma/M_\sigma)\Lambda` and $`E_\sigma = \int P_\sigma E`
-finite and independent of $`d` and $`c`
-(`CohnElkies.lowerStripPoissonMajorant_dimension_central_bound`); since
-$`J_\sigma = 1 + J^{\mathrm{Lean}}_\sigma`, this is the upper half of (20) with an $`O_\sigma(1)`
+$`E(T) = 3|f_T(0)| + 2|f_T(1)| + \tfrac12\log\coth\tfrac{\pi|T|}{2}`,
+for $`h_\lambda` as in {uses "def_lower_boundary_majorant"}[] with $`R = c\sqrt d`. Consequently,
+for $`0 \le \sigma < 1`,
+$`H_\sigma(0) \le \lambda M_\sigma\bigl(\log(2\pi c^2) + J_\sigma\bigr) + E_\sigma`
+with $`J_\sigma = 1 + \int(P_\sigma/M_\sigma)\Lambda` and $`E_\sigma = \int P_\sigma E`
+finite and independent of $`d` and $`c`: this is the upper half of (20) with an $`O_\sigma(1)`
 error. Uses {uses "def_strip_poisson_kernel"}[].
 :::
 
@@ -135,17 +114,13 @@ of the Wallis product already used for (33).
 :::lemma_ "lemma_3_4_frullani" (lean := "CohnElkies.integral_poissonLogistic_mul_wallisPhaseKernel")
 Let $`p` be the density of {uses "eq_21_sech_characteristic"}[] and $`\Lambda` the endpoint phase of
 {uses "lemma_3_3_one_sided"}[]. For $`t > 0` and $`u \in \mathbb{R}` put
-$`K(u,t) = \dfrac{(1 - e^{-t})\cos(ut) - te^{-t}}{t^2}` (`CohnElkies.wallisPhaseKernel`, the real
-part of the complex Frullani kernel `Frullani.shiftedCexpKernel`). Then
-$`\int_0^\infty K(u,t)\,dt = 1 + \Lambda(2u)` for every $`u`
-(`CohnElkies.integral_wallisPhaseKernel_zero`),
-$`\int_{\mathbb{R}}p(u)K(u,t)\,du = \dfrac{e^{-t}(1 - e^{-t})}{t(1 + e^{-t})}` for every $`t > 0`
-(`CohnElkies.integral_poissonLogistic_mul_wallisPhaseKernel`, with the Laplace kernel
-`Real.Wallis.laplaceKernel`), and consequently
+$`K(u,t) = \dfrac{(1 - e^{-t})\cos(ut) - te^{-t}}{t^2}`, the real part of the complex Frullani kernel
+$`((1 - e^{-t})e^{-zt} - te^{-t})/t^2` at $`z = -iu`. Then
+$`\int_0^\infty K(u,t)\,dt = 1 + \Lambda(2u)` for every $`u`,
+$`\int_{\mathbb{R}}p(u)K(u,t)\,du = \dfrac{e^{-t}(1 - e^{-t})}{t(1 + e^{-t})}` for every $`t > 0`,
+and consequently
 $`\int_{\mathbb{R}}p(u)\bigl(1 + \Lambda(2u)\bigr)\,du = \log\dfrac{\pi}{2}`,
-$`\int_{\mathbb{R}}p(u)\Lambda(2u)\,du = \log\dfrac{\pi}{2} - 1`
-(`CohnElkies.integral_poissonLogistic_one_add_lowerEndpointPhase`,
-`CohnElkies.integral_poissonLogistic_lowerEndpointPhase`).
+$`\int_{\mathbb{R}}p(u)\Lambda(2u)\,du = \log\dfrac{\pi}{2} - 1`.
 :::
 
 :::proof "lemma_3_4_frullani"
@@ -172,13 +147,9 @@ $`|s| > B\lambda`, the formalization averages them into a single integrable majo
 For every $`0 < c < 1/\pi` there are $`\sigma \in (0,1)` and $`\gamma, C > 0` such that, for all
 sufficiently large $`d` and all $`S \in \mathbb{R}`,
 $`\exp\bigl(H_\sigma(\lambda S)\bigr) \le \dfrac{Ce^{-\gamma\lambda}}{(1 + |S|)^2}`, with
-$`H_\sigma`
-from {uses "def_strip_poisson_kernel"}[] and $`R = c\sqrt d`. Consequently
+$`H_\sigma` from {uses "def_strip_poisson_kernel"}[] and $`R = c\sqrt d`. Consequently
 $`\int_{\mathbb{R}}|Z(s + i\sigma\lambda)|\,ds \le CJ\lambda e^{-\gamma\lambda}` with
-$`J = \int_{\mathbb{R}}(1 + |S|)^{-2}\,dS` (`CohnElkies.lowerInverseQuadraticMass`), which is (26)
-of {bpref "lemma_3_5"}[]; the integration step is
-`CohnElkies.integral_norm_le_of_quadratic_majorant`
-and `CohnElkies.integral_norm_Z_g_le_of_majorant`.
+$`J = \int_{\mathbb{R}}(1 + |S|)^{-2}\,dS`, which is (26) of {bpref "lemma_3_5"}[].
 :::
 
 :::proof "lemma_3_5_inverse_quadratic"
@@ -237,20 +208,14 @@ $`\inf_{f \in \mathcal{A}_d}(f(0)/\widehat f(0))^{1/d}/\sqrt d`.
 :::theorem "thm_1_1_sandwich" (lean := "CohnElkies.sharpQuotient_of_uniform_lower_and_ordered_upper")
 Suppose that (a) for every $`c < 1/\pi` and all sufficiently large $`d`, every
 $`f \in \mathcal{A}_d` ({uses "def_admissible_class"}[]) has normalized cost
-$`(f(0)/\widehat f(0))^{1/d}/\sqrt d \ge c` (`CohnElkies.UniformAdmissibleLowerBound`), and
+$`(f(0)/\widehat f(0))^{1/d}/\sqrt d \ge c`, and
 (b) there is an ordered $`\epsilon`-construction as in {uses "thm_1_1_upper"}[]:
 $`\epsilon_0 > 0`, radii with $`R_{\epsilon,d}/\sqrt d \to \alpha_\epsilon` as $`d \to \infty` and
 $`\alpha_\epsilon \to 1/\pi` as $`\epsilon \downarrow 0`, and for every $`0 < \epsilon < \epsilon_0`
-and all large $`d` an admissible function of normalized cost at most $`R_{\epsilon,d}/\sqrt d`
-(`CohnElkies.OrderedEpsilonUpperConstruction`). Then
-$`\inf_{f \in \mathcal{A}_d^{\mathrm{rad}}}(f(0)/\widehat f(0))^{1/d}/\sqrt d \to 1/\pi`
-(`CohnElkies.SharpQuotientAsymptotic`), and consequently, with {uses "def_lp"}[],
-$`\mathrm{LP}_d^{1/d} \to \sqrt{e/(2\pi)}`.
-Formalized as `CohnElkies.sharpQuotient_of_uniform_lower_and_ordered_upper`; the hypothesis (a)
-is supplied by `CohnElkies.uniformAdmissibleLowerBound_of_signRadius` (from Proposition 3.7 and
-the scaling step of Theorem 3.8), (b) by `CohnElkies.saddleOrderedUpperConstruction`, and the
-passage to $`\mathrm{LP}_d^{1/d}` is `CohnElkies.sharpPackingRoot_of_sharpQuotient`; everything is
-assembled in `CohnElkies.sharpAsymptotics_of_saddleSourceEventualSigns`.
+and all large $`d` an admissible function of normalized cost at most $`R_{\epsilon,d}/\sqrt d`.
+Then
+$`\inf_{f \in \mathcal{A}_d^{\mathrm{rad}}}(f(0)/\widehat f(0))^{1/d}/\sqrt d \to 1/\pi`,
+and consequently, with {uses "def_lp"}[], $`\mathrm{LP}_d^{1/d} \to \sqrt{e/(2\pi)}`.
 :::
 
 :::proof "thm_1_1_sandwich"
@@ -281,19 +246,25 @@ theory were adapted from the Sphere Packing in Lean project.
 Mathlib has Stirling's formula for factorials (`Stirling.tendsto_stirlingSeq_sqrt_pi`) but not
 for $`\Gamma` at half-integers; the asymptotics of $`v_d^{1/d}\sqrt d` in
 {bpref "lemma_stirling_ball_volume"}[] are therefore derived through an even/odd split in $`d`.
-The gamma asymptotics of {bpref "lemma_gamma_asymptotics"}[] are correspondingly replaced by the
-elementary bounds $`\log(x-1) \le \psi(x) \le \log x`, explicit moment bounds for the gamma damping
-density, and polynomial decay of $`\Gamma` along vertical lines.
+The report's gamma asymptotics (Stirling's expansion of $`\psi`, uniform trigamma and polygamma
+bounds, the Malmstén–Binet representation of $`\log\Gamma`, and $`\log|\Gamma(a+ib)|` for
+$`|b| \to \infty`) are correspondingly replaced by the elementary bounds
+$`\log(x-1) \le \psi(x) \le \log x` ({bpref "lemma_gamma_asymptotics"}[]), explicit moment bounds
+for the gamma damping density ({bpref "lemma_4_4"}[]), the exponentiated Binet representation
+({bpref "eq_45_log_gamma_integral"}[]) and polynomial decay of $`\Gamma` along vertical lines.
 
 # The digamma function
 
 The original file defines the digamma function ad hoc, as the derivative of
-$`\log \circ \Gamma` on the reals, and reproves the needed estimates. This is still the state of
-{bpref "def_digamma"}[]: `Real.digamma` is that derivative, identified with the real part of
-Mathlib's `Complex.digamma` by `Real.digamma_eq_complex_re`. Mathlib (as of the
-pinned version) has `Complex.digamma` with its basic values and recurrence but no real digamma
-function and no series or asymptotic expansions; the planned refactoring defines a real digamma
-function in the project's Mathlib-candidate library and moves the estimates there.
+$`\log \circ \Gamma` on the reals, and reproves the needed estimates. The real digamma function
+`Real.digamma` of {bpref "def_digamma"}[] now lives in the project's Mathlib-candidate library
+(`CohnElkiesForMathlib.Analysis.SpecialFunctions.Gamma.Digamma`), identified with the real part of
+Mathlib's `Complex.digamma`, together with its recurrence, the bounds
+$`\log(x-1) \le \psi(x) \le \log x`, the harmonic representation
+$`\psi(m) = \lim_n(\log n - \sum_{k \le n}(m+k)^{-1})` and Gauss's integral representation
+({bpref "lemma_digamma_gauss_integral"}[], listed as a TODO in Mathlib's digamma file). Mathlib (as
+of the pinned version) has `Complex.digamma` with its basic values and recurrence but no real
+digamma function and no series or asymptotic expansions.
 
 # Statements added in the reformalization
 
@@ -322,11 +293,37 @@ report's statements:
 * the nonemptiness of $`\mathcal{A}_d` ({bpref "lemma_admissible_nonempty"}[]) and the
   comparator statements of the main theorems (`ComparatorChallenges/CohnElkies.lean`).
 
-Appendix A is formalized in $`L^1` generality ({bpref "prop_a_1"}[],
-{bpref "cor_a_plus_le_a_minus"}[]); the strict inequality ({bpref "cor_a_plus_lt_a_minus"}[])
+Appendix A is formalized in $`L^1` generality ({bpref "prop_a_1"}[]); the strict inequality
+({bpref "cor_a_plus_lt_a_minus"}[])
 rests on the existence of extremizers for $`\mathsf{A}_-(d)` ({bpref "thm_cg19_1_4_existence"}[]),
-proved after Cohn–Gonçalves 2019 with their quantitative uncertainty principle (Nazarov–Jaming)
-replaced by a compactness argument ({bpref "lemma_fourier_eigenfunction_no_concentration"}[]).
+which is not part of the report (see the next section).
+
+# Existence of extremizers: deviations from Cohn–Gonçalves
+
+The existence part of Theorem 1.4 of Cohn–Gonçalves (2019) is proved along the lines of their
+§3.2, with three changes.
+
+* *Uniform negative-mass bound.* Cohn–Gonçalves obtain $`\int_{B_{r(f_n)}} f_n \le K < 0` for the
+  normalized minimizing sequence from Nazarov's uncertainty principle in Jaming's
+  higher-dimensional form (alternatively from the Amrein–Berthier inequality), a quantitative
+  statement with explicit constants. The formalization uses the qualitative lemma
+  {bpref "lemma_fourier_eigenfunction_no_concentration"}[]: $`L^1`-normalized eigenfunctions of
+  the Fourier transform have $`L^1` mass at least $`\kappa(c,R) > 0` outside any fixed ball, proved by
+  contradiction from weak $`L^2` compactness ({bpref "lemma_weak_sequential_compactness"}[]) and
+  the compact-support theorem ({bpref "lemma_compactly_supported_eigenfunction_zero"}[]).
+* *No Mazur's lemma.* Cohn–Gonçalves upgrade the weak $`L^2` convergence of the minimizing
+  sequence to convergence almost everywhere and in $`L^2` (Mazur's lemma, using the convexity of
+  the class) and then apply Fatou's lemma. The formalization keeps the weak limit and reads off its
+  properties by testing against explicit $`L^2` functions (indicators, $`1_K\operatorname{sign} g`)
+  and smooth compactly supported functions (for the Fourier eigen-equation, through
+  $`\int\widehat u\,\Phi = \int u\,\widehat\Phi`).
+* *Origin correction.* Cohn–Gonçalves normalize the minimizing sequence with their Lemma 3.1
+  ($`\widehat{f_n} = -f_n`, $`f_n(0) = 0`) and deduce $`f(0) = 0` for the limit from minimality.
+  In the report's class $`\mathcal{E}_-(d)` both conditions are part of the definition, and the
+  origin correction ({bpref "lemma_cg19_3_1_origin_correction"}[]) is applied once, to the
+  continuous representative of the weak limit, which a priori only satisfies $`f(0) \ge 0`.
+
+The infinitely-many-roots part of Theorem 1.4 is not formalized.
 
 # Schwartz approximation with a bump mollifier
 
@@ -338,16 +335,15 @@ the Schwartz decay of the approximant elementary, and keeps the Gaussians only o
 
 :::lemma_ "lemma_schwartz_approximation_bump" (lean := "CohnElkies.fourier_approximant_apply")
 Let $`\varphi` be a smooth nonnegative radial function with compact support and
-$`\int\varphi = 1`, $`\varphi_n(x) = (n+1)^d\varphi((n+1)x)`, and let
+$`\int\varphi = 1`, $`\varphi_n(x) = n^d\varphi(nx)`, and let
 $`g \in L^1_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})` be continuous with $`\widehat g = \varsigma g`.
-Then $`q_n = (\eta_n g) * \varphi_n` is a real
-radial Schwartz function (`CohnElkies.approximant`, via `CohnElkies.schwartzConvolution`) with
+Then $`q_n = (\eta_n g) * \varphi_n` is a real radial Schwartz function with
 $`\widehat{q_n} = \varsigma\,(g * \kappa_n)\,\widehat{\varphi_n}`, and $`q_n \to g`,
-$`\widehat{q_n} \to \varsigma g` in $`L^1` (`CohnElkies.tendsto_approximant`,
-`CohnElkies.tendsto_fourier_approximant`). The corrector used to enforce $`g_n(0) = 0` is
-$`\psi_\varsigma = \varphi + \varsigma\widehat\varphi` for a bump $`\varphi` (or its dilate by
-$`2`), one of which has $`\psi_\varsigma(0) \ne 0` (`CohnElkies.exists_eigenTest`), in place of the
-Gaussian and Hermite functions $`\psi_\pm` of the report.
+$`\widehat{q_n} \to \varsigma g` in $`L^1`. Moreover, for a bump $`\varphi` as above, one of
+$`\varphi + \varsigma\widehat\varphi` and $`\varphi(2\cdot) + \varsigma\widehat{\varphi(2\cdot)}` is a
+real radial Schwartz function $`\psi_\varsigma` with $`\widehat{\psi_\varsigma} = \varsigma\psi_\varsigma`
+and $`\psi_\varsigma(0) \ne 0` (the corrector of {bpref "def_schwartz_approximation"}[], in place of
+the Gaussian and Hermite functions $`\psi_\pm` of the report).
 :::
 
 :::proof "lemma_schwartz_approximation_bump"

@@ -9,11 +9,10 @@ open Informal
 
 #doc (Manual) "Comparison of the sign-uncertainty constants" =>
 
-This chapter follows Appendix A of the report. Proposition A.1 and the comparison
-$`\mathsf{A}_+(d) \le \mathsf{A}_-(d)` are formalized in $`L^1` generality (modules
-`CohnElkies.SignUncertainty.MellinCancellation`, `CohnElkies.SignUncertainty.TailIntegral`,
-`CohnElkies.SignUncertainty.AppendixA`). The appendix's strict conclusion
-$`\mathsf{A}_+(d) < \mathsf{A}_-(d)` needs, in addition, an extremizer attaining
+This chapter follows Appendix A of the report. Proposition A.1 is formalized in $`L^1`
+generality (modules `CohnElkies.SignUncertainty.MellinCancellation`,
+`CohnElkies.SignUncertainty.TailIntegral`, `CohnElkies.SignUncertainty.AppendixA`). The appendix's
+conclusion $`\mathsf{A}_+(d) < \mathsf{A}_-(d)` needs, in addition, an extremizer attaining
 $`\mathsf{A}_-(d)` (Cohn–Gonçalves 2019, Theorem 1.4), whose proof is not part of the report. The
 second half of the chapter formalizes that existence theorem, following Cohn–Gonçalves (§3.2):
 the origin correction of their Lemma 3.1, the positivity and finiteness of the constants in every
@@ -21,11 +20,10 @@ dimension, weak sequential compactness in $`L^2`, and — in place of the quanti
 principle of Nazarov and Jaming they invoke — a qualitative "no concentration" lemma for
 eigenfunctions of the Fourier transform, proved by compactness (modules
 `CohnElkies.SignUncertainty.OriginCorrection`, `CohnElkies.SignUncertainty.Finiteness`,
-`CohnElkies.SignUncertainty.Extremizer`,
+`CohnElkies.SignUncertainty.AppendixA`,
 `CohnElkiesForMathlib.Analysis.InnerProductSpace.WeakSequentialCompactness`,
-`CohnElkiesForMathlib.Analysis.Fourier.EigenfunctionConcentration`). Every node of the chapter
-has a Lean counterpart. The nodes depend on the definitions of the introduction and on the radial
-reduction of the preliminaries.
+`CohnElkiesForMathlib.Analysis.Fourier.EigenfunctionConcentration`). The nodes depend on the
+definitions of the introduction and on the radial reduction of the preliminaries.
 
 For an anti-self-Fourier radial function $`g`, the central Mellin moment $`M_g(d/2)` vanishes.
 Integrating the radial tail of $`g` therefore produces a self-Fourier function with a strictly
@@ -107,20 +105,9 @@ Let $`d \ge 1`, $`\lambda = d/2`, and let $`0 \ne g \in L^1_{\mathrm{rad}}(\math
 satisfy $`\widehat g = -g` and $`g(0) = 0`, with $`T_dg` as in {uses "eq_87_tail_integration"}[].
 Then $`T_dg` is nonzero, continuous, radial and integrable, with
 $`\widehat{T_dg} = T_dg`, $`T_dg(0) = 0`, $`\|T_dg\|_1 \le \tfrac12\|g\|_1`;
-in particular $`T_dg \in \mathcal{E}_+(d)`. If $`r(g) < \infty` then $`r(T_dg) < r(g)`
-({uses "def_sign_radius"}[]); if $`g` is Schwartz, so is $`T_dg`.
-Formalized as the bundled eigenfunction `CohnElkies.SignEigenfunction.tailIntegral` (with
-`CohnElkies.SignEigenfunction.continuous_tailIntegral`,
-`CohnElkies.SignEigenfunction.integrable_tailIntegral`,
-`CohnElkies.SignEigenfunction.integral_norm_tailIntegral_le`,
-`CohnElkies.SignEigenfunction.fourier_tailIntegral`,
-`CohnElkies.SignEigenfunction.tailIntegral_ne_zero`, `CohnElkies.IsRadial.tailIntegral`) and the
-radius comparison `CohnElkies.SignEigenfunction.signRadius_tailIntegral_le` with its strict form
-`CohnElkies.SignEigenfunction.signRadius_tailIntegral_lt`. The nonvanishing uses the compact-support
-theorem `Real.ae_eq_zero_of_hasCompactSupport_fourierIntegral`
-({uses "lemma_compactly_supported_eigenfunction_zero"}[]) through the positivity
-`CohnElkies.SignEigenfunction.tailIntegral_pos` outside the ball of radius $`r(g)`. Schwartz
-preservation is not formalized (it is not needed for the comparison).
+in particular $`T_dg \in \mathcal{E}_+(d)`. Moreover $`r(T_dg) \le r(g)`, and if
+$`r(g) < \infty` then $`T_dg > 0` on $`\{|x| \ge r(g)\}` and $`r(T_dg) < r(g)`
+({uses "def_sign_radius"}[]).
 :::
 
 :::proof "prop_a_1"
@@ -143,31 +130,10 @@ particular $`T_dg(R) > 0`, so by continuity $`T_dg > 0` on some $`[R - \delta, R
 $`\delta > 0`, hence $`T_dg \ge 0` on $`\{|x| \ge R - \delta\}` and $`r(T_dg) \le R - \delta < R`.
 :::
 
-:::theorem "cor_a_plus_le_a_minus" (lean := "CohnElkies.signUncertaintyConstant_one_le_neg_one")
-For every $`d \ge 1`, $`\mathsf{A}_+(d) \le \mathsf{A}_-(d)` (see
-{uses "def_sign_uncertainty_constant"}[]). Formalized as
-`CohnElkies.signUncertaintyConstant_one_le_neg_one`, in $`[0,\infty]`.
-:::
-
-:::proof "cor_a_plus_le_a_minus"
-If $`\mathsf{A}_-(d) = \infty` there is nothing to prove. Otherwise let $`g \in \mathcal{E}_-(d)`
-with $`r(g) < \infty`. By {uses "lemma_rotational_average_properties"}[] and
-{uses "lemma_rotational_average_nonzero"}[] (applicable since $`g \ge 0` outside a ball),
-$`h = \mathcal{R}g` is a nonzero radial element of $`\mathcal{E}_-(d)` with $`r(h) \le r(g)`. By
-{uses "prop_a_1"}[], $`T_dh \in \mathcal{E}_+(d)` and $`r(T_dh) < r(h) \le r(g)`. Hence
-$`\mathsf{A}_+(d) \le r(g)` for every such $`g`, and taking the infimum over $`g` gives the claim.
-(In the formalization the infimum is first restricted to radial $`g` by
-{uses "lemma_sign_uncertainty_radial_reduction"}[], and only $`r(T_dh) \le r(h)` is used; the strict
-decrease is what the extremizer of {bpref "thm_cg19_1_4_existence"}[] turns into
-$`\mathsf{A}_+(d) < \mathsf{A}_-(d)`.)
-:::
-
 :::definition "def_cg19_gaussian_difference" (lean := "CohnElkies.gaussianDifference")
 (Cohn–Gonçalves 2019, (3.1).) For $`t > 0` let
 $`\varphi_t(x) = \dfrac{e^{-t\pi|x|^2} - e^{-2t\pi|x|^2}}{t^{-d/2} - (2t)^{-d/2}}`
-and $`\psi_t = \varphi_t - \widehat{\varphi_t}`. Formalized as `CohnElkies.gaussianDifference`,
-with the explicit transform `CohnElkies.fourierGaussianDifference` and the perturbation
-`CohnElkies.gaussianPerturbation`.
+and $`\psi_t = \varphi_t - \widehat{\varphi_t}`.
 :::
 
 :::lemma_ "lemma_cg19_gaussian_difference_properties" (lean := "CohnElkies.fourierGaussianDifference_neg_of_lt")
@@ -176,9 +142,6 @@ Then $`\varphi_t \ge 0`, $`\varphi_t(0) = 0`, $`\widehat{\varphi_t}(0) = 1`,
 $`\widehat{\widehat{\varphi_t}} = \varphi_t`, and $`\widehat{\varphi_t}(\xi) < 0` whenever
 $`|\xi|^2 > t\,d\log 2/\pi` (nonpositive when $`\ge`). Consequently $`\widehat{\psi_t} = -\psi_t`,
 $`\psi_t(0) = -1`, and $`\psi_t > 0` outside the ball of radius $`\sqrt{t\,d\log 2/\pi}`.
-Formalized as `CohnElkies.gaussianDifference_nonneg`, `CohnElkies.fourier_gaussianDifference_zero`,
-`CohnElkies.fourier_fourier_gaussianDifference`, `CohnElkies.fourierGaussianDifference_neg_of_lt`,
-`CohnElkies.fourier_gaussianPerturbation`, `CohnElkies.gaussianPerturbation_pos`.
 :::
 
 :::proof "lemma_cg19_gaussian_difference_properties"
@@ -196,9 +159,7 @@ $`g \in L^1(\mathbb{R}^d;\mathbb{R})` satisfy $`\widehat g = -g` pointwise, $`g 
 $`g \ge 0` on $`\{|x| \ge R\}` and $`g(0) \ge 0`. With $`t = \pi R^2/(d\log 2)` and $`\psi_t` as in
 {uses "def_cg19_gaussian_difference"}[], the function $`h = g + g(0)\psi_t` belongs to
 $`\mathcal{E}_-(d)` ({uses "def_sign_eigenfunction_class"}[]) and satisfies $`h \ge 0` on
-$`\{|x| \ge R\}`, so $`r(h) \le R`; moreover $`h = g` if $`g(0) = 0`. Formalized as
-`CohnElkies.originCorrection` with `CohnElkies.signRadius_originCorrection_le` and
-`CohnElkies.originCorrection_eq_of_zero`.
+$`\{|x| \ge R\}`, so $`r(h) \le R`; moreover $`h = g` if $`g(0) = 0`.
 :::
 
 :::proof "lemma_cg19_3_1_origin_correction"
@@ -208,35 +169,40 @@ $`\psi_t(x) \ge 0` and $`h(x) \ge g(x) \ge 0`. If $`g(0) > 0` then $`h(x) > g(x)
 $`|x| > R`, so $`h \ne 0`; if $`g(0) = 0` then $`h = g \ne 0`.
 :::
 
-:::lemma_ "lemma_sign_uncertainty_constant_pos_finite" (lean := "CohnElkies.signUncertaintyConstant_pos_lt_top")
-For every $`d \ge 1` and $`\varsigma = \pm 1`, $`0 < \mathsf{A}_\varsigma(d) < \infty`
-({uses "def_sign_uncertainty_constant"}[]). Formalized as `CohnElkies.signUncertaintyConstant_pos`
-and `CohnElkies.signUncertaintyConstant_lt_top` (module `CohnElkies.SignUncertainty.Finiteness`).
+:::lemma_ "lemma_sign_uncertainty_constant_pos" (lean := "CohnElkies.signUncertaintyConstant_pos")
+For every $`d \ge 1` and $`\varsigma = \pm 1`, $`\mathsf{A}_\varsigma(d) > 0`
+({uses "def_sign_uncertainty_constant"}[]).
 :::
 
-:::proof "lemma_sign_uncertainty_constant_pos_finite"
-Positivity (Cohn–Gonçalves 2019, §3.1): if $`g \in \mathcal{E}_\varsigma(d)` with $`\|g\|_1 = 1` is
+:::proof "lemma_sign_uncertainty_constant_pos"
+(Cohn–Gonçalves 2019, §3.1.) If $`g \in \mathcal{E}_\varsigma(d)` with $`\|g\|_1 = 1` is
 nonnegative outside $`B_\rho`, then $`\int g = \widehat g(0) = \varsigma g(0) = 0` gives
 $`\int g_- = \tfrac12`, while $`g_- \le |g| \le \|\widehat g\|_1 = 1` vanishes outside $`B_\rho`,
 so $`\tfrac12 \le \operatorname{vol}(B_\rho)`; choosing $`\rho` with
 $`\operatorname{vol}(B_\rho) < \tfrac12` shows $`\mathsf{A}_\varsigma(d) \ge \rho > 0`.
+:::
 
-Finiteness for $`\varsigma = -1`: with $`\psi_t` as in {uses "def_cg19_gaussian_difference"}[],
-$`G = \psi_{1/4} - \psi_{1/2}` satisfies $`\widehat G = -G`, $`G(0) = -1 - (-1) = 0`
-({uses "lemma_cg19_gaussian_difference_properties"}[]), and, writing $`E_b(x) = e^{-\pi b|x|^2}`,
+:::lemma_ "lemma_sign_uncertainty_constant_neg_one_lt_top" (lean := "CohnElkies.signUncertaintyConstant_neg_one_lt_top")
+For every $`d \ge 1`, $`\mathsf{A}_-(d) < \infty` ({uses "def_sign_uncertainty_constant"}[]):
+with $`\psi_t` as in {uses "def_cg19_gaussian_difference"}[], $`G = \psi_{1/4} - \psi_{1/2}`
+belongs to $`\mathcal{E}_-(d)` and is positive outside a ball.
+:::
+
+:::proof "lemma_sign_uncertainty_constant_neg_one_lt_top"
+$`G` satisfies $`\widehat G = -G` and $`G(0) = -1 - (-1) = 0`
+({uses "lemma_cg19_gaussian_difference_properties"}[]). Writing $`E_b(x) = e^{-\pi b|x|^2}`,
 $`D = 2^d - 2^{d/2}`, $`D' = 2^{d/2} - 1`,
 $`\psi_{1/4} = (E_{1/4} - E_{1/2} - 2^dE_4 + 2^{d/2}E_2)/D` and $`\psi_{1/2} = (E_{1/2} - 2^{d/2}E_2)/D'`,
 so that $`G \ge E_{1/4}\bigl(1 - e^{-\pi|x|^2/4}(1 + D/D' + 2^d)\bigr)/D > 0` once
-$`|x|^2 > (4/\pi)\log(1 + D/D' + 2^d)`; hence $`G \in \mathcal{E}_-(d)` and
-$`\mathsf{A}_-(d) \le r(G) < \infty`. For $`\varsigma = +1` use {uses "cor_a_plus_le_a_minus"}[].
+$`|x|^2 > (4/\pi)\log(1 + D/D' + 2^d)`; hence $`G \ne 0`, $`G \in \mathcal{E}_-(d)` and
+$`\mathsf{A}_-(d) \le r(G) < \infty`.
 :::
 
 :::lemma_ "lemma_weak_sequential_compactness" (lean := "InnerProductSpace.tendsto_subseq_inner_left_of_norm_le")
 Every bounded sequence $`(x_n)` in a separable Hilbert space $`E` has a weakly convergent
 subsequence: there are $`\varphi` strictly increasing and $`y \in E` with
 $`\|y\| \le \sup_n\|x_n\|` and $`\langle x_{\varphi(n)}, z\rangle \to \langle y, z\rangle` for
-every $`z \in E`. Formalized as `InnerProductSpace.tendsto_subseq_inner_left_of_norm_le` (module
-`CohnElkiesForMathlib.Analysis.InnerProductSpace.WeakSequentialCompactness`).
+every $`z \in E`.
 :::
 
 :::proof "lemma_weak_sequential_compactness"
@@ -250,10 +216,6 @@ back along the Riesz isometry gives $`y`.
 Let $`V` be a nontrivial finite-dimensional real inner product space, $`c \in \mathbb{C}\setminus\{0\}`
 and $`R \ge 0`. There is $`\kappa > 0` such that every integrable $`f : V \to \mathbb{C}` with
 $`\widehat f = cf` pointwise and $`\|f\|_1 = 1` satisfies $`\int_{|x| > R}|f| \ge \kappa`.
-This replaces the quantitative uncertainty principle of Nazarov–Jaming used by Cohn–Gonçalves
-(their "uniform negative-mass bound"). Formalized as
-`Real.exists_pos_le_setIntegral_norm_compl_closedBall_of_fourier_eq_mul` (module
-`CohnElkiesForMathlib.Analysis.Fourier.EigenfunctionConcentration`).
 :::
 
 :::proof "lemma_fourier_eigenfunction_no_concentration"
@@ -274,12 +236,11 @@ Thus $`G` and $`\widehat G` are compactly supported and $`G \ne 0`, contradictin
 :::theorem "thm_cg19_1_4_existence" (lean := "CohnElkies.exists_signRadius_eq_signUncertaintyConstant_neg_one")
 (Cohn–Gonçalves 2019, Theorem 1.4, existence part.) For every $`d \ge 1` there exists
 $`g \in \mathcal{E}_-(d)` with $`r(g) = \mathsf{A}_-(d)` ({uses "def_sign_uncertainty_constant"}[]).
-Formalized as `CohnElkies.exists_signRadius_eq_signUncertaintyConstant_neg_one` (module
-`CohnElkies.SignUncertainty.Extremizer`).
 :::
 
 :::proof "thm_cg19_1_4_existence"
-By {uses "lemma_sign_uncertainty_constant_pos_finite"}[], $`0 < a := \mathsf{A}_-(d) < \infty`.
+By {uses "lemma_sign_uncertainty_constant_pos"}[] and
+{uses "lemma_sign_uncertainty_constant_neg_one_lt_top"}[], $`0 < a := \mathsf{A}_-(d) < \infty`.
 Pick $`f_n \in \mathcal{E}_-(d)` with $`r(f_n) \le a + 1/(n+1)`, normalized so that
 $`\|f_n\|_1 = 1`; then $`|f_n| = |\widehat{f_n}| \le 1`, $`\int f_n = 0`, and $`f_n \ge 0` on
 $`\{|x| \ge a + 1/(n+1)\}`. By {uses "lemma_fourier_eigenfunction_no_concentration"}[] with
@@ -298,20 +259,37 @@ pointwise, $`G \ne 0`, $`G(0) = -\int g \ge 0`, and $`G \ge 0` on $`\{|x| \ge a\
 exterior, hence everywhere by continuity). Finally {uses "lemma_cg19_3_1_origin_correction"}[]
 with $`R = a` produces $`h \in \mathcal{E}_-(d)` with $`r(h) \le a`, and $`r(h) \ge \mathsf{A}_-(d) = a`
 by definition of the infimum.
+
+This differs from the proof of Cohn–Gonçalves in three places: their uniform negative-mass bound
+$`\int_{B} f_n \le K < 0` is deduced from Nazarov's uncertainty principle in Jaming's form (or
+from the Amrein–Berthier inequality), here from the compactness lemma
+{uses "lemma_fourier_eigenfunction_no_concentration"}[]; they pass from weak to almost-everywhere
+and $`L^2` convergence by Mazur's lemma before applying Fatou's lemma, whereas here the weak limit is
+only tested against explicit $`L^2` and smooth compactly supported functions; and they normalize
+the minimizing sequence by their Lemma 3.1 and infer $`f(0) = 0` for the limit from minimality,
+whereas here every element of $`\mathcal{E}_-(d)` already has $`\widehat g = -g` and $`g(0) = 0`,
+and the origin correction is applied once, to the limit.
 :::
 
 :::theorem "cor_a_plus_lt_a_minus" (lean := "CohnElkies.signUncertaintyConstant_one_lt_neg_one")
-For every $`d \ge 1`, $`\mathsf{A}_+(d) < \mathsf{A}_-(d)`. Formalized as
-`CohnElkies.signUncertaintyConstant_one_lt_neg_one` (module
-`CohnElkies.SignUncertainty.Extremizer`); the reduction to an extremizer is
-`CohnElkies.signUncertaintyConstant_one_lt_neg_one_of_exists_extremizer` (module
-`CohnElkies.SignUncertainty.AppendixA`).
+For every $`d \ge 1`, $`\mathsf{A}_+(d) < \mathsf{A}_-(d)` ({uses "def_sign_uncertainty_constant"}[]).
 :::
 
 :::proof "cor_a_plus_lt_a_minus"
 By {uses "thm_cg19_1_4_existence"}[] there is an extremizer $`g \in \mathcal{E}_-(d)`,
-$`r(g) = \mathsf{A}_-(d) < \infty` ({uses "lemma_sign_uncertainty_constant_pos_finite"}[]). Put
+$`r(g) = \mathsf{A}_-(d) < \infty` ({uses "lemma_sign_uncertainty_constant_neg_one_lt_top"}[]). Put
 $`h = \mathcal{R}g`, a nonzero radial element of $`\mathcal{E}_-(d)` with $`r(h) \le r(g)`
 ({uses "lemma_rotational_average_properties"}[], {uses "lemma_rotational_average_nonzero"}[]).
 By {uses "prop_a_1"}[], $`\mathsf{A}_+(d) \le r(T_dh) < r(h) \le r(g) = \mathsf{A}_-(d)`.
+:::
+
+:::theorem "cor_sign_uncertainty_constant_lt_top" (lean := "CohnElkies.signUncertaintyConstant_lt_top")
+For every $`d \ge 1` and $`\varsigma = \pm 1`, $`\mathsf{A}_\varsigma(d) < \infty`
+({uses "def_sign_uncertainty_constant"}[]); together with
+{uses "lemma_sign_uncertainty_constant_pos"}[], $`0 < \mathsf{A}_\varsigma(d) < \infty`.
+:::
+
+:::proof "cor_sign_uncertainty_constant_lt_top"
+$`\mathsf{A}_+(d) < \mathsf{A}_-(d) < \infty` by {uses "cor_a_plus_lt_a_minus"}[] and
+{uses "lemma_sign_uncertainty_constant_neg_one_lt_top"}[].
 :::

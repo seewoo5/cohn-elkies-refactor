@@ -43,10 +43,8 @@ $`\varsigma \in \{-1,+1\}`, and $`g(0) = 0`. With $`S_d` from {uses "def_sphere_
 $`X_g` from {uses "def_radial_mellin"}[], define in the logarithmic coordinate $`r = Re^v`
 (equation (12))
 $`\varphi(v) = \dfrac{S_d}{\|g\|_1}\,(Re^v)^d\,g(Re^v)` and
-$`Z(t) = \dfrac{S_d}{\|g\|_1}\,R^{\lambda+it}\,X_g(t)`.
-Formalized as `CohnElkies.φ_g` and `CohnElkies.Z_g` (with $`t` complex, through the complex
-Mellin frequency `CohnElkies.X_f`), for an arbitrary test function $`g` and radius $`R > 0`;
-$`\|g\|_1` is `CohnElkies.L1norm`.
+$`Z(t) = \dfrac{S_d}{\|g\|_1}\,R^{\lambda+it}\,X_g(t)`
+(the latter for complex $`t` as well, through the Mellin transform of the profile).
 :::
 
 :::lemma_ "eq_13_normalization" (lean := "CohnElkies.RadialEigenfunction.integral_abs_logProfile")
@@ -54,13 +52,7 @@ In the setting of {uses "def_normalized_profile"}[] (equation (13)):
 $`\|\varphi\|_1 = 1`, $`\int_{\mathbb{R}}\varphi = 0`,
 $`\int_{-\infty}^0|\varphi(v)|\,dv = \dfrac{1}{\|g\|_1}\int_{|x|<R}|g(x)|\,dx`,
 and $`Z(t) = \int_{\mathbb{R}}\varphi(v)e^{-(\lambda+it)v}\,dv` for every complex $`t` for which
-the integral converges absolutely, in particular for real $`t`. Formalized as
-`CohnElkies.RadialEigenfunction.integral_abs_logProfile`,
-`CohnElkies.RadialEigenfunction.integral_logProfile`,
-`CohnElkies.RadialEigenfunction.setIntegral_Iic_abs_logProfile`, and, for the last identity on
-the line $`\operatorname{Im} t = \lambda - a`,
-`CohnElkies.normalizedRadialMellinStrip_shifted_eq_fourier`,
-which writes $`Z(s + i(\lambda - a))` as the Fourier transform of $`e^{-av}\varphi(v)`.
+the integral converges absolutely, in particular for real $`t`.
 :::
 
 :::proof "eq_13_normalization"
@@ -78,7 +70,6 @@ The strip estimates for the normalized Mellin transform `Z` (Lemmas 3.2–3.6 of
 :::definition "def_lower_boundary_majorant" (lean := "CohnElkies.h_ℓ") (parent := "grp_mellin_strip")
 The lower-boundary majorant is (equation (14)), for $`y \ne 0`,
 $`h_\lambda(y) = \lambda\log(\pi R^2) + \log|\Gamma(-iy/2)| - \log|\Gamma(\lambda + iy/2)|`.
-Formalized as `CohnElkies.h_ℓ`, a function of $`\lambda`, $`R` and $`y`.
 :::
 
 :::definition "def_strip_poisson_kernel" (lean := "CohnElkies.P_σ") (parent := "grp_mellin_strip")
@@ -88,50 +79,47 @@ $`M_\sigma = \int_{\mathbb{R}}P_\sigma(T)\,dT = \dfrac{1-\sigma}{2}`,
 and the Poisson majorant (equation (18))
 $`H_\sigma(s) = \int_{\mathbb{R}}P_\sigma(T)\,h_\lambda(s - \lambda T)\,dT` with $`h_\lambda` from
 {uses "def_lower_boundary_majorant"}[]. The kernel is positive, even, decreasing on $`(0,\infty)`,
-and $`P_\sigma(T) \ll_\sigma e^{-\pi|T|/2}`. Formalized as `CohnElkies.θ`, `CohnElkies.P_σ`,
-`CohnElkies.M_σ` and `CohnElkies.H_σ`, with the positivity `CohnElkies.stripPoissonKernel_pos`
-and the exponential majorant `CohnElkies.P_σ_le_exponentialMajorant`.
+and $`P_\sigma(T) \ll_\sigma e^{-\pi|T|/2}`.
 :::
 
-:::lemma_ "lemma_strip_poisson_principle" (parent := "grp_mellin_strip") (tags := "not-formalized")
-(Poisson principle for the strip.) Let $`\lambda > 0` and let $`Z` be holomorphic on a
-neighbourhood of the closed strip $`\{|\operatorname{Im} t| \le \lambda\}` and bounded there. Let
-$`b : \mathbb{R} \to \mathbb{R}` be measurable and bounded above, with
-$`\log|Z(y - i\lambda)| \le b(y)` and $`\log|Z(y + i\lambda)| \le 0` for all $`y \in \mathbb{R}`.
-Then for $`-1 < \sigma < 1` and $`s \in \mathbb{R}`,
+:::lemma_ "lemma_strip_poisson_principle" (lean := "CohnElkies.norm_le_exp_integral_P_σ_of_strip") (parent := "grp_mellin_strip")
+(Poisson principle for the strip.) Let $`\lambda > 0` and let $`Z` be holomorphic on the open
+strip $`\{|\operatorname{Im} t| < \lambda\}`, continuous on its closure, and of growth
+$`|Z(t)| \le C\exp(Ce^{c|\operatorname{Re} t|})` there for some $`c < \pi/(2\lambda)` (for
+instance bounded). Let $`b : \mathbb{R} \to \mathbb{R}` be continuous with
+$`|b(y)| \le A(1 + |y|)`, and suppose $`\log|Z(y - i\lambda)| \le b(y)` and
+$`\log|Z(y + i\lambda)| \le 0` for all $`y \in \mathbb{R}`. Then for $`-1 < \sigma < 1` and
+$`s \in \mathbb{R}`,
 $`\log|Z(s + i\sigma\lambda)| \le \int_{\mathbb{R}}P_\sigma(T)\,b(s - \lambda T)\,dT`,
-the integral being well defined in $`[-\infty,\infty)`. Here
-$`\lambda^{-1}P_\sigma((s-y)/\lambda)\,dy` is the lower-edge harmonic measure of the strip at
-$`s+i\sigma\lambda`, of mass $`M_\sigma`; the upper-edge measure has mass $`(1+\sigma)/2`. Uses
-{uses "def_strip_poisson_kernel"}[].
-
-This is the report's tool for the interior bound of Lemma 3.2. It is not formalized: the
-formalization proves the interior bound instead by a Phragmén–Lindelöf argument on the strip,
-{bpref "lemma_phragmen_lindelof_strip"}[] and {bpref "lemma_3_2_capped"}[].
+with $`P_\sigma` from {uses "def_strip_poisson_kernel"}[]: $`\lambda^{-1}P_\sigma((s-y)/\lambda)\,dy`
+is the lower-edge harmonic measure of the strip at $`s+i\sigma\lambda`, of mass $`M_\sigma`,
+and the upper-edge measure has mass $`(1+\sigma)/2`.
 :::
 
 :::proof "lemma_strip_poisson_principle"
-The map $`\Phi(t) = \exp(\pi(t+i\lambda)/(2\lambda))` is a biholomorphism from the open strip onto
-the upper half-plane $`\mathbb{H}`; it sends the lower edge $`y - i\lambda` to
-$`e^{\pi y/(2\lambda)} \in (0,\infty)`, the upper edge $`y + i\lambda` to
-$`-e^{\pi y/(2\lambda)} \in (-\infty,0)`, and $`s + i\sigma\lambda` to $`\rho e^{i\theta}` with
-$`\rho = e^{\pi s/(2\lambda)}`. The function $`u = \log|Z \circ \Phi^{-1}|` is subharmonic on
-$`\mathbb{H}` (with value $`-\infty` at zeros) and bounded above, and its boundary values are at
-most $`\tilde b(x) = b((2\lambda/\pi)\log x)` for $`x > 0` and $`0` for $`x < 0`, a function
-bounded above. The upper-half-plane Poisson principle (Ahlfors) gives
-$`u(\rho e^{i\theta})`
-$`\le \frac1\pi\int_{\mathbb{R}}P_{\mathbb{H}}(\rho e^{i\theta}, x)\,\tilde b(x)\,dx`, with the
-half-plane Poisson kernel
-$`P_{\mathbb{H}}(\rho e^{i\theta}, x)`
-$`= \dfrac{\rho\sin\theta}{(x-\rho\cos\theta)^2 + \rho^2\sin^2\theta}`,,
-where only $`x > 0` contributes. Substituting $`x = e^{\pi y/(2\lambda)}`,
-$`dx = (\pi x/(2\lambda))dy`, and
-$`(x-\rho\cos\theta)^2 + \rho^2\sin^2\theta = x^2 - 2\rho x\cos\theta + \rho^2`, the measure
-becomes $`\dfrac{\sin\theta}{2\lambda(x/\rho + \rho/x - 2\cos\theta)}\,dy`, which equals
-$`\dfrac{\sin\theta}{4\lambda(\cosh(\pi(s-y)/(2\lambda)) - \cos\theta)}\,dy`
-$`= \lambda^{-1}P_\sigma\bigl(\tfrac{s-y}{\lambda}\bigr)\,dy`.
-The substitution $`T = (s-y)/\lambda` gives the claim. The mass $`M_\sigma = (1-\sigma)/2` is the
-harmonic measure of $`(0,\infty)` seen from $`\rho e^{i\theta}`, namely $`(\pi-\theta)/\pi`.
+The conformal map $`\Phi(t) = \exp(\pi(t+i\lambda)/(2\lambda))` sends the open strip onto the upper
+half-plane, the lower edge $`y - i\lambda` to $`e^{\pi y/(2\lambda)} \in (0,\infty)`, the upper edge
+to $`(-\infty,0)`, and $`s + i\sigma\lambda` to $`\rho e^{i\theta}` with $`\rho = e^{\pi s/(2\lambda)}`,
+$`\theta = \pi(1+\sigma)/2`; transporting the half-plane Poisson kernel
+$`\rho\sin\theta/((x-\rho\cos\theta)^2 + \rho^2\sin^2\theta)` through $`x = e^{\pi y/(2\lambda)}`
+gives the lower-edge harmonic measure $`\lambda^{-1}P_\sigma((s-y)/\lambda)\,dy`, of mass
+$`M_\sigma = (\pi-\theta)/\pi = (1-\sigma)/2`. This density is the real part of the holomorphic
+kernel $`K_\lambda(z,y) = \frac{i}{4\lambda}\frac{E+1}{E-1}`, $`E = e^{\pi(z-y+i\lambda)/(2\lambda)}`,
+regularized to $`\widetilde K_\lambda(z,y) = K_\lambda(z,y) \pm i/(4\lambda)` so that it decays like
+$`e^{-\pi|y|/(2\lambda)}` in $`y`. Let $`W(z) = \int_{\mathbb{R}}\widetilde K_\lambda(z,y)\,b(y)\,dy`.
+Since $`|b(y)| \le A(1+|y|)`, $`W` is holomorphic on the open strip (differentiation under the
+integral sign), $`\operatorname{Re}W(s + i\sigma\lambda) = \int P_\sigma(T)\,b(s-\lambda T)\,dT`, and
+$`|\operatorname{Re}W(z)| \le B(1 + |\operatorname{Re}z|)` because $`M_\sigma \le 1` and
+$`\int P_\sigma(T)|T|\,dT` is bounded uniformly in $`\sigma`. By dominated convergence
+($`P_\sigma` concentrates at $`T = 0` as $`\sigma \downarrow -1` and tends to $`0` as
+$`\sigma \uparrow 1`), $`\operatorname{Re}W` extends continuously to the closed strip with boundary
+values $`b` on the lower edge and $`0` on the upper edge. Hence $`e^{-W}Z` is holomorphic on the
+open strip, its modulus $`e^{-\operatorname{Re}W}|Z|` extends continuously to the closed strip with
+values at most $`e^{-b(y)}|Z(y-i\lambda)| \le 1` on the lower edge and $`|Z(y+i\lambda)| \le 1` on
+the upper edge, and it is $`O(\exp(B'e^{c'|\operatorname{Re}z|}))` for some $`c' < \pi/(2\lambda)`.
+The Phragmén–Lindelöf principle for the strip ({uses "lemma_phragmen_lindelof_strip"}[]) gives
+$`e^{-\operatorname{Re}W}|Z| \le 1` inside, i.e.
+$`\log|Z(s+i\sigma\lambda)| \le \operatorname{Re}W(s+i\sigma\lambda) = \int P_\sigma(T)\,b(s-\lambda T)\,dT`.
 :::
 
 :::lemma_ "lemma_3_2" (lean := "CohnElkies.normalizedRadialMellinStrip_diffContOnCl") (parent := "grp_mellin_strip")
@@ -145,14 +133,6 @@ $`\log|Z(y - i\lambda)| \le h_\lambda(y)` for $`y \ne 0`, with $`h_\lambda` from
 $`|Z(s + i\sigma\lambda)| \le \exp(H_\sigma(s))`
 $`= \exp\Bigl(\int_{\mathbb{R}}P_\sigma(T)h_\lambda(s-\lambda T)\,dT\Bigr)`
 for every $`s \in \mathbb{R}`.
-
-Formalized for `RadialEigenfunction`: holomorphy on the open strip together with continuity on
-its closure is `CohnElkies.normalizedRadialMellinStrip_diffContOnCl`
-(`CohnElkies.RadialEigenfunction.diffContOnCl_Z_g`), boundedness on the closed strip is
-`CohnElkies.RadialEigenfunction.exists_norm_Z_g_le`, the boundary values (16) and (17) are
-`CohnElkies.RadialEigenfunction.norm_Z_g_top_le_one` and
-`CohnElkies.RadialEigenfunction.norm_Z_g_bottom_le_exp_h_ℓ`, and the interior bound (18) is
-`CohnElkies.norm_Z_g_le_exp_H_σ`.
 :::
 
 :::proof "lemma_3_2"
@@ -185,23 +165,23 @@ $`h_\lambda(y) = -\log|y| + O_\lambda(1)` as $`y \to 0`.
 
 Interior. The logarithmic singularity of $`h_\lambda` requires a bounded truncation. Choose
 $`D > \max\{0, \sup_y\log|Z(y - i\lambda)|\}` and let $`h_{\lambda,D} = \min\{h_\lambda, D\}`
-(with value $`D` at $`0`). The report applies the Poisson principle
-({bpref "lemma_strip_poisson_principle"}[]) to $`Z` with lower majorant $`h_{\lambda,D}` and
-upper majorant $`0`; the formalization obtains the same capped bound
+(with value $`D` at $`0`), a continuous function of logarithmic growth. The Poisson principle
+({uses "lemma_strip_poisson_principle"}[]) applied to the bounded function $`Z` with lower majorant
+$`h_{\lambda,D}` and upper majorant $`0` gives the capped bound
 $`\log|Z(s+i\sigma\lambda)| \le \int P_\sigma(T)h_{\lambda,D}(s-\lambda T)\,dT`
-from {uses "lemma_3_2_capped"}[]. The integral $`H_\sigma(s)` converges absolutely, because
+({uses "lemma_3_2_capped"}[]). The integral $`H_\sigma(s)` converges absolutely, because
 $`P_\sigma` decays exponentially, the singularity of $`h_\lambda` at $`0` is locally integrable,
-and $`h_\lambda(y) = -\lambda\log|y| + O_\lambda(1)` as $`|y| \to \infty` by
-{uses "lemma_gamma_asymptotics"}[]. Since $`h_{\lambda,D} \le h_\lambda` and $`P_\sigma \ge 0`,
+and $`h_\lambda(y) = -\lambda\log|y| + O_\lambda(1)` as $`|y| \to \infty` by Stirling's
+formula. Since $`h_{\lambda,D} \le h_\lambda` and $`P_\sigma \ge 0`,
 the capped majorant is at most $`H_\sigma(s)`; equivalently, dominated convergence lets
 $`D \to \infty` (`CohnElkies.lowerStripCappedPoisson_tendsto`). This proves (18).
 :::
 
 :::lemma_ "lemma_convolution_symmetric_decreasing" (lean := "CohnElkies.even_antitone_poisson_convolution_max") (parent := "grp_mellin_strip")
-Let $`f, q : \mathbb{R} \to [0,\infty)` be integrable, even, and nonincreasing on $`[0,\infty)`.
-Then $`(f * q)(x) \le (f * q)(0)` for every $`x \in \mathbb{R}`. Formalized for the case needed
-here, $`q = P_\sigma` of {uses "def_strip_poisson_kernel"}[] and $`f` compactly supported, as
-`CohnElkies.even_antitone_poisson_convolution_max`.
+Let $`f : \mathbb{R} \to [0,\infty)` be integrable, compactly supported, even, and nonincreasing on
+$`[0,\infty)`, and let $`-1 < \sigma < 1`. Then $`(f * P_\sigma)(x) \le (f * P_\sigma)(0)` for every
+$`x \in \mathbb{R}`, with $`P_\sigma` from {uses "def_strip_poisson_kernel"}[] (which is
+positive, even and nonincreasing on $`[0,\infty)`).
 :::
 
 :::proof "lemma_convolution_symmetric_decreasing"
@@ -214,33 +194,13 @@ centred intervals, one translated by $`x`, is largest at $`x = 0`.
 :::
 
 :::lemma_ "lemma_3_3" (lean := "CohnElkies.lowerStripPoissonMajorant_dimension_central_bound") (parent := "grp_mellin_strip")
-Put $`f_T(x) = \log\sqrt{x^2 + T^2/4}`. For every $`-1 < \sigma < 1` there is $`C_\sigma > 0`,
-independent of $`d`, $`c` and $`g`, such that (equation (19))
-$`\int_{\mathbb{R}}P_\sigma(T)\,\Bigl|h_\lambda(\lambda T)`
-$`- \lambda\Bigl(\log(2\pi c^2) - \int_0^1 f_T(x)\,dx\Bigr)\Bigr|\,dT \le C_\sigma\log(2+\lambda)`.
-Define $`J_\sigma = -\dfrac{1}{M_\sigma}\int_{\mathbb{R}}P_\sigma(T)\int_0^1 f_T(x)\,dx\,dT`. Then
-for
-every $`s \in \mathbb{R}` (equation (20))
-$`H_\sigma(s) \le H_\sigma(0) = \lambda M_\sigma\bigl(\log(2\pi c^2) + J_\sigma\bigr)`
-$`+ O_\sigma(\log(2+\lambda))`.
+Put $`f_T(x) = \log\sqrt{x^2 + T^2/4}` and
+$`J_\sigma = -\dfrac{1}{M_\sigma}\int_{\mathbb{R}}P_\sigma(T)\int_0^1 f_T(x)\,dx\,dT`.
+For every $`0 \le \sigma < 1` there is $`E_\sigma < \infty`, independent of $`d`, $`c` and $`g`,
+such that in the setting of {uses "def_normalized_profile"}[] (with $`d \ge 2`), for every
+$`s \in \mathbb{R}` (equation (20)),
+$`H_\sigma(s) \le H_\sigma(0) \le \lambda M_\sigma\bigl(\log(2\pi c^2) + J_\sigma\bigr) + E_\sigma`.
 Uses {uses "def_lower_boundary_majorant"}[] and {uses "def_strip_poisson_kernel"}[].
-
-The formalization proves the upper halves of these statements, which are all that is used later,
-with an error term that is uniform in $`d`. Writing $`\Lambda(T) = -\int_0^1 f_T - 1` for the
-endpoint phase `CohnElkies.lowerEndpointPhase` (so that
-$`\log(2\pi c^2) - \int_0^1 f_T = \log(2\pi e c^2) + \Lambda(T)`), the one-sided form of (19) is
-$`h_\lambda(\lambda T) \le \lambda(\log(2\pi e c^2) + \Lambda(T)) + E(T)` with an explicit
-$`E(T)` independent of $`d` and $`c` ({bpref "lemma_3_3_one_sided"}[],
-`CohnElkies.lowerGammaBoundaryLog_dimension_scaled_riemann_le`); the maximum property
-$`H_\sigma(s) \le H_\sigma(0)` is `CohnElkies.lowerStripPoissonMajorant_dimension_centered_max`;
-and the central bound is
-`CohnElkies.lowerStripPoissonMajorant_dimension_central_bound`,
-$`H_\sigma(0) \le \lambda M_\sigma(\log(2\pi e c^2) + J^{\mathrm{Lean}}_\sigma) + E_\sigma`, where
-$`J^{\mathrm{Lean}}_\sigma = \int(P_\sigma/M_\sigma)(T)\Lambda(T)\,dT`
-(`CohnElkies.lowerPoissonEndpointExpectation`) satisfies $`J_\sigma = 1 + J^{\mathrm{Lean}}_\sigma`,
-and $`E_\sigma = \int P_\sigma E` (`CohnElkies.lowerRiemannPoissonError`) is finite and
-independent of $`d` and $`c`. Thus the bracket $`\log(2\pi c^2) + J_\sigma` of the report and
-the bracket $`\log(2\pi e c^2) + J^{\mathrm{Lean}}_\sigma` of the code coincide.
 :::
 
 :::proof "lemma_3_3"
@@ -290,12 +250,11 @@ $`H_\sigma(s) \le H_\sigma(0)`, and evaluating at $`0` with (19) proves (20).
 :::
 
 :::lemma_ "eq_21_sech_characteristic" (lean := "CohnElkies.poissonLogistic_characteristic") (parent := "grp_mellin_strip")
-The probability density $`p(u) = \dfrac{\pi}{4}\operatorname{sech}^2\bigl(\dfrac{\pi u}{2}\bigr)` on
-$`\mathbb{R}` has characteristic function (equation (21))
-$`\int_{\mathbb{R}}p(u)e^{itu}\,du = \dfrac{t}{\sinh t}` for $`t \in \mathbb{R}`, interpreted as
-$`1` at $`t = 0`. Formalized as `CohnElkies.poissonLogistic_characteristic` for the density
-`CohnElkies.poissonLogisticDensity`, written as $`p(u) = \pi e^{\pi u}/(1 + e^{\pi u})^2`; the
-real form $`\int p(u)\cos(tu)\,du = t/\sinh t` is `CohnElkies.poissonLogistic_cosine_transform`.
+The probability density $`p(u) = \dfrac{\pi}{4}\operatorname{sech}^2\bigl(\dfrac{\pi u}{2}\bigr)`
+$`= \dfrac{\pi e^{\pi u}}{(1 + e^{\pi u})^2}` on $`\mathbb{R}` has characteristic function
+(equation (21))
+$`\int_{\mathbb{R}}p(u)e^{itu}\,du = \int_{\mathbb{R}}p(u)\cos(tu)\,du = \dfrac{t}{\sinh t}`
+for $`t \in \mathbb{R}`, interpreted as $`1` at $`t = 0`.
 :::
 
 :::proof "eq_21_sech_characteristic"
@@ -312,39 +271,32 @@ $`\Gamma(1 + it/\pi)\Gamma(1 - it/\pi)`, which equals $`t/\sinh t` by the reflec
 The value $`1` at $`t = 0` is $`\int p = 1`.
 :::
 
-:::lemma_ "eq_22_log_moment_digamma" (parent := "grp_mellin_strip") (tags := "not-formalized")
+:::lemma_ "eq_22_log_moment_digamma" (lean := "CohnElkies.integral_poissonLogisticDensity_mul_log_sqrt") (parent := "grp_mellin_strip")
 With $`p` from {uses "eq_21_sech_characteristic"}[] and $`\psi` from {uses "def_digamma"}[],
 for every $`x \ge 0` (equation (22))
 $`\int_{\mathbb{R}}p(u)\log\sqrt{x^2+u^2}\,du = \psi\Bigl(\dfrac{x+1}{2}\Bigr) + \log 2`.
-
-This identity is not formalized: the formalization does not use it, and evaluates the limit of
-Lemma 3.4 through a Frullani-type kernel instead ({bpref "lemma_3_4_frullani"}[]).
 :::
 
 :::proof "eq_22_log_moment_digamma"
-Let $`I(x)` denote the left side. For $`x > 0`, the Laplace representation
-$`x/(x^2+u^2) = \int_0^\infty e^{-xt}\cos(ut)\,dt`, Fubini, and {uses "eq_21_sech_characteristic"}[]
-give $`I'(x) = \int_0^\infty e^{-xt}\dfrac{t}{\sinh t}\,dt`, which equals
-$`\tfrac12\psi'((x+1)/2)` by the trigamma integral in {uses "lemma_gamma_asymptotics"}[] (iii)
-after the substitution $`t = s/2`. Both $`I(x)` and $`\psi((x+1)/2) + \log 2` equal
-$`\log x + o(1)` as $`x \to \infty`, so their integration constants agree. Local integrability of
-$`\log|u|` at $`u = 0` extends the identity to $`x = 0` by dominated convergence.
+Let $`x > 0`. Taking real parts in the complex Frullani formula
+$`\int_0^\infty (e^{-t} - e^{-(x+iu)t})/t\,dt = \log(x+iu)` gives
+$`\log\sqrt{x^2+u^2} = \int_0^\infty\dfrac{e^{-t} - e^{-xt}\cos(ut)}{t}\,dt`. The integrand times
+$`p(u)` is integrable on $`\mathbb{R} \times (0,\infty)` (it is bounded by $`p(u)(1 + x + |u|)`
+for $`t \le 1`, using $`|1 - \cos(ut)| \le |u|t`, and by $`p(u)(e^{-t} + e^{-xt})` for $`t \ge 1`),
+so by Fubini, $`\int p = 1` and {uses "eq_21_sech_characteristic"}[],
+$`\int_{\mathbb{R}}p(u)\log\sqrt{x^2+u^2}\,du = \int_0^\infty\Bigl(\dfrac{e^{-t}}{t} - \dfrac{e^{-xt}}{\sinh t}\Bigr)dt`.
+Gauss's integral ({uses "lemma_digamma_gauss_integral"}[]) at $`m = (x+1)/2`, after the substitution
+$`t = 2s`, reads $`\psi((x+1)/2) = \int_0^\infty\bigl(e^{-2s}/s - e^{-xs}/\sinh s\bigr)ds`. Subtracting,
+the difference of the two sides is $`\int_0^\infty (e^{-s} - e^{-2s})/s\,ds = \log 2` (Frullani).
+The case $`x = 0` follows by letting $`x \downarrow 0`: the left side converges by dominated
+convergence (for $`0 \le x \le 1`, $`|\log\sqrt{x^2+u^2}| \le |\log|u|| + |u|`, and $`\log|u|` is
+locally integrable against the bounded density $`p`), and $`\psi` is continuous at $`1/2`.
 :::
 
 :::lemma_ "lemma_3_4" (lean := "CohnElkies.limitingPoissonEndpointExpectation_eq_log_pi_div_two_sub_one") (parent := "grp_mellin_strip")
 For $`J_\sigma` defined in {uses "lemma_3_3"}[], $`\lim_{\sigma\uparrow 1}J_\sigma = \log(\pi/2)`.
-Consequently, for every $`0 < c < 1/\pi` there is $`\sigma = \sigma(c) \in (-1,1)` such that
-$`\delta_c = -(\log(2\pi c^2) + J_{\sigma(c)}) > 0` (equation (23)).
-
-In the formalization the endpoint expectation is normalized as
-$`J^{\mathrm{Lean}}_\sigma = J_\sigma - 1` ({bpref "lemma_3_3"}[]), so the limit reads
-$`\lim_{\sigma\uparrow1}J^{\mathrm{Lean}}_\sigma = \log(\pi/2) - 1`:
-this is `CohnElkies.limitingPoissonEndpointExpectation_eq_log_pi_div_two_sub_one` together with
-`CohnElkies.tendsto_lowerPoissonEndpointExpectation`. The threshold identity
-$`\log(2\pi e c^2) + \lim J^{\mathrm{Lean}}_\sigma = \log(\pi^2 c^2)` is
-`CohnElkies.lowerPoissonEndpointSharpCoefficient_eq`, and (23), in the form that
-$`\log(2\pi e c^2) + J^{\mathrm{Lean}}_\sigma < 0` for all $`\sigma < 1` close to $`1`, is
-`CohnElkies.eventually_lowerPoissonEndpointSharpCoefficient_neg`.
+Consequently, for every $`0 < c < 1/\pi`, $`\delta_c(\sigma) = -(\log(2\pi c^2) + J_\sigma) > 0` for
+all $`\sigma < 1` close enough to $`1`; fix such a $`\sigma = \sigma(c) \in (0,1)` (equation (23)).
 :::
 
 :::proof "lemma_3_4"
@@ -379,23 +331,14 @@ horizontal line $`\operatorname{Im} t = \sigma\lambda`, and then use that bound 
 of $`g` inside $`B(0,c\sqrt d)`.
 
 :::lemma_ "lemma_3_5" (lean := "CohnElkies.exists_lowerStripPoissonMajorant_uniform_negative") (parent := "grp_mellin_strip")
-There exist $`\gamma_c, C_c, B_c > 0`, depending only on $`c` (not on $`d`, $`g`, or $`\varsigma`),
-such that for every sufficiently large $`d`, with $`\sigma = \sigma(c)` from {uses "lemma_3_4"}[]
-and $`H_\sigma`, $`Z` as in {uses "def_strip_poisson_kernel"}[] and
+There exist $`\gamma_c, C_c, B_c, \kappa_c > 0`, depending only on $`c` (not on $`d`, $`g`, or
+$`\varsigma`), such that for every sufficiently large $`d`, with $`\sigma = \sigma(c)` from
+{uses "lemma_3_4"}[] and $`H_\sigma`, $`Z` as in {uses "def_strip_poisson_kernel"}[] and
 {uses "def_normalized_profile"}[]:
 $`H_\sigma(s) \le -\gamma_c\lambda` for all $`s \in \mathbb{R}` (equation (24)),
-$`H_\sigma(\lambda S) \le -\dfrac{M_\sigma\lambda}{2}\log\dfrac{|S|}{C_c}` for $`|S| \ge B_c`
+$`H_\sigma(\lambda S) \le -\kappa_c\lambda\log\dfrac{|S|}{C_c}` for $`|S| \ge B_c`
 (equation (25)), and
 $`\int_{\mathbb{R}}|Z(s + i\sigma\lambda)|\,ds \le C_c\lambda e^{-\gamma_c\lambda}` (equation (26)).
-
-Formalized as `CohnElkies.exists_lowerStripPoissonMajorant_uniform_negative` (24), which also
-produces the height $`\sigma(c) \in (0,1)`;
-`CohnElkies.exists_lowerStripPoissonMajorant_logarithmic_tail` (25), with a constant
-$`\kappa > 0` depending on $`\sigma` in place of $`M_\sigma/2`; and, for (26),
-`CohnElkies.exists_lowerStripPoissonMajorant_integrable_majorant` combined with
-`CohnElkies.integral_norm_Z_g_le_of_majorant`, which integrate a single inverse-quadratic
-majorant of $`e^{H_\sigma}` ({bpref "lemma_3_5_inverse_quadratic"}[]) rather than the two bounds
-(24) and (25) separately.
 :::
 
 :::proof "lemma_3_5"
@@ -437,17 +380,11 @@ majorant of {uses "lemma_3_5_inverse_quadratic"}[].
 :::
 
 :::lemma_ "lemma_3_6" (lean := "CohnElkies.RadialEigenfunction.setIntegral_ball_norm_le") (parent := "grp_mellin_strip")
-For every $`0 < c < 1/\pi` there exist $`C_c, \gamma_c > 0` and $`d_0(c) \in \mathbb{N}`,
-independent of $`g` and $`\varsigma`, such that in the setting of {uses "def_normalized_profile"}[]
+In the setting of {uses "def_normalized_profile"}[], for every $`-1 < \sigma < 1`,
+$`\int_{-\infty}^0|\varphi(v)|\,dv = \dfrac{1}{\|g\|_1}\int_{|x|<R}|g(x)|\,dx`
+$`\le \dfrac{1}{2\pi(1-\sigma)\lambda}\int_{\mathbb{R}}|Z(s+i\sigma\lambda)|\,ds`.
+Consequently, for every $`0 < c < 1/\pi` there exist $`C_c, \gamma_c > 0` and $`d_0(c)` such that
 $`\int_{-\infty}^0|\varphi(v)|\,dv \le C_c e^{-\gamma_c d}` for all $`d \ge d_0(c)` (equation (27)).
-
-The formalization states the inversion step separately from the $`L^1` bound (26): for every
-$`-1 < \sigma < 1`,
-$`\dfrac{1}{\|g\|_1}\int_{|x|<R}|g(x)|\,dx`
-$`\le \dfrac{1}{2\pi(1-\sigma)\lambda}\int_{\mathbb{R}}|Z(s+i\sigma\lambda)|\,ds`
-(`CohnElkies.RadialEigenfunction.setIntegral_ball_norm_le`, whose left side is
-$`\int_{-\infty}^0|\varphi|` by (13)), obtained from the abstract inversion estimate
-`CohnElkies.negativeHalfline_le_of_fourierInversion`; inserting (26) gives (27).
 :::
 
 :::proof "lemma_3_6"
@@ -475,9 +412,6 @@ that, for every $`d \ge d_0(c)`, every $`\varsigma \in \{-1,+1\}`, and every non
 $`g \in \mathcal{S}_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})` satisfying $`\widehat g = \varsigma g`
 and $`g(0) = 0`, one has (equation (11))
 $`\int_{|x| < c\sqrt d}|g(x)|\,dx \le C_c e^{-\gamma_c d}\,\|g\|_1`.
-Formalized as `CohnElkies.exists_interior_mass_bound`, stated for `g : RadialEigenfunction d ς`
-with the constants $`C_c, \gamma_c` quantified before the eventually-in-$`d` statement, exactly
-as here.
 :::
 
 :::proof "prop_3_1"
@@ -496,14 +430,6 @@ $`d \ge d_0(c)` and $`\varsigma \in \{-1,+1\}`, no $`g \in \mathcal{E}_\varsigma
 In words: no nonzero $`g \in L^1(\mathbb{R}^d;\mathbb{R})` with $`\widehat g = \varsigma g` and
 $`g(0) = 0` is nonnegative outside $`B(0,c\sqrt d)`, where $`g` denotes its continuous
 Fourier-inversion representative.
-
-Formalized as `CohnElkies.eventually_not_nonneg_outside_signEigenfunction` (module
-`CohnElkies.SignUncertainty.LowerBound`), for `g : SignEigenfunction d ς` and both signs; the
-Schwartz case, for `g : RadialEigenfunction d ς`, is `CohnElkies.eventually_not_nonneg_outside`
-(`CohnElkies.LowerBound.Main`). The Schwartz case with $`\varsigma = -1` is what
-Theorem 3.8 uses, in the form `CohnElkies.uniformAntiFourierSignRadius`: for $`c < 1/\pi` and
-all large $`d` there is no `CohnElkies.AntiSelfFourierWitness d (c√d)`, that is, no radial
-anti-self-Fourier eigenfunction that is nonnegative outside $`B(0,c\sqrt d)`.
 :::
 
 :::proof "prop_3_7"
@@ -528,19 +454,11 @@ large $`d`.
 :::
 
 :::theorem "thm_3_8" (lean := "CohnElkies.exists_manuscriptUniversalPackingIsLittleO")
-There is a sequence $`\epsilon_d \to 0` such that, for every sufficiently large $`d` and every
-$`F \in \mathcal{A}_d` ({uses "def_admissible_class"}[]), (equation (28))
+There is a sequence $`\epsilon_d \to 0`, $`\epsilon_d \ge 0`, such that for every $`d \ge 1` and
+every $`F \in \mathcal{A}_d` ({uses "def_admissible_class"}[]), (equation (28))
 $`\dfrac{F(0)}{\widehat F(0)}`
 $`\ge \dfrac{2^d}{v_d}\Bigl(\sqrt{\dfrac{e}{2\pi}} - \epsilon_d\Bigr)^d`,
-with $`v_d` from {uses "def_ball_volume"}[]. Formalized as
-`CohnElkies.exists_manuscriptUniversalPackingIsLittleO`, with a nonnegative $`o(1)` sequence
-$`\epsilon_d` and the inequality for every $`d \ge 1` and every $`F \in \mathcal{A}_d` (the radial
-bound is transferred by `CohnElkies.Admissible.normalizedCost_radialize`); the explicit deficit
-is `CohnElkies.manuscriptPackingDeficit` (`CohnElkies.manuscriptUniversalQuotientBound`), also
-recorded in the field `universal_nonnegative_delta` of
-`PackingBounds.SharpFullCohnElkiesManuscriptConclusions`. The scaling step is
-`CohnElkies.normalizedCost_ge_of_no_antiFourierWitness`, and the resulting uniform lower bound
-on normalized costs is `CohnElkies.uniformAdmissibleLowerBound_of_signRadius`.
+with $`v_d` from {uses "def_ball_volume"}[].
 :::
 
 :::proof "thm_3_8"

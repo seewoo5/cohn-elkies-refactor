@@ -3,10 +3,11 @@ import CohnElkies.LowerBound.GammaBoundary
 /-!
 # The capped Gamma boundary function and its holomorphic Poisson extension (report §3.2)
 
-The capped boundary function `h_{λ,D} = max (h_λ) (-D)`, its continuity and limits, the
-holomorphic function `W_D(z) = ∫ K'_ℓ(z, y) h_{λ,D}(y) dy` built from the regularized Schwarz
-kernel of the strip, its differentiability and real part, and the comparison of the strip Poisson
-kernel with its value at the centre.
+The capped boundary function `h_{λ,D} = min (h_λ) D`, its continuity and limits, the
+holomorphic Poisson integral `W[b](z) = ∫ K'_ℓ(z, y) b(y) dy` of a boundary datum `b` built from
+the regularized Schwarz kernel of the strip, its differentiability and real part (the general
+Poisson principle for the strip is proved in `CohnElkies.LowerBound.CappedMajorization`), and the
+comparison of the strip Poisson kernel with its value at the centre.
 -/
 
 namespace CohnElkies
@@ -182,31 +183,18 @@ theorem differentiableAt_W_b {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ} (hz : z ∈ 
     hbound (habs.const_mul C) (.of_forall fun y w hw ↦
       (stripRegularizedHolomorphicPoissonKernel_hasDerivAt_deriv hℓ hw.2 y).mul_const _)).2
 
-/-- The outer function `W_D = W[h_{λ,D}]` of the capped majorant; Lemma 3.2. -/
-def W_D (ℓ R D : ℝ) (z : ℂ) : ℂ := W_b ℓ (h_ℓD ℓ R D) z
-
 theorem integrable_exp_mul_h_ℓD_dim {d : ℕ} (hd : 0 < d) {a : ℝ} (ha : 0 < a) (R D : ℝ) :
     Integrable fun y : ℝ ↦ exp (-a * |y|) * h_ℓD ((d : ℝ) / 2) R D y :=
   integrable_exp_mul_h_ℓD (half_pos (Nat.cast_pos.mpr hd)) ha R D
     (lowerGammaBoundaryLog_dimension_exp_integrable hd ha R)
 
-/-- The integrand of `W_D` is integrable in dimension `d`. -/
+/-- The integrand of `W[h_{λ,D}]` is integrable in dimension `d`. -/
 theorem lowerStripCappedGammaOuter_integrable_dimension {d : ℕ} (hd : 0 < d) {R D : ℝ} {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2)) :
     Integrable fun y : ℝ ↦ K'_ℓ ((d : ℝ) / 2) z y * (h_ℓD ((d : ℝ) / 2) R D y : ℂ) := by
   have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
   exact integrable_K'_ℓ_mul hℓ hz _ (lowerGammaBoundaryCapped_continuous hℓ R D)
     (integrable_exp_mul_h_ℓD_dim hd (div_pos pi_pos (by linarith)) R D)
-
-/-- `W_D` is holomorphic on the open strip `|Im z| < d/2`. -/
-theorem lowerStripCappedGammaOuter_differentiableOn_dimension {d : ℕ} (hd : 0 < d) (R D : ℝ) :
-    DifferentiableOn ℂ (W_D ((d : ℝ) / 2) R D)
-      (Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2)) := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  intro z hz
-  unfold W_D
-  exact (differentiableAt_W_b hℓ hz _ (lowerGammaBoundaryCapped_continuous hℓ R D)
-    (integrable_exp_mul_h_ℓD_dim hd (div_pos pi_pos (by linarith)) R D)).differentiableWithinAt
 
 /-- On the horizontal line `Im z = σλ` the real part of `W[b]` is the Poisson integral of `b`. -/
 theorem W_b_re {ℓ σ : ℝ} (hℓ : 0 < ℓ) (hσbelow : -1 < σ) (hσabove : σ < 1) (s : ℝ) (b : ℝ → ℝ)
@@ -219,24 +207,6 @@ theorem W_b_re {ℓ σ : ℝ} (hℓ : 0 < ℓ) (hσbelow : -1 < σ) (hσabove : 
     P_σ σ ((s - y) / ℓ) / ℓ * b y
   rw [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im, mul_zero, sub_zero,
     stripRegularizedHolomorphicPoissonKernel_re hℓ hσbelow hσabove]
-
-/-- `Re W_D(s + iσλ) = ∫ P_σ(T) h_{λ,D}(s - λT) dT`; Lemma 3.2 of the report. -/
-theorem lowerStripCappedGammaOuter_re_dimension {d : ℕ} (hd : 0 < d) {σ R D : ℝ}
-    (hσbelow : -1 < σ) (hσabove : σ < 1) (s : ℝ) :
-    (W_D ((d : ℝ) / 2) R D ((s : ℂ) + I * (σ * ((d : ℂ) / 2)))).re =
-      ∫ T : ℝ, P_σ σ T * h_ℓD ((d : ℝ) / 2) R D (s - (d : ℝ) / 2 * T) := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  have hz : ((s : ℂ) + I * (σ * (d / 2 : ℝ) : ℂ)) ∈
-      Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2) := by
-    simp only [mem_preimage, mem_Ioo, Complex.add_im, Complex.ofReal_im, Complex.mul_im,
-      Complex.mul_re, Complex.I_re, Complex.ofReal_re, zero_mul, Complex.I_im, one_mul, zero_add,
-      mul_zero, sub_zero, add_zero]
-    constructor
-    · nlinarith [mul_pos (show 0 < 1 + σ by linarith) hℓ]
-    · nlinarith [mul_pos (show 0 < 1 - σ by linarith) hℓ]
-  rw [show (σ : ℂ) * ((d : ℂ) / 2) = (σ * (d / 2 : ℝ) : ℂ) by push_cast; ring]
-  exact W_b_re hℓ hσbelow hσabove s _
-    (lowerStripCappedGammaOuter_integrable_dimension hd (R := R) (D := D) hz)
 
 /-- As `σ → -1` the strip Poisson kernel vanishes away from `T = 0`. -/
 theorem stripPoissonKernel_tendsto_zero_bottom_of_ne {T : ℝ} (hT : T ≠ 0) :
@@ -327,29 +297,6 @@ theorem stripPoissonKernel_lower_product_integrable {σ : ℝ} (hbelow : -1 < σ
     _ = 1 / (1 - cos (θ σ)) * ‖P_σ 0 T * g T‖ := by
       rw [norm_mul, Real.norm_of_nonneg hcenter.le]
       ring
-
-/-- The central Poisson integrand of the capped majorant is integrable. -/
-theorem lowerGammaBoundaryCapped_central_poisson_shift_integrable {d : ℕ} (hd : 0 < d)
-    (R D s : ℝ) :
-    Integrable fun T : ℝ ↦ P_σ 0 T * h_ℓD ((d : ℝ) / 2) R D (s - (d : ℝ) / 2 * T) := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  have hd0 : (d : ℝ) ≠ 0 := (Nat.cast_pos.mpr hd).ne'
-  have hz : ((s : ℂ) + I * ((0 : ℝ) * (d / 2 : ℝ) : ℂ)) ∈
-      Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2) := by
-    simp only [mem_preimage, mem_Ioo, Complex.add_im, Complex.ofReal_im, Complex.mul_im,
-      Complex.mul_re, Complex.I_re, Complex.I_im, Complex.ofReal_re, zero_mul, mul_zero, sub_zero,
-      add_zero]
-    constructor <;> linarith
-  have harg : ∀ T : ℝ, (s - (s - (d : ℝ) / 2 * T)) / ((d : ℝ) / 2) = T := fun T ↦ by
-    field_simp
-    ring
-  refine ((((lowerStripCappedGammaOuter_integrable_dimension hd (R := R) (D := D)
-    hz).re.comp_sub_left s).comp_mul_left' hℓ.ne').const_mul ((d : ℝ) / 2)).congr
-    (.of_forall fun T ↦ ?_)
-  simp only [RCLike.re_to_complex, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im, mul_zero,
-    sub_zero, stripRegularizedHolomorphicPoissonKernel_re hℓ (by norm_num : (-1 : ℝ) < 0)
-      (by norm_num : (0 : ℝ) < 1), harg]
-  field_simp
 
 end
 

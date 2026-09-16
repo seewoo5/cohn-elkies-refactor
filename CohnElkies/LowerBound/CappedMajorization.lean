@@ -3,13 +3,20 @@ import CohnElkies.LowerBound.CappedMajorant
 import CohnElkiesForMathlib.Analysis.Complex.PhragmenLindelof
 
 /-!
-# The Poisson majorization of `Z` in the strip (report §3.2, Lemma 3.2)
+# The Poisson principle in the strip and the majorization of `Z` (report §3.2, Lemma 3.2)
 
-Phragmén–Lindelöf in the strip applied to `Z(z) e^{-W_D(z)}`: the modulus of `Z` at a point
-`x - iσ d/2` of the strip is bounded by `exp (∫ P_σ(x - y) h_{λ,D}(y) dy)`, the Poisson integral of
-the capped boundary function (`exists_capped_poisson_majorization`). The proof controls the
-horizontal integrals far away, the bottom and top edges, and uses the continuous extension of
-`|Z e^{-W_D}|` to the closed strip.
+**Poisson principle for a horizontal strip** (`norm_le_exp_integral_P_σ_of_strip`): if `Z` is
+holomorphic on the strip `|Im z| < ℓ`, continuous on its closure and of Phragmén–Lindelöf growth,
+with `‖Z‖ ≤ e^{b}` on the bottom edge for a continuous, linearly bounded profile `b` and `‖Z‖ ≤ 1`
+on the top edge, then `‖Z(s + iσℓ)‖ ≤ exp (∫ P_σ(T) b(s − ℓT) dT)` at every interior point. The
+proof applies Phragmén–Lindelöf to `Z e^{-W[b]}`, where `W[b]` is the holomorphic Poisson integral
+of `b`: it controls `Re W[b]` far away (linear growth in `Re z`), identifies its traces `b` and `0`
+on the two edges, and uses the continuous extension of `|Z e^{-W[b]}|` to the closed strip.
+
+Applied to the normalized Mellin transform `Z_g` and the capped boundary profile `h_{λ,D}` this is
+Lemma 3.2 of the report: `‖Z(s + iσλ)‖ ≤ exp (∫ P_σ(T) h_{λ,D}(s − λT) dT)` for every large enough
+cap `D` (`norm_Z_g_le_exp_integral_of_cap`, `exists_capped_poisson_majorization`). The module also
+proves the linear bound on `h_{λ,D}` and the uniform first-moment bound on the kernels `P_σ`.
 -/
 
 namespace CohnElkies
@@ -212,94 +219,146 @@ theorem exists_integral_P_σ_mul_abs_le :
       mul_le_mul_of_nonneg_right (P_σ_le_exponentialMajorant hσ.le habove T) (abs_nonneg T),
       mul_nonneg hC.le hJ]
 
-private theorem ofReal_div_mul_half {d : ℕ} (hd : 0 < d) (x : ℝ) :
-    (x / ((d : ℝ) / 2) : ℝ) * ((d : ℂ) / 2) = (x : ℂ) := by
-  rw [Complex.ofReal_div, Complex.ofReal_div, Complex.ofReal_natCast, Complex.ofReal_ofNat]
-  exact div_mul_cancel₀ _
-    (div_ne_zero (Nat.cast_ne_zero.mpr hd.ne') (by norm_num : (2 : ℂ) ≠ 0))
+/-- A continuous profile with `|b y| ≤ A (1 + |y|)` has integrable exponential weights
+`e^{-a|y|} b(y)` for `a > 0`; this is the integrability of the boundary datum required by `W[b]`. -/
+theorem integrable_exp_neg_mul_abs_mul_of_abs_le {a : ℝ} (ha : 0 < a) {b : ℝ → ℝ}
+    (hb : Continuous b) {A : ℝ} (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) :
+    Integrable fun y : ℝ ↦ Real.exp (-a * |y|) * b y := by
+  have hmajor : Integrable fun y : ℝ ↦
+      A * Real.exp (-a * |y|) + A * (|y| ^ 1 * Real.exp (-a * |y|)) :=
+    ((integrable_exp_neg_mul_abs ha).const_mul A).add
+      ((integrable_abs_pow_mul_exp_neg_mul_abs 1 ha).const_mul A)
+  refine hmajor.mono' ((by fun_prop : Continuous fun y : ℝ ↦ Real.exp (-a * |y|)).mul
+    hb).aestronglyMeasurable (.of_forall fun y ↦ ?_)
+  rw [Real.norm_eq_abs, abs_mul, abs_of_pos (Real.exp_pos _), pow_one]
+  calc Real.exp (-a * |y|) * |b y| ≤ Real.exp (-a * |y|) * (A * (1 + |y|)) := by
+        gcongr; exact hbound y
+    _ = A * Real.exp (-a * |y|) + A * (|y| * Real.exp (-a * |y|)) := by ring
 
-/-- Report Lemma 3.2: `Re W_D(z) = ∫ P_σ(T) h_{λ,D}(Re z - λT) dT` grows at most linearly in
-`Re z`, uniformly on the open strip `|Im z| < λ = d/2`. -/
-theorem exists_abs_W_D_re_le {d : ℕ} (hd : 0 < d) (R D : ℝ) :
-    ∃ B : ℝ, 0 ≤ B ∧ ∀ z : ℂ, z ∈ Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2) →
-      |(W_D ((d : ℝ) / 2) R D z).re| ≤ B * (1 + |z.re|) := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  obtain ⟨A, hA, hdatum⟩ := exists_abs_h_ℓD_le hd R D
+/-- `W[b]` is holomorphic on the open strip `|Im z| < ℓ` for every continuous profile `b` with
+`|b y| ≤ A (1 + |y|)`. -/
+theorem differentiableOn_W_b {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ}
+    (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) :
+    DifferentiableOn ℂ (W_b ℓ b) (Complex.im ⁻¹' Ioo (-ℓ) ℓ) := fun z hz ↦
+  (differentiableAt_W_b hℓ hz b hb
+    (integrable_exp_neg_mul_abs_mul_of_abs_le (by positivity) hb hbound)).differentiableWithinAt
+
+/-- A point of the open strip `|Im z| < ℓ` has normalized height `Im z / ℓ ∈ (-1, 1)`. -/
+theorem im_div_mem_Ioo_of_mem_strip {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+    (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) : -1 < z.im / ℓ ∧ z.im / ℓ < 1 :=
+  ⟨(lt_div_iff₀ hℓ).2 (by simpa using hz.1), (div_lt_iff₀ hℓ).2 (by simpa using hz.2)⟩
+
+/-- On the open strip `Re W[b](z) = ∫ P_σ(T) b(Re z − ℓT) dT` with `σ = Im z / ℓ`; report (16). -/
+theorem W_b_re_of_mem_strip {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ}
+    (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) {z : ℂ}
+    (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) :
+    (W_b ℓ b z).re = ∫ T : ℝ, P_σ (z.im / ℓ) T * b (z.re - ℓ * T) := by
+  obtain ⟨hbelow, habove⟩ := im_div_mem_Ioo_of_mem_strip hℓ hz
+  have hzeq : (z.re : ℂ) + I * ((z.im / ℓ : ℝ) * ℓ : ℂ) = z :=
+    Complex.ext (by simp) (by simp [hℓ.ne'])
+  have h := W_b_re hℓ hbelow habove z.re b (integrable_K'_ℓ_mul hℓ (by rw [hzeq]; exact hz) b hb
+    (integrable_exp_neg_mul_abs_mul_of_abs_le (by positivity) hb hbound))
+  rwa [hzeq] at h
+
+/-- The Poisson integrand of a linearly bounded profile is dominated by the kernel and its first
+moment: `|P_σ(T) b(x − ℓT)| ≤ A (1 + |x|) P_σ(T) + A ℓ P_σ(T) |T|`. -/
+theorem norm_P_σ_mul_le_of_abs_le {ℓ σ : ℝ} (hℓ : 0 < ℓ) (hbelow : -1 < σ) (habove : σ < 1)
+    {b : ℝ → ℝ} {A : ℝ} (hA : 0 ≤ A) (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) (x T : ℝ) :
+    ‖P_σ σ T * b (x - ℓ * T)‖ ≤ A * (1 + |x|) * P_σ σ T + A * ℓ * (P_σ σ T * |T|) := by
+  have hkpos := stripPoissonKernel_pos hbelow habove T
+  have hb : |b (x - ℓ * T)| ≤ A * (1 + |x| + ℓ * |T|) := by
+    refine (hbound _).trans (mul_le_mul_of_nonneg_left ?_ hA)
+    have habs := abs_sub x (ℓ * T)
+    rw [abs_mul, abs_of_pos hℓ] at habs
+    linarith
+  rw [norm_mul, Real.norm_eq_abs, abs_of_pos hkpos, Real.norm_eq_abs]
+  nlinarith [mul_nonneg hkpos.le (sub_nonneg.mpr hb)]
+
+/-- The Poisson integrand of a continuous, linearly bounded profile is integrable on every
+horizontal line `-1 < σ < 1` of the strip. -/
+theorem integrable_P_σ_mul_of_abs_le {ℓ σ : ℝ} (hℓ : 0 < ℓ) (hbelow : -1 < σ) (habove : σ < 1)
+    {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ} (hA : 0 ≤ A)
+    (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) (x : ℝ) :
+    Integrable fun T : ℝ ↦ P_σ σ T * b (x - ℓ * T) := by
+  have hmeas : Measurable fun T : ℝ ↦ P_σ σ T * b (x - ℓ * T) :=
+    (by unfold P_σ θ; fun_prop : Measurable fun T : ℝ ↦ P_σ σ T).mul
+      (hb.measurable.comp (by fun_prop))
+  exact (((stripPoissonKernel_integrable hbelow habove).const_mul _).add
+    ((integrable_P_σ_mul_abs hbelow habove).const_mul _)).mono' hmeas.aestronglyMeasurable
+    (.of_forall fun T ↦ norm_P_σ_mul_le_of_abs_le hℓ hbelow habove hA hbound x T)
+
+/-- Report Lemma 3.2: `Re W[b](z) = ∫ P_σ(T) b(Re z − ℓT) dT` grows at most linearly in `Re z`,
+uniformly on the open strip `|Im z| < ℓ`, when `|b y| ≤ A (1 + |y|)`: the mass `M_σ ≤ 1` and the
+first absolute moments of the kernels are bounded uniformly in `σ`. -/
+theorem exists_abs_W_b_re_le {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ}
+    (hA : 0 ≤ A) (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) :
+    ∃ B : ℝ, 0 ≤ B ∧ ∀ z : ℂ, z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ →
+      |(W_b ℓ b z).re| ≤ B * (1 + |z.re|) := by
   obtain ⟨M, hM, hmoment⟩ := exists_integral_P_σ_mul_abs_le
-  refine ⟨A * (1 + (d : ℝ) / 2 * M), by positivity, fun z hz ↦ ?_⟩
-  obtain ⟨σ, hbelow, habove, hre⟩ : ∃ σ : ℝ, -1 < σ ∧ σ < 1 ∧ (W_D ((d : ℝ) / 2) R D z).re =
-      ∫ T : ℝ, P_σ σ T * h_ℓD ((d : ℝ) / 2) R D (z.re - (d : ℝ) / 2 * T) := by
-    have hbelow : -1 < z.im / ((d : ℝ) / 2) := (lt_div_iff₀ hℓ).2 (by simpa using hz.1)
-    have habove : z.im / ((d : ℝ) / 2) < 1 := (div_lt_iff₀ hℓ).2 (by simpa using hz.2)
-    have hre := lowerStripCappedGammaOuter_re_dimension (R := R) (D := D) hd hbelow habove z.re
-    rw [ofReal_div_mul_half hd z.im, mul_comm I (z.im : ℂ), Complex.re_add_im] at hre
-    exact ⟨_, hbelow, habove, hre⟩
-  have hconstant : Integrable fun T : ℝ ↦ A * (1 + |z.re|) * P_σ σ T :=
+  refine ⟨A * (1 + ℓ * M), by positivity, fun z hz ↦ ?_⟩
+  obtain ⟨hbelow, habove⟩ := im_div_mem_Ioo_of_mem_strip hℓ hz
+  have hconstant : Integrable fun T : ℝ ↦ A * (1 + |z.re|) * P_σ (z.im / ℓ) T :=
     (stripPoissonKernel_integrable hbelow habove).const_mul _
-  have hlinear : Integrable fun T : ℝ ↦ A * ((d : ℝ) / 2) * (P_σ σ T * |T|) :=
+  have hlinear : Integrable fun T : ℝ ↦ A * ℓ * (P_σ (z.im / ℓ) T * |T|) :=
     (integrable_P_σ_mul_abs hbelow habove).const_mul _
-  have hpoint : ∀ᵐ T : ℝ, ‖P_σ σ T * h_ℓD ((d : ℝ) / 2) R D (z.re - (d : ℝ) / 2 * T)‖ ≤
-      A * (1 + |z.re|) * P_σ σ T + A * ((d : ℝ) / 2) * (P_σ σ T * |T|) := by
-    refine .of_forall fun T ↦ ?_
-    have hkpos := stripPoissonKernel_pos hbelow habove T
-    have hb : |h_ℓD ((d : ℝ) / 2) R D (z.re - (d : ℝ) / 2 * T)| ≤
-        A * (1 + |z.re| + (d : ℝ) / 2 * |T|) := by
-      refine (hdatum _).trans (mul_le_mul_of_nonneg_left ?_ hA)
-      have habs := abs_sub z.re ((d : ℝ) / 2 * T)
-      rw [abs_mul, abs_of_pos hℓ] at habs
-      linarith
-    rw [norm_mul, Real.norm_eq_abs, abs_of_pos hkpos, Real.norm_eq_abs]
-    nlinarith [mul_nonneg hkpos.le (sub_nonneg.mpr hb)]
-  rw [hre]
-  calc |∫ T : ℝ, P_σ σ T * h_ℓD ((d : ℝ) / 2) R D (z.re - (d : ℝ) / 2 * T)|
-      ≤ ∫ T : ℝ, (A * (1 + |z.re|) * P_σ σ T + A * ((d : ℝ) / 2) * (P_σ σ T * |T|)) := by
+  rw [W_b_re_of_mem_strip hℓ hb hbound hz]
+  calc |∫ T : ℝ, P_σ (z.im / ℓ) T * b (z.re - ℓ * T)|
+      ≤ ∫ T : ℝ, (A * (1 + |z.re|) * P_σ (z.im / ℓ) T + A * ℓ * (P_σ (z.im / ℓ) T * |T|)) := by
         rw [← Real.norm_eq_abs]
-        exact norm_integral_le_of_norm_le (hconstant.add hlinear) hpoint
-    _ = A * (1 + |z.re|) * M_σ σ + A * ((d : ℝ) / 2) * ∫ T : ℝ, P_σ σ T * |T| := by
+        exact norm_integral_le_of_norm_le (hconstant.add hlinear)
+          (.of_forall fun T ↦ norm_P_σ_mul_le_of_abs_le hℓ hbelow habove hA hbound z.re T)
+    _ = A * (1 + |z.re|) * M_σ (z.im / ℓ) + A * ℓ * ∫ T : ℝ, P_σ (z.im / ℓ) T * |T| := by
         rw [integral_add hconstant hlinear, integral_const_mul, integral_const_mul,
           integral_stripPoissonKernel hbelow habove]
-    _ ≤ A * (1 + (d : ℝ) / 2 * M) * (1 + |z.re|) := by
+    _ ≤ A * (1 + ℓ * M) * (1 + |z.re|) := by
         have h₁ := mul_le_mul_of_nonneg_left (stripBottomMass_lt_one hbelow).le
           (by positivity : (0 : ℝ) ≤ A * (1 + |z.re|))
-        have h₂ := mul_le_mul_of_nonneg_left (hmoment σ hbelow habove)
-          (by positivity : (0 : ℝ) ≤ A * ((d : ℝ) / 2))
+        have h₂ := mul_le_mul_of_nonneg_left (hmoment _ hbelow habove)
+          (by positivity : (0 : ℝ) ≤ A * ℓ)
         nlinarith [mul_nonneg (mul_nonneg (mul_nonneg hA hℓ.le) hM) (abs_nonneg z.re)]
 
-/-- Report Lemma 3.2: the weighted Mellin integrand `e^{-W_D} Z_g` grows like
-`exp (B exp (c |Re z|))` with `c = π/(4λ)`, below the Phragmén–Lindelöf threshold `π/(2λ)`. -/
-theorem isBigO_exp_neg_W_D_mul_Z_g {d : ℕ} {ς : ℤˣ} (hd : 0 < d) (g : RadialEigenfunction d ς)
-    (R D : ℝ) :
-    ∃ c < π / ((d : ℝ) / 2 - -((d : ℝ) / 2)), ∃ B : ℝ,
-      (fun z : ℂ ↦ Complex.exp (-(W_D ((d : ℝ) / 2) R D z)) * Z_g hd g.toFun R z) =O[
-          comap (fun z : ℂ ↦ |z.re|) atTop ⊓
-            principal (Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2))]
-        fun z : ℂ ↦ Real.exp (B * Real.exp (c * |z.re|)) := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  obtain ⟨G, hG, houter⟩ := exists_abs_W_D_re_le hd R D
-  obtain ⟨K, hK, hwitness⟩ := g.exists_norm_Z_g_le hd R
-  obtain ⟨c, hc, hclt⟩ : ∃ c : ℝ, 0 < c ∧ c < π / ((d : ℝ) / 2 - -((d : ℝ) / 2)) :=
-    ⟨π / (4 * ((d : ℝ) / 2)), by positivity,
-      (div_lt_div_iff₀ (by positivity) (by linarith)).2 (by nlinarith [Real.pi_pos])⟩
-  refine ⟨c, hclt, G * (1 + 1 / c), IsBigO.of_bound (K + 1)
-    (eventually_inf_principal.mpr (.of_forall fun z hz ↦ ?_))⟩
-  have hexp : G * (1 + |z.re|) ≤ G * (1 + 1 / c) * Real.exp (c * |z.re|) := by
-    have hlin : 1 + |z.re| ≤ (1 + 1 / c) * (1 + c * |z.re|) := by
-      have hrecip : 1 / c * (c * |z.re|) = |z.re| := by
-        rw [← mul_assoc, one_div_mul_cancel hc.ne', one_mul]
-      linarith [mul_nonneg hc.le (abs_nonneg z.re), one_div_pos.mpr hc]
-    calc G * (1 + |z.re|) ≤ G * ((1 + 1 / c) * Real.exp (c * |z.re|)) :=
+/-- Report Lemma 3.2: if `Z` has the Phragmén–Lindelöf growth `Z = O(exp (B e^{c |Re z|}))` on
+the strip `|Im z| < ℓ` for some `c < π/(2ℓ)`, so does `e^{-W[b]} Z`: the linear bound
+`|Re W[b](z)| ≤ G (1 + |Re z|)` costs a factor `exp (G (1 + 1/c') e^{c' |Re z|})` for any
+`c' > 0`, and one may take `c' = max c (π/(4ℓ))`. -/
+theorem isBigO_exp_neg_W_b_mul {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ}
+    (hA : 0 ≤ A) (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) {Z : ℂ → ℂ}
+    (hgrowth : ∃ c < π / (2 * ℓ), ∃ B : ℝ, Z =O[comap (fun z : ℂ ↦ |z.re|) atTop ⊓
+      𝓟 (Complex.im ⁻¹' Ioo (-ℓ) ℓ)] fun z : ℂ ↦ Real.exp (B * Real.exp (c * |z.re|))) :
+    ∃ c < π / (2 * ℓ), ∃ B : ℝ,
+      (fun z : ℂ ↦ Complex.exp (-(W_b ℓ b z)) * Z z) =O[comap (fun z : ℂ ↦ |z.re|) atTop ⊓
+        𝓟 (Complex.im ⁻¹' Ioo (-ℓ) ℓ)] fun z : ℂ ↦ Real.exp (B * Real.exp (c * |z.re|)) := by
+  obtain ⟨c, hc, B, hO⟩ := hgrowth
+  obtain ⟨G, hG, houter⟩ := exists_abs_W_b_re_le hℓ hb hA hbound
+  obtain ⟨c', hcc', hc'pos, hc'lt⟩ : ∃ c' : ℝ, c ≤ c' ∧ 0 < c' ∧ c' < π / (2 * ℓ) :=
+    ⟨max c (π / (4 * ℓ)), le_max_left _ _, lt_max_of_lt_right (by positivity),
+      max_lt hc ((div_lt_div_iff_of_pos_left Real.pi_pos (by positivity) (by positivity)).2
+        (by linarith))⟩
+  refine ⟨c', hc'lt, G * (1 + 1 / c') + max B 0, ?_⟩
+  have hexp : ∀ z : ℂ, G * (1 + |z.re|) ≤ G * (1 + 1 / c') * Real.exp (c' * |z.re|) := fun z ↦ by
+    have hlin : 1 + |z.re| ≤ (1 + 1 / c') * (1 + c' * |z.re|) := by
+      have hrecip : 1 / c' * (c' * |z.re|) = |z.re| := by
+        rw [← mul_assoc, one_div_mul_cancel hc'pos.ne', one_mul]
+      linarith [mul_nonneg hc'pos.le (abs_nonneg z.re), one_div_pos.mpr hc'pos]
+    calc G * (1 + |z.re|) ≤ G * ((1 + 1 / c') * Real.exp (c' * |z.re|)) :=
           mul_le_mul_of_nonneg_left (hlin.trans (mul_le_mul_of_nonneg_left
-            (by simpa [add_comm] using Real.add_one_le_exp (c * |z.re|)) (by positivity))) hG
-      _ = G * (1 + 1 / c) * Real.exp (c * |z.re|) := by ring
-  rw [norm_mul, Complex.norm_exp, Complex.neg_re, Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
-  calc Real.exp (-(W_D ((d : ℝ) / 2) R D z).re) * ‖Z_g hd g.toFun R z‖
-      ≤ Real.exp (G * (1 + |z.re|)) * K :=
-        mul_le_mul (Real.exp_le_exp.mpr ((neg_le_abs _).trans (houter z hz)))
-          (hwitness z hz.1.le hz.2.le) (norm_nonneg _) (Real.exp_pos _).le
-    _ ≤ Real.exp (G * (1 + 1 / c) * Real.exp (c * |z.re|)) * K :=
-        mul_le_mul_of_nonneg_right (Real.exp_le_exp.mpr hexp) hK
-    _ ≤ (K + 1) * Real.exp (G * (1 + 1 / c) * Real.exp (c * |z.re|)) := by
-        nlinarith [Real.exp_pos (G * (1 + 1 / c) * Real.exp (c * |z.re|))]
+            (by simpa [add_comm] using Real.add_one_le_exp (c' * |z.re|)) (by positivity))) hG
+      _ = G * (1 + 1 / c') * Real.exp (c' * |z.re|) := by ring
+  have houterO : (fun z : ℂ ↦ Complex.exp (-(W_b ℓ b z))) =O[comap (fun z : ℂ ↦ |z.re|) atTop ⊓
+      𝓟 (Complex.im ⁻¹' Ioo (-ℓ) ℓ)]
+        fun z : ℂ ↦ Real.exp (G * (1 + 1 / c') * Real.exp (c' * |z.re|)) := by
+    refine IsBigO.of_bound' (eventually_inf_principal.mpr (.of_forall fun z hz ↦ ?_))
+    rw [Complex.norm_exp, Complex.neg_re, Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
+    exact Real.exp_le_exp.mpr ((neg_le_abs _).trans ((houter z hz).trans (hexp z)))
+  refine (houterO.mul hO).trans (IsBigO.of_bound' (.of_forall fun z ↦ ?_))
+  have hB : B * Real.exp (c * |z.re|) ≤ max B 0 * Real.exp (c' * |z.re|) :=
+    (mul_le_mul_of_nonneg_right (le_max_left B 0) (Real.exp_pos _).le).trans
+      (mul_le_mul_of_nonneg_left (Real.exp_le_exp.mpr
+        (mul_le_mul_of_nonneg_right hcc' (abs_nonneg _))) (le_max_right B 0))
+  rw [norm_mul, Real.norm_eq_abs, Real.norm_eq_abs, Real.norm_eq_abs,
+    abs_of_pos (Real.exp_pos _), abs_of_pos (Real.exp_pos _), abs_of_pos (Real.exp_pos _),
+    ← Real.exp_add, add_mul]
+  exact Real.exp_le_exp.mpr (by linarith)
 
 /-- Boundary traces at the bottom edge `Im z = -ℓ`: the abscissa converges to `s`, the normalized
 height `Im z / ℓ` to `-1`, and the latter eventually lies in `(-1, 0]`. -/
@@ -544,68 +603,6 @@ theorem tendsto_integral_top {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb 
     (hrange.mono fun z hz T _ ↦ P_σ_le_exponentialMajorant hz.1 hz.2 T)
     fun T _ ↦ (tendsto_P_σ_one T).comp hσ
 
-/-- Report Lemma 3.2: for `D` large enough the capped profile majorizes the bottom-edge values of
-`Z_g`; away from the pole this is the Gamma bound, near it the global bound `C` and the cap. -/
-theorem exists_norm_Z_g_bottom_le_exp_h_ℓD {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
-    (g : RadialEigenfunction d ς) {R : ℝ} (hR : 0 < R) :
-    ∃ D₀ : ℝ, ∀ D : ℝ, D₀ ≤ D → ∀ y : ℝ,
-      ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤
-        Real.exp (h_ℓD ((d : ℝ) / 2) R D y) := by
-  obtain ⟨C, hC, hglobal⟩ := g.exists_norm_Z_g_le hd R
-  refine ⟨Real.log (C + 1), fun D hD y ↦ ?_⟩
-  have hbounded := hglobal ((y : ℂ) - I * ((d : ℂ) / 2)) (by simp)
-    (by simp; linarith [Nat.cast_nonneg (α := ℝ) d])
-  have hexp : ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤ Real.exp D :=
-    calc ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤ C + 1 := by linarith
-      _ = Real.exp (Real.log (C + 1)) := (Real.exp_log (by linarith)).symm
-      _ ≤ Real.exp D := Real.exp_le_exp.mpr hD
-  rcases eq_or_ne y 0 with rfl | hy
-  · simpa [h_ℓD] using hexp
-  · rw [h_ℓD, if_neg hy]
-    rcases le_total (h_ℓ ((d : ℝ) / 2) R y) D with hmin | hmin
-    · rw [min_eq_left hmin]
-      exact g.norm_Z_g_bottom_le_exp_h_ℓ hd hR y hy
-    · rw [min_eq_right hmin]
-      exact hexp
-
-/-- On the open strip `Re W_D` is the Poisson average of the capped boundary profile;
-report (16). -/
-theorem W_D_re_eventuallyEq {d : ℕ} (hd : 0 < d) (R D : ℝ) (z₀ : ℂ) :
-    (fun z : ℂ ↦ (W_D ((d : ℝ) / 2) R D z).re) =ᶠ[
-      𝓝[Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2)] z₀]
-      fun z : ℂ ↦ ∫ T : ℝ, P_σ (z.im / ((d : ℝ) / 2)) T *
-        h_ℓD ((d : ℝ) / 2) R D (z.re - (d : ℝ) / 2 * T) := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  filter_upwards [self_mem_nhdsWithin] with z hz
-  have hbelow : -1 < z.im / ((d : ℝ) / 2) := (lt_div_iff₀ hℓ).2 (by simpa using hz.1)
-  have habove : z.im / ((d : ℝ) / 2) < 1 := (div_lt_iff₀ hℓ).2 (by simpa using hz.2)
-  have hre := lowerStripCappedGammaOuter_re_dimension (R := R) (D := D) hd hbelow habove z.re
-  rwa [ofReal_div_mul_half hd z.im, mul_comm I (z.im : ℂ), Complex.re_add_im] at hre
-
-/-- Report Lemma 3.2: `Re W_D` extends continuously to the bottom edge, with trace `h_{λ,D}`. -/
-theorem tendsto_W_D_re_bottom {d : ℕ} (hd : 0 < d) (R D s : ℝ) :
-    Tendsto (fun z : ℂ ↦ (W_D ((d : ℝ) / 2) R D z).re)
-      (𝓝[Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2)]
-        ((s : ℂ) - I * ((d : ℂ) / 2))) (𝓝 (h_ℓD ((d : ℝ) / 2) R D s)) := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  obtain ⟨A, hA, hbound⟩ := exists_abs_h_ℓD_le hd R D
-  rw [show ((d : ℂ) / 2) = ((d : ℝ) / 2 : ℝ) by
-    rw [Complex.ofReal_div, Complex.ofReal_natCast, Complex.ofReal_ofNat]]
-  exact (tendsto_integral_bottom hℓ (lowerGammaBoundaryCapped_continuous hℓ R D) hA hbound
-    (lowerGammaBoundaryCapped_central_poisson_shift_integrable hd R D) s).congr'
-      (W_D_re_eventuallyEq hd R D _).symm
-
-/-- Report Lemma 3.2: `Re W_D` extends continuously to the top edge, with trace `0`. -/
-theorem tendsto_W_D_re_top {d : ℕ} (hd : 0 < d) (R D s : ℝ) :
-    Tendsto (fun z : ℂ ↦ (W_D ((d : ℝ) / 2) R D z).re)
-      (𝓝[Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2)]
-        ((s : ℂ) + I * ((d : ℂ) / 2))) (𝓝 (0 : ℝ)) := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  obtain ⟨A, hA, hbound⟩ := exists_abs_h_ℓD_le hd R D
-  rw [show ((d : ℂ) / 2) = ((d : ℝ) / 2 : ℝ) by
-    rw [Complex.ofReal_div, Complex.ofReal_natCast, Complex.ofReal_ofNat]]
-  exact (tendsto_integral_top hℓ (lowerGammaBoundaryCapped_continuous hℓ R D) hA hbound s).congr'
-    (W_D_re_eventuallyEq hd R D _).symm
 
 /-- Extend a function on the open horizontal strip `a < Im z < b` to the closed strip by
 prescribing its traces on the two edges. -/
@@ -669,57 +666,178 @@ theorem stripTraceExtension_continuousOn {a b : ℝ} (hab : a < b) (H : ℂ → 
       simp [hE, stripTraceExtension, hw])).union
     (hedge b top htop fun w hw ↦ by simp [hE, stripTraceExtension, hw, hba])
 
-/-- The continuous extension of `Re W_D` to the closed strip `|Im z| ≤ λ`, with bottom trace
-`h_{λ,D}` and top trace `0`; report Lemma 3.2. -/
-def W_D_reExtension (d : ℕ) (R D : ℝ) : ℂ → ℝ :=
-  stripTraceExtension (-((d : ℝ) / 2)) ((d : ℝ) / 2) (fun w : ℂ ↦ (W_D ((d : ℝ) / 2) R D w).re)
-    (h_ℓD ((d : ℝ) / 2) R D) fun _ : ℝ ↦ 0
+/-- Report Lemma 3.2: `Re W[b]` extends continuously to the bottom edge `Im z = -ℓ`, with trace
+`b`. -/
+theorem tendsto_W_b_re_bottom {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ}
+    (hA : 0 ≤ A) (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) (s : ℝ) :
+    Tendsto (fun z : ℂ ↦ (W_b ℓ b z).re)
+      (𝓝[Complex.im ⁻¹' Ioo (-ℓ) ℓ] ((s : ℂ) - I * (ℓ : ℂ))) (𝓝 (b s)) :=
+  (tendsto_integral_bottom hℓ hb hA hbound
+    (fun t ↦ integrable_P_σ_mul_of_abs_le hℓ (by norm_num) one_pos hb hA hbound t) s).congr'
+    (eventually_nhdsWithin_of_forall fun _ hz ↦ (W_b_re_of_mem_strip hℓ hb hbound hz).symm)
 
-/-- The extension `W_D_reExtension` is continuous on the closed strip; report Lemma 3.2. -/
-theorem W_D_reExtension_continuousOn {d : ℕ} (hd : 0 < d) (R D : ℝ) :
-    ContinuousOn (W_D_reExtension d R D) (Complex.im ⁻¹' Icc (-((d : ℝ) / 2)) ((d : ℝ) / 2)) := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
+/-- Report Lemma 3.2: `Re W[b]` extends continuously to the top edge `Im z = ℓ`, with trace `0`. -/
+theorem tendsto_W_b_re_top {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ}
+    (hA : 0 ≤ A) (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) (s : ℝ) :
+    Tendsto (fun z : ℂ ↦ (W_b ℓ b z).re)
+      (𝓝[Complex.im ⁻¹' Ioo (-ℓ) ℓ] ((s : ℂ) + I * (ℓ : ℂ))) (𝓝 (0 : ℝ)) :=
+  (tendsto_integral_top hℓ hb hA hbound s).congr'
+    (eventually_nhdsWithin_of_forall fun _ hz ↦ (W_b_re_of_mem_strip hℓ hb hbound hz).symm)
+
+/-- The continuous extension of `Re W[b]` to the closed strip `|Im z| ≤ ℓ`, with bottom trace `b`
+and top trace `0`; report Lemma 3.2. -/
+def W_b_reExtension (ℓ : ℝ) (b : ℝ → ℝ) : ℂ → ℝ :=
+  stripTraceExtension (-ℓ) ℓ (fun w : ℂ ↦ (W_b ℓ b w).re) b fun _ : ℝ ↦ 0
+
+/-- On the open strip the extension `W_b_reExtension` is `Re W[b]`. -/
+theorem W_b_reExtension_of_mem_strip (ℓ : ℝ) (b : ℝ → ℝ) {v : ℂ} (hv : v.im ∈ Ioo (-ℓ) ℓ) :
+    W_b_reExtension ℓ b v = (W_b ℓ b v).re := by
+  simp [W_b_reExtension, stripTraceExtension, (ne_of_gt hv.1 : v.im ≠ -ℓ),
+    (ne_of_lt hv.2 : v.im ≠ ℓ)]
+
+/-- The extension `W_b_reExtension` is continuous on the closed strip; report Lemma 3.2. -/
+theorem W_b_reExtension_continuousOn {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ}
+    (hA : 0 ≤ A) (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) :
+    ContinuousOn (W_b_reExtension ℓ b) (Complex.im ⁻¹' Icc (-ℓ) ℓ) := by
   refine stripTraceExtension_continuousOn (by linarith) _ _ _
-    (Complex.continuous_re.comp_continuousOn
-      (lowerStripCappedGammaOuter_differentiableOn_dimension hd R D).continuousOn)
-    (lowerGammaBoundaryCapped_continuous hℓ R D) continuous_const (fun s ↦ ?_) fun s ↦ ?_
-  · simpa [sub_eq_add_neg] using tendsto_W_D_re_bottom hd R D s
-  · simpa using tendsto_W_D_re_top hd R D s
+    (Complex.continuous_re.comp_continuousOn (differentiableOn_W_b hℓ hb hbound).continuousOn)
+    hb continuous_const (fun s ↦ ?_) fun s ↦ ?_
+  · simpa [sub_eq_add_neg] using tendsto_W_b_re_bottom hℓ hb hA hbound s
+  · exact tendsto_W_b_re_top hℓ hb hA hbound s
 
-/-- On the bottom edge `e^{-W_D} Z_g` has modulus at most `1` once `‖Z_g‖ ≤ exp h_{λ,D}` there. -/
-private theorem exp_neg_W_D_reExtension_mul_norm_Z_g_bottom_le_one {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
-    (g : RadialEigenfunction d ς) (R D : ℝ)
-    (hcap : ∀ y : ℝ, ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤
-      Real.exp (h_ℓD ((d : ℝ) / 2) R D y))
-    (v : ℂ) (hv : v.im = -((d : ℝ) / 2)) :
-    Real.exp (-(W_D_reExtension d R D v)) * ‖Z_g hd g.toFun R v‖ ≤ 1 := by
-  have hnorm : ‖Z_g hd g.toFun R v‖ ≤ Real.exp (h_ℓD ((d : ℝ) / 2) R D v.re) := by
-    have h := hcap v.re
-    rwa [show (v.re : ℂ) - I * ((d : ℂ) / 2) = v from
-      Complex.ext (by simp) (by simp [hv])] at h
-  rw [show W_D_reExtension d R D v = h_ℓD ((d : ℝ) / 2) R D v.re by
-    simp [W_D_reExtension, stripTraceExtension, hv]]
-  calc Real.exp (-(h_ℓD ((d : ℝ) / 2) R D v.re)) * ‖Z_g hd g.toFun R v‖
-      ≤ Real.exp (-(h_ℓD ((d : ℝ) / 2) R D v.re)) * Real.exp (h_ℓD ((d : ℝ) / 2) R D v.re) :=
+/-- On the bottom edge `e^{-W[b]} Z` has modulus at most `1` once `‖Z‖ ≤ e^{b}` there. -/
+private theorem exp_neg_W_b_reExtension_mul_norm_bottom_le_one {ℓ : ℝ} {b : ℝ → ℝ} {Z : ℂ → ℂ}
+    (hbottom : ∀ y : ℝ, ‖Z ((y : ℂ) - I * (ℓ : ℂ))‖ ≤ Real.exp (b y)) (v : ℂ) (hv : v.im = -ℓ) :
+    Real.exp (-(W_b_reExtension ℓ b v)) * ‖Z v‖ ≤ 1 := by
+  have hnorm : ‖Z v‖ ≤ Real.exp (b v.re) := by
+    have h := hbottom v.re
+    rwa [show (v.re : ℂ) - I * (ℓ : ℂ) = v from Complex.ext (by simp) (by simp [hv])] at h
+  rw [show W_b_reExtension ℓ b v = b v.re by simp [W_b_reExtension, stripTraceExtension, hv]]
+  calc Real.exp (-(b v.re)) * ‖Z v‖ ≤ Real.exp (-(b v.re)) * Real.exp (b v.re) :=
         mul_le_mul_of_nonneg_left hnorm (Real.exp_pos _).le
     _ = 1 := by rw [← Real.exp_add]; simp
 
-/-- On the top edge `e^{-W_D} Z_g` has modulus at most `1`. -/
-private theorem exp_neg_W_D_reExtension_mul_norm_Z_g_top_le_one {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
-    (g : RadialEigenfunction d ς) (R D : ℝ) (v : ℂ) (hv : v.im = (d : ℝ) / 2) :
-    Real.exp (-(W_D_reExtension d R D v)) * ‖Z_g hd g.toFun R v‖ ≤ 1 := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  have hnorm : ‖Z_g hd g.toFun R v‖ ≤ 1 := by
-    have h := g.norm_Z_g_top_le_one hd R v.re
-    rwa [show (v.re : ℂ) + I * ((d : ℂ) / 2) = v from
-      Complex.ext (by simp) (by simp [hv])] at h
-  rw [show W_D_reExtension d R D v = 0 by
-    simp [W_D_reExtension, stripTraceExtension, hv, (by linarith : (d : ℝ) / 2 ≠ -((d : ℝ) / 2))]]
+/-- On the top edge `e^{-W[b]} Z` has modulus at most `1` once `‖Z‖ ≤ 1` there. -/
+private theorem exp_neg_W_b_reExtension_mul_norm_top_le_one {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ}
+    {Z : ℂ → ℂ} (htop : ∀ y : ℝ, ‖Z ((y : ℂ) + I * (ℓ : ℂ))‖ ≤ 1) (v : ℂ) (hv : v.im = ℓ) :
+    Real.exp (-(W_b_reExtension ℓ b v)) * ‖Z v‖ ≤ 1 := by
+  have hnorm : ‖Z v‖ ≤ 1 := by
+    have h := htop v.re
+    rwa [show (v.re : ℂ) + I * (ℓ : ℂ) = v from Complex.ext (by simp) (by simp [hv])] at h
+  rw [show W_b_reExtension ℓ b v = 0 by
+    simp [W_b_reExtension, stripTraceExtension, hv, (by linarith : ℓ ≠ -ℓ)]]
   simpa using hnorm
 
-/-- Report Lemma 3.2: `|Z(s + iσλ)| ≤ exp(∫ P_σ(T) h_{λ,D}(s − λT) dT)`, by Phragmén–Lindelöf
-applied to `e^{-W_D} Z_g`, whose modulus extends continuously to the closed strip with boundary
-values at most `1`. -/
+/-- **Poisson principle for the strip** (report, proof of Lemma 3.2). Let `Z` be holomorphic on
+the open strip `|Im z| < ℓ` and continuous on its closure, with the Phragmén–Lindelöf growth
+`Z = O(exp (B e^{c |Re z|}))` as `|Re z| → ∞` in the strip for some `c < π/(2ℓ)`. Let `b` be a
+continuous profile with `|b y| ≤ A (1 + |y|)` such that `‖Z(y − iℓ)‖ ≤ e^{b(y)}` on the bottom
+edge and `‖Z(y + iℓ)‖ ≤ 1` on the top edge. Then at every interior point `s + iσℓ`, `-1 < σ < 1`,
+`‖Z(s + iσℓ)‖ ≤ exp (∫ P_σ(T) b(s − ℓT) dT)`, the exponential of the Poisson integral of `b`.
+
+Proof: Phragmén–Lindelöf (`PhragmenLindelof.horizontal_strip_norm_extension`) applied to
+`e^{-W[b]} Z`, where `W[b]` is the holomorphic Poisson integral of `b`: `Re W[b]` is the Poisson
+average of `b`, its extension to the closed strip is continuous with traces `b` (bottom) and `0`
+(top), so `e^{-W[b]} Z` has modulus at most `1` on both edges, and it keeps the growth of `Z`
+since `|Re W[b](z)| ≤ B (1 + |Re z|)`. -/
+theorem norm_le_exp_integral_P_σ_of_strip {ℓ : ℝ} (hℓ : 0 < ℓ) {Z : ℂ → ℂ}
+    (hZ : DiffContOnCl ℂ Z (Complex.im ⁻¹' Ioo (-ℓ) ℓ))
+    (hgrowth : ∃ c < π / (2 * ℓ), ∃ B : ℝ, Z =O[comap (fun z : ℂ ↦ |z.re|) atTop ⊓
+      𝓟 (Complex.im ⁻¹' Ioo (-ℓ) ℓ)] fun z : ℂ ↦ Real.exp (B * Real.exp (c * |z.re|)))
+    {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ} (hA : 0 ≤ A)
+    (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|))
+    (hbottom : ∀ y : ℝ, ‖Z ((y : ℂ) - I * (ℓ : ℂ))‖ ≤ Real.exp (b y))
+    (htop : ∀ y : ℝ, ‖Z ((y : ℂ) + I * (ℓ : ℂ))‖ ≤ 1)
+    {σ : ℝ} (hσbelow : -1 < σ) (hσabove : σ < 1) (s : ℝ) :
+    ‖Z ((s : ℂ) + I * (σ * ℓ : ℂ))‖ ≤ Real.exp (∫ T : ℝ, P_σ σ T * b (s - ℓ * T)) := by
+  have hwidth : -ℓ < ℓ := by linarith
+  have hZcont : ContinuousOn Z (Complex.im ⁻¹' Icc (-ℓ) ℓ) := by
+    have hcl : closure (Complex.im ⁻¹' Ioo (-ℓ) ℓ) = Complex.im ⁻¹' Icc (-ℓ) ℓ := by
+      rw [Complex.closure_preimage_im, closure_Ioo hwidth.ne]
+    simpa [hcl] using hZ.continuousOn
+  have hzmem : ((s : ℂ) + I * (σ * ℓ : ℂ)).im ∈ Ioo (-ℓ) ℓ := by
+    simp only [mem_Ioo, Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.mul_re,
+      Complex.I_re, Complex.ofReal_re, zero_mul, Complex.I_im, one_mul, zero_add, mul_zero,
+      sub_zero, add_zero]
+    constructor
+    · nlinarith [mul_pos (show 0 < 1 + σ by linarith) hℓ]
+    · nlinarith [mul_pos (show 0 < 1 - σ by linarith) hℓ]
+  have hmax := PhragmenLindelof.horizontal_strip_norm_extension hwidth one_pos
+    (fun v ↦ Complex.exp (-(W_b ℓ b v)) * Z v)
+    (fun v ↦ Real.exp (-(W_b_reExtension ℓ b v)) * ‖Z v‖)
+    ((differentiableOn_W_b hℓ hb hbound).neg.cexp.mul hZ.differentiableOn)
+    ((W_b_reExtension_continuousOn hℓ hb hA hbound).neg.rexp.mul hZcont.norm)
+    (fun _ _ ↦ mul_nonneg (Real.exp_pos _).le (norm_nonneg _))
+    (fun v hv ↦ by
+      rw [W_b_reExtension_of_mem_strip ℓ b hv, norm_mul, Complex.norm_exp, Complex.neg_re])
+    (exp_neg_W_b_reExtension_mul_norm_bottom_le_one hbottom)
+    (exp_neg_W_b_reExtension_mul_norm_top_le_one hℓ htop)
+    (by
+      rw [show ℓ - -ℓ = 2 * ℓ by ring]
+      exact isBigO_exp_neg_W_b_mul hℓ hb hA hbound hgrowth) hzmem.1.le hzmem.2.le
+  rw [W_b_reExtension_of_mem_strip ℓ b hzmem, W_b_re hℓ hσbelow hσabove s b
+    (integrable_K'_ℓ_mul hℓ hzmem b hb
+      (integrable_exp_neg_mul_abs_mul_of_abs_le (by positivity) hb hbound))] at hmax
+  calc ‖Z ((s : ℂ) + I * (σ * ℓ : ℂ))‖
+      = Real.exp (∫ T : ℝ, P_σ σ T * b (s - ℓ * T)) *
+          (Real.exp (-(∫ T : ℝ, P_σ σ T * b (s - ℓ * T))) * ‖Z ((s : ℂ) + I * (σ * ℓ : ℂ))‖) := by
+        rw [← mul_assoc (Real.exp _), ← Real.exp_add]; simp
+    _ ≤ Real.exp (∫ T : ℝ, P_σ σ T * b (s - ℓ * T)) * 1 :=
+        mul_le_mul_of_nonneg_left hmax (Real.exp_pos _).le
+    _ = _ := mul_one _
+
+/-- A function bounded on the open strip `|Im z| < ℓ` has the Phragmén–Lindelöf growth required
+by `norm_le_exp_integral_P_σ_of_strip` (with `c = 0` and `B = 0`). -/
+theorem isBigO_exp_mul_exp_abs_re_of_norm_le {ℓ : ℝ} (hℓ : 0 < ℓ) {Z : ℂ → ℂ} {K : ℝ}
+    (hK : ∀ z : ℂ, z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ → ‖Z z‖ ≤ K) :
+    ∃ c < π / (2 * ℓ), ∃ B : ℝ, Z =O[comap (fun z : ℂ ↦ |z.re|) atTop ⊓
+      𝓟 (Complex.im ⁻¹' Ioo (-ℓ) ℓ)] fun z : ℂ ↦ Real.exp (B * Real.exp (c * |z.re|)) :=
+  ⟨0, by positivity, 0, IsBigO.of_bound K (eventually_inf_principal.mpr (.of_forall fun z hz ↦ by
+    simpa using hK z hz))⟩
+
+/-- The Poisson principle `norm_le_exp_integral_P_σ_of_strip` for a *bounded* holomorphic function
+on the strip: `‖Z(s + iσℓ)‖ ≤ exp (∫ P_σ(T) b(s − ℓT) dT)` when `‖Z‖ ≤ K` in the open strip,
+`‖Z(y − iℓ)‖ ≤ e^{b(y)}` and `‖Z(y + iℓ)‖ ≤ 1`. -/
+theorem norm_le_exp_integral_P_σ_of_strip_of_norm_le {ℓ : ℝ} (hℓ : 0 < ℓ) {Z : ℂ → ℂ}
+    (hZ : DiffContOnCl ℂ Z (Complex.im ⁻¹' Ioo (-ℓ) ℓ)) {K : ℝ}
+    (hK : ∀ z : ℂ, z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ → ‖Z z‖ ≤ K)
+    {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ} (hA : 0 ≤ A)
+    (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|))
+    (hbottom : ∀ y : ℝ, ‖Z ((y : ℂ) - I * (ℓ : ℂ))‖ ≤ Real.exp (b y))
+    (htop : ∀ y : ℝ, ‖Z ((y : ℂ) + I * (ℓ : ℂ))‖ ≤ 1)
+    {σ : ℝ} (hσbelow : -1 < σ) (hσabove : σ < 1) (s : ℝ) :
+    ‖Z ((s : ℂ) + I * (σ * ℓ : ℂ))‖ ≤ Real.exp (∫ T : ℝ, P_σ σ T * b (s - ℓ * T)) :=
+  norm_le_exp_integral_P_σ_of_strip hℓ hZ (isBigO_exp_mul_exp_abs_re_of_norm_le hℓ hK) hb hA
+    hbound hbottom htop hσbelow hσabove s
+
+/-- Report Lemma 3.2: for `D` large enough the capped profile majorizes the bottom-edge values of
+`Z_g`; away from the pole this is the Gamma bound, near it the global bound `C` and the cap. -/
+theorem exists_norm_Z_g_bottom_le_exp_h_ℓD {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
+    (g : RadialEigenfunction d ς) {R : ℝ} (hR : 0 < R) :
+    ∃ D₀ : ℝ, ∀ D : ℝ, D₀ ≤ D → ∀ y : ℝ,
+      ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤
+        Real.exp (h_ℓD ((d : ℝ) / 2) R D y) := by
+  obtain ⟨C, hC, hglobal⟩ := g.exists_norm_Z_g_le hd R
+  refine ⟨Real.log (C + 1), fun D hD y ↦ ?_⟩
+  have hbounded := hglobal ((y : ℂ) - I * ((d : ℂ) / 2)) (by simp)
+    (by simp; linarith [Nat.cast_nonneg (α := ℝ) d])
+  have hexp : ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤ Real.exp D :=
+    calc ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤ C + 1 := by linarith
+      _ = Real.exp (Real.log (C + 1)) := (Real.exp_log (by linarith)).symm
+      _ ≤ Real.exp D := Real.exp_le_exp.mpr hD
+  rcases eq_or_ne y 0 with rfl | hy
+  · simpa [h_ℓD] using hexp
+  · rw [h_ℓD, if_neg hy]
+    rcases le_total (h_ℓ ((d : ℝ) / 2) R y) D with hmin | hmin
+    · rw [min_eq_left hmin]
+      exact g.norm_Z_g_bottom_le_exp_h_ℓ hd hR y hy
+    · rw [min_eq_right hmin]
+      exact hexp
+
+/-- Report Lemma 3.2: `|Z(s + iσλ)| ≤ exp(∫ P_σ(T) h_{λ,D}(s − λT) dT)`, the Poisson principle
+`norm_le_exp_integral_P_σ_of_strip_of_norm_le` for the bounded function `Z_g` on the strip
+`|Im z| < λ = d/2` with the capped profile `b = h_{λ,D}`, which is continuous and linearly
+bounded; the top-edge bound is (16). -/
 theorem norm_Z_g_le_exp_integral_of_cap {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
     (g : RadialEigenfunction d ς) (R D : ℝ)
     (hcap : ∀ y : ℝ, ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤
@@ -728,44 +846,14 @@ theorem norm_Z_g_le_exp_integral_of_cap {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
     ‖Z_g hd g.toFun R ((s : ℂ) + I * (σ * ((d : ℂ) / 2)))‖ ≤
       Real.exp (∫ T : ℝ, P_σ σ T * h_ℓD ((d : ℝ) / 2) R D (s - (d : ℝ) / 2 * T)) := by
   have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  have hwidth : -((d : ℝ) / 2) < (d : ℝ) / 2 := by linarith
-  have hZcont : ContinuousOn (Z_g hd g.toFun R)
-      (Complex.im ⁻¹' Icc (-((d : ℝ) / 2)) ((d : ℝ) / 2)) := by
-    have hcl : closure (Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2)) =
-        Complex.im ⁻¹' Icc (-((d : ℝ) / 2)) ((d : ℝ) / 2) := by
-      rw [Complex.closure_preimage_im, closure_Ioo hwidth.ne]
-    simpa [hcl] using (g.diffContOnCl_Z_g hd R).continuousOn
-  have hEint : ∀ v : ℂ, v.im ∈ Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2) →
-      W_D_reExtension d R D v = (W_D ((d : ℝ) / 2) R D v).re := fun v hv ↦ by
-    simp [W_D_reExtension, stripTraceExtension, (ne_of_gt hv.1 : v.im ≠ -((d : ℝ) / 2)),
-      (ne_of_lt hv.2 : v.im ≠ (d : ℝ) / 2)]
-  have hzim : ((s : ℂ) + I * (σ * ((d : ℂ) / 2))).im = σ * ((d : ℝ) / 2) := by simp
-  have hzmem : ((s : ℂ) + I * (σ * ((d : ℂ) / 2))).im ∈
-      Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2) := by
-    rw [hzim]
-    exact ⟨by nlinarith [mul_pos (show 0 < 1 + σ by linarith) hℓ],
-      by nlinarith [mul_pos (show 0 < 1 - σ by linarith) hℓ]⟩
-  have hmax := PhragmenLindelof.horizontal_strip_norm_extension hwidth one_pos
-    (fun v ↦ Complex.exp (-(W_D ((d : ℝ) / 2) R D v)) * Z_g hd g.toFun R v)
-    (fun v ↦ Real.exp (-(W_D_reExtension d R D v)) * ‖Z_g hd g.toFun R v‖)
-    ((lowerStripCappedGammaOuter_differentiableOn_dimension hd R D).neg.cexp.mul
-      (g.diffContOnCl_Z_g hd R).differentiableOn)
-    ((W_D_reExtension_continuousOn hd R D).neg.rexp.mul hZcont.norm)
-    (fun _ _ ↦ mul_nonneg (Real.exp_pos _).le (norm_nonneg _))
-    (fun v hv ↦ by rw [hEint v hv, norm_mul, Complex.norm_exp, Complex.neg_re])
-    (exp_neg_W_D_reExtension_mul_norm_Z_g_bottom_le_one hd g R D hcap)
-    (exp_neg_W_D_reExtension_mul_norm_Z_g_top_le_one hd g R D)
-    (isBigO_exp_neg_W_D_mul_Z_g hd g R D) hzmem.1.le hzmem.2.le
-  rw [(hEint _ hzmem).trans
-    (lowerStripCappedGammaOuter_re_dimension (R := R) (D := D) hd hbelow habove s)] at hmax
-  calc ‖Z_g hd g.toFun R ((s : ℂ) + I * (σ * ((d : ℂ) / 2)))‖
-      = Real.exp (∫ T : ℝ, P_σ σ T * h_ℓD ((d : ℝ) / 2) R D (s - (d : ℝ) / 2 * T)) *
-          (Real.exp (-(∫ T : ℝ, P_σ σ T * h_ℓD ((d : ℝ) / 2) R D (s - (d : ℝ) / 2 * T))) *
-            ‖Z_g hd g.toFun R ((s : ℂ) + I * (σ * ((d : ℂ) / 2)))‖) := by
-        rw [← mul_assoc (Real.exp _), ← Real.exp_add]; simp
-    _ ≤ Real.exp (∫ T : ℝ, P_σ σ T * h_ℓD ((d : ℝ) / 2) R D (s - (d : ℝ) / 2 * T)) * 1 :=
-        mul_le_mul_of_nonneg_left hmax (Real.exp_pos _).le
-    _ = _ := mul_one _
+  have hcast : ((d : ℂ) / 2) = (((d : ℝ) / 2 : ℝ) : ℂ) := by
+    rw [Complex.ofReal_div, Complex.ofReal_natCast, Complex.ofReal_ofNat]
+  obtain ⟨A, hA, hbound⟩ := exists_abs_h_ℓD_le hd R D
+  obtain ⟨K, -, hK⟩ := g.exists_norm_Z_g_le hd R
+  rw [hcast] at hcap ⊢
+  exact norm_le_exp_integral_P_σ_of_strip_of_norm_le hℓ (g.diffContOnCl_Z_g hd R)
+    (fun z hz ↦ hK z hz.1.le hz.2.le) (lowerGammaBoundaryCapped_continuous hℓ R D) hA hbound hcap
+    (fun y ↦ by rw [← hcast]; exact g.norm_Z_g_top_le_one hd R y) hbelow habove s
 
 /-- Report Lemma 3.2: for every large enough cap `D`, the normalized Mellin transform of a
 radial eigenfunction is majorized on the strip by the Poisson extension of `h_{λ,D}`. -/

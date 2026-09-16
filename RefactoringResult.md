@@ -25,20 +25,20 @@ Proposition 3.7 for `L¹` functions, the self-Fourier function `f₀`, the const
 
 (filled in as the work progresses)
 
-### 1.0 Result in numbers (final state, 2026-09-15)
+### 1.0 Result in numbers (final state, 2026-09-16)
 
 | | lines |
 |---|---|
 | original `SpherePacking.lean` | 55,616 |
 | `CohnElkies/` after golfing, before the new theorems (Step 1, 52 modules) | 24,242 (−56 %) |
 | `CohnElkies/` at the end of Step 3 (53 modules, including the new material: `SignUncertainty/*` ≈ 2,350 lines, `UpperBound/SelfFourier` ≈ 220, Propositions 3.1/3.7; 2026-09-14) | 24,647 |
-| final `CohnElkies/` (59 modules; adds Appendix A ≈ 890 lines and the Cohn–Gonçalves existence theorem ≈ 1,340 lines, §1.6) | 26,405 |
-| final `CohnElkiesForMathlib/` (16 modules; adds `coth`, the compact-support theorem, weak sequential compactness, the no-concentration lemma) | 3,089 |
-| total (single file `SpherePackingRefactored.lean`, assembled from both) | 29,814 (−46 %) |
+| final `CohnElkies/` (59 modules; adds Appendix A ≈ 890 lines, the Cohn–Gonçalves existence theorem ≈ 1,340 lines, the general Poisson principle and (22) ≈ 470 lines, §1.6) | 26,768 |
+| final `CohnElkiesForMathlib/` (17 modules; adds `coth`, the compact-support theorem, weak sequential compactness, the no-concentration lemma, Gauss's digamma integral) | 3,276 |
+| total (single file `SpherePackingRefactored.lean`, assembled from both) | 30,368 (−45 %) |
 
-Excluding the newly formalized material (≈ 5,500 lines: both signs of Propositions 3.1/3.7, `f₀`,
-the `L¹` theory, Appendix A and the existence of extremizers), the refactored code is ≈ 56 %
-shorter than the original. The whole library compiles with the lakefile options
+Excluding the newly formalized material (≈ 6,100 lines: both signs of Propositions 3.1/3.7, `f₀`,
+the `L¹` theory, Appendix A, the existence of extremizers, the Poisson principle and (22)), the
+refactored code is ≈ 56 % shorter than the original. The whole library compiles with the lakefile options
 (`maxSynthPendingDepth = 3`, Mathlib's standard linter set) under the default `maxHeartbeats`,
 with no `set_option backward.*`, no `sorry`, no axiom beyond `propext`, `Classical.choice`,
 `Quot.sound`. After the cleanup pass (§2.3) the only warnings left are the five `sorry`s of the
@@ -130,7 +130,7 @@ notations `P₊`, `P₋`, `f₊`, `f₋`, `f₀` available for statements). Defi
 | K_λ (holomorphic Poisson kernel, blog) | `stripHolomorphicPoissonKernel` | `K_ℓ` |
 | K̃_λ | `stripRegularizedHolomorphicPoissonKernel` | `K'_ℓ` |
 | W[b] | `stripRegularizedOuter` | `W_b` |
-| W_D | `lowerStripCappedGammaOuter` | `W_D` |
+| W_D = W[h_{λ,D}] | `lowerStripCappedGammaOuter` | `W_D` (removed 2026-09-16: the general `W_b` is used directly) |
 | μ_{λ,η} (37) | `upperGammaMeasureDensity` | `μ_ℓ` |
 | V_γ (48) | `upperGammaVariance` | `V_γ` |
 | third moment of μ_{λ,η} (48) | `upperGammaThirdMoment` | `M₃_γ` |
@@ -167,13 +167,17 @@ the list:
 
 - **Lemma 3.2, interior bound (Poisson principle → Phragmén–Lindelöf).** The report maps the strip
   to the upper half-plane and applies the Poisson principle to `log|Z|`. The formalization stays on
-  the strip: it builds the holomorphic Poisson integral `W_D` of the capped majorant `h_{λ,D}`
-  (`CohnElkies/LowerBound/CappedMajorization.lean`) and applies a Phragmén–Lindelöf maximum
-  principle for a horizontal strip to `e^{-W_D} Z`
-  (`horizontalStrip_norm_extension_majorization` in `LowerBound/PhragmenLindelof.lean`), where only
-  the *modulus* of the function is assumed to extend continuously to the closed strip. Mathlib's
+  the strip: the Poisson principle for the strip is proved for continuous boundary data of linear
+  growth (`norm_le_exp_integral_P_σ_of_strip` in `CohnElkies/LowerBound/CappedMajorization.lean`,
+  2026-09-16; before, only its instance for `Z_g` and `h_{λ,D}` was proved) by building the
+  holomorphic Poisson integral `W_b` of the boundary datum and applying a Phragmén–Lindelöf maximum
+  principle for a horizontal strip to `e^{-W_b} Z`
+  (`PhragmenLindelof.horizontal_strip_norm_extension` in
+  `CohnElkiesForMathlib/Analysis/Complex/PhragmenLindelof.lean`), where only the *modulus* of the
+  function is assumed to extend continuously to the closed strip. Mathlib's
   `PhragmenLindelof.horizontal_strip` cannot be used directly for that reason (it needs
-  `DiffContOnCl`). The uncapped bound is recovered by dominated convergence in `D`.
+  `DiffContOnCl`). Lemma 3.2's capped bound is the instance with the capped majorant `h_{λ,D}`, and
+  the uncapped bound is recovered by dominated convergence in `D`.
 - **Lemma 3.3 (one-sided).** Only the upper half of the two-sided Riemann-sum estimate (19) is
   proved, with a unified error term for even and odd `d` (`LowerBound/CenteredMax*.lean`).
 - **Lemma 3.5 (single tail majorant).** Instead of integrating the bounds (24), (25) separately
@@ -360,15 +364,14 @@ lattice with Schwartz functions.
   `T_d g x = -(λ/2)∫_0^1 s^{λ-1} g(sx) ds` (report (89)), continuity and the self-Fourier identity by
   Fubini and Fourier scaling; positivity of `T_d g` outside the ball of radius `r(g)`, where the
   vanishing of `T_d g` at one point would make `g` and `𝓕 g = -g` compactly supported, hence zero.
-  Conclusion `signUncertaintyConstant_one_le_neg_one (hd : 0 < d) : signUncertaintyConstant 1 d ≤
-  signUncertaintyConstant (-1) d` by the radial reduction and the infimum. The report's strict
-  `A₊(d) < A₋(d)` needs an extremizer for `A₋(d)` (Cohn–Gonçalves 2019, Theorem 1.4, not proved in
-  the report): the reduction is `signUncertaintyConstant_one_lt_neg_one_of_exists_extremizer (hd)
-  (hfin : A₋(d) < ⊤) (hext : ∃ g : SignEigenfunction d (-1), signRadius g = A₋(d))` (radialize the
-  extremizer, apply `signRadius_tailIntegral_lt`), and the existence theorem is formalized below,
-  so that `signUncertaintyConstant_one_lt_neg_one (hd : 0 < d) : A₊(d) < A₋(d)` holds
-  unconditionally (`CohnElkies/SignUncertainty/Extremizer.lean`). Schwartz preservation by `T_d`
-  is not needed and not formalized.
+  The report's `A₊(d) < A₋(d)` needs an extremizer for `A₋(d)` (Cohn–Gonçalves 2019, Theorem 1.4,
+  not proved in the report); with the existence theorem formalized below,
+  `signUncertaintyConstant_one_lt_neg_one (hd : 0 < d) : A₊(d) < A₋(d)` is proved in
+  `CohnElkies/SignUncertainty/AppendixA.lean` by radializing the extremizer and applying
+  `signRadius_tailIntegral_lt`. (A first version proved the non-strict `A₊(d) ≤ A₋(d)` by the radial
+  reduction and the infimum, and the strict inequality conditionally on an extremizer; both were
+  removed on 2026-09-16 as subsumed by the unconditional theorem, at the owner's request.) Schwartz
+  preservation by `T_d` is not needed and not formalized.
   The compact-support theorem this rests on, "`f` and `𝓕 f` compactly supported (or vanishing
   outside balls) ⇒ `f = 0` a.e.", is not in Mathlib and now lives in
   `CohnElkiesForMathlib/Analysis/Fourier/CompactSupport.lean` for any nontrivial finite-dimensional
@@ -401,7 +404,8 @@ lattice with Schwartz functions.
     nonnegative outside `B_ρ`, `SignEigenfunction.half_le_volume_ball`); finiteness of `A₋(d)` uses
     the explicit element `ψ_{1/4} - ψ_{1/2} ∈ 𝓔₋(d)` (`explicitSignEigenfunction`: it vanishes at
     the origin, is anti-self-Fourier, and is positive outside an explicit ball since its slowest
-    Gaussian `e^{-π|x|²/4}` has positive coefficient), and `A₊(d) ≤ A₋(d)` gives the other sign.
+    Gaussian `e^{-π|x|²/4}` has positive coefficient); `A₊(d) < A₋(d)` gives the other sign
+    (`signUncertaintyConstant_lt_top`, in `AppendixA.lean`).
     Before this, finiteness was only known for large `d` (from Theorem 1.2's upper bound).
   - `CohnElkiesForMathlib/Analysis/InnerProductSpace/WeakSequentialCompactness.lean` (135 lines):
     every bounded sequence in a separable Hilbert space has a weakly convergent subsequence
@@ -420,7 +424,8 @@ lattice with Schwartz functions.
     bounded convergence on `B` and Fatou on `Bᶜ` give `∫_B |G| = 1`, `G = 0` off `B`, and
     `𝓕 G = c G`, contradicting the compact-support theorem. Also `memLp_indicator_of_ae_norm_le`,
     `Integrable.continuous_fourier`, `Real.norm_fourier_sub_fourier_indicator_le`.
-  - `CohnElkies/SignUncertainty/Extremizer.lean` (567 lines): `IsMinimizingSequence a f` (normalized
+  - the existence proof, now the second half of `CohnElkies/SignUncertainty/AppendixA.lean`
+    (originally the module `Extremizer.lean`, 567 lines): `IsMinimizingSequence a f` (normalized
     `f_n ∈ 𝓔₋(d)` with `r(f_n) ≤ a + 1/(n+1)`), the uniform bound `∫_{B_{a+1}} f_n ≤ -κ` from the
     concentration lemma, the weak `L²` limit `g` (`‖f_n‖₂ ≤ 1`), and its properties by testing:
     `g ∈ L¹` (against `1_K sign g`), `∫_{B_{a+1}} g ≤ -κ` so `g ≠ 0`, `∫ g ≤ 0`, `g ≥ 0` a.e. on
@@ -432,7 +437,40 @@ lattice with Schwartz functions.
     `signUncertaintyConstant_one_lt_neg_one (hd : 0 < d) : signUncertaintyConstant 1 d <
     signUncertaintyConstant (-1) d`.
   All new declarations depend only on `propext`, `Classical.choice`, `Quot.sound`. The
-  infinitely-many-roots part of Theorem 1.4 is not formalized (not needed).
+  infinitely-many-roots part of Theorem 1.4 is not formalized (not needed). On 2026-09-16 the
+  module `Extremizer.lean` was merged into `AppendixA.lean` (owner's request), and the non-strict
+  `A₊(d) ≤ A₋(d)` together with the conditional strict inequality were removed as subsumed.
+
+- **The two report lemmas the formal proofs bypass** (2026-09-16, at the owner's request, so that
+  every blueprint node is formalized):
+  - *Poisson principle for the strip* (`norm_le_exp_integral_P_σ_of_strip`,
+    `CohnElkies/LowerBound/CappedMajorization.lean`): for `ℓ > 0`, a function `Z` holomorphic on
+    the open strip `|Im z| < ℓ`, continuous on its closure, of Phragmén–Lindelöf growth
+    `O(exp(B e^{c|Re z|}))` with `c < π/(2ℓ)` (in particular bounded:
+    `norm_le_exp_integral_P_σ_of_strip_of_norm_le`), and a continuous `b` with `|b y| ≤ A(1+|y|)`
+    such that `‖Z(y − iℓ)‖ ≤ e^{b y}` and `‖Z(y + iℓ)‖ ≤ 1`, one has
+    `‖Z(s + iσℓ)‖ ≤ exp(∫ P_σ(T) b(s − ℓT) dT)` for `−1 < σ < 1`. This is the form in which the
+    report applies the principle (to `log|Z|` with the continuous capped majorant `min{h_λ, D}`);
+    the proof generalizes the earlier `Z_g`/`h_{λ,D}`-specific argument (holomorphic Poisson
+    integral `W_b`, edge traces, Phragmén–Lindelöf), and Lemma 3.2's capped bound
+    `norm_Z_g_le_exp_integral_of_cap` is now its instance. The `W_D`-specific lemmas were deleted
+    (−229/+317 lines in `CappedMajorization.lean`, four unused declarations removed from
+    `CappedMajorant.lean`).
+  - *Gauss's digamma integral* `Real.digamma_eq_integral (hm : 0 < m) : digamma m = ∫ t in Ioi 0,
+    (e^{-t}/t − e^{-mt}/(1 − e^{-t}))` (`CohnElkiesForMathlib/Analysis/SpecialFunctions/Gamma/DigammaIntegral.lean`,
+    187 lines; listed as a TODO in Mathlib's `Digamma.lean`): from the harmonic representation
+    `ψ(m) = lim (log n − Σ_{k≤n} (m+k)⁻¹)`, Frullani for `log n`, Laplace integrals for `(m+k)⁻¹`,
+    the finite geometric sum, and the explicit error bound `‖∫ e^{-nt} g‖ ≤ (m+1)/n` for the
+    bounded remainder `g(t) = 1/t − e^{-(m+1)t}/(1−e^{-t})` — no dominated convergence.
+  - *Equation (22)* `integral_poissonLogisticDensity_mul_log_sqrt (hx : 0 ≤ x) :
+    ∫ p(u) log √(x² + u²) du = ψ((x+1)/2) + log 2` (`CohnElkies/LowerBound/LogMomentDigamma.lean`,
+    378 lines): for `x > 0`, `log √(x²+u²) = ∫₀^∞ (e^{-t} − e^{-xt} cos(ut))/t dt` (real part of the
+    complex Frullani formula), Fubini with the cosine transform `t/sinh t` of `p` (21), Gauss's
+    integral at `m = (x+1)/2` with `t = 2s`, and a final real Frullani integral `log 2`; the case
+    `x = 0` by dominated convergence (majorant `p(u)|u| + π 1_{[-1,1]}|log u|`) and continuity of
+    `ψ` at `1/2`. The report's route (differentiate in `x`, trigamma integral, match constants at
+    `∞`) is avoided. Neither result is used by the main theorems (Lemma 3.4 keeps the Frullani
+    route); they exist so that the blueprint has no informal node.
 
 ## 2. Step 2 — module layout
 
@@ -456,14 +494,14 @@ modules, 2,193 lines.
 | `Radial`, `MellinFourier` | `v_d`, radial profiles, `X_f`, the multiplier `m_ℓ`, the Mellin–Fourier functional equation (report §2.2) |
 | `SchwartzTools` | `dilate`, `IsRadial.fourier`, `IsRealValued.fourier_of_radial`, exponential tilts, the change of variables `r = R e^v` |
 | `Admissible/{Nonempty, Radialization}` | `𝒜_d^rad ≠ ∅` via a bump autocorrelation; the radial reduction of report §2.1 (`Admissible.radialize`, `LP_eq_radial`) |
-| `LowerBound/{Balanced, LogProfile, MellinStrip, PoissonKernel, GammaBoundary, LimitingDensity, CappedMajorant, CappedMajorization, CenteredMax, Main}` | report §3: `φ_g`, `Z_g`, the strip and its boundary values, `P_σ`, `h_ℓ`, Lemma 3.2 (capped, Phragmén–Lindelöf), Lemma 3.3–3.6, Propositions 3.1 and 3.7 |
+| `LowerBound/{Balanced, LogProfile, MellinStrip, PoissonKernel, GammaBoundary, LimitingDensity, CappedMajorant, CappedMajorization, CenteredMax, Main, LogMomentDigamma}` | report §3: `φ_g`, `Z_g`, the strip and its boundary values, `P_σ`, `h_ℓ`, the Poisson principle for the strip and Lemma 3.2 (capped), Lemma 3.3–3.6, Propositions 3.1 and 3.7; the log-moment identity (22) |
 | `UpperBound/{Envelope, MellinProfile, Residues, WallisRadius, ShellEstimates, SaddleDamping, FourierPair, SmallRadius, Schwartz, SaddleContour, GammaPhase, SaddleTails, GaussianError, Coverage, Signs, SelfFourier}` | report §4: envelope and generic `mellinProfile`, residues, the radius `R_{ε,d}`, Lemmas 4.2–4.10 (generic in the polynomial), `f₊`, `f₋`, `f₀`, exterior signs |
 | `Asymptotics/{Framework, Stirling, Main, Manuscript}` | the sandwich argument, Stirling for `v_d`, Theorem 1.1 in all its forms |
 | `SpherePacking/{Basic, Periodic, PeriodicApproximation, CohnElkiesBound, Radialization}` | packings, periodic packings, the Cohn–Elkies bound via Poisson summation, the `O(d)` radial symmetrization of test functions |
 | `PackingBound`, `Manuscript` | `Δ_d ≤ LP_d` and Theorem 1.1 in the form of the comparator (`PackingBounds.*`), the manuscript conclusions |
 | `SignUncertainty/{Basic, Radialization, L1Approximation, SchwartzFamily, Mollifiers, SchwartzApproximation, LowerBound, UpperBound, Main}` | report §2.1 and Theorem 1.2 (§1.6) |
-| `SignUncertainty/{MellinCancellation, TailIntegral, AppendixA}` | Appendix A: `T_d`, Proposition A.1, `A₊(d) ≤ A₋(d)` and the reduction of `A₊(d) < A₋(d)` to an extremizer (§1.6) |
-| `SignUncertainty/{OriginCorrection, Finiteness, Extremizer}` | Cohn–Gonçalves 2019: Lemma 3.1, `0 < A_ς(d) < ∞`, Theorem 1.4 (existence of extremizers) and the unconditional `A₊(d) < A₋(d)` (§1.6) |
+| `SignUncertainty/{MellinCancellation, TailIntegral, AppendixA}` | Appendix A: `T_d`, Proposition A.1, the existence of extremizers for `A₋(d)` (Cohn–Gonçalves, Theorem 1.4) and `A₊(d) < A₋(d)` (§1.6) |
+| `SignUncertainty/{OriginCorrection, Finiteness}` | Cohn–Gonçalves 2019: Lemma 3.1 (origin correction), `0 < A_ς(d)` and `A₋(d) < ∞` for every `d ≥ 1` (§1.6) |
 
 Root `CohnElkies.lean` imports `PackingBound`, `Manuscript` and `SignUncertainty.Main`. Import graph (scratchpad
 `depgraph_after.txt`): shared infrastructure `Basic`, `Parameters`, `Radial`, `MellinFourier`,
@@ -483,7 +521,7 @@ in `Asymptotics/Main`; the sphere-packing modules depend only on `Basic` and `As
 | `Analysis/Fourier/PoissonSummation` | Poisson summation for lattices in `ℝ^d` and Schwartz functions (from the Sphere-Packing-Lean project) |
 | `Analysis/InnerProductSpace/WeakSequentialCompactness` | weak sequential compactness of bounded sequences in separable Hilbert spaces (`InnerProductSpace.tendsto_subseq_inner_left_of_norm_le`), from Mathlib's sequential Banach–Alaoglu via the Riesz isometry |
 | `Analysis/SpecialFunctions/FrullaniIntegral` | real and complex exponential Frullani integrals, the Wallis product as a Laplace integral (`Frullani.*`, `Real.Wallis.*`) |
-| `Analysis/SpecialFunctions/Gamma/{Basic, Beta, Digamma}` | `Γ(z+k)`, `‖Γ z‖ ≤ Γ(Re z)`, residues, `‖Γ(½+ix)‖²`, `‖Γ(ix)‖²`, the `coth` form of their quotient (`Complex.log_norm_Gamma_I_mul_sub_log_norm_Gamma_one_half_add_I_mul`); `Real.digamma := logDeriv Real.Gamma` with recurrence, `log(x−1) ≤ ψ ≤ log x`, `ψ − log → 0`, the harmonic representation and `Real.digamma_eq_complex_re` |
+| `Analysis/SpecialFunctions/Gamma/{Basic, Beta, Digamma, DigammaIntegral}` | `Γ(z+k)`, `‖Γ z‖ ≤ Γ(Re z)`, residues, `‖Γ(½+ix)‖²`, `‖Γ(ix)‖²`, the `coth` form of their quotient (`Complex.log_norm_Gamma_I_mul_sub_log_norm_Gamma_one_half_add_I_mul`); `Real.digamma := logDeriv Real.Gamma` with recurrence, `log(x−1) ≤ ψ ≤ log x`, `ψ − log → 0`, the harmonic representation and `Real.digamma_eq_complex_re`; Gauss's integral `Real.digamma_eq_integral` (a Mathlib TODO) |
 | `Analysis/SpecialFunctions/ImproperIntegrals` | integrability of even functions, `e^{-a|x|}`, `|x|^n e^{-a|x|}`, `e^{-a|x|}|log|x||` |
 | `Analysis/SpecialFunctions/Stirling` | `log k!/k − log k → −1` |
 | `Topology/Algebra/InfiniteSum/ENat` | the `ℕ∞`-valued `tsum` API |
@@ -548,17 +586,21 @@ statements and proofs in natural language):
 | Report versus formalization | 7 | the Phragmén–Lindelöf replacement of the Poisson principle, capped Lemma 3.2, one-sided Lemma 3.3, the Frullani route for Lemma 3.4, the inverse-quadratic Lemma 3.5, the fused Theorem 1.1, the bump-mollifier Schwartz approximation, the parameter table |
 
 Every node names its Lean counterpart (checked by the scratchpad scripts `check_bp.py` and
-`check_names.py` against the sources; the rename table of Step 2 was applied), except the two
-informal-only nodes tagged `not-formalized`: the report's Poisson-principle and digamma
-log-moment lemmas, which the formalization replaces by other arguments. Appendix A, initially
-left informal (2026-09-13), was formalized on 2026-09-15 including the existence of extremizers
-(six new nodes); all its nodes now carry a `lean` attribute. The rendered summary page reports
-102 entries (groups excluded): 100 fully closed (statement and proof formalized, no `sorry`
-anywhere), 0 with incomplete dependencies, and the 2 informal-only lemmas. The site builds with
+`check_names.py` against the sources; the rename table of Step 2 was applied). Appendix A,
+initially left informal (2026-09-13), was formalized on 2026-09-15 including the existence of
+extremizers; the last two informal nodes — the report's strip Poisson principle and the digamma
+log-moment identity (22), which the formal proofs bypass — were formalized on 2026-09-16 (§1.6),
+so no node is tagged `not-formalized` any more. On 2026-09-16 the statements of all nodes were
+also reduced to their mathematical content (the owner's request): Lean names appear only in the
+`lean` attributes (and in proof texts), and where the report's statement is not what the code
+proves, the node states the formalized version (e.g. `lemma_gamma_asymptotics` is the digamma
+asymptotic `ψ(x) − log x → 0` only; Lemma 3.3 in its one-sided form; the weak signs of Theorem 4.1
+and Corollary 4.9; explicit constants in Lemmas 4.2, 4.4–4.7). The site builds with
 `LEAN_NUM_THREADS=2 ./scripts/ci-pages.sh` (`_out/site/html-multi/`, ~30 MB). Verso `v4.33.0`
 specifics learned: the lemma directive is `:::lemma_`, directive arguments must sit on one line
-(so a few headers exceed 100 characters), there is no `notReady`/status flag (informal nodes are
-tagged `not-formalized` and carry no `lean`).
+(so a few headers exceed 100 characters), there is no `notReady`/status flag. The rendered
+summary page (2026-09-16) reports 104 entries (groups excluded), all fully closed: statement and
+proof formalized, no `sorry`, no incomplete dependency.
 
 ### Per-module golfing notes
 
@@ -680,17 +722,18 @@ tagged `not-formalized` and carry no `lean`).
   `Tendsto.atTop_div_const`, `Real.exp_half`.
 - **B17 (Asymptotics/Framework, LowerBound/CappedMajorant, LowerBound/PhragmenLindelof)**:
   1,061 → 645 lines. The abstract lower/upper-bound framework lost its two intermediate `Prop`s
-  and four wrappers; the capped majorant `h_{λ,D}` and the outer functions `W_b`, `W_D` of Lemma 3.2
-  are `h_ℓD`, `W_b`, `W_D` with short lemma names; the Phragmén–Lindelöf strip principle
+  and four wrappers; the capped majorant `h_{λ,D}` and the outer function `W[b]` of Lemma 3.2
+  are `h_ℓD`, `W_b` with short lemma names; the Phragmén–Lindelöf strip principle
   (`horizontalStrip_norm_extension_majorization`) was restructured along Mathlib's
   `PhragmenLindelof.horizontal_strip` (which cannot be used directly: it needs `DiffContOnCl`, but
-  only the modulus of `e^{-W_D} Z` extends continuously) and is ready for `ForMathlib`. Mathlib:
+  only the modulus of `e^{-W[b]} Z` extends continuously) and is ready for `ForMathlib`. Mathlib:
   `Convex.linear_preimage`, `Real.one_lt_cosh`, `Real.cosh_le_cosh`, `RCLike.re_to_complex`.
 - **B18 (LowerBound/CappedMajorization)**: 1,420 → 755 lines. Lemma 3.2's capped majorization
   `|Z(s+iσλ)| ≤ exp ∫ P_σ h_{λ,D}` now rests on one dominated-convergence workhorse
   (`tendsto_setIntegral_P_σ_mul`, generic in kernel, set and filter) for the boundary behaviour of
-  `Re W_D`, a shared Riemann-sum estimate `abs_sum_log_sqrtFactor_le`, and the growth bound
-  `exists_abs_W_D_re_le`; the strip-trace extension is `stripTraceExtension`/`W_D_reExtension`.
+  `Re W[b]`, a shared Riemann-sum estimate `abs_sum_log_sqrtFactor_le`, and the growth bound
+  `exists_abs_W_b_re_le`; the strip-trace extension is `stripTraceExtension`/`W_b_reExtension`
+  (all now stated for a general continuous boundary datum `b` of linear growth, 2026-09-16).
   Mathlib: `Complex.re_add_im`, `IsBigO.of_bound`, `integral_add_compl`, `Filter.Tendsto.congr'`.
 
   default heartbeat budget with no exceptions. The centered-maximum argument of Lemma 3.3 is one

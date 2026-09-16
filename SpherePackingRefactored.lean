@@ -3008,6 +3008,197 @@ end Real
 
 end CohnElkiesForMathlib_Analysis_SpecialFunctions_Gamma_Digamma
 
+/-! ## Module `CohnElkiesForMathlib.Analysis.SpecialFunctions.Gamma.DigammaIntegral` -/
+
+section CohnElkiesForMathlib_Analysis_SpecialFunctions_Gamma_DigammaIntegral
+
+/-!
+# Gauss's integral representation of the digamma function
+
+For `m > 0`, `ψ(m) = ∫₀^∞ (e^{-t} / t - e^{-mt} / (1 - e^{-t})) dt` (`Real.digamma_eq_integral`;
+a TODO of Mathlib's `Mathlib.Analysis.SpecialFunctions.Gamma.Digamma`).
+
+The proof starts from the harmonic representation
+`ψ(m) = lim_n (log n - ∑_{k ≤ n} (m + k)⁻¹)` (`Real.tendsto_digamma_harmonic`). By the Frullani
+formula `log n = ∫₀^∞ (e^{-t} - e^{-nt}) / t dt` and the Laplace integrals
+`(m + k)⁻¹ = ∫₀^∞ e^{-(m+k)t} dt`, the `n`-th term is the integral over `(0, ∞)` of the
+approximant `(e^{-t} - e^{-nt}) / t - ∑_{k ≤ n} e^{-(m+k)t}`. Summing the geometric series, the
+approximant is Gauss's integrand minus `e^{-nt} g(t)` with the remainder
+`g(t) = 1 / t - e^{-(m+1)t} / (1 - e^{-t})`, which satisfies `0 ≤ g ≤ m + 1` on `(0, ∞)`; the
+error term is therefore at most `(m + 1) / n` in absolute value, and letting `n → ∞` gives the
+integral representation (and the integrability of Gauss's integrand).
+-/
+
+open Filter MeasureTheory Set
+open scoped Topology
+
+namespace Real
+
+noncomputable section
+
+/-- The integrand `e^{-t} / t - e^{-mt} / (1 - e^{-t})` of Gauss's digamma integral. -/
+def digammaKernel (m t : ℝ) : ℝ := exp (-t) / t - exp (-m * t) / (1 - exp (-t))
+
+/-- The remainder `1 / t - e^{-(m+1)t} / (1 - e^{-t})`, bounded by `m + 1` on `(0, ∞)`. -/
+def digammaRemainder (m t : ℝ) : ℝ := t⁻¹ - exp (-(m + 1) * t) / (1 - exp (-t))
+
+/-- The `n`-th approximant `(e^{-t} - e^{-nt}) / t - ∑_{k ≤ n} e^{-(m+k)t}` of Gauss's integrand;
+its integral over `(0, ∞)` is `log n - ∑_{k ≤ n} (m + k)⁻¹`. -/
+def digammaApproximant (m : ℝ) (n : ℕ) (t : ℝ) : ℝ :=
+  Frullani.expKernel 1 n t - ∑ k ∈ Finset.range (n + 1), exp (-(m + k) * t)
+
+/-- `0 ≤ 1 / t - e^{-(m+1)t} / (1 - e^{-t}) ≤ m + 1` for `t > 0` and `m ≥ 0`: writing
+`q = e^{-t}`, `r = e^{-mt}`, the remainder is `(1 - q - t q r) / (t (1 - q))`, and
+`1 - q - t q r = (1 - q - q t) + q t (1 - r)` with `1 - q - q t ≤ t (1 - q)` (from `1 - t ≤ q`)
+and `q t (1 - r) ≤ m t (1 - q)` (from `1 - r ≤ m t` and `q t ≤ 1 - q`). -/
+theorem digammaRemainder_nonneg_and_le {m t : ℝ} (hm : 0 ≤ m) (ht : 0 < t) :
+    0 ≤ digammaRemainder m t ∧ digammaRemainder m t ≤ m + 1 := by
+  have hq0 : 0 < exp (-t) := exp_pos _
+  have hq1 : exp (-t) < 1 := exp_lt_one_iff.mpr (by linarith)
+  have hqt : 1 - t ≤ exp (-t) := by linarith [add_one_le_exp (-t)]
+  have hqt' : exp (-t) * t ≤ 1 - exp (-t) := by
+    have h := mul_le_mul_of_nonneg_left (add_one_le_exp t) hq0.le
+    rw [← exp_add, neg_add_cancel, exp_zero] at h
+    linarith
+  have hr1 : exp (-m * t) ≤ 1 := exp_le_one_iff.mpr (by nlinarith)
+  have hrt : 1 - m * t ≤ exp (-m * t) := by linarith [add_one_le_exp (-m * t)]
+  have hE : exp (-(m + 1) * t) = exp (-m * t) * exp (-t) := by
+    rw [← exp_add]
+    ring_nf
+  have hden : 0 < t * (1 - exp (-t)) := mul_pos ht (sub_pos.mpr hq1)
+  have hkey : digammaRemainder m t =
+      (1 - exp (-t) - t * (exp (-m * t) * exp (-t))) / (t * (1 - exp (-t))) := by
+    have hne : 1 - exp (-t) ≠ 0 := (sub_pos.mpr hq1).ne'
+    unfold digammaRemainder
+    rw [hE]
+    field_simp
+  rw [hkey]
+  constructor
+  · refine div_nonneg ?_ hden.le
+    have h := mul_le_mul_of_nonneg_left (mul_le_of_le_one_left hq0.le hr1) ht.le
+    linarith
+  · rw [div_le_iff₀ hden]
+    have h2 : exp (-t) * t * (1 - exp (-m * t)) ≤ m * t * (1 - exp (-t)) :=
+      calc exp (-t) * t * (1 - exp (-m * t)) ≤ exp (-t) * t * (m * t) :=
+            mul_le_mul_of_nonneg_left (by linarith) (by positivity)
+        _ = m * t * (exp (-t) * t) := by ring
+        _ ≤ m * t * (1 - exp (-t)) := mul_le_mul_of_nonneg_left hqt' (by positivity)
+    linarith
+
+/-- The finite geometric sum
+`∑_{k ≤ n} e^{-(m+k)t} = e^{-mt} (1 - (e^{-t})^(n+1)) / (1 - e^{-t})`. -/
+theorem sum_exp_neg_add_mul {t : ℝ} (ht : 0 < t) (m : ℝ) (n : ℕ) :
+    ∑ k ∈ Finset.range (n + 1), exp (-(m + k) * t) =
+      exp (-m * t) * (1 - exp (-t) ^ (n + 1)) / (1 - exp (-t)) := by
+  have hq1 : exp (-t) ≠ 1 := (exp_lt_one_iff.mpr (by linarith)).ne
+  have hterm (k : ℕ) : exp (-(m + k) * t) = exp (-m * t) * exp (-t) ^ k := by
+    rw [← exp_nat_mul, ← exp_add]
+    ring_nf
+  simp_rw [hterm]
+  rw [← Finset.mul_sum, geom_sum_eq hq1, mul_div_assoc, ← neg_div_neg_eq, neg_sub, neg_sub]
+
+/-- The `n`-th approximant is Gauss's integrand minus `e^{-nt}` times the remainder. -/
+theorem digammaApproximant_eq {t : ℝ} (ht : 0 < t) (m : ℝ) (n : ℕ) :
+    digammaApproximant m n t = digammaKernel m t - exp (-n * t) * digammaRemainder m t := by
+  have hq1 : 1 - exp (-t) ≠ 0 := (sub_pos.mpr (exp_lt_one_iff.mpr (by linarith))).ne'
+  have hn : exp (-(n : ℝ) * t) = exp (-t) ^ n := by
+    rw [← exp_nat_mul]
+    ring_nf
+  have hE : exp (-(m + 1) * t) = exp (-m * t) * exp (-t) := by
+    rw [← exp_add]
+    ring_nf
+  unfold digammaApproximant digammaKernel digammaRemainder Frullani.expKernel
+  rw [sum_exp_neg_add_mul ht m n, hn, hE, neg_one_mul]
+  field_simp
+  ring
+
+theorem integrableOn_digammaApproximant {m : ℝ} (hm : 0 < m) {n : ℕ} (hn : 1 ≤ n) :
+    IntegrableOn (digammaApproximant m n) (Ioi 0) :=
+  (Frullani.integrableOn_expKernel one_pos (by exact_mod_cast hn)).sub
+    (integrable_finsetSum _ fun k _ ↦ integrableOn_exp_neg_mul_Ioi (by positivity))
+
+/-- `∫₀^∞ ((e^{-t} - e^{-nt}) / t - ∑_{k ≤ n} e^{-(m+k)t}) dt = log n - ∑_{k ≤ n} (m + k)⁻¹`, by
+the Frullani formula and the Laplace integrals. -/
+theorem integral_digammaApproximant {m : ℝ} (hm : 0 < m) {n : ℕ} (hn : 1 ≤ n) :
+    ∫ t in Ioi (0 : ℝ), digammaApproximant m n t =
+      log n - ∑ k ∈ Finset.range (n + 1), (m + k)⁻¹ := by
+  have hk (k : ℕ) : (0 : ℝ) < m + k := by positivity
+  unfold digammaApproximant
+  rw [integral_sub (Frullani.integrableOn_expKernel one_pos (by exact_mod_cast hn))
+      (integrable_finsetSum _ fun k _ ↦ integrableOn_exp_neg_mul_Ioi (hk k)),
+    Frullani.integral_expKernel one_pos (by exact_mod_cast hn), div_one,
+    integral_finsetSum _ fun k _ ↦ integrableOn_exp_neg_mul_Ioi (hk k)]
+  congr 1
+  exact Finset.sum_congr rfl fun k _ ↦ integral_exp_neg_mul_Ioi (hk k)
+
+theorem norm_exp_neg_mul_mul_digammaRemainder_le {m t : ℝ} (hm : 0 ≤ m) (ht : 0 < t) (a : ℝ) :
+    ‖exp (-a * t) * digammaRemainder m t‖ ≤ (m + 1) * exp (-a * t) := by
+  obtain ⟨h0, h1⟩ := digammaRemainder_nonneg_and_le hm ht
+  rw [Real.norm_eq_abs, abs_of_nonneg (mul_nonneg (exp_pos _).le h0), mul_comm]
+  exact mul_le_mul_of_nonneg_right h1 (exp_pos _).le
+
+theorem integrableOn_exp_neg_mul_mul_digammaRemainder {m a : ℝ} (hm : 0 ≤ m) (ha : 0 < a) :
+    IntegrableOn (fun t ↦ exp (-a * t) * digammaRemainder m t) (Ioi 0) := by
+  refine ((integrableOn_exp_neg_mul_Ioi ha).const_mul (m + 1)).mono' ?_ ?_
+  · exact (by unfold digammaRemainder; fun_prop :
+      Measurable fun t : ℝ ↦ exp (-a * t) * digammaRemainder m t).aestronglyMeasurable
+  · filter_upwards [ae_restrict_mem measurableSet_Ioi] with t ht
+    exact norm_exp_neg_mul_mul_digammaRemainder_le hm ht a
+
+/-- The error term is small: `|∫₀^∞ e^{-at} g(t) dt| ≤ (m + 1) / a`. -/
+theorem norm_integral_exp_neg_mul_mul_digammaRemainder_le {m a : ℝ} (hm : 0 ≤ m) (ha : 0 < a) :
+    ‖∫ t in Ioi (0 : ℝ), exp (-a * t) * digammaRemainder m t‖ ≤ (m + 1) * a⁻¹ := by
+  rw [← integral_exp_neg_mul_Ioi ha, ← integral_const_mul]
+  refine norm_integral_le_of_norm_le ((integrableOn_exp_neg_mul_Ioi ha).const_mul (m + 1)) ?_
+  filter_upwards [ae_restrict_mem measurableSet_Ioi] with t ht
+  exact norm_exp_neg_mul_mul_digammaRemainder_le hm ht a
+
+/-- Gauss's integrand `e^{-t} / t - e^{-mt} / (1 - e^{-t})` is integrable on `(0, ∞)`. -/
+theorem integrableOn_digammaKernel {m : ℝ} (hm : 0 < m) :
+    IntegrableOn (digammaKernel m) (Ioi 0) := by
+  refine ((integrableOn_digammaApproximant hm le_rfl).add
+    (integrableOn_exp_neg_mul_mul_digammaRemainder hm.le (Nat.cast_pos.mpr one_pos))).congr_fun
+    (fun t ht ↦ ?_) measurableSet_Ioi
+  simp only [Pi.add_apply]
+  rw [digammaApproximant_eq ht]
+  ring
+
+/-- Gauss's integral representation of the digamma function, in terms of `digammaKernel`. -/
+theorem digamma_eq_integral_digammaKernel {m : ℝ} (hm : 0 < m) :
+    digamma m = ∫ t in Ioi (0 : ℝ), digammaKernel m t := by
+  refine tendsto_nhds_unique (tendsto_digamma_harmonic hm) ?_
+  have hbound : Tendsto (fun n : ℕ ↦ (m + 1) * (n : ℝ)⁻¹) atTop (𝓝 0) := by
+    simpa using (tendsto_inv_atTop_nhds_zero_nat (𝕜 := ℝ)).const_mul (m + 1)
+  have hrem : Tendsto (fun n : ℕ ↦ ∫ t in Ioi (0 : ℝ), exp (-(n : ℝ) * t) * digammaRemainder m t)
+      atTop (𝓝 0) := by
+    refine squeeze_zero_norm' ?_ hbound
+    filter_upwards [eventually_ge_atTop 1] with n hn
+    exact norm_integral_exp_neg_mul_mul_digammaRemainder_le hm.le (Nat.cast_pos.mpr hn)
+  have hlim := (tendsto_const_nhds (x := ∫ t in Ioi (0 : ℝ), digammaKernel m t)).sub hrem
+  rw [sub_zero] at hlim
+  refine hlim.congr' ?_
+  filter_upwards [eventually_ge_atTop 1] with n hn
+  rw [← integral_digammaApproximant hm hn,
+    ← integral_sub (integrableOn_digammaKernel hm)
+      (integrableOn_exp_neg_mul_mul_digammaRemainder hm.le (Nat.cast_pos.mpr hn))]
+  exact setIntegral_congr_fun measurableSet_Ioi fun t ht ↦ (digammaApproximant_eq ht m n).symm
+
+/-- Gauss's integral representation of the digamma function. -/
+theorem digamma_eq_integral {m : ℝ} (hm : 0 < m) :
+    digamma m = ∫ t in Ioi (0 : ℝ), (exp (-t) / t - exp (-m * t) / (1 - exp (-t))) :=
+  digamma_eq_integral_digammaKernel hm
+
+/-- The integrand of Gauss's digamma integral is integrable on `(0, ∞)`. -/
+theorem integrableOn_digamma_integrand {m : ℝ} (hm : 0 < m) :
+    IntegrableOn (fun t : ℝ ↦ exp (-t) / t - exp (-m * t) / (1 - exp (-t))) (Ioi 0) :=
+  integrableOn_digammaKernel hm
+
+end
+
+end Real
+
+end CohnElkiesForMathlib_Analysis_SpecialFunctions_Gamma_DigammaIntegral
+
 /-! ## Module `CohnElkiesForMathlib.Analysis.SpecialFunctions.Stirling` -/
 
 section CohnElkiesForMathlib_Analysis_SpecialFunctions_Stirling
@@ -8337,10 +8528,11 @@ section CohnElkies_LowerBound_CappedMajorant
 /-!
 # The capped Gamma boundary function and its holomorphic Poisson extension (report §3.2)
 
-The capped boundary function `h_{λ,D} = max (h_λ) (-D)`, its continuity and limits, the
-holomorphic function `W_D(z) = ∫ K'_ℓ(z, y) h_{λ,D}(y) dy` built from the regularized Schwarz
-kernel of the strip, its differentiability and real part, and the comparison of the strip Poisson
-kernel with its value at the centre.
+The capped boundary function `h_{λ,D} = min (h_λ) D`, its continuity and limits, the
+holomorphic Poisson integral `W[b](z) = ∫ K'_ℓ(z, y) b(y) dy` of a boundary datum `b` built from
+the regularized Schwarz kernel of the strip, its differentiability and real part (the general
+Poisson principle for the strip is proved in `CohnElkies.LowerBound.CappedMajorization`), and the
+comparison of the strip Poisson kernel with its value at the centre.
 -/
 
 namespace CohnElkies
@@ -8516,31 +8708,18 @@ theorem differentiableAt_W_b {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ} (hz : z ∈ 
     hbound (habs.const_mul C) (.of_forall fun y w hw ↦
       (stripRegularizedHolomorphicPoissonKernel_hasDerivAt_deriv hℓ hw.2 y).mul_const _)).2
 
-/-- The outer function `W_D = W[h_{λ,D}]` of the capped majorant; Lemma 3.2. -/
-def W_D (ℓ R D : ℝ) (z : ℂ) : ℂ := W_b ℓ (h_ℓD ℓ R D) z
-
 theorem integrable_exp_mul_h_ℓD_dim {d : ℕ} (hd : 0 < d) {a : ℝ} (ha : 0 < a) (R D : ℝ) :
     Integrable fun y : ℝ ↦ exp (-a * |y|) * h_ℓD ((d : ℝ) / 2) R D y :=
   integrable_exp_mul_h_ℓD (half_pos (Nat.cast_pos.mpr hd)) ha R D
     (lowerGammaBoundaryLog_dimension_exp_integrable hd ha R)
 
-/-- The integrand of `W_D` is integrable in dimension `d`. -/
+/-- The integrand of `W[h_{λ,D}]` is integrable in dimension `d`. -/
 theorem lowerStripCappedGammaOuter_integrable_dimension {d : ℕ} (hd : 0 < d) {R D : ℝ} {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2)) :
     Integrable fun y : ℝ ↦ K'_ℓ ((d : ℝ) / 2) z y * (h_ℓD ((d : ℝ) / 2) R D y : ℂ) := by
   have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
   exact integrable_K'_ℓ_mul hℓ hz _ (lowerGammaBoundaryCapped_continuous hℓ R D)
     (integrable_exp_mul_h_ℓD_dim hd (div_pos pi_pos (by linarith)) R D)
-
-/-- `W_D` is holomorphic on the open strip `|Im z| < d/2`. -/
-theorem lowerStripCappedGammaOuter_differentiableOn_dimension {d : ℕ} (hd : 0 < d) (R D : ℝ) :
-    DifferentiableOn ℂ (W_D ((d : ℝ) / 2) R D)
-      (Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2)) := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  intro z hz
-  unfold W_D
-  exact (differentiableAt_W_b hℓ hz _ (lowerGammaBoundaryCapped_continuous hℓ R D)
-    (integrable_exp_mul_h_ℓD_dim hd (div_pos pi_pos (by linarith)) R D)).differentiableWithinAt
 
 /-- On the horizontal line `Im z = σλ` the real part of `W[b]` is the Poisson integral of `b`. -/
 theorem W_b_re {ℓ σ : ℝ} (hℓ : 0 < ℓ) (hσbelow : -1 < σ) (hσabove : σ < 1) (s : ℝ) (b : ℝ → ℝ)
@@ -8553,24 +8732,6 @@ theorem W_b_re {ℓ σ : ℝ} (hℓ : 0 < ℓ) (hσbelow : -1 < σ) (hσabove : 
     P_σ σ ((s - y) / ℓ) / ℓ * b y
   rw [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im, mul_zero, sub_zero,
     stripRegularizedHolomorphicPoissonKernel_re hℓ hσbelow hσabove]
-
-/-- `Re W_D(s + iσλ) = ∫ P_σ(T) h_{λ,D}(s - λT) dT`; Lemma 3.2 of the report. -/
-theorem lowerStripCappedGammaOuter_re_dimension {d : ℕ} (hd : 0 < d) {σ R D : ℝ}
-    (hσbelow : -1 < σ) (hσabove : σ < 1) (s : ℝ) :
-    (W_D ((d : ℝ) / 2) R D ((s : ℂ) + I * (σ * ((d : ℂ) / 2)))).re =
-      ∫ T : ℝ, P_σ σ T * h_ℓD ((d : ℝ) / 2) R D (s - (d : ℝ) / 2 * T) := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  have hz : ((s : ℂ) + I * (σ * (d / 2 : ℝ) : ℂ)) ∈
-      Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2) := by
-    simp only [mem_preimage, mem_Ioo, Complex.add_im, Complex.ofReal_im, Complex.mul_im,
-      Complex.mul_re, Complex.I_re, Complex.ofReal_re, zero_mul, Complex.I_im, one_mul, zero_add,
-      mul_zero, sub_zero, add_zero]
-    constructor
-    · nlinarith [mul_pos (show 0 < 1 + σ by linarith) hℓ]
-    · nlinarith [mul_pos (show 0 < 1 - σ by linarith) hℓ]
-  rw [show (σ : ℂ) * ((d : ℂ) / 2) = (σ * (d / 2 : ℝ) : ℂ) by push_cast; ring]
-  exact W_b_re hℓ hσbelow hσabove s _
-    (lowerStripCappedGammaOuter_integrable_dimension hd (R := R) (D := D) hz)
 
 /-- As `σ → -1` the strip Poisson kernel vanishes away from `T = 0`. -/
 theorem stripPoissonKernel_tendsto_zero_bottom_of_ne {T : ℝ} (hT : T ≠ 0) :
@@ -8662,29 +8823,6 @@ theorem stripPoissonKernel_lower_product_integrable {σ : ℝ} (hbelow : -1 < σ
       rw [norm_mul, Real.norm_of_nonneg hcenter.le]
       ring
 
-/-- The central Poisson integrand of the capped majorant is integrable. -/
-theorem lowerGammaBoundaryCapped_central_poisson_shift_integrable {d : ℕ} (hd : 0 < d)
-    (R D s : ℝ) :
-    Integrable fun T : ℝ ↦ P_σ 0 T * h_ℓD ((d : ℝ) / 2) R D (s - (d : ℝ) / 2 * T) := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  have hd0 : (d : ℝ) ≠ 0 := (Nat.cast_pos.mpr hd).ne'
-  have hz : ((s : ℂ) + I * ((0 : ℝ) * (d / 2 : ℝ) : ℂ)) ∈
-      Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2) := by
-    simp only [mem_preimage, mem_Ioo, Complex.add_im, Complex.ofReal_im, Complex.mul_im,
-      Complex.mul_re, Complex.I_re, Complex.I_im, Complex.ofReal_re, zero_mul, mul_zero, sub_zero,
-      add_zero]
-    constructor <;> linarith
-  have harg : ∀ T : ℝ, (s - (s - (d : ℝ) / 2 * T)) / ((d : ℝ) / 2) = T := fun T ↦ by
-    field_simp
-    ring
-  refine ((((lowerStripCappedGammaOuter_integrable_dimension hd (R := R) (D := D)
-    hz).re.comp_sub_left s).comp_mul_left' hℓ.ne').const_mul ((d : ℝ) / 2)).congr
-    (.of_forall fun T ↦ ?_)
-  simp only [RCLike.re_to_complex, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im, mul_zero,
-    sub_zero, stripRegularizedHolomorphicPoissonKernel_re hℓ (by norm_num : (-1 : ℝ) < 0)
-      (by norm_num : (0 : ℝ) < 1), harg]
-  field_simp
-
 end
 
 end CohnElkies
@@ -8696,13 +8834,20 @@ end CohnElkies_LowerBound_CappedMajorant
 section CohnElkies_LowerBound_CappedMajorization
 
 /-!
-# The Poisson majorization of `Z` in the strip (report §3.2, Lemma 3.2)
+# The Poisson principle in the strip and the majorization of `Z` (report §3.2, Lemma 3.2)
 
-Phragmén–Lindelöf in the strip applied to `Z(z) e^{-W_D(z)}`: the modulus of `Z` at a point
-`x - iσ d/2` of the strip is bounded by `exp (∫ P_σ(x - y) h_{λ,D}(y) dy)`, the Poisson integral of
-the capped boundary function (`exists_capped_poisson_majorization`). The proof controls the
-horizontal integrals far away, the bottom and top edges, and uses the continuous extension of
-`|Z e^{-W_D}|` to the closed strip.
+**Poisson principle for a horizontal strip** (`norm_le_exp_integral_P_σ_of_strip`): if `Z` is
+holomorphic on the strip `|Im z| < ℓ`, continuous on its closure and of Phragmén–Lindelöf growth,
+with `‖Z‖ ≤ e^{b}` on the bottom edge for a continuous, linearly bounded profile `b` and `‖Z‖ ≤ 1`
+on the top edge, then `‖Z(s + iσℓ)‖ ≤ exp (∫ P_σ(T) b(s − ℓT) dT)` at every interior point. The
+proof applies Phragmén–Lindelöf to `Z e^{-W[b]}`, where `W[b]` is the holomorphic Poisson integral
+of `b`: it controls `Re W[b]` far away (linear growth in `Re z`), identifies its traces `b` and `0`
+on the two edges, and uses the continuous extension of `|Z e^{-W[b]}|` to the closed strip.
+
+Applied to the normalized Mellin transform `Z_g` and the capped boundary profile `h_{λ,D}` this is
+Lemma 3.2 of the report: `‖Z(s + iσλ)‖ ≤ exp (∫ P_σ(T) h_{λ,D}(s − λT) dT)` for every large enough
+cap `D` (`norm_Z_g_le_exp_integral_of_cap`, `exists_capped_poisson_majorization`). The module also
+proves the linear bound on `h_{λ,D}` and the uniform first-moment bound on the kernels `P_σ`.
 -/
 
 namespace CohnElkies
@@ -8905,94 +9050,146 @@ theorem exists_integral_P_σ_mul_abs_le :
       mul_le_mul_of_nonneg_right (P_σ_le_exponentialMajorant hσ.le habove T) (abs_nonneg T),
       mul_nonneg hC.le hJ]
 
-private theorem ofReal_div_mul_half {d : ℕ} (hd : 0 < d) (x : ℝ) :
-    (x / ((d : ℝ) / 2) : ℝ) * ((d : ℂ) / 2) = (x : ℂ) := by
-  rw [Complex.ofReal_div, Complex.ofReal_div, Complex.ofReal_natCast, Complex.ofReal_ofNat]
-  exact div_mul_cancel₀ _
-    (div_ne_zero (Nat.cast_ne_zero.mpr hd.ne') (by norm_num : (2 : ℂ) ≠ 0))
+/-- A continuous profile with `|b y| ≤ A (1 + |y|)` has integrable exponential weights
+`e^{-a|y|} b(y)` for `a > 0`; this is the integrability of the boundary datum required by `W[b]`. -/
+theorem integrable_exp_neg_mul_abs_mul_of_abs_le {a : ℝ} (ha : 0 < a) {b : ℝ → ℝ}
+    (hb : Continuous b) {A : ℝ} (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) :
+    Integrable fun y : ℝ ↦ Real.exp (-a * |y|) * b y := by
+  have hmajor : Integrable fun y : ℝ ↦
+      A * Real.exp (-a * |y|) + A * (|y| ^ 1 * Real.exp (-a * |y|)) :=
+    ((integrable_exp_neg_mul_abs ha).const_mul A).add
+      ((integrable_abs_pow_mul_exp_neg_mul_abs 1 ha).const_mul A)
+  refine hmajor.mono' ((by fun_prop : Continuous fun y : ℝ ↦ Real.exp (-a * |y|)).mul
+    hb).aestronglyMeasurable (.of_forall fun y ↦ ?_)
+  rw [Real.norm_eq_abs, abs_mul, abs_of_pos (Real.exp_pos _), pow_one]
+  calc Real.exp (-a * |y|) * |b y| ≤ Real.exp (-a * |y|) * (A * (1 + |y|)) := by
+        gcongr; exact hbound y
+    _ = A * Real.exp (-a * |y|) + A * (|y| * Real.exp (-a * |y|)) := by ring
 
-/-- Report Lemma 3.2: `Re W_D(z) = ∫ P_σ(T) h_{λ,D}(Re z - λT) dT` grows at most linearly in
-`Re z`, uniformly on the open strip `|Im z| < λ = d/2`. -/
-theorem exists_abs_W_D_re_le {d : ℕ} (hd : 0 < d) (R D : ℝ) :
-    ∃ B : ℝ, 0 ≤ B ∧ ∀ z : ℂ, z ∈ Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2) →
-      |(W_D ((d : ℝ) / 2) R D z).re| ≤ B * (1 + |z.re|) := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  obtain ⟨A, hA, hdatum⟩ := exists_abs_h_ℓD_le hd R D
+/-- `W[b]` is holomorphic on the open strip `|Im z| < ℓ` for every continuous profile `b` with
+`|b y| ≤ A (1 + |y|)`. -/
+theorem differentiableOn_W_b {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ}
+    (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) :
+    DifferentiableOn ℂ (W_b ℓ b) (Complex.im ⁻¹' Ioo (-ℓ) ℓ) := fun z hz ↦
+  (differentiableAt_W_b hℓ hz b hb
+    (integrable_exp_neg_mul_abs_mul_of_abs_le (by positivity) hb hbound)).differentiableWithinAt
+
+/-- A point of the open strip `|Im z| < ℓ` has normalized height `Im z / ℓ ∈ (-1, 1)`. -/
+theorem im_div_mem_Ioo_of_mem_strip {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+    (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) : -1 < z.im / ℓ ∧ z.im / ℓ < 1 :=
+  ⟨(lt_div_iff₀ hℓ).2 (by simpa using hz.1), (div_lt_iff₀ hℓ).2 (by simpa using hz.2)⟩
+
+/-- On the open strip `Re W[b](z) = ∫ P_σ(T) b(Re z − ℓT) dT` with `σ = Im z / ℓ`; report (16). -/
+theorem W_b_re_of_mem_strip {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ}
+    (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) {z : ℂ}
+    (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) :
+    (W_b ℓ b z).re = ∫ T : ℝ, P_σ (z.im / ℓ) T * b (z.re - ℓ * T) := by
+  obtain ⟨hbelow, habove⟩ := im_div_mem_Ioo_of_mem_strip hℓ hz
+  have hzeq : (z.re : ℂ) + I * ((z.im / ℓ : ℝ) * ℓ : ℂ) = z :=
+    Complex.ext (by simp) (by simp [hℓ.ne'])
+  have h := W_b_re hℓ hbelow habove z.re b (integrable_K'_ℓ_mul hℓ (by rw [hzeq]; exact hz) b hb
+    (integrable_exp_neg_mul_abs_mul_of_abs_le (by positivity) hb hbound))
+  rwa [hzeq] at h
+
+/-- The Poisson integrand of a linearly bounded profile is dominated by the kernel and its first
+moment: `|P_σ(T) b(x − ℓT)| ≤ A (1 + |x|) P_σ(T) + A ℓ P_σ(T) |T|`. -/
+theorem norm_P_σ_mul_le_of_abs_le {ℓ σ : ℝ} (hℓ : 0 < ℓ) (hbelow : -1 < σ) (habove : σ < 1)
+    {b : ℝ → ℝ} {A : ℝ} (hA : 0 ≤ A) (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) (x T : ℝ) :
+    ‖P_σ σ T * b (x - ℓ * T)‖ ≤ A * (1 + |x|) * P_σ σ T + A * ℓ * (P_σ σ T * |T|) := by
+  have hkpos := stripPoissonKernel_pos hbelow habove T
+  have hb : |b (x - ℓ * T)| ≤ A * (1 + |x| + ℓ * |T|) := by
+    refine (hbound _).trans (mul_le_mul_of_nonneg_left ?_ hA)
+    have habs := abs_sub x (ℓ * T)
+    rw [abs_mul, abs_of_pos hℓ] at habs
+    linarith
+  rw [norm_mul, Real.norm_eq_abs, abs_of_pos hkpos, Real.norm_eq_abs]
+  nlinarith [mul_nonneg hkpos.le (sub_nonneg.mpr hb)]
+
+/-- The Poisson integrand of a continuous, linearly bounded profile is integrable on every
+horizontal line `-1 < σ < 1` of the strip. -/
+theorem integrable_P_σ_mul_of_abs_le {ℓ σ : ℝ} (hℓ : 0 < ℓ) (hbelow : -1 < σ) (habove : σ < 1)
+    {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ} (hA : 0 ≤ A)
+    (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) (x : ℝ) :
+    Integrable fun T : ℝ ↦ P_σ σ T * b (x - ℓ * T) := by
+  have hmeas : Measurable fun T : ℝ ↦ P_σ σ T * b (x - ℓ * T) :=
+    (by unfold P_σ θ; fun_prop : Measurable fun T : ℝ ↦ P_σ σ T).mul
+      (hb.measurable.comp (by fun_prop))
+  exact (((stripPoissonKernel_integrable hbelow habove).const_mul _).add
+    ((integrable_P_σ_mul_abs hbelow habove).const_mul _)).mono' hmeas.aestronglyMeasurable
+    (.of_forall fun T ↦ norm_P_σ_mul_le_of_abs_le hℓ hbelow habove hA hbound x T)
+
+/-- Report Lemma 3.2: `Re W[b](z) = ∫ P_σ(T) b(Re z − ℓT) dT` grows at most linearly in `Re z`,
+uniformly on the open strip `|Im z| < ℓ`, when `|b y| ≤ A (1 + |y|)`: the mass `M_σ ≤ 1` and the
+first absolute moments of the kernels are bounded uniformly in `σ`. -/
+theorem exists_abs_W_b_re_le {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ}
+    (hA : 0 ≤ A) (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) :
+    ∃ B : ℝ, 0 ≤ B ∧ ∀ z : ℂ, z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ →
+      |(W_b ℓ b z).re| ≤ B * (1 + |z.re|) := by
   obtain ⟨M, hM, hmoment⟩ := exists_integral_P_σ_mul_abs_le
-  refine ⟨A * (1 + (d : ℝ) / 2 * M), by positivity, fun z hz ↦ ?_⟩
-  obtain ⟨σ, hbelow, habove, hre⟩ : ∃ σ : ℝ, -1 < σ ∧ σ < 1 ∧ (W_D ((d : ℝ) / 2) R D z).re =
-      ∫ T : ℝ, P_σ σ T * h_ℓD ((d : ℝ) / 2) R D (z.re - (d : ℝ) / 2 * T) := by
-    have hbelow : -1 < z.im / ((d : ℝ) / 2) := (lt_div_iff₀ hℓ).2 (by simpa using hz.1)
-    have habove : z.im / ((d : ℝ) / 2) < 1 := (div_lt_iff₀ hℓ).2 (by simpa using hz.2)
-    have hre := lowerStripCappedGammaOuter_re_dimension (R := R) (D := D) hd hbelow habove z.re
-    rw [ofReal_div_mul_half hd z.im, mul_comm I (z.im : ℂ), Complex.re_add_im] at hre
-    exact ⟨_, hbelow, habove, hre⟩
-  have hconstant : Integrable fun T : ℝ ↦ A * (1 + |z.re|) * P_σ σ T :=
+  refine ⟨A * (1 + ℓ * M), by positivity, fun z hz ↦ ?_⟩
+  obtain ⟨hbelow, habove⟩ := im_div_mem_Ioo_of_mem_strip hℓ hz
+  have hconstant : Integrable fun T : ℝ ↦ A * (1 + |z.re|) * P_σ (z.im / ℓ) T :=
     (stripPoissonKernel_integrable hbelow habove).const_mul _
-  have hlinear : Integrable fun T : ℝ ↦ A * ((d : ℝ) / 2) * (P_σ σ T * |T|) :=
+  have hlinear : Integrable fun T : ℝ ↦ A * ℓ * (P_σ (z.im / ℓ) T * |T|) :=
     (integrable_P_σ_mul_abs hbelow habove).const_mul _
-  have hpoint : ∀ᵐ T : ℝ, ‖P_σ σ T * h_ℓD ((d : ℝ) / 2) R D (z.re - (d : ℝ) / 2 * T)‖ ≤
-      A * (1 + |z.re|) * P_σ σ T + A * ((d : ℝ) / 2) * (P_σ σ T * |T|) := by
-    refine .of_forall fun T ↦ ?_
-    have hkpos := stripPoissonKernel_pos hbelow habove T
-    have hb : |h_ℓD ((d : ℝ) / 2) R D (z.re - (d : ℝ) / 2 * T)| ≤
-        A * (1 + |z.re| + (d : ℝ) / 2 * |T|) := by
-      refine (hdatum _).trans (mul_le_mul_of_nonneg_left ?_ hA)
-      have habs := abs_sub z.re ((d : ℝ) / 2 * T)
-      rw [abs_mul, abs_of_pos hℓ] at habs
-      linarith
-    rw [norm_mul, Real.norm_eq_abs, abs_of_pos hkpos, Real.norm_eq_abs]
-    nlinarith [mul_nonneg hkpos.le (sub_nonneg.mpr hb)]
-  rw [hre]
-  calc |∫ T : ℝ, P_σ σ T * h_ℓD ((d : ℝ) / 2) R D (z.re - (d : ℝ) / 2 * T)|
-      ≤ ∫ T : ℝ, (A * (1 + |z.re|) * P_σ σ T + A * ((d : ℝ) / 2) * (P_σ σ T * |T|)) := by
+  rw [W_b_re_of_mem_strip hℓ hb hbound hz]
+  calc |∫ T : ℝ, P_σ (z.im / ℓ) T * b (z.re - ℓ * T)|
+      ≤ ∫ T : ℝ, (A * (1 + |z.re|) * P_σ (z.im / ℓ) T + A * ℓ * (P_σ (z.im / ℓ) T * |T|)) := by
         rw [← Real.norm_eq_abs]
-        exact norm_integral_le_of_norm_le (hconstant.add hlinear) hpoint
-    _ = A * (1 + |z.re|) * M_σ σ + A * ((d : ℝ) / 2) * ∫ T : ℝ, P_σ σ T * |T| := by
+        exact norm_integral_le_of_norm_le (hconstant.add hlinear)
+          (.of_forall fun T ↦ norm_P_σ_mul_le_of_abs_le hℓ hbelow habove hA hbound z.re T)
+    _ = A * (1 + |z.re|) * M_σ (z.im / ℓ) + A * ℓ * ∫ T : ℝ, P_σ (z.im / ℓ) T * |T| := by
         rw [integral_add hconstant hlinear, integral_const_mul, integral_const_mul,
           integral_stripPoissonKernel hbelow habove]
-    _ ≤ A * (1 + (d : ℝ) / 2 * M) * (1 + |z.re|) := by
+    _ ≤ A * (1 + ℓ * M) * (1 + |z.re|) := by
         have h₁ := mul_le_mul_of_nonneg_left (stripBottomMass_lt_one hbelow).le
           (by positivity : (0 : ℝ) ≤ A * (1 + |z.re|))
-        have h₂ := mul_le_mul_of_nonneg_left (hmoment σ hbelow habove)
-          (by positivity : (0 : ℝ) ≤ A * ((d : ℝ) / 2))
+        have h₂ := mul_le_mul_of_nonneg_left (hmoment _ hbelow habove)
+          (by positivity : (0 : ℝ) ≤ A * ℓ)
         nlinarith [mul_nonneg (mul_nonneg (mul_nonneg hA hℓ.le) hM) (abs_nonneg z.re)]
 
-/-- Report Lemma 3.2: the weighted Mellin integrand `e^{-W_D} Z_g` grows like
-`exp (B exp (c |Re z|))` with `c = π/(4λ)`, below the Phragmén–Lindelöf threshold `π/(2λ)`. -/
-theorem isBigO_exp_neg_W_D_mul_Z_g {d : ℕ} {ς : ℤˣ} (hd : 0 < d) (g : RadialEigenfunction d ς)
-    (R D : ℝ) :
-    ∃ c < π / ((d : ℝ) / 2 - -((d : ℝ) / 2)), ∃ B : ℝ,
-      (fun z : ℂ ↦ Complex.exp (-(W_D ((d : ℝ) / 2) R D z)) * Z_g hd g.toFun R z) =O[
-          comap (fun z : ℂ ↦ |z.re|) atTop ⊓
-            principal (Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2))]
-        fun z : ℂ ↦ Real.exp (B * Real.exp (c * |z.re|)) := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  obtain ⟨G, hG, houter⟩ := exists_abs_W_D_re_le hd R D
-  obtain ⟨K, hK, hwitness⟩ := g.exists_norm_Z_g_le hd R
-  obtain ⟨c, hc, hclt⟩ : ∃ c : ℝ, 0 < c ∧ c < π / ((d : ℝ) / 2 - -((d : ℝ) / 2)) :=
-    ⟨π / (4 * ((d : ℝ) / 2)), by positivity,
-      (div_lt_div_iff₀ (by positivity) (by linarith)).2 (by nlinarith [Real.pi_pos])⟩
-  refine ⟨c, hclt, G * (1 + 1 / c), IsBigO.of_bound (K + 1)
-    (eventually_inf_principal.mpr (.of_forall fun z hz ↦ ?_))⟩
-  have hexp : G * (1 + |z.re|) ≤ G * (1 + 1 / c) * Real.exp (c * |z.re|) := by
-    have hlin : 1 + |z.re| ≤ (1 + 1 / c) * (1 + c * |z.re|) := by
-      have hrecip : 1 / c * (c * |z.re|) = |z.re| := by
-        rw [← mul_assoc, one_div_mul_cancel hc.ne', one_mul]
-      linarith [mul_nonneg hc.le (abs_nonneg z.re), one_div_pos.mpr hc]
-    calc G * (1 + |z.re|) ≤ G * ((1 + 1 / c) * Real.exp (c * |z.re|)) :=
+/-- Report Lemma 3.2: if `Z` has the Phragmén–Lindelöf growth `Z = O(exp (B e^{c |Re z|}))` on
+the strip `|Im z| < ℓ` for some `c < π/(2ℓ)`, so does `e^{-W[b]} Z`: the linear bound
+`|Re W[b](z)| ≤ G (1 + |Re z|)` costs a factor `exp (G (1 + 1/c') e^{c' |Re z|})` for any
+`c' > 0`, and one may take `c' = max c (π/(4ℓ))`. -/
+theorem isBigO_exp_neg_W_b_mul {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ}
+    (hA : 0 ≤ A) (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) {Z : ℂ → ℂ}
+    (hgrowth : ∃ c < π / (2 * ℓ), ∃ B : ℝ, Z =O[comap (fun z : ℂ ↦ |z.re|) atTop ⊓
+      𝓟 (Complex.im ⁻¹' Ioo (-ℓ) ℓ)] fun z : ℂ ↦ Real.exp (B * Real.exp (c * |z.re|))) :
+    ∃ c < π / (2 * ℓ), ∃ B : ℝ,
+      (fun z : ℂ ↦ Complex.exp (-(W_b ℓ b z)) * Z z) =O[comap (fun z : ℂ ↦ |z.re|) atTop ⊓
+        𝓟 (Complex.im ⁻¹' Ioo (-ℓ) ℓ)] fun z : ℂ ↦ Real.exp (B * Real.exp (c * |z.re|)) := by
+  obtain ⟨c, hc, B, hO⟩ := hgrowth
+  obtain ⟨G, hG, houter⟩ := exists_abs_W_b_re_le hℓ hb hA hbound
+  obtain ⟨c', hcc', hc'pos, hc'lt⟩ : ∃ c' : ℝ, c ≤ c' ∧ 0 < c' ∧ c' < π / (2 * ℓ) :=
+    ⟨max c (π / (4 * ℓ)), le_max_left _ _, lt_max_of_lt_right (by positivity),
+      max_lt hc ((div_lt_div_iff_of_pos_left Real.pi_pos (by positivity) (by positivity)).2
+        (by linarith))⟩
+  refine ⟨c', hc'lt, G * (1 + 1 / c') + max B 0, ?_⟩
+  have hexp : ∀ z : ℂ, G * (1 + |z.re|) ≤ G * (1 + 1 / c') * Real.exp (c' * |z.re|) := fun z ↦ by
+    have hlin : 1 + |z.re| ≤ (1 + 1 / c') * (1 + c' * |z.re|) := by
+      have hrecip : 1 / c' * (c' * |z.re|) = |z.re| := by
+        rw [← mul_assoc, one_div_mul_cancel hc'pos.ne', one_mul]
+      linarith [mul_nonneg hc'pos.le (abs_nonneg z.re), one_div_pos.mpr hc'pos]
+    calc G * (1 + |z.re|) ≤ G * ((1 + 1 / c') * Real.exp (c' * |z.re|)) :=
           mul_le_mul_of_nonneg_left (hlin.trans (mul_le_mul_of_nonneg_left
-            (by simpa [add_comm] using Real.add_one_le_exp (c * |z.re|)) (by positivity))) hG
-      _ = G * (1 + 1 / c) * Real.exp (c * |z.re|) := by ring
-  rw [norm_mul, Complex.norm_exp, Complex.neg_re, Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
-  calc Real.exp (-(W_D ((d : ℝ) / 2) R D z).re) * ‖Z_g hd g.toFun R z‖
-      ≤ Real.exp (G * (1 + |z.re|)) * K :=
-        mul_le_mul (Real.exp_le_exp.mpr ((neg_le_abs _).trans (houter z hz)))
-          (hwitness z hz.1.le hz.2.le) (norm_nonneg _) (Real.exp_pos _).le
-    _ ≤ Real.exp (G * (1 + 1 / c) * Real.exp (c * |z.re|)) * K :=
-        mul_le_mul_of_nonneg_right (Real.exp_le_exp.mpr hexp) hK
-    _ ≤ (K + 1) * Real.exp (G * (1 + 1 / c) * Real.exp (c * |z.re|)) := by
-        nlinarith [Real.exp_pos (G * (1 + 1 / c) * Real.exp (c * |z.re|))]
+            (by simpa [add_comm] using Real.add_one_le_exp (c' * |z.re|)) (by positivity))) hG
+      _ = G * (1 + 1 / c') * Real.exp (c' * |z.re|) := by ring
+  have houterO : (fun z : ℂ ↦ Complex.exp (-(W_b ℓ b z))) =O[comap (fun z : ℂ ↦ |z.re|) atTop ⊓
+      𝓟 (Complex.im ⁻¹' Ioo (-ℓ) ℓ)]
+        fun z : ℂ ↦ Real.exp (G * (1 + 1 / c') * Real.exp (c' * |z.re|)) := by
+    refine IsBigO.of_bound' (eventually_inf_principal.mpr (.of_forall fun z hz ↦ ?_))
+    rw [Complex.norm_exp, Complex.neg_re, Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
+    exact Real.exp_le_exp.mpr ((neg_le_abs _).trans ((houter z hz).trans (hexp z)))
+  refine (houterO.mul hO).trans (IsBigO.of_bound' (.of_forall fun z ↦ ?_))
+  have hB : B * Real.exp (c * |z.re|) ≤ max B 0 * Real.exp (c' * |z.re|) :=
+    (mul_le_mul_of_nonneg_right (le_max_left B 0) (Real.exp_pos _).le).trans
+      (mul_le_mul_of_nonneg_left (Real.exp_le_exp.mpr
+        (mul_le_mul_of_nonneg_right hcc' (abs_nonneg _))) (le_max_right B 0))
+  rw [norm_mul, Real.norm_eq_abs, Real.norm_eq_abs, Real.norm_eq_abs,
+    abs_of_pos (Real.exp_pos _), abs_of_pos (Real.exp_pos _), abs_of_pos (Real.exp_pos _),
+    ← Real.exp_add, add_mul]
+  exact Real.exp_le_exp.mpr (by linarith)
 
 /-- Boundary traces at the bottom edge `Im z = -ℓ`: the abscissa converges to `s`, the normalized
 height `Im z / ℓ` to `-1`, and the latter eventually lies in `(-1, 0]`. -/
@@ -9237,68 +9434,6 @@ theorem tendsto_integral_top {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb 
     (hrange.mono fun z hz T _ ↦ P_σ_le_exponentialMajorant hz.1 hz.2 T)
     fun T _ ↦ (tendsto_P_σ_one T).comp hσ
 
-/-- Report Lemma 3.2: for `D` large enough the capped profile majorizes the bottom-edge values of
-`Z_g`; away from the pole this is the Gamma bound, near it the global bound `C` and the cap. -/
-theorem exists_norm_Z_g_bottom_le_exp_h_ℓD {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
-    (g : RadialEigenfunction d ς) {R : ℝ} (hR : 0 < R) :
-    ∃ D₀ : ℝ, ∀ D : ℝ, D₀ ≤ D → ∀ y : ℝ,
-      ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤
-        Real.exp (h_ℓD ((d : ℝ) / 2) R D y) := by
-  obtain ⟨C, hC, hglobal⟩ := g.exists_norm_Z_g_le hd R
-  refine ⟨Real.log (C + 1), fun D hD y ↦ ?_⟩
-  have hbounded := hglobal ((y : ℂ) - I * ((d : ℂ) / 2)) (by simp)
-    (by simp; linarith [Nat.cast_nonneg (α := ℝ) d])
-  have hexp : ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤ Real.exp D :=
-    calc ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤ C + 1 := by linarith
-      _ = Real.exp (Real.log (C + 1)) := (Real.exp_log (by linarith)).symm
-      _ ≤ Real.exp D := Real.exp_le_exp.mpr hD
-  rcases eq_or_ne y 0 with rfl | hy
-  · simpa [h_ℓD] using hexp
-  · rw [h_ℓD, if_neg hy]
-    rcases le_total (h_ℓ ((d : ℝ) / 2) R y) D with hmin | hmin
-    · rw [min_eq_left hmin]
-      exact g.norm_Z_g_bottom_le_exp_h_ℓ hd hR y hy
-    · rw [min_eq_right hmin]
-      exact hexp
-
-/-- On the open strip `Re W_D` is the Poisson average of the capped boundary profile;
-report (16). -/
-theorem W_D_re_eventuallyEq {d : ℕ} (hd : 0 < d) (R D : ℝ) (z₀ : ℂ) :
-    (fun z : ℂ ↦ (W_D ((d : ℝ) / 2) R D z).re) =ᶠ[
-      𝓝[Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2)] z₀]
-      fun z : ℂ ↦ ∫ T : ℝ, P_σ (z.im / ((d : ℝ) / 2)) T *
-        h_ℓD ((d : ℝ) / 2) R D (z.re - (d : ℝ) / 2 * T) := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  filter_upwards [self_mem_nhdsWithin] with z hz
-  have hbelow : -1 < z.im / ((d : ℝ) / 2) := (lt_div_iff₀ hℓ).2 (by simpa using hz.1)
-  have habove : z.im / ((d : ℝ) / 2) < 1 := (div_lt_iff₀ hℓ).2 (by simpa using hz.2)
-  have hre := lowerStripCappedGammaOuter_re_dimension (R := R) (D := D) hd hbelow habove z.re
-  rwa [ofReal_div_mul_half hd z.im, mul_comm I (z.im : ℂ), Complex.re_add_im] at hre
-
-/-- Report Lemma 3.2: `Re W_D` extends continuously to the bottom edge, with trace `h_{λ,D}`. -/
-theorem tendsto_W_D_re_bottom {d : ℕ} (hd : 0 < d) (R D s : ℝ) :
-    Tendsto (fun z : ℂ ↦ (W_D ((d : ℝ) / 2) R D z).re)
-      (𝓝[Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2)]
-        ((s : ℂ) - I * ((d : ℂ) / 2))) (𝓝 (h_ℓD ((d : ℝ) / 2) R D s)) := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  obtain ⟨A, hA, hbound⟩ := exists_abs_h_ℓD_le hd R D
-  rw [show ((d : ℂ) / 2) = ((d : ℝ) / 2 : ℝ) by
-    rw [Complex.ofReal_div, Complex.ofReal_natCast, Complex.ofReal_ofNat]]
-  exact (tendsto_integral_bottom hℓ (lowerGammaBoundaryCapped_continuous hℓ R D) hA hbound
-    (lowerGammaBoundaryCapped_central_poisson_shift_integrable hd R D) s).congr'
-      (W_D_re_eventuallyEq hd R D _).symm
-
-/-- Report Lemma 3.2: `Re W_D` extends continuously to the top edge, with trace `0`. -/
-theorem tendsto_W_D_re_top {d : ℕ} (hd : 0 < d) (R D s : ℝ) :
-    Tendsto (fun z : ℂ ↦ (W_D ((d : ℝ) / 2) R D z).re)
-      (𝓝[Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2)]
-        ((s : ℂ) + I * ((d : ℂ) / 2))) (𝓝 (0 : ℝ)) := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  obtain ⟨A, hA, hbound⟩ := exists_abs_h_ℓD_le hd R D
-  rw [show ((d : ℂ) / 2) = ((d : ℝ) / 2 : ℝ) by
-    rw [Complex.ofReal_div, Complex.ofReal_natCast, Complex.ofReal_ofNat]]
-  exact (tendsto_integral_top hℓ (lowerGammaBoundaryCapped_continuous hℓ R D) hA hbound s).congr'
-    (W_D_re_eventuallyEq hd R D _).symm
 
 /-- Extend a function on the open horizontal strip `a < Im z < b` to the closed strip by
 prescribing its traces on the two edges. -/
@@ -9362,57 +9497,178 @@ theorem stripTraceExtension_continuousOn {a b : ℝ} (hab : a < b) (H : ℂ → 
       simp [hE, stripTraceExtension, hw])).union
     (hedge b top htop fun w hw ↦ by simp [hE, stripTraceExtension, hw, hba])
 
-/-- The continuous extension of `Re W_D` to the closed strip `|Im z| ≤ λ`, with bottom trace
-`h_{λ,D}` and top trace `0`; report Lemma 3.2. -/
-def W_D_reExtension (d : ℕ) (R D : ℝ) : ℂ → ℝ :=
-  stripTraceExtension (-((d : ℝ) / 2)) ((d : ℝ) / 2) (fun w : ℂ ↦ (W_D ((d : ℝ) / 2) R D w).re)
-    (h_ℓD ((d : ℝ) / 2) R D) fun _ : ℝ ↦ 0
+/-- Report Lemma 3.2: `Re W[b]` extends continuously to the bottom edge `Im z = -ℓ`, with trace
+`b`. -/
+theorem tendsto_W_b_re_bottom {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ}
+    (hA : 0 ≤ A) (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) (s : ℝ) :
+    Tendsto (fun z : ℂ ↦ (W_b ℓ b z).re)
+      (𝓝[Complex.im ⁻¹' Ioo (-ℓ) ℓ] ((s : ℂ) - I * (ℓ : ℂ))) (𝓝 (b s)) :=
+  (tendsto_integral_bottom hℓ hb hA hbound
+    (fun t ↦ integrable_P_σ_mul_of_abs_le hℓ (by norm_num) one_pos hb hA hbound t) s).congr'
+    (eventually_nhdsWithin_of_forall fun _ hz ↦ (W_b_re_of_mem_strip hℓ hb hbound hz).symm)
 
-/-- The extension `W_D_reExtension` is continuous on the closed strip; report Lemma 3.2. -/
-theorem W_D_reExtension_continuousOn {d : ℕ} (hd : 0 < d) (R D : ℝ) :
-    ContinuousOn (W_D_reExtension d R D) (Complex.im ⁻¹' Icc (-((d : ℝ) / 2)) ((d : ℝ) / 2)) := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
+/-- Report Lemma 3.2: `Re W[b]` extends continuously to the top edge `Im z = ℓ`, with trace `0`. -/
+theorem tendsto_W_b_re_top {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ}
+    (hA : 0 ≤ A) (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) (s : ℝ) :
+    Tendsto (fun z : ℂ ↦ (W_b ℓ b z).re)
+      (𝓝[Complex.im ⁻¹' Ioo (-ℓ) ℓ] ((s : ℂ) + I * (ℓ : ℂ))) (𝓝 (0 : ℝ)) :=
+  (tendsto_integral_top hℓ hb hA hbound s).congr'
+    (eventually_nhdsWithin_of_forall fun _ hz ↦ (W_b_re_of_mem_strip hℓ hb hbound hz).symm)
+
+/-- The continuous extension of `Re W[b]` to the closed strip `|Im z| ≤ ℓ`, with bottom trace `b`
+and top trace `0`; report Lemma 3.2. -/
+def W_b_reExtension (ℓ : ℝ) (b : ℝ → ℝ) : ℂ → ℝ :=
+  stripTraceExtension (-ℓ) ℓ (fun w : ℂ ↦ (W_b ℓ b w).re) b fun _ : ℝ ↦ 0
+
+/-- On the open strip the extension `W_b_reExtension` is `Re W[b]`. -/
+theorem W_b_reExtension_of_mem_strip (ℓ : ℝ) (b : ℝ → ℝ) {v : ℂ} (hv : v.im ∈ Ioo (-ℓ) ℓ) :
+    W_b_reExtension ℓ b v = (W_b ℓ b v).re := by
+  simp [W_b_reExtension, stripTraceExtension, (ne_of_gt hv.1 : v.im ≠ -ℓ),
+    (ne_of_lt hv.2 : v.im ≠ ℓ)]
+
+/-- The extension `W_b_reExtension` is continuous on the closed strip; report Lemma 3.2. -/
+theorem W_b_reExtension_continuousOn {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ}
+    (hA : 0 ≤ A) (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) :
+    ContinuousOn (W_b_reExtension ℓ b) (Complex.im ⁻¹' Icc (-ℓ) ℓ) := by
   refine stripTraceExtension_continuousOn (by linarith) _ _ _
-    (Complex.continuous_re.comp_continuousOn
-      (lowerStripCappedGammaOuter_differentiableOn_dimension hd R D).continuousOn)
-    (lowerGammaBoundaryCapped_continuous hℓ R D) continuous_const (fun s ↦ ?_) fun s ↦ ?_
-  · simpa [sub_eq_add_neg] using tendsto_W_D_re_bottom hd R D s
-  · simpa using tendsto_W_D_re_top hd R D s
+    (Complex.continuous_re.comp_continuousOn (differentiableOn_W_b hℓ hb hbound).continuousOn)
+    hb continuous_const (fun s ↦ ?_) fun s ↦ ?_
+  · simpa [sub_eq_add_neg] using tendsto_W_b_re_bottom hℓ hb hA hbound s
+  · exact tendsto_W_b_re_top hℓ hb hA hbound s
 
-/-- On the bottom edge `e^{-W_D} Z_g` has modulus at most `1` once `‖Z_g‖ ≤ exp h_{λ,D}` there. -/
-private theorem exp_neg_W_D_reExtension_mul_norm_Z_g_bottom_le_one {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
-    (g : RadialEigenfunction d ς) (R D : ℝ)
-    (hcap : ∀ y : ℝ, ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤
-      Real.exp (h_ℓD ((d : ℝ) / 2) R D y))
-    (v : ℂ) (hv : v.im = -((d : ℝ) / 2)) :
-    Real.exp (-(W_D_reExtension d R D v)) * ‖Z_g hd g.toFun R v‖ ≤ 1 := by
-  have hnorm : ‖Z_g hd g.toFun R v‖ ≤ Real.exp (h_ℓD ((d : ℝ) / 2) R D v.re) := by
-    have h := hcap v.re
-    rwa [show (v.re : ℂ) - I * ((d : ℂ) / 2) = v from
-      Complex.ext (by simp) (by simp [hv])] at h
-  rw [show W_D_reExtension d R D v = h_ℓD ((d : ℝ) / 2) R D v.re by
-    simp [W_D_reExtension, stripTraceExtension, hv]]
-  calc Real.exp (-(h_ℓD ((d : ℝ) / 2) R D v.re)) * ‖Z_g hd g.toFun R v‖
-      ≤ Real.exp (-(h_ℓD ((d : ℝ) / 2) R D v.re)) * Real.exp (h_ℓD ((d : ℝ) / 2) R D v.re) :=
+/-- On the bottom edge `e^{-W[b]} Z` has modulus at most `1` once `‖Z‖ ≤ e^{b}` there. -/
+private theorem exp_neg_W_b_reExtension_mul_norm_bottom_le_one {ℓ : ℝ} {b : ℝ → ℝ} {Z : ℂ → ℂ}
+    (hbottom : ∀ y : ℝ, ‖Z ((y : ℂ) - I * (ℓ : ℂ))‖ ≤ Real.exp (b y)) (v : ℂ) (hv : v.im = -ℓ) :
+    Real.exp (-(W_b_reExtension ℓ b v)) * ‖Z v‖ ≤ 1 := by
+  have hnorm : ‖Z v‖ ≤ Real.exp (b v.re) := by
+    have h := hbottom v.re
+    rwa [show (v.re : ℂ) - I * (ℓ : ℂ) = v from Complex.ext (by simp) (by simp [hv])] at h
+  rw [show W_b_reExtension ℓ b v = b v.re by simp [W_b_reExtension, stripTraceExtension, hv]]
+  calc Real.exp (-(b v.re)) * ‖Z v‖ ≤ Real.exp (-(b v.re)) * Real.exp (b v.re) :=
         mul_le_mul_of_nonneg_left hnorm (Real.exp_pos _).le
     _ = 1 := by rw [← Real.exp_add]; simp
 
-/-- On the top edge `e^{-W_D} Z_g` has modulus at most `1`. -/
-private theorem exp_neg_W_D_reExtension_mul_norm_Z_g_top_le_one {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
-    (g : RadialEigenfunction d ς) (R D : ℝ) (v : ℂ) (hv : v.im = (d : ℝ) / 2) :
-    Real.exp (-(W_D_reExtension d R D v)) * ‖Z_g hd g.toFun R v‖ ≤ 1 := by
-  have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  have hnorm : ‖Z_g hd g.toFun R v‖ ≤ 1 := by
-    have h := g.norm_Z_g_top_le_one hd R v.re
-    rwa [show (v.re : ℂ) + I * ((d : ℂ) / 2) = v from
-      Complex.ext (by simp) (by simp [hv])] at h
-  rw [show W_D_reExtension d R D v = 0 by
-    simp [W_D_reExtension, stripTraceExtension, hv, (by linarith : (d : ℝ) / 2 ≠ -((d : ℝ) / 2))]]
+/-- On the top edge `e^{-W[b]} Z` has modulus at most `1` once `‖Z‖ ≤ 1` there. -/
+private theorem exp_neg_W_b_reExtension_mul_norm_top_le_one {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ}
+    {Z : ℂ → ℂ} (htop : ∀ y : ℝ, ‖Z ((y : ℂ) + I * (ℓ : ℂ))‖ ≤ 1) (v : ℂ) (hv : v.im = ℓ) :
+    Real.exp (-(W_b_reExtension ℓ b v)) * ‖Z v‖ ≤ 1 := by
+  have hnorm : ‖Z v‖ ≤ 1 := by
+    have h := htop v.re
+    rwa [show (v.re : ℂ) + I * (ℓ : ℂ) = v from Complex.ext (by simp) (by simp [hv])] at h
+  rw [show W_b_reExtension ℓ b v = 0 by
+    simp [W_b_reExtension, stripTraceExtension, hv, (by linarith : ℓ ≠ -ℓ)]]
   simpa using hnorm
 
-/-- Report Lemma 3.2: `|Z(s + iσλ)| ≤ exp(∫ P_σ(T) h_{λ,D}(s − λT) dT)`, by Phragmén–Lindelöf
-applied to `e^{-W_D} Z_g`, whose modulus extends continuously to the closed strip with boundary
-values at most `1`. -/
+/-- **Poisson principle for the strip** (report, proof of Lemma 3.2). Let `Z` be holomorphic on
+the open strip `|Im z| < ℓ` and continuous on its closure, with the Phragmén–Lindelöf growth
+`Z = O(exp (B e^{c |Re z|}))` as `|Re z| → ∞` in the strip for some `c < π/(2ℓ)`. Let `b` be a
+continuous profile with `|b y| ≤ A (1 + |y|)` such that `‖Z(y − iℓ)‖ ≤ e^{b(y)}` on the bottom
+edge and `‖Z(y + iℓ)‖ ≤ 1` on the top edge. Then at every interior point `s + iσℓ`, `-1 < σ < 1`,
+`‖Z(s + iσℓ)‖ ≤ exp (∫ P_σ(T) b(s − ℓT) dT)`, the exponential of the Poisson integral of `b`.
+
+Proof: Phragmén–Lindelöf (`PhragmenLindelof.horizontal_strip_norm_extension`) applied to
+`e^{-W[b]} Z`, where `W[b]` is the holomorphic Poisson integral of `b`: `Re W[b]` is the Poisson
+average of `b`, its extension to the closed strip is continuous with traces `b` (bottom) and `0`
+(top), so `e^{-W[b]} Z` has modulus at most `1` on both edges, and it keeps the growth of `Z`
+since `|Re W[b](z)| ≤ B (1 + |Re z|)`. -/
+theorem norm_le_exp_integral_P_σ_of_strip {ℓ : ℝ} (hℓ : 0 < ℓ) {Z : ℂ → ℂ}
+    (hZ : DiffContOnCl ℂ Z (Complex.im ⁻¹' Ioo (-ℓ) ℓ))
+    (hgrowth : ∃ c < π / (2 * ℓ), ∃ B : ℝ, Z =O[comap (fun z : ℂ ↦ |z.re|) atTop ⊓
+      𝓟 (Complex.im ⁻¹' Ioo (-ℓ) ℓ)] fun z : ℂ ↦ Real.exp (B * Real.exp (c * |z.re|)))
+    {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ} (hA : 0 ≤ A)
+    (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|))
+    (hbottom : ∀ y : ℝ, ‖Z ((y : ℂ) - I * (ℓ : ℂ))‖ ≤ Real.exp (b y))
+    (htop : ∀ y : ℝ, ‖Z ((y : ℂ) + I * (ℓ : ℂ))‖ ≤ 1)
+    {σ : ℝ} (hσbelow : -1 < σ) (hσabove : σ < 1) (s : ℝ) :
+    ‖Z ((s : ℂ) + I * (σ * ℓ : ℂ))‖ ≤ Real.exp (∫ T : ℝ, P_σ σ T * b (s - ℓ * T)) := by
+  have hwidth : -ℓ < ℓ := by linarith
+  have hZcont : ContinuousOn Z (Complex.im ⁻¹' Icc (-ℓ) ℓ) := by
+    have hcl : closure (Complex.im ⁻¹' Ioo (-ℓ) ℓ) = Complex.im ⁻¹' Icc (-ℓ) ℓ := by
+      rw [Complex.closure_preimage_im, closure_Ioo hwidth.ne]
+    simpa [hcl] using hZ.continuousOn
+  have hzmem : ((s : ℂ) + I * (σ * ℓ : ℂ)).im ∈ Ioo (-ℓ) ℓ := by
+    simp only [mem_Ioo, Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.mul_re,
+      Complex.I_re, Complex.ofReal_re, zero_mul, Complex.I_im, one_mul, zero_add, mul_zero,
+      sub_zero, add_zero]
+    constructor
+    · nlinarith [mul_pos (show 0 < 1 + σ by linarith) hℓ]
+    · nlinarith [mul_pos (show 0 < 1 - σ by linarith) hℓ]
+  have hmax := PhragmenLindelof.horizontal_strip_norm_extension hwidth one_pos
+    (fun v ↦ Complex.exp (-(W_b ℓ b v)) * Z v)
+    (fun v ↦ Real.exp (-(W_b_reExtension ℓ b v)) * ‖Z v‖)
+    ((differentiableOn_W_b hℓ hb hbound).neg.cexp.mul hZ.differentiableOn)
+    ((W_b_reExtension_continuousOn hℓ hb hA hbound).neg.rexp.mul hZcont.norm)
+    (fun _ _ ↦ mul_nonneg (Real.exp_pos _).le (norm_nonneg _))
+    (fun v hv ↦ by
+      rw [W_b_reExtension_of_mem_strip ℓ b hv, norm_mul, Complex.norm_exp, Complex.neg_re])
+    (exp_neg_W_b_reExtension_mul_norm_bottom_le_one hbottom)
+    (exp_neg_W_b_reExtension_mul_norm_top_le_one hℓ htop)
+    (by
+      rw [show ℓ - -ℓ = 2 * ℓ by ring]
+      exact isBigO_exp_neg_W_b_mul hℓ hb hA hbound hgrowth) hzmem.1.le hzmem.2.le
+  rw [W_b_reExtension_of_mem_strip ℓ b hzmem, W_b_re hℓ hσbelow hσabove s b
+    (integrable_K'_ℓ_mul hℓ hzmem b hb
+      (integrable_exp_neg_mul_abs_mul_of_abs_le (by positivity) hb hbound))] at hmax
+  calc ‖Z ((s : ℂ) + I * (σ * ℓ : ℂ))‖
+      = Real.exp (∫ T : ℝ, P_σ σ T * b (s - ℓ * T)) *
+          (Real.exp (-(∫ T : ℝ, P_σ σ T * b (s - ℓ * T))) * ‖Z ((s : ℂ) + I * (σ * ℓ : ℂ))‖) := by
+        rw [← mul_assoc (Real.exp _), ← Real.exp_add]; simp
+    _ ≤ Real.exp (∫ T : ℝ, P_σ σ T * b (s - ℓ * T)) * 1 :=
+        mul_le_mul_of_nonneg_left hmax (Real.exp_pos _).le
+    _ = _ := mul_one _
+
+/-- A function bounded on the open strip `|Im z| < ℓ` has the Phragmén–Lindelöf growth required
+by `norm_le_exp_integral_P_σ_of_strip` (with `c = 0` and `B = 0`). -/
+theorem isBigO_exp_mul_exp_abs_re_of_norm_le {ℓ : ℝ} (hℓ : 0 < ℓ) {Z : ℂ → ℂ} {K : ℝ}
+    (hK : ∀ z : ℂ, z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ → ‖Z z‖ ≤ K) :
+    ∃ c < π / (2 * ℓ), ∃ B : ℝ, Z =O[comap (fun z : ℂ ↦ |z.re|) atTop ⊓
+      𝓟 (Complex.im ⁻¹' Ioo (-ℓ) ℓ)] fun z : ℂ ↦ Real.exp (B * Real.exp (c * |z.re|)) :=
+  ⟨0, by positivity, 0, IsBigO.of_bound K (eventually_inf_principal.mpr (.of_forall fun z hz ↦ by
+    simpa using hK z hz))⟩
+
+/-- The Poisson principle `norm_le_exp_integral_P_σ_of_strip` for a *bounded* holomorphic function
+on the strip: `‖Z(s + iσℓ)‖ ≤ exp (∫ P_σ(T) b(s − ℓT) dT)` when `‖Z‖ ≤ K` in the open strip,
+`‖Z(y − iℓ)‖ ≤ e^{b(y)}` and `‖Z(y + iℓ)‖ ≤ 1`. -/
+theorem norm_le_exp_integral_P_σ_of_strip_of_norm_le {ℓ : ℝ} (hℓ : 0 < ℓ) {Z : ℂ → ℂ}
+    (hZ : DiffContOnCl ℂ Z (Complex.im ⁻¹' Ioo (-ℓ) ℓ)) {K : ℝ}
+    (hK : ∀ z : ℂ, z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ → ‖Z z‖ ≤ K)
+    {b : ℝ → ℝ} (hb : Continuous b) {A : ℝ} (hA : 0 ≤ A)
+    (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|))
+    (hbottom : ∀ y : ℝ, ‖Z ((y : ℂ) - I * (ℓ : ℂ))‖ ≤ Real.exp (b y))
+    (htop : ∀ y : ℝ, ‖Z ((y : ℂ) + I * (ℓ : ℂ))‖ ≤ 1)
+    {σ : ℝ} (hσbelow : -1 < σ) (hσabove : σ < 1) (s : ℝ) :
+    ‖Z ((s : ℂ) + I * (σ * ℓ : ℂ))‖ ≤ Real.exp (∫ T : ℝ, P_σ σ T * b (s - ℓ * T)) :=
+  norm_le_exp_integral_P_σ_of_strip hℓ hZ (isBigO_exp_mul_exp_abs_re_of_norm_le hℓ hK) hb hA
+    hbound hbottom htop hσbelow hσabove s
+
+/-- Report Lemma 3.2: for `D` large enough the capped profile majorizes the bottom-edge values of
+`Z_g`; away from the pole this is the Gamma bound, near it the global bound `C` and the cap. -/
+theorem exists_norm_Z_g_bottom_le_exp_h_ℓD {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
+    (g : RadialEigenfunction d ς) {R : ℝ} (hR : 0 < R) :
+    ∃ D₀ : ℝ, ∀ D : ℝ, D₀ ≤ D → ∀ y : ℝ,
+      ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤
+        Real.exp (h_ℓD ((d : ℝ) / 2) R D y) := by
+  obtain ⟨C, hC, hglobal⟩ := g.exists_norm_Z_g_le hd R
+  refine ⟨Real.log (C + 1), fun D hD y ↦ ?_⟩
+  have hbounded := hglobal ((y : ℂ) - I * ((d : ℂ) / 2)) (by simp)
+    (by simp; linarith [Nat.cast_nonneg (α := ℝ) d])
+  have hexp : ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤ Real.exp D :=
+    calc ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤ C + 1 := by linarith
+      _ = Real.exp (Real.log (C + 1)) := (Real.exp_log (by linarith)).symm
+      _ ≤ Real.exp D := Real.exp_le_exp.mpr hD
+  rcases eq_or_ne y 0 with rfl | hy
+  · simpa [h_ℓD] using hexp
+  · rw [h_ℓD, if_neg hy]
+    rcases le_total (h_ℓ ((d : ℝ) / 2) R y) D with hmin | hmin
+    · rw [min_eq_left hmin]
+      exact g.norm_Z_g_bottom_le_exp_h_ℓ hd hR y hy
+    · rw [min_eq_right hmin]
+      exact hexp
+
+/-- Report Lemma 3.2: `|Z(s + iσλ)| ≤ exp(∫ P_σ(T) h_{λ,D}(s − λT) dT)`, the Poisson principle
+`norm_le_exp_integral_P_σ_of_strip_of_norm_le` for the bounded function `Z_g` on the strip
+`|Im z| < λ = d/2` with the capped profile `b = h_{λ,D}`, which is continuous and linearly
+bounded; the top-edge bound is (16). -/
 theorem norm_Z_g_le_exp_integral_of_cap {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
     (g : RadialEigenfunction d ς) (R D : ℝ)
     (hcap : ∀ y : ℝ, ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤
@@ -9421,44 +9677,14 @@ theorem norm_Z_g_le_exp_integral_of_cap {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
     ‖Z_g hd g.toFun R ((s : ℂ) + I * (σ * ((d : ℂ) / 2)))‖ ≤
       Real.exp (∫ T : ℝ, P_σ σ T * h_ℓD ((d : ℝ) / 2) R D (s - (d : ℝ) / 2 * T)) := by
   have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  have hwidth : -((d : ℝ) / 2) < (d : ℝ) / 2 := by linarith
-  have hZcont : ContinuousOn (Z_g hd g.toFun R)
-      (Complex.im ⁻¹' Icc (-((d : ℝ) / 2)) ((d : ℝ) / 2)) := by
-    have hcl : closure (Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2)) =
-        Complex.im ⁻¹' Icc (-((d : ℝ) / 2)) ((d : ℝ) / 2) := by
-      rw [Complex.closure_preimage_im, closure_Ioo hwidth.ne]
-    simpa [hcl] using (g.diffContOnCl_Z_g hd R).continuousOn
-  have hEint : ∀ v : ℂ, v.im ∈ Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2) →
-      W_D_reExtension d R D v = (W_D ((d : ℝ) / 2) R D v).re := fun v hv ↦ by
-    simp [W_D_reExtension, stripTraceExtension, (ne_of_gt hv.1 : v.im ≠ -((d : ℝ) / 2)),
-      (ne_of_lt hv.2 : v.im ≠ (d : ℝ) / 2)]
-  have hzim : ((s : ℂ) + I * (σ * ((d : ℂ) / 2))).im = σ * ((d : ℝ) / 2) := by simp
-  have hzmem : ((s : ℂ) + I * (σ * ((d : ℂ) / 2))).im ∈
-      Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2) := by
-    rw [hzim]
-    exact ⟨by nlinarith [mul_pos (show 0 < 1 + σ by linarith) hℓ],
-      by nlinarith [mul_pos (show 0 < 1 - σ by linarith) hℓ]⟩
-  have hmax := PhragmenLindelof.horizontal_strip_norm_extension hwidth one_pos
-    (fun v ↦ Complex.exp (-(W_D ((d : ℝ) / 2) R D v)) * Z_g hd g.toFun R v)
-    (fun v ↦ Real.exp (-(W_D_reExtension d R D v)) * ‖Z_g hd g.toFun R v‖)
-    ((lowerStripCappedGammaOuter_differentiableOn_dimension hd R D).neg.cexp.mul
-      (g.diffContOnCl_Z_g hd R).differentiableOn)
-    ((W_D_reExtension_continuousOn hd R D).neg.rexp.mul hZcont.norm)
-    (fun _ _ ↦ mul_nonneg (Real.exp_pos _).le (norm_nonneg _))
-    (fun v hv ↦ by rw [hEint v hv, norm_mul, Complex.norm_exp, Complex.neg_re])
-    (exp_neg_W_D_reExtension_mul_norm_Z_g_bottom_le_one hd g R D hcap)
-    (exp_neg_W_D_reExtension_mul_norm_Z_g_top_le_one hd g R D)
-    (isBigO_exp_neg_W_D_mul_Z_g hd g R D) hzmem.1.le hzmem.2.le
-  rw [(hEint _ hzmem).trans
-    (lowerStripCappedGammaOuter_re_dimension (R := R) (D := D) hd hbelow habove s)] at hmax
-  calc ‖Z_g hd g.toFun R ((s : ℂ) + I * (σ * ((d : ℂ) / 2)))‖
-      = Real.exp (∫ T : ℝ, P_σ σ T * h_ℓD ((d : ℝ) / 2) R D (s - (d : ℝ) / 2 * T)) *
-          (Real.exp (-(∫ T : ℝ, P_σ σ T * h_ℓD ((d : ℝ) / 2) R D (s - (d : ℝ) / 2 * T))) *
-            ‖Z_g hd g.toFun R ((s : ℂ) + I * (σ * ((d : ℂ) / 2)))‖) := by
-        rw [← mul_assoc (Real.exp _), ← Real.exp_add]; simp
-    _ ≤ Real.exp (∫ T : ℝ, P_σ σ T * h_ℓD ((d : ℝ) / 2) R D (s - (d : ℝ) / 2 * T)) * 1 :=
-        mul_le_mul_of_nonneg_left hmax (Real.exp_pos _).le
-    _ = _ := mul_one _
+  have hcast : ((d : ℂ) / 2) = (((d : ℝ) / 2 : ℝ) : ℂ) := by
+    rw [Complex.ofReal_div, Complex.ofReal_natCast, Complex.ofReal_ofNat]
+  obtain ⟨A, hA, hbound⟩ := exists_abs_h_ℓD_le hd R D
+  obtain ⟨K, -, hK⟩ := g.exists_norm_Z_g_le hd R
+  rw [hcast] at hcap ⊢
+  exact norm_le_exp_integral_P_σ_of_strip_of_norm_le hℓ (g.diffContOnCl_Z_g hd R)
+    (fun z hz ↦ hK z hz.1.le hz.2.le) (lowerGammaBoundaryCapped_continuous hℓ R D) hA hbound hcap
+    (fun y ↦ by rw [← hcast]; exact g.norm_Z_g_top_le_one hd R y) hbelow habove s
 
 /-- Report Lemma 3.2: for every large enough cap `D`, the normalized Mellin transform of a
 radial eigenfunction is majorized on the strip by the Poisson extension of `h_{λ,D}`. -/
@@ -22596,6 +22822,388 @@ end CohnElkies
 
 end CohnElkies_Asymptotics_Manuscript
 
+/-! ## Module `CohnElkies.LowerBound.LogMomentDigamma` -/
+
+section CohnElkies_LowerBound_LogMomentDigamma
+
+/-!
+# The logarithmic moment of the logistic density (report (22))
+
+For `x ≥ 0`, `∫ p(u) log √(x² + u²) du = ψ((x + 1) / 2) + log 2`, where `p` is the logistic
+density `poissonLogisticDensity` and `ψ` the digamma function
+(`CohnElkies.integral_poissonLogisticDensity_mul_log_sqrt`; equation (22) of the report, in the
+proof of Lemma 3.4).
+
+For `x > 0` the complex Frullani formula with parameters `1` and `x + iu` gives
+`log √(x² + u²) = Re log (x + iu) = ∫₀^∞ (e^{-t} - e^{-xt} cos (ut)) / t dt`. Integrating against
+`p` and swapping the integrals (Fubini; the kernel is bounded by `1 + x + |u|` for `t ≤ 1` and by
+`e^{-t} + e^{-xt}` for `t ≥ 1`), the inner `u`-integral is
+`(e^{-t} - e^{-xt} t / sinh t) / t = e^{-t} / t - e^{-xt} / sinh t` by the cosine transform of `p`.
+Gauss's integral for `ψ((x + 1) / 2)` becomes `∫₀^∞ (e^{-2s} / s - e^{-xs} / sinh s) ds` after the
+substitution `t = 2s`, and the difference of the two integrands is the Frullani kernel
+`(e^{-s} - e^{-2s}) / s`, whose integral is `log 2`. The case `x = 0` follows by dominated
+convergence along `x = 1 / (n + 1) ↓ 0`, with the majorant `p(u) |u| + π 𝟙_{[-1, 1]}(u) |log u|`,
+and the continuity of `ψ` on `(0, ∞)`.
+-/
+
+namespace CohnElkies
+open scoped Real
+open Complex (I)
+
+noncomputable section
+
+open Filter MeasureTheory Real Set
+open scoped Topology
+
+/-! ### The Frullani kernel of `log √(x² + u²)` -/
+
+/-- The Frullani kernel `(e^{-t} - e^{-xt} cos (ut)) / t` of `log √(x² + u²)`: the real part of
+`Frullani.cexpKernel 1 (x + iu)`. -/
+def logSqrtKernel (x u t : ℝ) : ℝ := (exp (-t) - exp (-x * t) * cos (u * t)) / t
+
+theorem logSqrtKernel_re (x u t : ℝ) :
+    (Frullani.cexpKernel 1 ((x : ℂ) + I * (u : ℂ)) t).re = logSqrtKernel x u t := by
+  unfold Frullani.cexpKernel logSqrtKernel
+  rw [Complex.div_ofReal_re]
+  simp [Complex.exp_re, Complex.mul_re, Complex.mul_im]
+
+theorem norm_ofReal_add_I_mul_ofReal (x u : ℝ) : ‖(x : ℂ) + I * (u : ℂ)‖ = √(x ^ 2 + u ^ 2) := by
+  rw [Complex.norm_def, Complex.normSq_apply]
+  congr 1
+  simp
+  ring
+
+/-- `log √(x² + u²) = ∫₀^∞ (e^{-t} - e^{-xt} cos (ut)) / t dt` for `x > 0`: the real part of the
+complex Frullani formula `∫₀^∞ (e^{-t} - e^{-(x + iu) t}) / t dt = log (x + iu)`. -/
+theorem integral_logSqrtKernel {x : ℝ} (hx : 0 < x) (u : ℝ) :
+    ∫ t in Ioi (0 : ℝ), logSqrtKernel x u t = log (√(x ^ 2 + u ^ 2)) := by
+  have hw : 0 < ((x : ℂ) + I * (u : ℂ)).re := by simpa using hx
+  have h1 : (0 : ℝ) < (1 : ℂ).re := by norm_num
+  calc ∫ t in Ioi (0 : ℝ), logSqrtKernel x u t
+      = ∫ t in Ioi (0 : ℝ), (Frullani.cexpKernel 1 ((x : ℂ) + I * (u : ℂ)) t).re :=
+        setIntegral_congr_fun measurableSet_Ioi fun t _ ↦ (logSqrtKernel_re x u t).symm
+    _ = (∫ t in Ioi (0 : ℝ), Frullani.cexpKernel 1 ((x : ℂ) + I * (u : ℂ)) t).re :=
+        integral_re (Frullani.integrableOn_cexpKernel h1 hw)
+    _ = log (√(x ^ 2 + u ^ 2)) := by
+        rw [Frullani.integral_cexpKernel h1 hw, Complex.log_one, sub_zero, Complex.log_re,
+          norm_ofReal_add_I_mul_ofReal]
+
+/-- `|(e^{-t} - e^{-xt} cos (ut)) / t| ≤ 1 + x + |u|` for `t > 0` and `x ≥ 0`, from
+`|e^{-t} - e^{-xt}| ≤ (1 - e^{-t}) + (1 - e^{-xt}) ≤ (1 + x) t` and `|1 - cos (ut)| ≤ |u| t`. -/
+theorem abs_logSqrtKernel_le {x : ℝ} (hx : 0 ≤ x) (u : ℝ) {t : ℝ} (ht : 0 < t) :
+    |logSqrtKernel x u t| ≤ 1 + x + |u| := by
+  have hr0 : 0 < exp (-x * t) := exp_pos _
+  have hq1 : exp (-t) ≤ 1 := exp_le_one_iff.mpr (by linarith)
+  have hr1 : exp (-x * t) ≤ 1 := exp_le_one_iff.mpr (by nlinarith)
+  have hqt : 1 - exp (-t) ≤ t := by linarith [add_one_le_exp (-t)]
+  have hrt : 1 - exp (-x * t) ≤ x * t := by linarith [add_one_le_exp (-x * t)]
+  have hcos : |cos (u * t) - 1| ≤ |u| * t := by
+    simpa [abs_mul, abs_of_pos ht] using abs_cos_sub_cos_le (u * t) 0
+  have h1 : |(1 - exp (-x * t)) - (1 - exp (-t))| ≤ x * t + t :=
+    calc |(1 - exp (-x * t)) - (1 - exp (-t))| ≤ |1 - exp (-x * t)| + |1 - exp (-t)| := abs_sub _ _
+      _ = (1 - exp (-x * t)) + (1 - exp (-t)) := by
+          rw [abs_of_nonneg (by linarith), abs_of_nonneg (by linarith)]
+      _ ≤ x * t + t := by linarith
+  have h2 : |exp (-x * t) * (cos (u * t) - 1)| ≤ |u| * t := by
+    rw [abs_mul, abs_of_pos hr0]
+    calc exp (-x * t) * |cos (u * t) - 1| ≤ 1 * (|u| * t) :=
+          mul_le_mul hr1 hcos (abs_nonneg _) zero_le_one
+      _ = |u| * t := one_mul _
+  unfold logSqrtKernel
+  rw [abs_div, abs_of_pos ht, div_le_iff₀ ht,
+    show exp (-t) - exp (-x * t) * cos (u * t) =
+      ((1 - exp (-x * t)) - (1 - exp (-t))) - exp (-x * t) * (cos (u * t) - 1) by ring]
+  calc |((1 - exp (-x * t)) - (1 - exp (-t))) - exp (-x * t) * (cos (u * t) - 1)|
+      ≤ |(1 - exp (-x * t)) - (1 - exp (-t))| + |exp (-x * t) * (cos (u * t) - 1)| :=
+        abs_sub _ _
+    _ ≤ (x * t + t) + |u| * t := add_le_add h1 h2
+    _ = (1 + x + |u|) * t := by ring
+
+/-- `|(e^{-t} - e^{-xt} cos (ut)) / t| ≤ e^{-t} + e^{-xt}` for `t ≥ 1`. -/
+theorem abs_logSqrtKernel_le_tail (x u : ℝ) {t : ℝ} (ht : 1 ≤ t) :
+    |logSqrtKernel x u t| ≤ exp (-t) + exp (-x * t) := by
+  have htp : 0 < t := by linarith
+  unfold logSqrtKernel
+  rw [abs_div, abs_of_pos htp, div_le_iff₀ htp]
+  calc |exp (-t) - exp (-x * t) * cos (u * t)|
+      ≤ |exp (-t)| + |exp (-x * t) * cos (u * t)| := abs_sub _ _
+    _ ≤ exp (-t) + exp (-x * t) := by
+        rw [abs_of_pos (exp_pos _), abs_mul, abs_of_pos (exp_pos _)]
+        exact add_le_add le_rfl (mul_le_of_le_one_right (exp_pos _).le (abs_cos_le_one _))
+    _ ≤ (exp (-t) + exp (-x * t)) * t := le_mul_of_one_le_right (by positivity) ht
+
+theorem logSqrtTail_integrable {x : ℝ} (hx : 0 < x) :
+    IntegrableOn (fun t : ℝ ↦ exp (-t) + exp (-x * t)) (Ioi 1) := by
+  have h1 : IntegrableOn (fun t : ℝ ↦ exp (-t)) (Ioi 1) := by
+    simpa using (integrableOn_exp_neg_mul_Ioi (a := (1 : ℝ)) zero_lt_one).mono_set
+      (Ioi_subset_Ioi zero_le_one)
+  exact h1.add ((integrableOn_exp_neg_mul_Ioi hx).mono_set (Ioi_subset_Ioi zero_le_one))
+
+/-- Fubini's hypothesis: `p(u) (e^{-t} - e^{-xt} cos (ut)) / t` is integrable on `ℝ × (0, ∞)`. -/
+theorem poissonLogistic_logSqrtKernel_integrable {x : ℝ} (hx : 0 < x) :
+    Integrable (fun p : ℝ × ℝ ↦ poissonLogisticDensity p.1 * logSqrtKernel x p.1 p.2)
+      (volume.prod (volume.restrict (Ioi 0))) := by
+  set F : ℝ × ℝ → ℝ := fun p ↦ poissonLogisticDensity p.1 * logSqrtKernel x p.1 p.2 with hF
+  have hmeas : Measurable F := by
+    rw [hF]
+    unfold poissonLogisticDensity logSqrtKernel
+    fun_prop
+  have key (s : Set ℝ) : Integrable F (volume.prod (volume.restrict s)) ↔
+      IntegrableOn F (univ ×ˢ s) (volume.prod volume) := by
+    change _ ↔ Integrable F ((volume.prod volume).restrict (univ ×ˢ s))
+    rw [← Measure.prod_restrict, Measure.restrict_univ]
+  have hnear : Integrable F (volume.prod (volume.restrict (Ioc (0 : ℝ) 1))) := by
+    have hfreq : Integrable fun u : ℝ ↦ poissonLogisticDensity u * (1 + x + |u|) := by
+      refine ((poissonLogisticDensity_integrable.const_mul (1 + x)).add
+        (poissonLogisticDensity_abs_moment_integrable 1)).congr (.of_forall fun u ↦ ?_)
+      simp only [Pi.add_apply, pow_one]
+      ring
+    have hconst : IntegrableOn (fun _ : ℝ ↦ (1 : ℝ)) (Ioc (0 : ℝ) 1) :=
+      integrableOn_const measure_Ioc_lt_top.ne
+    refine (hfreq.mul_prod hconst).mono' hmeas.aestronglyMeasurable ?_
+    filter_upwards [(Measure.ae_prod_iff_ae_ae (measurableSet_Ioc.preimage measurable_snd)).2
+      (.of_forall fun _ ↦ ae_restrict_mem measurableSet_Ioc)] with p hp
+    have hd := poissonLogisticDensity_pos p.1
+    rw [hF, Real.norm_eq_abs, abs_mul, abs_of_pos hd, mul_one]
+    exact mul_le_mul_of_nonneg_left (abs_logSqrtKernel_le hx.le p.1 hp.1) hd.le
+  have hfar : Integrable F (volume.prod (volume.restrict (Ioi (1 : ℝ)))) := by
+    refine (poissonLogisticDensity_integrable.mul_prod (logSqrtTail_integrable hx)).mono'
+      hmeas.aestronglyMeasurable ?_
+    filter_upwards [(Measure.ae_prod_iff_ae_ae (measurableSet_Ioi.preimage measurable_snd)).2
+      (.of_forall fun _ ↦ ae_restrict_mem measurableSet_Ioi)] with p hp
+    have hd := poissonLogisticDensity_pos p.1
+    rw [hF, Real.norm_eq_abs, abs_mul, abs_of_pos hd]
+    exact mul_le_mul_of_nonneg_left (abs_logSqrtKernel_le_tail x p.1 (mem_Ioi.mp hp).le) hd.le
+  have hunion : (univ : Set ℝ) ×ˢ Ioi (0 : ℝ) =
+      univ ×ˢ Ioc (0 : ℝ) 1 ∪ univ ×ˢ Ioi (1 : ℝ) := by
+    rw [← prod_union, Ioc_union_Ioi_eq_Ioi zero_le_one]
+  refine (key _).2 ?_
+  rw [hunion]
+  exact ((key _).1 hnear).union ((key _).1 hfar)
+
+/-! ### The averaged kernel and Gauss's integral -/
+
+/-- The `p`-average `e^{-t} / t - e^{-xt} / sinh t` of the kernel
+`(e^{-t} - e^{-xt} cos (ut)) / t`. -/
+def logMomentKernel (x t : ℝ) : ℝ := exp (-t) / t - exp (-x * t) / sinh t
+
+/-- Averaging the kernel against `p`, using `∫ p = 1` and `∫ p(u) cos (tu) du = t / sinh t`:
+`∫ p(u) (e^{-t} - e^{-xt} cos (ut)) / t du = e^{-t} / t - e^{-xt} / sinh t`. -/
+theorem integral_poissonLogisticDensity_mul_logSqrtKernel (x : ℝ) {t : ℝ} (ht : 0 < t) :
+    ∫ u : ℝ, poissonLogisticDensity u * logSqrtKernel x u t = logMomentKernel x t := by
+  have h1 : Integrable fun u : ℝ ↦ exp (-t) * poissonLogisticDensity u :=
+    poissonLogisticDensity_integrable.const_mul _
+  have h2 : Integrable fun u : ℝ ↦ exp (-x * t) * (poissonLogisticDensity u * cos (t * u)) :=
+    (poissonLogistic_cosine_integrable t).const_mul _
+  have hsinh : sinh t ≠ 0 := (sinh_pos_iff.mpr ht).ne'
+  calc ∫ u : ℝ, poissonLogisticDensity u * logSqrtKernel x u t
+      = ∫ u : ℝ, (exp (-t) * poissonLogisticDensity u -
+          exp (-x * t) * (poissonLogisticDensity u * cos (t * u))) / t := by
+        refine integral_congr_ae ?_
+        filter_upwards with u
+        unfold logSqrtKernel
+        rw [mul_comm u t]
+        ring
+    _ = (exp (-t) * (∫ u : ℝ, poissonLogisticDensity u) -
+          exp (-x * t) * ∫ u : ℝ, poissonLogisticDensity u * cos (t * u)) / t := by
+        rw [integral_div, integral_sub h1 h2, integral_const_mul, integral_const_mul]
+    _ = logMomentKernel x t := by
+        rw [integral_poissonLogisticDensity, poissonLogistic_cosine_transform t, if_neg ht.ne']
+        unfold logMomentKernel
+        field_simp
+
+/-- Gauss's integrand at `(x + 1) / 2` after the substitution `t = 2s`:
+`2 (e^{-2s} / (2s) - e^{-(x+1)s} / (1 - e^{-2s})) = e^{-2s} / s - e^{-xs} / sinh s`. -/
+def digammaHalfKernel (x s : ℝ) : ℝ := exp (-2 * s) / s - exp (-x * s) / sinh s
+
+theorem two_mul_digammaKernel_two_mul (x : ℝ) {s : ℝ} (hs : 0 < s) :
+    2 * digammaKernel ((x + 1) / 2) (2 * s) = digammaHalfKernel x s := by
+  have hs0 : s ≠ 0 := hs.ne'
+  have hb0 : 0 < exp (-s) := exp_pos _
+  have hb1 : exp (-s) < 1 := exp_lt_one_iff.mpr (by linarith)
+  have hab : exp s * exp (-s) = 1 := by rw [← exp_add, add_neg_cancel, exp_zero]
+  have hsinh : (exp s - exp (-s)) / 2 ≠ 0 := by
+    rw [← sinh_eq]
+    exact (sinh_pos_iff.mpr hs).ne'
+  have h2s : exp (-(2 * s)) = exp (-s) ^ 2 := by
+    rw [sq, ← exp_add]
+    ring_nf
+  have h2s' : exp (-2 * s) = exp (-s) ^ 2 := by
+    rw [sq, ← exp_add]
+    ring_nf
+  have hxs : exp (-((x + 1) / 2) * (2 * s)) = exp (-x * s) * exp (-s) := by
+    rw [← exp_add]
+    ring_nf
+  have hden : 1 - exp (-s) ^ 2 ≠ 0 := by nlinarith
+  have key : 2 * (exp (-x * s) * exp (-s) / (1 - exp (-s) ^ 2)) =
+      exp (-x * s) / ((exp s - exp (-s)) / 2) := by
+    rw [mul_div_assoc', div_eq_div_iff hden hsinh]
+    linear_combination exp (-x * s) * hab
+  unfold digammaKernel digammaHalfKernel
+  rw [h2s, h2s', hxs, sinh_eq, mul_sub, key]
+  congr 1
+  field_simp
+
+/-- Gauss's integral for `ψ((x + 1) / 2)` after the substitution `t = 2s`:
+`ψ((x + 1) / 2) = ∫₀^∞ (e^{-2s} / s - e^{-xs} / sinh s) ds`. -/
+theorem digamma_half_eq_integral_digammaHalfKernel {x : ℝ} (hx : 0 ≤ x) :
+    digamma ((x + 1) / 2) = ∫ s in Ioi (0 : ℝ), digammaHalfKernel x s := by
+  have hm : 0 < (x + 1) / 2 := by positivity
+  have hsub := integral_comp_mul_left_Ioi' (digammaKernel ((x + 1) / 2)) 0 two_pos
+  rw [mul_zero, smul_eq_mul, ← integral_const_mul] at hsub
+  rw [digamma_eq_integral_digammaKernel hm, ← hsub]
+  exact setIntegral_congr_fun measurableSet_Ioi fun s hs ↦ two_mul_digammaKernel_two_mul x hs
+
+theorem integrableOn_digammaHalfKernel {x : ℝ} (hx : 0 ≤ x) :
+    IntegrableOn (digammaHalfKernel x) (Ioi 0) := by
+  have hm : 0 < (x + 1) / 2 := by positivity
+  have h : IntegrableOn (fun s : ℝ ↦ digammaKernel ((x + 1) / 2) (2 * s)) (Ioi 0) :=
+    (integrableOn_Ioi_comp_mul_left_iff (digammaKernel ((x + 1) / 2)) 0 two_pos).2
+      (by simpa using integrableOn_digammaKernel hm)
+  exact IntegrableOn.congr_fun (h.const_mul 2) (fun s hs ↦ two_mul_digammaKernel_two_mul x hs)
+    measurableSet_Ioi
+
+/-- The averaged kernel is Gauss's (substituted) integrand plus the Frullani kernel of `log 2`. -/
+theorem logMomentKernel_eq (x s : ℝ) :
+    logMomentKernel x s = digammaHalfKernel x s + Frullani.expKernel 1 2 s := by
+  unfold logMomentKernel digammaHalfKernel Frullani.expKernel
+  rw [show exp (-1 * s) = exp (-s) by rw [neg_one_mul]]
+  ring
+
+/-- Report (22) for `x > 0`: `∫ p(u) log √(x² + u²) du = ψ((x + 1) / 2) + log 2`. -/
+theorem integral_poissonLogisticDensity_mul_log_sqrt_of_pos {x : ℝ} (hx : 0 < x) :
+    ∫ u : ℝ, poissonLogisticDensity u * log (√(x ^ 2 + u ^ 2)) =
+      digamma ((x + 1) / 2) + log 2 := by
+  calc ∫ u : ℝ, poissonLogisticDensity u * log (√(x ^ 2 + u ^ 2))
+      = ∫ u : ℝ, ∫ t in Ioi (0 : ℝ), poissonLogisticDensity u * logSqrtKernel x u t := by
+        refine integral_congr_ae ?_
+        filter_upwards with u
+        rw [integral_const_mul, integral_logSqrtKernel hx]
+    _ = ∫ t in Ioi (0 : ℝ), ∫ u : ℝ, poissonLogisticDensity u * logSqrtKernel x u t :=
+        integral_integral_swap (poissonLogistic_logSqrtKernel_integrable hx)
+    _ = ∫ t in Ioi (0 : ℝ), logMomentKernel x t :=
+        setIntegral_congr_fun measurableSet_Ioi fun t ht ↦
+          integral_poissonLogisticDensity_mul_logSqrtKernel x ht
+    _ = ∫ t in Ioi (0 : ℝ), (digammaHalfKernel x t + Frullani.expKernel 1 2 t) :=
+        setIntegral_congr_fun measurableSet_Ioi fun t _ ↦ logMomentKernel_eq x t
+    _ = digamma ((x + 1) / 2) + log 2 := by
+        rw [integral_add (integrableOn_digammaHalfKernel hx.le)
+            (Frullani.integrableOn_expKernel one_pos one_le_two),
+          digamma_half_eq_integral_digammaHalfKernel hx.le,
+          Frullani.integral_expKernel one_pos one_le_two, div_one]
+
+/-! ### The case `x = 0` by dominated convergence -/
+
+/-- `|u| ≤ √(x² + u²) ≤ |u| + x` for `x ≥ 0`. -/
+theorem abs_le_sqrt_sq_add_sq_and_le {x : ℝ} (hx : 0 ≤ x) (u : ℝ) :
+    |u| ≤ √(x ^ 2 + u ^ 2) ∧ √(x ^ 2 + u ^ 2) ≤ |u| + x := by
+  refine ⟨Real.abs_le_sqrt (by nlinarith), ?_⟩
+  rw [Real.sqrt_le_left (by positivity)]
+  nlinarith [abs_nonneg u, sq_abs u]
+
+/-- For `0 ≤ x ≤ 1` and `u ≠ 0`, `log |u| ≤ log √(x² + u²) ≤ |u|`. -/
+theorem log_abs_le_log_sqrt_and_le {x u : ℝ} (hx0 : 0 ≤ x) (hx1 : x ≤ 1) (hu : u ≠ 0) :
+    log |u| ≤ log (√(x ^ 2 + u ^ 2)) ∧ log (√(x ^ 2 + u ^ 2)) ≤ |u| := by
+  have hu0 : 0 < |u| := abs_pos.mpr hu
+  obtain ⟨hlow, hupp⟩ := abs_le_sqrt_sq_add_sq_and_le hx0 u
+  refine ⟨log_le_log hu0 hlow, ?_⟩
+  calc log (√(x ^ 2 + u ^ 2)) ≤ log (|u| + 1) :=
+        log_le_log (hu0.trans_le hlow) (hupp.trans (by linarith))
+    _ ≤ |u| + 1 - 1 := log_le_sub_one_of_pos (by positivity)
+    _ = |u| := by ring
+
+/-- The majorant `p(u) |u| + π 𝟙_{[-1, 1]}(u) |log u|` of `p(u) log √(x² + u²)` for `0 ≤ x ≤ 1`. -/
+def logSqrtMajorant (u : ℝ) : ℝ :=
+  poissonLogisticDensity u * |u| + π * (Icc (-1 : ℝ) 1).indicator (fun v ↦ |log v|) u
+
+theorem logSqrtMajorant_integrable : Integrable logSqrtMajorant := by
+  have hlog : IntegrableOn (fun v : ℝ ↦ |log v|) (Icc (-1 : ℝ) 1) :=
+    (intervalIntegrable_iff_integrableOn_Icc_of_le (by norm_num)).1
+      (IntervalIntegrable.abs intervalIntegral.intervalIntegrable_log')
+  have h1 : Integrable fun u : ℝ ↦ poissonLogisticDensity u * |u| := by
+    simpa using poissonLogisticDensity_abs_moment_integrable 1
+  exact h1.add (((integrable_indicator_iff measurableSet_Icc).2 hlog).const_mul π)
+
+theorem poissonLogisticDensity_le_pi (u : ℝ) : poissonLogisticDensity u ≤ π :=
+  (poissonLogisticDensity_le_pi_exp u).trans (mul_le_of_le_one_right pi_pos.le
+    (exp_le_one_iff.mpr (by rw [neg_mul, neg_nonpos]; positivity)))
+
+/-- The pointwise domination `|p(u) log √(x² + u²)| ≤ p(u) |u| + π 𝟙_{[-1, 1]}(u) |log u|` for
+`0 ≤ x ≤ 1` and `u ≠ 0`. -/
+theorem abs_poissonLogisticDensity_mul_log_sqrt_le {x u : ℝ} (hx0 : 0 ≤ x) (hx1 : x ≤ 1)
+    (hu : u ≠ 0) :
+    |poissonLogisticDensity u * log (√(x ^ 2 + u ^ 2))| ≤ logSqrtMajorant u := by
+  obtain ⟨hlow, hupp⟩ := log_abs_le_log_sqrt_and_le hx0 hx1 hu
+  have hd := poissonLogisticDensity_pos u
+  have hple := poissonLogisticDensity_le_pi u
+  rw [abs_mul, abs_of_pos hd]
+  unfold logSqrtMajorant
+  by_cases hmem : u ∈ Icc (-1 : ℝ) 1
+  · rw [indicator_of_mem hmem]
+    have hlow' : log u ≤ log (√(x ^ 2 + u ^ 2)) := by rwa [log_abs] at hlow
+    have h1 : |log (√(x ^ 2 + u ^ 2))| ≤ |log u| + |u| :=
+      abs_le.mpr ⟨by linarith [neg_abs_le (log u), abs_nonneg u], by linarith [abs_nonneg (log u)]⟩
+    calc poissonLogisticDensity u * |log (√(x ^ 2 + u ^ 2))|
+        ≤ poissonLogisticDensity u * (|log u| + |u|) := mul_le_mul_of_nonneg_left h1 hd.le
+      _ = poissonLogisticDensity u * |u| + poissonLogisticDensity u * |log u| := by ring
+      _ ≤ poissonLogisticDensity u * |u| + π * |log u| := by gcongr
+  · rw [indicator_of_notMem hmem, mul_zero, add_zero]
+    have hu1 : 1 ≤ |u| := by
+      simp only [mem_Icc, not_and_or, not_le] at hmem
+      rcases hmem with h | h
+      · exact le_abs.mpr (Or.inr (by linarith))
+      · exact le_abs.mpr (Or.inl h.le)
+    rw [abs_of_nonneg ((log_nonneg hu1).trans hlow)]
+    exact mul_le_mul_of_nonneg_left hupp hd.le
+
+/-- Dominated convergence along `x = 1 / (n + 1) ↓ 0` for the left side of report (22). -/
+theorem tendsto_integral_poissonLogisticDensity_mul_log_sqrt :
+    Tendsto (fun n : ℕ ↦ ∫ u : ℝ,
+        poissonLogisticDensity u * log (√((1 / ((n : ℝ) + 1)) ^ 2 + u ^ 2))) atTop
+      (𝓝 (∫ u : ℝ, poissonLogisticDensity u * log (√((0 : ℝ) ^ 2 + u ^ 2)))) := by
+  have hae : ∀ᵐ u : ℝ, u ≠ 0 := by
+    filter_upwards [compl_mem_ae_iff.mpr (measure_singleton (0 : ℝ))] with u hu
+    simpa using hu
+  refine tendsto_integral_of_dominated_convergence logSqrtMajorant (fun n ↦ ?_)
+    logSqrtMajorant_integrable (fun n ↦ ?_) ?_
+  · exact (by unfold poissonLogisticDensity; fun_prop : Measurable fun u : ℝ ↦
+      poissonLogisticDensity u * log (√((1 / ((n : ℝ) + 1)) ^ 2 + u ^ 2))).aestronglyMeasurable
+  · filter_upwards [hae] with u hu
+    have h0 : (0 : ℝ) ≤ 1 / ((n : ℝ) + 1) := by positivity
+    have h1 : 1 / ((n : ℝ) + 1) ≤ 1 := by
+      rw [div_le_one (by positivity)]
+      linarith [Nat.cast_nonneg (α := ℝ) n]
+    rw [Real.norm_eq_abs]
+    exact abs_poissonLogisticDensity_mul_log_sqrt_le h0 h1 hu
+  · filter_upwards [hae] with u hu
+    have hcont :
+        ContinuousAt (fun x : ℝ ↦ poissonLogisticDensity u * log (√(x ^ 2 + u ^ 2))) 0 := by
+      refine continuousAt_const.mul (ContinuousAt.log ?_ ?_)
+      · exact (by fun_prop : Continuous fun x : ℝ ↦ √(x ^ 2 + u ^ 2)).continuousAt
+      · exact (Real.sqrt_pos.mpr (by positivity)).ne'
+    exact hcont.tendsto.comp tendsto_one_div_add_atTop_nhds_zero_nat
+
+/-- Report (22): `∫ p(u) log √(x² + u²) du = ψ((x + 1) / 2) + log 2` for `x ≥ 0`. -/
+theorem integral_poissonLogisticDensity_mul_log_sqrt {x : ℝ} (hx : 0 ≤ x) :
+    ∫ u : ℝ, poissonLogisticDensity u * Real.log (√(x ^ 2 + u ^ 2)) =
+      Real.digamma ((x + 1) / 2) + Real.log 2 := by
+  rcases hx.lt_or_eq with hx | rfl
+  · exact integral_poissonLogisticDensity_mul_log_sqrt_of_pos hx
+  · refine tendsto_nhds_unique tendsto_integral_poissonLogisticDensity_mul_log_sqrt ?_
+    have hcont : ContinuousAt (fun x : ℝ ↦ digamma ((x + 1) / 2) + log 2) 0 := by
+      have hf : ContinuousAt (fun x : ℝ ↦ (x + 1) / 2) 0 := by fun_prop
+      have hg : ContinuousAt digamma ((0 + 1) / 2) :=
+        continuousOn_digamma_Ioi.continuousAt (Ioi_mem_nhds (by norm_num))
+      exact (hg.comp_of_eq hf rfl).add continuousAt_const
+    refine (hcont.tendsto.comp tendsto_one_div_add_atTop_nhds_zero_nat).congr fun n ↦ ?_
+    exact (integral_poissonLogisticDensity_mul_log_sqrt_of_pos (by positivity)).symm
+
+end
+
+end CohnElkies
+
+end CohnElkies_LowerBound_LogMomentDigamma
+
 /-! ## Module `CohnElkies.Manuscript` -/
 
 section CohnElkies_Manuscript
@@ -27101,312 +27709,6 @@ end CohnElkies
 
 end CohnElkies_SignUncertainty_TailIntegral
 
-/-! ## Module `CohnElkies.SignUncertainty.AppendixA` -/
-
-section CohnElkies_SignUncertainty_AppendixA
-
-/-! # Appendix A of the report: Proposition A.1 and `A₊(d) ≤ A₋(d)`
-
-For a radial `g ∈ E₋(d)`, `d ≥ 1`, the tail integral `T_d g` of report (87) is a self-Fourier sign
-eigenfunction `T_d g ∈ E₊(d)` (`SignEigenfunction.tailIntegral`, Proposition A.1): continuous,
-integrable, `𝓕 (T_d g) = T_d g`, `T_d g (0) = 0` (`CohnElkies.SignUncertainty.TailIntegral`), and
-nonzero (differentiating the small-scale representation along a ray recovers `g`). If `g ≥ 0`
-outside the ball of radius `R`, then `T_d g > 0` outside that ball: `T_d g (x) ≥ 0` by (87), and
-`T_d g (x) = 0` would force `g`, hence `𝓕 g = -g`, to vanish outside the ball of radius `‖x‖`,
-contradicting Fourier analyticity (`fourier_eq_zero_of_eq_zero_outside`). Hence `r(T_d g) ≤ r(g)`
-and, when `r(g) < ∞`, `r(T_d g) < r(g)` (`SignEigenfunction.signRadius_tailIntegral_lt`).
-
-Combined with the radial reduction `signUncertaintyConstant_eq_radial`, this gives the comparison
-`A₊(d) ≤ A₋(d)` of the sign-uncertainty constants (`signUncertaintyConstant_one_le_neg_one`). The
-strict inequality `A₊(d) < A₋(d)` of the report needs an extremizer attaining `A₋(d)`
-(Cohn–Gonçalves 2019, Theorem 1.4): it is proved here from that hypothesis
-(`signUncertaintyConstant_one_lt_neg_one_of_exists_extremizer`), and the extremizer is
-constructed in `CohnElkies.SignUncertainty.Extremizer`, which states the unconditional
-`signUncertaintyConstant_one_lt_neg_one`. -/
-
-namespace CohnElkies
-open scoped Real
-open Complex (I)
-
-noncomputable section
-
-open Filter MeasureTheory Set
-open scoped ENNReal FourierTransform Topology
-
-variable {d : ℕ}
-
-/-! ### Sign radii -/
-
-/-- A sign eigenfunction nonnegative outside the ball of radius `R` has `R > 0`: otherwise `g ≥ 0`
-everywhere and `∫ g = 0` would force `g = 0` (report, proof of Proposition A.1). -/
-theorem SignEigenfunction.pos_of_nonneg_outside {ς : ℤˣ} (g : SignEigenfunction d ς) {R : ℝ}
-    (hR : ∀ x : Euclidean d, R ≤ ‖x‖ → 0 ≤ g x) : 0 < R := by
-  by_contra! hR0
-  have hnn : ∀ x, 0 ≤ g x := fun x ↦ hR x (hR0.trans (norm_nonneg x))
-  have h := (integral_eq_zero_iff_of_nonneg hnn g.integrable).1 g.integral_eq_zero
-  exact g.ne_zero ((g.continuous.ae_eq_iff_eq volume continuous_const).1 h)
-
-/-- A continuous function on `ℝ^d` (`d ≥ 1`) nonnegative outside the closed ball of radius `R` is
-nonnegative on its boundary sphere as well. -/
-theorem nonneg_of_forall_lt_norm (hd : 0 < d) {g : Euclidean d → ℝ} (hg : Continuous g) {R : ℝ}
-    (h : ∀ x : Euclidean d, R < ‖x‖ → 0 ≤ g x) (x : Euclidean d) (hx : R ≤ ‖x‖) : 0 ≤ g x := by
-  rcases hx.lt_or_eq with hlt | heq
-  · exact h x hlt
-  by_cases hx0 : x = 0
-  · subst hx0
-    rw [norm_zero] at heq
-    set e := radialUnitDirection hd
-    have hlim : Tendsto (fun t : ℝ ↦ g (t • e)) (𝓝[>] 0) (𝓝 (g 0)) := by
-      have hc : Continuous fun t : ℝ ↦ g (t • e) := hg.comp (continuous_id.smul continuous_const)
-      have := (hc.tendsto 0).mono_left (nhdsWithin_le_nhds (s := Ioi 0))
-      simpa using this
-    refine ge_of_tendsto hlim ?_
-    filter_upwards [self_mem_nhdsWithin] with t ht
-    refine h _ ?_
-    rw [norm_smul, norm_radialUnitDirection hd, mul_one, Real.norm_of_nonneg (le_of_lt ht), heq]
-    exact ht
-  · have hlim : Tendsto (fun t : ℝ ↦ g (t • x)) (𝓝[>] 1) (𝓝 (g x)) := by
-      have hc : Continuous fun t : ℝ ↦ g (t • x) := hg.comp (continuous_id.smul continuous_const)
-      have := (hc.tendsto 1).mono_left (nhdsWithin_le_nhds (s := Ioi 1))
-      simpa using this
-    refine ge_of_tendsto hlim ?_
-    filter_upwards [self_mem_nhdsWithin] with t ht
-    refine h _ ?_
-    rw [norm_smul, Real.norm_of_nonneg (zero_le_one.trans (le_of_lt ht)), heq]
-    exact lt_mul_of_one_lt_left (norm_pos_iff.2 hx0) ht
-
-/-- The last-sign radius `r(g)` of a continuous function with `r(g) < ⊤` is itself a sign radius
-(`d ≥ 1`). -/
-theorem nonneg_of_toReal_signRadius_le (hd : 0 < d) {g : Euclidean d → ℝ} (hg : Continuous g)
-    (hfin : signRadius g < ⊤) (x : Euclidean d) (hx : (signRadius g).toReal ≤ ‖x‖) : 0 ≤ g x := by
-  refine nonneg_of_forall_lt_norm hd hg (R := (signRadius g).toReal) (fun y hy ↦ ?_) x hx
-  by_contra hneg
-  have h := le_signRadius_of_not_nonneg_outside (g := g) (R := ‖y‖) fun hall ↦ hneg (hall y le_rfl)
-  rw [ENNReal.ofReal_le_iff_le_toReal hfin.ne] at h
-  exact hy.not_ge h
-
-namespace SignEigenfunction
-
-variable (hd : 0 < d) (g : SignEigenfunction d (-1)) (hg : IsRadial (g : Euclidean d → ℝ))
-include hd hg
-
-/-! ### Positivity of `T_d g` outside a sign radius of `g` -/
-
-/-- Report, proof of Proposition A.1: if `g ≥ 0` outside the ball of radius `R`, then `T_d g > 0`
-outside that ball. Nonnegativity is (87); if `T_d g (x) = 0`, then `g` vanishes on the ray beyond
-`x`, hence (radiality) outside the ball of radius `‖x‖`, and so does `𝓕 g = -g`, which forces
-`g = 0` by Fourier analyticity. -/
-theorem tailIntegral_pos {R : ℝ} (hR : ∀ x : Euclidean d, R ≤ ‖x‖ → 0 ≤ g x) {x : Euclidean d}
-    (hx : R ≤ ‖x‖) : 0 < tailIntegral d g x := by
-  have hR0 : 0 < R := g.pos_of_nonneg_outside hR
-  have hx' : 0 < ‖x‖ := hR0.trans_le hx
-  have hx0 : x ≠ 0 := norm_pos_iff.1 hx'
-  set Φ : ℝ → ℝ := fun t ↦ t ^ ((d / 2 : ℝ) - 1) * g (t • x) with hΦ
-  have hΦnn : ∀ t ∈ Ioi (1 : ℝ), 0 ≤ Φ t := fun t ht ↦ by
-    have ht0 : 0 < t := zero_lt_one.trans ht
-    refine mul_nonneg (Real.rpow_nonneg ht0.le _) (hR _ ?_)
-    rw [norm_smul, Real.norm_of_nonneg ht0.le]
-    exact hx.trans (le_mul_of_one_le_left (norm_nonneg x) (le_of_lt ht))
-  have hint : IntegrableOn Φ (Ioi 1) :=
-    (g.integrableOn_rpow_mul_smul hd hg hx0).mono_set (Ioi_subset_Ioi zero_le_one)
-  have hnn : 0 ≤ ∫ t in Ioi (1 : ℝ), Φ t := setIntegral_nonneg measurableSet_Ioi hΦnn
-  rw [tailIntegral_of_ne_zero _ hx0]
-  refine mul_pos (by positivity) (lt_of_le_of_ne hnn fun h0 ↦ ?_)
-  have hae : Φ =ᵐ[volume.restrict (Ioi 1)] 0 :=
-    (setIntegral_eq_zero_iff_of_nonneg_ae (ae_restrict_of_forall_mem measurableSet_Ioi hΦnn)
-      hint).1 h0.symm
-  have hcont : ContinuousOn Φ (Ioi 1) :=
-    (continuousOn_id.rpow_const fun t ht ↦ Or.inl (zero_lt_one.trans ht).ne').mul
-      (g.continuous.comp (continuous_id.smul continuous_const :
-        Continuous fun t : ℝ ↦ t • x)).continuousOn
-  have hzero : ∀ t ∈ Ioi (1 : ℝ), Φ t = 0 := fun t ht ↦ by
-    simpa using Measure.eqOn_open_of_ae_eq hae isOpen_Ioi hcont continuousOn_const ht
-  have hvan : ∀ y : Euclidean d, ‖x‖ < ‖y‖ → g y = 0 := by
-    intro y hy
-    have ht : 1 < ‖y‖ / ‖x‖ := (one_lt_div hx').2 hy
-    have hΦt := hzero _ ht
-    simp only [hΦ] at hΦt
-    have hgy : g y = g ((‖y‖ / ‖x‖) • x) := hg _ _ (by
-      rw [norm_smul, Real.norm_of_nonneg (by positivity), div_mul_cancel₀ _ hx'.ne'])
-    rw [hgy]
-    exact (mul_eq_zero.1 hΦt).resolve_left (Real.rpow_pos_of_pos (zero_lt_one.trans ht) _).ne'
-  have hsupp : ∀ y : Euclidean d, ‖x‖ < ‖y‖ → g.toComplex y = 0 := fun y hy ↦ by
-    simp [hvan y hy]
-  have hfour : ∀ y : Euclidean d, ‖x‖ < ‖y‖ → 𝓕 g.toComplex y = 0 := fun y hy ↦ by
-    rw [g.fourier_toComplex, hvan y hy]
-    simp
-  have hzero' := fourier_eq_zero_of_eq_zero_outside hd g.integrable_toComplex hsupp hfour
-  exact g.ne_zero (funext fun y ↦ by simpa [congrFun hzero' y] using g.coe_eq_fourier y)
-
-/-! ### Nonvanishing of `T_d g` -/
-
-/-- If all the small-scale integrals `∫_0^1 s^{λ-1} g(s x) ds` vanish, then `g = 0`: the profile
-`F(R) = ∫_0^R r^{λ-1} g(r e₁) dr` vanishes for all `R > 0`, so its derivative `R^{λ-1} g(R e₁)`
-vanishes too (this is `(x·∇ + λ) T_d g = -λ g/2` of the report, integrated along rays). -/
-theorem eq_zero_of_forall_integral_Ioo_eq_zero
-    (h : ∀ x : Euclidean d, ∫ s in Ioo (0 : ℝ) 1, s ^ ((d / 2 : ℝ) - 1) * g (s • x) = 0) :
-    (g : Euclidean d → ℝ) = 0 := by
-  set e := radialUnitDirection hd with he
-  set f : ℝ → ℝ := fun r ↦ r ^ ((d / 2 : ℝ) - 1) * g (r • e) with hf
-  have hF : ∀ R : ℝ, 0 < R → ∫ r in (0 : ℝ)..R, f r = 0 := by
-    intro R hR
-    have h1 := h (R • e)
-    rw [← integral_Ioc_eq_integral_Ioo,
-      ← intervalIntegral.integral_of_le (zero_le_one : (0 : ℝ) ≤ 1)] at h1
-    have h2 : ∫ s in (0 : ℝ)..1, s ^ ((d / 2 : ℝ) - 1) * g (s • R • e) =
-        (R ^ ((d / 2 : ℝ) - 1))⁻¹ * ∫ s in (0 : ℝ)..1, f (R * s) := by
-      rw [← intervalIntegral.integral_const_mul]
-      refine intervalIntegral.integral_congr fun s hs ↦ ?_
-      have hs0 : 0 ≤ s := by
-        rw [uIcc_of_le (zero_le_one : (0 : ℝ) ≤ 1)] at hs
-        exact hs.1
-      simp only [hf, smul_smul, Real.mul_rpow hR.le hs0]
-      field_simp
-    rw [h2, intervalIntegral.integral_comp_mul_left (f := f) hR.ne', mul_zero, mul_one,
-      smul_eq_mul] at h1
-    simpa [hR.ne', (Real.rpow_pos_of_pos hR _).ne'] using h1
-  have hderiv : ∀ R : ℝ, 0 < R → f R = 0 := by
-    intro R hR
-    have hfint : IntervalIntegrable f volume 0 R := by
-      rw [intervalIntegrable_iff_integrableOn_Ioc_of_le hR.le]
-      exact (g.integrableOn_rpow_mul_profile hd hg).mono_set Ioc_subset_Ioi_self
-    have hcont : ContinuousAt f R :=
-      (Real.continuousAt_rpow_const R _ (Or.inl hR.ne')).mul
-        (g.continuous.comp (continuous_id.smul continuous_const :
-          Continuous fun r : ℝ ↦ r • e)).continuousAt
-    have hmeas : StronglyMeasurableAtFilter f (𝓝 R) :=
-      ((measurable_id.pow_const _).mul (g.continuous.measurable.comp
-        (measurable_id.smul_const e))).aestronglyMeasurable.stronglyMeasurableAtFilter
-    have hD := intervalIntegral.integral_hasDerivAt_right hfint hmeas hcont
-    have hD0 : HasDerivAt (fun u ↦ ∫ r in (0 : ℝ)..u, f r) 0 R := by
-      refine (hasDerivAt_const R (0 : ℝ)).congr_of_eventuallyEq ?_
-      filter_upwards [Ioi_mem_nhds hR] with u hu
-      exact hF u hu
-    exact hD.unique hD0
-  funext x
-  by_cases hx : x = 0
-  · simp [hx, g.zero]
-  · have hx' : 0 < ‖x‖ := norm_pos_iff.2 hx
-    have hfx := hderiv ‖x‖ hx'
-    simp only [hf] at hfx
-    rw [Pi.zero_apply, hg x (‖x‖ • e) (by simp [norm_smul, he, norm_radialUnitDirection hd])]
-    exact (mul_eq_zero.1 hfx).resolve_left (Real.rpow_pos_of_pos hx' _).ne'
-
-/-- `T_d g ≠ 0` (Proposition A.1). -/
-theorem tailIntegral_ne_zero : tailIntegral d g ≠ 0 := fun h ↦
-  g.ne_zero (g.eq_zero_of_forall_integral_Ioo_eq_zero hd hg fun x ↦ by
-    have hx := congrFun h x
-    rw [g.tailIntegral_eq_neg_integral_Ioo hd hg x, Pi.zero_apply, neg_mul, neg_eq_zero,
-      mul_eq_zero] at hx
-    exact hx.resolve_left (by positivity))
-
-/-! ### Proposition A.1 -/
-
-/-- `r(T_d g) ≤ r(g)`: `T_d g ≥ 0` outside every ball outside which `g ≥ 0`. -/
-theorem signRadius_tailIntegral_le : signRadius (tailIntegral d g) ≤ signRadius g :=
-  signRadius_le_signRadius fun _ hR _ hx ↦ (g.tailIntegral_pos hd hg hR hx).le
-
-/-- Proposition A.1: if `r(g) < ∞` then `r(T_d g) < r(g)`. Indeed `r(g) > 0`, `T_d g > 0` on the
-sphere of radius `r(g)`, and the (radial, continuous) function `T_d g` stays positive on a slightly
-smaller sphere. -/
-theorem signRadius_tailIntegral_lt (hfin : signRadius (g : Euclidean d → ℝ) < ⊤) :
-    signRadius (tailIntegral d g) < signRadius g := by
-  set R := (signRadius (g : Euclidean d → ℝ)).toReal with hRdef
-  have hR : ∀ y : Euclidean d, R ≤ ‖y‖ → 0 ≤ g y :=
-    nonneg_of_toReal_signRadius_le hd g.continuous hfin
-  have hR0 : 0 < R := g.pos_of_nonneg_outside hR
-  set e := radialUnitDirection hd with he
-  have hpos : 0 < tailIntegral d g (R • e) := g.tailIntegral_pos hd hg hR
-    (by simp [norm_smul, he, norm_radialUnitDirection hd, abs_of_pos hR0])
-  have hcont : ContinuousAt (fun r : ℝ ↦ tailIntegral d g (r • e)) R :=
-    ((g.continuous_tailIntegral hd hg).comp (continuous_id.smul continuous_const :
-      Continuous fun r : ℝ ↦ r • e)).continuousAt
-  obtain ⟨δ, hδ, hδpos⟩ : ∃ δ > 0, ∀ r : ℝ, |r - R| < δ → 0 < tailIntegral d g (r • e) := by
-    obtain ⟨δ, hδ, hδ'⟩ := Metric.eventually_nhds_iff.1 (hcont.eventually (lt_mem_nhds hpos))
-    exact ⟨δ, hδ, fun r hr ↦ hδ' (by rwa [Real.dist_eq])⟩
-  have hsign : ∀ y : Euclidean d, R - δ / 2 ≤ ‖y‖ → 0 ≤ tailIntegral d g y := by
-    intro y hy
-    rcases le_or_gt R ‖y‖ with h | h
-    · exact (g.tailIntegral_pos hd hg hR h).le
-    · have h' := hδpos ‖y‖ (by rw [abs_sub_lt_iff]; constructor <;> linarith)
-      rw [hg.tailIntegral (‖y‖ • e) y (by simp [norm_smul, he, norm_radialUnitDirection hd])]
-        at h'
-      exact h'.le
-  calc signRadius (tailIntegral d g) ≤ ENNReal.ofReal (R - δ / 2) :=
-        signRadius_le (R := Real.toNNReal (R - δ / 2)) fun y hy ↦
-          hsign y ((Real.le_coe_toNNReal _).trans hy)
-    _ < ENNReal.ofReal R := (ENNReal.ofReal_lt_ofReal_iff hR0).2 (by linarith)
-    _ = signRadius g := ENNReal.ofReal_toReal hfin.ne
-
-end SignEigenfunction
-
-/-- Proposition A.1 of the report (Appendix A): for a radial `g ∈ E₋(d)`, `d ≥ 1`, the tail
-integral `T_d g` of (87) is a self-Fourier sign eigenfunction, `T_d g ∈ E₊(d)`: it is continuous
-and integrable, `𝓕 (T_d g) = T_d g`, `T_d g (0) = 0` and `T_d g ≠ 0`. Moreover `‖T_d g‖₁ ≤ ½ ‖g‖₁`
-(`SignEigenfunction.integral_norm_tailIntegral_le`), `r(T_d g) ≤ r(g)`
-(`SignEigenfunction.signRadius_tailIntegral_le`) and `r(T_d g) < r(g)` when `r(g) < ∞`
-(`SignEigenfunction.signRadius_tailIntegral_lt`). -/
-def SignEigenfunction.tailIntegral (hd : 0 < d) (g : SignEigenfunction d (-1))
-    (hg : IsRadial (g : Euclidean d → ℝ)) : SignEigenfunction d 1 where
-  toFun := _root_.CohnElkies.tailIntegral d g
-  integrable := g.integrable_tailIntegral hd hg
-  fourier_eq ξ := by
-    rw [g.fourier_tailIntegral hd hg ξ]
-    simp
-  ne_zero := g.tailIntegral_ne_zero hd hg
-  zero := tailIntegral_zero _
-
-@[simp] theorem SignEigenfunction.tailIntegral_apply (hd : 0 < d) (g : SignEigenfunction d (-1))
-    (hg : IsRadial (g : Euclidean d → ℝ)) (x : Euclidean d) :
-    g.tailIntegral hd hg x = _root_.CohnElkies.tailIntegral d g x :=
-  rfl
-
-/-! ### The comparison `A₊(d) ≤ A₋(d)` -/
-
-/-- Appendix A of the report: `A₊(d) ≤ A₋(d)` for `d ≥ 1`. Every radial `g ∈ E₋(d)` yields
-`T_d g ∈ E₊(d)` with `r(T_d g) ≤ r(g)` (Proposition A.1), and the infimum defining `A₋(d)` may
-be taken over radial eigenfunctions (`signUncertaintyConstant_eq_radial`). The strict inequality
-`A₊(d) < A₋(d)` stated in the report needs an extremizer attaining `A₋(d)` (Cohn–Gonçalves 2019,
-Theorem 1.4, not proved in the report): see
-`signUncertaintyConstant_one_lt_neg_one_of_exists_extremizer` below and the unconditional
-`signUncertaintyConstant_one_lt_neg_one` in `CohnElkies.SignUncertainty.Extremizer`. -/
-theorem signUncertaintyConstant_one_le_neg_one (hd : 0 < d) :
-    signUncertaintyConstant 1 d ≤ signUncertaintyConstant (-1) d := by
-  rw [signUncertaintyConstant_eq_radial hd (-1)]
-  exact le_iInf₂ fun g hg ↦ (signUncertaintyConstant_le (g.tailIntegral hd hg)).trans
-    (g.signRadius_tailIntegral_le hd hg)
-
-/-- The strict inequality `A₊(d) < A₋(d)` of Appendix A, conditional on the existence of an
-extremizer: if some `g ∈ 𝓔₋(d)` attains `A₋(d) < ∞`, then `A₊(d) < A₋(d)`. The existence of such
-an extremizer is Theorem 1.4 of Cohn–Gonçalves (2019), whose proof (weak `L²` compactness, Mazur's
-lemma, Fatou, and a uniform negative-mass bound from Jaming's form of Nazarov's uncertainty
-principle) is not part of the report; it is formalized as
-`exists_signRadius_eq_signUncertaintyConstant_neg_one` in `SignUncertainty/Extremizer.lean`,
-which turns this into the unconditional `signUncertaintyConstant_one_lt_neg_one`. -/
-theorem signUncertaintyConstant_one_lt_neg_one_of_exists_extremizer (hd : 0 < d)
-    (hfin : signUncertaintyConstant (-1) d < ⊤)
-    (hext : ∃ g : SignEigenfunction d (-1),
-      signRadius (g : Euclidean d → ℝ) = signUncertaintyConstant (-1) d) :
-    signUncertaintyConstant 1 d < signUncertaintyConstant (-1) d := by
-  obtain ⟨g, hg⟩ := hext
-  obtain ⟨R, hR⟩ := exists_nonneg_outside_of_signRadius_lt_top (hg ▸ hfin)
-  have hrad : IsRadial (g.radialize hd hR : Euclidean d → ℝ) := g.radialize_eq_of_norm_eq hd hR
-  have heq : signRadius (g.radialize hd hR : Euclidean d → ℝ) = signUncertaintyConstant (-1) d :=
-    le_antisymm ((g.signRadius_radialize_le hd hR).trans hg.le)
-      (signUncertaintyConstant_le (g.radialize hd hR))
-  calc signUncertaintyConstant 1 d
-      ≤ signRadius ((g.radialize hd hR).tailIntegral hd hrad : Euclidean d → ℝ) :=
-        signUncertaintyConstant_le _
-    _ < signRadius (g.radialize hd hR : Euclidean d → ℝ) :=
-        (g.radialize hd hR).signRadius_tailIntegral_lt hd hrad (heq ▸ hfin)
-    _ = signUncertaintyConstant (-1) d := heq
-
-end
-
-end CohnElkies
-
-end CohnElkies_SignUncertainty_AppendixA
-
 /-! ## Module `CohnElkies.SignUncertainty.OriginCorrection` -/
 
 section CohnElkies_SignUncertainty_OriginCorrection
@@ -27825,10 +28127,10 @@ section CohnElkies_SignUncertainty_Finiteness
 
 /-! # Positivity and finiteness of the sign-uncertainty constants
 
-For every dimension `d ≥ 1` and both signs `ς = ±1`, the constants `A_ς(d) = inf r(g)` of report (6)
-satisfy `0 < A_ς(d) < ∞`, the two facts needed before extremizers of `A_ς(d)` can be discussed
-(Cohn–Gonçalves, *An optimal uncertainty principle in twelve dimensions via modular forms*, Invent.
-Math. 2019, §3.1 and Theorem 1.4).
+For every dimension `d ≥ 1`, the constants `A_ς(d) = inf r(g)` of report (6) satisfy
+`0 < A_ς(d)` for both signs `ς = ±1` and `A₋(d) < ∞`, the two facts needed before extremizers of
+`A₋(d)` can be discussed (Cohn–Gonçalves, *An optimal uncertainty principle in twelve dimensions
+via modular forms*, Invent. Math. 2019, §3.1 and Theorem 1.4).
 
 * `A_ς(d) > 0` (`signUncertaintyConstant_pos`): if `g ∈ 𝓔_ς(d)` is nonnegative outside the ball
   `B_ρ`, then, normalizing `‖g‖₁ = 1` and using `∫ g = 0`, the negative part `g₋ = (|g| - g)/2`
@@ -27847,8 +28149,8 @@ Math. 2019, §3.1 and Theorem 1.4).
   and dropping the positive `E_2`-terms, `E_{1/2} = E_{1/4} e^{-π|x|²/4}` and
   `E_4 ≤ E_{1/4} e^{-π|x|²/4}` give `G ≥ E_{1/4} (1 - e^{-π|x|²/4} (1 + D/D' + 2^d)) / D`, which
   is positive as soon as `|x|² > (4/π) log (1 + D/D' + 2^d)`.
-* `A₊(d) < ∞` (`signUncertaintyConstant_lt_top`) follows from `A₊(d) ≤ A₋(d)`
-  (`signUncertaintyConstant_one_le_neg_one`, Appendix A of the report). -/
+* `A₊(d) < ∞` follows from `A₊(d) < A₋(d)` (`signUncertaintyConstant_lt_top` in
+  `CohnElkies.SignUncertainty.Extremizer`). -/
 
 namespace CohnElkies
 open scoped Real
@@ -28100,41 +28402,48 @@ theorem signUncertaintyConstant_neg_one_lt_top (hd : 0 < d) :
   (signUncertaintyConstant_le (explicitSignEigenfunction hd)).trans_lt
     (signRadius_explicitSignEigenfunction_lt_top hd)
 
-/-- `A_ς(d) < ∞` for `d ≥ 1` and both signs: `A₊(d) ≤ A₋(d) < ∞` (Appendix A of the report). -/
-theorem signUncertaintyConstant_lt_top (hd : 0 < d) (ς : ℤˣ) :
-    signUncertaintyConstant ς d < ⊤ := by
-  rcases Int.units_eq_one_or ς with rfl | rfl
-  · exact (signUncertaintyConstant_one_le_neg_one hd).trans_lt
-      (signUncertaintyConstant_neg_one_lt_top hd)
-  · exact signUncertaintyConstant_neg_one_lt_top hd
-
-/-- `0 < A_ς(d) < ∞` for `d ≥ 1` and both signs. -/
-theorem signUncertaintyConstant_pos_lt_top (hd : 0 < d) (ς : ℤˣ) :
-    0 < signUncertaintyConstant ς d ∧ signUncertaintyConstant ς d < ⊤ :=
-  ⟨signUncertaintyConstant_pos hd ς, signUncertaintyConstant_lt_top hd ς⟩
-
 end
 
 end CohnElkies
 
 end CohnElkies_SignUncertainty_Finiteness
 
-/-! ## Module `CohnElkies.SignUncertainty.Extremizer` -/
+/-! ## Module `CohnElkies.SignUncertainty.AppendixA` -/
 
-section CohnElkies_SignUncertainty_Extremizer
+section CohnElkies_SignUncertainty_AppendixA
 
-/-! # Existence of extremizers for `A₋(d)` and the strict inequality `A₊(d) < A₋(d)`
+/-! # Appendix A of the report: Proposition A.1 and `A₊(d) < A₋(d)`
 
-Theorem 1.4 of Cohn–Gonçalves, *An optimal uncertainty principle in twelve dimensions via modular
-forms* (Invent. Math. 2019), in its existence part (their §3.2): for every `d ≥ 1` the infimum
-`A₋(d) = inf {r(g) : g ∈ 𝓔₋(d)}` of report (6) is attained. With it, the strict inequality
-`A₊(d) < A₋(d)` of Appendix A of the report becomes unconditional
-(`signUncertaintyConstant_one_lt_neg_one`).
+**Proposition A.1.** For a radial `g ∈ E₋(d)`, `d ≥ 1`, the tail integral `T_d g` of report (87) is
+a self-Fourier sign eigenfunction `T_d g ∈ E₊(d)` (`SignEigenfunction.tailIntegral`): continuous,
+integrable, `𝓕 (T_d g) = T_d g`, `T_d g (0) = 0` (`CohnElkies.SignUncertainty.TailIntegral`), and
+nonzero (differentiating the small-scale representation along a ray recovers `g`). If `g ≥ 0`
+outside the ball of radius `R`, then `T_d g > 0` outside that ball: `T_d g (x) ≥ 0` by (87), and
+`T_d g (x) = 0` would force `g`, hence `𝓕 g = -g`, to vanish outside the ball of radius `‖x‖`,
+contradicting Fourier analyticity (`fourier_eq_zero_of_eq_zero_outside`). Hence `r(T_d g) ≤ r(g)`
+and, when `r(g) < ∞`, `r(T_d g) < r(g)` (`SignEigenfunction.signRadius_tailIntegral_lt`).
+
+**Existence of extremizers.** Theorem 1.4 of Cohn–Gonçalves, *An optimal uncertainty principle in
+twelve dimensions via modular forms* (Invent. Math. 2019), in its existence part (their §3.2): for
+every `d ≥ 1` the infimum `A₋(d) = inf {r(g) : g ∈ 𝓔₋(d)}` of report (6) is attained
+(`exists_signRadius_eq_signUncertaintyConstant_neg_one`). Applied to Proposition A.1, this gives
+the comparison `A₊(d) < A₋(d)` of the sign-uncertainty constants
+(`signUncertaintyConstant_one_lt_neg_one`), and `0 < A_ς(d) < ∞` for both signs
+(`signUncertaintyConstant_pos_lt_top`).
 
 Write `A = A₋(d)`, `0 < A < ∞` (`CohnElkies.SignUncertainty.Finiteness`), `a = A.toReal`. The
-proof follows Cohn–Gonçalves, with their quantitative input (Nazarov's uncertainty principle)
-replaced by the qualitative compactness statement of
-`CohnElkiesForMathlib.Analysis.Fourier.EigenfunctionConcentration`.
+existence proof follows Cohn–Gonçalves §3.2 with three deviations. (i) Their uniform
+negative-mass bound comes from a quantitative uncertainty principle (Nazarov, in Jaming's
+higher-dimensional form, or Amrein–Berthier); here it comes from the qualitative compactness
+statement of `CohnElkiesForMathlib.Analysis.Fourier.EigenfunctionConcentration` (eigenfunctions of
+`𝓕` cannot concentrate on a ball). (ii) They upgrade the weak `L²` convergence to a.e. and `L²`
+convergence by Mazur's lemma (convexity of the class) before applying Fatou; here Mazur's lemma
+is not used: every property of the weak limit (integrability, the sign outside the ball, the
+Fourier eigen-equation, nonvanishing) is read off by testing the weak convergence against
+explicit `L²` functions and smooth compactly supported functions. (iii) They normalize the
+minimizing sequence by Lemma 3.1 (`𝓕 f_n = -f_n`, `f_n(0) = 0`) and deduce `f(0) = 0` for the
+limit from minimality; here every element of `𝓔₋(d)` already satisfies both conditions, and the
+origin correction of Lemma 3.1 is applied once, to the continuous representative of the limit.
 
 1. *Minimizing sequence* (`IsMinimizingSequence`, `exists_isMinimizingSequence`): `L¹`-normalized
    `f n ∈ 𝓔₋(d)` with `r(f n) ≤ a + 1/(n+1)`; then `|f n| ≤ 1`, `∫ f n = 0`, and `f n ≥ 0` outside
@@ -28154,7 +28463,7 @@ replaced by the qualitative compactness statement of
    continuous, integrable, `𝓕 G = -G` everywhere, `G ≠ 0`, `G(0) = -∫ g ≥ 0` and `G ≥ 0` outside
    the ball of radius `a`; the origin correction of Cohn–Gonçalves (Lemma 3.1,
    `CohnElkies.SignUncertainty.OriginCorrection`) turns `G` into `h ∈ 𝓔₋(d)` with `r(h) ≤ a`.
-7. Hence `r(h) = A₋(d)` (`exists_signRadius_eq_signUncertaintyConstant_neg_one`). -/
+7. Hence `r(h) = A₋(d)`, and `A₊(d) ≤ r(T_d ℛh) < r(ℛh) = A₋(d)` for the rotational average `ℛh`. -/
 
 namespace CohnElkies
 open scoped Real
@@ -28168,7 +28477,235 @@ open scoped ENNReal NNReal FourierTransform Topology InnerProductSpace RealInner
 
 variable {d : ℕ}
 
-/-! ### Step 1: minimizing sequences -/
+/-! ### Sign radii -/
+
+/-- A sign eigenfunction nonnegative outside the ball of radius `R` has `R > 0`: otherwise `g ≥ 0`
+everywhere and `∫ g = 0` would force `g = 0` (report, proof of Proposition A.1). -/
+theorem SignEigenfunction.pos_of_nonneg_outside {ς : ℤˣ} (g : SignEigenfunction d ς) {R : ℝ}
+    (hR : ∀ x : Euclidean d, R ≤ ‖x‖ → 0 ≤ g x) : 0 < R := by
+  by_contra! hR0
+  have hnn : ∀ x, 0 ≤ g x := fun x ↦ hR x (hR0.trans (norm_nonneg x))
+  have h := (integral_eq_zero_iff_of_nonneg hnn g.integrable).1 g.integral_eq_zero
+  exact g.ne_zero ((g.continuous.ae_eq_iff_eq volume continuous_const).1 h)
+
+/-- A continuous function on `ℝ^d` (`d ≥ 1`) nonnegative outside the closed ball of radius `R` is
+nonnegative on its boundary sphere as well. -/
+theorem nonneg_of_forall_lt_norm (hd : 0 < d) {g : Euclidean d → ℝ} (hg : Continuous g) {R : ℝ}
+    (h : ∀ x : Euclidean d, R < ‖x‖ → 0 ≤ g x) (x : Euclidean d) (hx : R ≤ ‖x‖) : 0 ≤ g x := by
+  rcases hx.lt_or_eq with hlt | heq
+  · exact h x hlt
+  by_cases hx0 : x = 0
+  · subst hx0
+    rw [norm_zero] at heq
+    set e := radialUnitDirection hd
+    have hlim : Tendsto (fun t : ℝ ↦ g (t • e)) (𝓝[>] 0) (𝓝 (g 0)) := by
+      have hc : Continuous fun t : ℝ ↦ g (t • e) := hg.comp (continuous_id.smul continuous_const)
+      have := (hc.tendsto 0).mono_left (nhdsWithin_le_nhds (s := Ioi 0))
+      simpa using this
+    refine ge_of_tendsto hlim ?_
+    filter_upwards [self_mem_nhdsWithin] with t ht
+    refine h _ ?_
+    rw [norm_smul, norm_radialUnitDirection hd, mul_one, Real.norm_of_nonneg (le_of_lt ht), heq]
+    exact ht
+  · have hlim : Tendsto (fun t : ℝ ↦ g (t • x)) (𝓝[>] 1) (𝓝 (g x)) := by
+      have hc : Continuous fun t : ℝ ↦ g (t • x) := hg.comp (continuous_id.smul continuous_const)
+      have := (hc.tendsto 1).mono_left (nhdsWithin_le_nhds (s := Ioi 1))
+      simpa using this
+    refine ge_of_tendsto hlim ?_
+    filter_upwards [self_mem_nhdsWithin] with t ht
+    refine h _ ?_
+    rw [norm_smul, Real.norm_of_nonneg (zero_le_one.trans (le_of_lt ht)), heq]
+    exact lt_mul_of_one_lt_left (norm_pos_iff.2 hx0) ht
+
+/-- The last-sign radius `r(g)` of a continuous function with `r(g) < ⊤` is itself a sign radius
+(`d ≥ 1`). -/
+theorem nonneg_of_toReal_signRadius_le (hd : 0 < d) {g : Euclidean d → ℝ} (hg : Continuous g)
+    (hfin : signRadius g < ⊤) (x : Euclidean d) (hx : (signRadius g).toReal ≤ ‖x‖) : 0 ≤ g x := by
+  refine nonneg_of_forall_lt_norm hd hg (R := (signRadius g).toReal) (fun y hy ↦ ?_) x hx
+  by_contra hneg
+  have h := le_signRadius_of_not_nonneg_outside (g := g) (R := ‖y‖) fun hall ↦ hneg (hall y le_rfl)
+  rw [ENNReal.ofReal_le_iff_le_toReal hfin.ne] at h
+  exact hy.not_ge h
+
+namespace SignEigenfunction
+
+variable (hd : 0 < d) (g : SignEigenfunction d (-1)) (hg : IsRadial (g : Euclidean d → ℝ))
+include hd hg
+
+/-! ### Positivity of `T_d g` outside a sign radius of `g` -/
+
+/-- Report, proof of Proposition A.1: if `g ≥ 0` outside the ball of radius `R`, then `T_d g > 0`
+outside that ball. Nonnegativity is (87); if `T_d g (x) = 0`, then `g` vanishes on the ray beyond
+`x`, hence (radiality) outside the ball of radius `‖x‖`, and so does `𝓕 g = -g`, which forces
+`g = 0` by Fourier analyticity. -/
+theorem tailIntegral_pos {R : ℝ} (hR : ∀ x : Euclidean d, R ≤ ‖x‖ → 0 ≤ g x) {x : Euclidean d}
+    (hx : R ≤ ‖x‖) : 0 < tailIntegral d g x := by
+  have hR0 : 0 < R := g.pos_of_nonneg_outside hR
+  have hx' : 0 < ‖x‖ := hR0.trans_le hx
+  have hx0 : x ≠ 0 := norm_pos_iff.1 hx'
+  set Φ : ℝ → ℝ := fun t ↦ t ^ ((d / 2 : ℝ) - 1) * g (t • x) with hΦ
+  have hΦnn : ∀ t ∈ Ioi (1 : ℝ), 0 ≤ Φ t := fun t ht ↦ by
+    have ht0 : 0 < t := zero_lt_one.trans ht
+    refine mul_nonneg (Real.rpow_nonneg ht0.le _) (hR _ ?_)
+    rw [norm_smul, Real.norm_of_nonneg ht0.le]
+    exact hx.trans (le_mul_of_one_le_left (norm_nonneg x) (le_of_lt ht))
+  have hint : IntegrableOn Φ (Ioi 1) :=
+    (g.integrableOn_rpow_mul_smul hd hg hx0).mono_set (Ioi_subset_Ioi zero_le_one)
+  have hnn : 0 ≤ ∫ t in Ioi (1 : ℝ), Φ t := setIntegral_nonneg measurableSet_Ioi hΦnn
+  rw [tailIntegral_of_ne_zero _ hx0]
+  refine mul_pos (by positivity) (lt_of_le_of_ne hnn fun h0 ↦ ?_)
+  have hae : Φ =ᵐ[volume.restrict (Ioi 1)] 0 :=
+    (setIntegral_eq_zero_iff_of_nonneg_ae (ae_restrict_of_forall_mem measurableSet_Ioi hΦnn)
+      hint).1 h0.symm
+  have hcont : ContinuousOn Φ (Ioi 1) :=
+    (continuousOn_id.rpow_const fun t ht ↦ Or.inl (zero_lt_one.trans ht).ne').mul
+      (g.continuous.comp (continuous_id.smul continuous_const :
+        Continuous fun t : ℝ ↦ t • x)).continuousOn
+  have hzero : ∀ t ∈ Ioi (1 : ℝ), Φ t = 0 := fun t ht ↦ by
+    simpa using Measure.eqOn_open_of_ae_eq hae isOpen_Ioi hcont continuousOn_const ht
+  have hvan : ∀ y : Euclidean d, ‖x‖ < ‖y‖ → g y = 0 := by
+    intro y hy
+    have ht : 1 < ‖y‖ / ‖x‖ := (one_lt_div hx').2 hy
+    have hΦt := hzero _ ht
+    simp only [hΦ] at hΦt
+    have hgy : g y = g ((‖y‖ / ‖x‖) • x) := hg _ _ (by
+      rw [norm_smul, Real.norm_of_nonneg (by positivity), div_mul_cancel₀ _ hx'.ne'])
+    rw [hgy]
+    exact (mul_eq_zero.1 hΦt).resolve_left (Real.rpow_pos_of_pos (zero_lt_one.trans ht) _).ne'
+  have hsupp : ∀ y : Euclidean d, ‖x‖ < ‖y‖ → g.toComplex y = 0 := fun y hy ↦ by
+    simp [hvan y hy]
+  have hfour : ∀ y : Euclidean d, ‖x‖ < ‖y‖ → 𝓕 g.toComplex y = 0 := fun y hy ↦ by
+    rw [g.fourier_toComplex, hvan y hy]
+    simp
+  have hzero' := fourier_eq_zero_of_eq_zero_outside hd g.integrable_toComplex hsupp hfour
+  exact g.ne_zero (funext fun y ↦ by simpa [congrFun hzero' y] using g.coe_eq_fourier y)
+
+/-! ### Nonvanishing of `T_d g` -/
+
+/-- If all the small-scale integrals `∫_0^1 s^{λ-1} g(s x) ds` vanish, then `g = 0`: the profile
+`F(R) = ∫_0^R r^{λ-1} g(r e₁) dr` vanishes for all `R > 0`, so its derivative `R^{λ-1} g(R e₁)`
+vanishes too (this is `(x·∇ + λ) T_d g = -λ g/2` of the report, integrated along rays). -/
+theorem eq_zero_of_forall_integral_Ioo_eq_zero
+    (h : ∀ x : Euclidean d, ∫ s in Ioo (0 : ℝ) 1, s ^ ((d / 2 : ℝ) - 1) * g (s • x) = 0) :
+    (g : Euclidean d → ℝ) = 0 := by
+  set e := radialUnitDirection hd with he
+  set f : ℝ → ℝ := fun r ↦ r ^ ((d / 2 : ℝ) - 1) * g (r • e) with hf
+  have hF : ∀ R : ℝ, 0 < R → ∫ r in (0 : ℝ)..R, f r = 0 := by
+    intro R hR
+    have h1 := h (R • e)
+    rw [← integral_Ioc_eq_integral_Ioo,
+      ← intervalIntegral.integral_of_le (zero_le_one : (0 : ℝ) ≤ 1)] at h1
+    have h2 : ∫ s in (0 : ℝ)..1, s ^ ((d / 2 : ℝ) - 1) * g (s • R • e) =
+        (R ^ ((d / 2 : ℝ) - 1))⁻¹ * ∫ s in (0 : ℝ)..1, f (R * s) := by
+      rw [← intervalIntegral.integral_const_mul]
+      refine intervalIntegral.integral_congr fun s hs ↦ ?_
+      have hs0 : 0 ≤ s := by
+        rw [uIcc_of_le (zero_le_one : (0 : ℝ) ≤ 1)] at hs
+        exact hs.1
+      simp only [hf, smul_smul, Real.mul_rpow hR.le hs0]
+      field_simp
+    rw [h2, intervalIntegral.integral_comp_mul_left (f := f) hR.ne', mul_zero, mul_one,
+      smul_eq_mul] at h1
+    simpa [hR.ne', (Real.rpow_pos_of_pos hR _).ne'] using h1
+  have hderiv : ∀ R : ℝ, 0 < R → f R = 0 := by
+    intro R hR
+    have hfint : IntervalIntegrable f volume 0 R := by
+      rw [intervalIntegrable_iff_integrableOn_Ioc_of_le hR.le]
+      exact (g.integrableOn_rpow_mul_profile hd hg).mono_set Ioc_subset_Ioi_self
+    have hcont : ContinuousAt f R :=
+      (Real.continuousAt_rpow_const R _ (Or.inl hR.ne')).mul
+        (g.continuous.comp (continuous_id.smul continuous_const :
+          Continuous fun r : ℝ ↦ r • e)).continuousAt
+    have hmeas : StronglyMeasurableAtFilter f (𝓝 R) :=
+      ((measurable_id.pow_const _).mul (g.continuous.measurable.comp
+        (measurable_id.smul_const e))).aestronglyMeasurable.stronglyMeasurableAtFilter
+    have hD := intervalIntegral.integral_hasDerivAt_right hfint hmeas hcont
+    have hD0 : HasDerivAt (fun u ↦ ∫ r in (0 : ℝ)..u, f r) 0 R := by
+      refine (hasDerivAt_const R (0 : ℝ)).congr_of_eventuallyEq ?_
+      filter_upwards [Ioi_mem_nhds hR] with u hu
+      exact hF u hu
+    exact hD.unique hD0
+  funext x
+  by_cases hx : x = 0
+  · simp [hx, g.zero]
+  · have hx' : 0 < ‖x‖ := norm_pos_iff.2 hx
+    have hfx := hderiv ‖x‖ hx'
+    simp only [hf] at hfx
+    rw [Pi.zero_apply, hg x (‖x‖ • e) (by simp [norm_smul, he, norm_radialUnitDirection hd])]
+    exact (mul_eq_zero.1 hfx).resolve_left (Real.rpow_pos_of_pos hx' _).ne'
+
+/-- `T_d g ≠ 0` (Proposition A.1). -/
+theorem tailIntegral_ne_zero : tailIntegral d g ≠ 0 := fun h ↦
+  g.ne_zero (g.eq_zero_of_forall_integral_Ioo_eq_zero hd hg fun x ↦ by
+    have hx := congrFun h x
+    rw [g.tailIntegral_eq_neg_integral_Ioo hd hg x, Pi.zero_apply, neg_mul, neg_eq_zero,
+      mul_eq_zero] at hx
+    exact hx.resolve_left (by positivity))
+
+/-! ### Proposition A.1 -/
+
+/-- `r(T_d g) ≤ r(g)`: `T_d g ≥ 0` outside every ball outside which `g ≥ 0`. -/
+theorem signRadius_tailIntegral_le : signRadius (tailIntegral d g) ≤ signRadius g :=
+  signRadius_le_signRadius fun _ hR _ hx ↦ (g.tailIntegral_pos hd hg hR hx).le
+
+/-- Proposition A.1: if `r(g) < ∞` then `r(T_d g) < r(g)`. Indeed `r(g) > 0`, `T_d g > 0` on the
+sphere of radius `r(g)`, and the (radial, continuous) function `T_d g` stays positive on a slightly
+smaller sphere. -/
+theorem signRadius_tailIntegral_lt (hfin : signRadius (g : Euclidean d → ℝ) < ⊤) :
+    signRadius (tailIntegral d g) < signRadius g := by
+  set R := (signRadius (g : Euclidean d → ℝ)).toReal with hRdef
+  have hR : ∀ y : Euclidean d, R ≤ ‖y‖ → 0 ≤ g y :=
+    nonneg_of_toReal_signRadius_le hd g.continuous hfin
+  have hR0 : 0 < R := g.pos_of_nonneg_outside hR
+  set e := radialUnitDirection hd with he
+  have hpos : 0 < tailIntegral d g (R • e) := g.tailIntegral_pos hd hg hR
+    (by simp [norm_smul, he, norm_radialUnitDirection hd, abs_of_pos hR0])
+  have hcont : ContinuousAt (fun r : ℝ ↦ tailIntegral d g (r • e)) R :=
+    ((g.continuous_tailIntegral hd hg).comp (continuous_id.smul continuous_const :
+      Continuous fun r : ℝ ↦ r • e)).continuousAt
+  obtain ⟨δ, hδ, hδpos⟩ : ∃ δ > 0, ∀ r : ℝ, |r - R| < δ → 0 < tailIntegral d g (r • e) := by
+    obtain ⟨δ, hδ, hδ'⟩ := Metric.eventually_nhds_iff.1 (hcont.eventually (lt_mem_nhds hpos))
+    exact ⟨δ, hδ, fun r hr ↦ hδ' (by rwa [Real.dist_eq])⟩
+  have hsign : ∀ y : Euclidean d, R - δ / 2 ≤ ‖y‖ → 0 ≤ tailIntegral d g y := by
+    intro y hy
+    rcases le_or_gt R ‖y‖ with h | h
+    · exact (g.tailIntegral_pos hd hg hR h).le
+    · have h' := hδpos ‖y‖ (by rw [abs_sub_lt_iff]; constructor <;> linarith)
+      rw [hg.tailIntegral (‖y‖ • e) y (by simp [norm_smul, he, norm_radialUnitDirection hd])]
+        at h'
+      exact h'.le
+  calc signRadius (tailIntegral d g) ≤ ENNReal.ofReal (R - δ / 2) :=
+        signRadius_le (R := Real.toNNReal (R - δ / 2)) fun y hy ↦
+          hsign y ((Real.le_coe_toNNReal _).trans hy)
+    _ < ENNReal.ofReal R := (ENNReal.ofReal_lt_ofReal_iff hR0).2 (by linarith)
+    _ = signRadius g := ENNReal.ofReal_toReal hfin.ne
+
+end SignEigenfunction
+
+/-- Proposition A.1 of the report (Appendix A): for a radial `g ∈ E₋(d)`, `d ≥ 1`, the tail
+integral `T_d g` of (87) is a self-Fourier sign eigenfunction, `T_d g ∈ E₊(d)`: it is continuous
+and integrable, `𝓕 (T_d g) = T_d g`, `T_d g (0) = 0` and `T_d g ≠ 0`. Moreover `‖T_d g‖₁ ≤ ½ ‖g‖₁`
+(`SignEigenfunction.integral_norm_tailIntegral_le`), `r(T_d g) ≤ r(g)`
+(`SignEigenfunction.signRadius_tailIntegral_le`) and `r(T_d g) < r(g)` when `r(g) < ∞`
+(`SignEigenfunction.signRadius_tailIntegral_lt`). -/
+def SignEigenfunction.tailIntegral (hd : 0 < d) (g : SignEigenfunction d (-1))
+    (hg : IsRadial (g : Euclidean d → ℝ)) : SignEigenfunction d 1 where
+  toFun := _root_.CohnElkies.tailIntegral d g
+  integrable := g.integrable_tailIntegral hd hg
+  fourier_eq ξ := by
+    rw [g.fourier_tailIntegral hd hg ξ]
+    simp
+  ne_zero := g.tailIntegral_ne_zero hd hg
+  zero := tailIntegral_zero _
+
+@[simp] theorem SignEigenfunction.tailIntegral_apply (hd : 0 < d) (g : SignEigenfunction d (-1))
+    (hg : IsRadial (g : Euclidean d → ℝ)) (x : Euclidean d) :
+    g.tailIntegral hd hg x = _root_.CohnElkies.tailIntegral d g x :=
+  rfl
+
+/-! ## Existence of extremizers (Cohn–Gonçalves, Theorem 1.4)
+
+### Step 1: minimizing sequences -/
 
 /-- A minimizing sequence for `A₋(d)` at level `a` (Cohn–Gonçalves 2019, §3.2): `L¹`-normalized
 integrable `f n` with `𝓕 (f n) = -f n` pointwise, `|f n| ≤ 1`, `∫ f n = 0`, and `f n ≥ 0` outside
@@ -28674,18 +29211,44 @@ theorem exists_signRadius_eq_signUncertaintyConstant_neg_one (hd : 0 < d) :
   exact ⟨g, le_antisymm (hg.trans_eq (ENNReal.ofReal_toReal hfin.ne))
     (signUncertaintyConstant_le g)⟩
 
-/-- Appendix A of the report, unconditionally: `A₊(d) < A₋(d)` for every `d ≥ 1`. -/
+/-- Appendix A of the report: `A₊(d) < A₋(d)` for every `d ≥ 1`. Let `g ∈ 𝓔₋(d)` attain
+`A₋(d) < ∞` and let `h = ℛg` be its rotational average, a radial element of `𝓔₋(d)` with
+`r(h) = A₋(d)`; then `T_d h ∈ 𝓔₊(d)` (Proposition A.1) has `r(T_d h) < r(h)`, so
+`A₊(d) ≤ r(T_d h) < A₋(d)`. -/
 theorem signUncertaintyConstant_one_lt_neg_one (hd : 0 < d) :
-    signUncertaintyConstant 1 d < signUncertaintyConstant (-1) d :=
-  signUncertaintyConstant_one_lt_neg_one_of_exists_extremizer hd
-    (signUncertaintyConstant_neg_one_lt_top hd)
-    (exists_signRadius_eq_signUncertaintyConstant_neg_one hd)
+    signUncertaintyConstant 1 d < signUncertaintyConstant (-1) d := by
+  have hfin := signUncertaintyConstant_neg_one_lt_top hd
+  obtain ⟨g, hg⟩ := exists_signRadius_eq_signUncertaintyConstant_neg_one hd
+  obtain ⟨R, hR⟩ := exists_nonneg_outside_of_signRadius_lt_top (hg ▸ hfin)
+  have hrad : IsRadial (g.radialize hd hR : Euclidean d → ℝ) := g.radialize_eq_of_norm_eq hd hR
+  have heq : signRadius (g.radialize hd hR : Euclidean d → ℝ) = signUncertaintyConstant (-1) d :=
+    le_antisymm ((g.signRadius_radialize_le hd hR).trans hg.le)
+      (signUncertaintyConstant_le (g.radialize hd hR))
+  calc signUncertaintyConstant 1 d
+      ≤ signRadius ((g.radialize hd hR).tailIntegral hd hrad : Euclidean d → ℝ) :=
+        signUncertaintyConstant_le _
+    _ < signRadius (g.radialize hd hR : Euclidean d → ℝ) :=
+        (g.radialize hd hR).signRadius_tailIntegral_lt hd hrad (heq ▸ hfin)
+    _ = signUncertaintyConstant (-1) d := heq
+
+/-- `A_ς(d) < ∞` for `d ≥ 1` and both signs: `A₊(d) < A₋(d) < ∞`. -/
+theorem signUncertaintyConstant_lt_top (hd : 0 < d) (ς : ℤˣ) :
+    signUncertaintyConstant ς d < ⊤ := by
+  rcases Int.units_eq_one_or ς with rfl | rfl
+  · exact (signUncertaintyConstant_one_lt_neg_one hd).trans
+      (signUncertaintyConstant_neg_one_lt_top hd)
+  · exact signUncertaintyConstant_neg_one_lt_top hd
+
+/-- `0 < A_ς(d) < ∞` for `d ≥ 1` and both signs. -/
+theorem signUncertaintyConstant_pos_lt_top (hd : 0 < d) (ς : ℤˣ) :
+    0 < signUncertaintyConstant ς d ∧ signUncertaintyConstant ς d < ⊤ :=
+  ⟨signUncertaintyConstant_pos hd ς, signUncertaintyConstant_lt_top hd ς⟩
 
 end
 
 end CohnElkies
 
-end CohnElkies_SignUncertainty_Extremizer
+end CohnElkies_SignUncertainty_AppendixA
 
 /-! ## Module `CohnElkies.SignUncertainty.SchwartzApproximation` -/
 
