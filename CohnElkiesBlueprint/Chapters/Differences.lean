@@ -296,8 +296,34 @@ report's statements:
 Appendix A is formalized in $`L^1` generality ({bpref "prop_a_1"}[]); the strict inequality
 ({bpref "cor_a_plus_lt_a_minus"}[])
 rests on the existence of extremizers for $`\mathsf{A}_-(d)` ({bpref "thm_cg19_1_4_existence"}[]),
-proved after Cohn–Gonçalves 2019 with their quantitative uncertainty principle (Nazarov–Jaming)
-replaced by a compactness argument ({bpref "lemma_fourier_eigenfunction_no_concentration"}[]).
+which is not part of the report (see the next section).
+
+# Existence of extremizers: deviations from Cohn–Gonçalves
+
+The existence part of Theorem 1.4 of Cohn–Gonçalves (2019) is proved along the lines of their
+§3.2, with three changes.
+
+* *Uniform negative-mass bound.* Cohn–Gonçalves obtain $`\int_{B_{r(f_n)}} f_n \le K < 0` for the
+  normalized minimizing sequence from Nazarov's uncertainty principle in Jaming's
+  higher-dimensional form (alternatively from the Amrein–Berthier inequality), a quantitative
+  statement with explicit constants. The formalization uses the qualitative lemma
+  {bpref "lemma_fourier_eigenfunction_no_concentration"}[]: $`L^1`-normalized eigenfunctions of
+  the Fourier transform have $`L^1` mass at least $`\kappa(c,R) > 0` outside any fixed ball, proved by
+  contradiction from weak $`L^2` compactness ({bpref "lemma_weak_sequential_compactness"}[]) and
+  the compact-support theorem ({bpref "lemma_compactly_supported_eigenfunction_zero"}[]).
+* *No Mazur's lemma.* Cohn–Gonçalves upgrade the weak $`L^2` convergence of the minimizing
+  sequence to convergence almost everywhere and in $`L^2` (Mazur's lemma, using the convexity of
+  the class) and then apply Fatou's lemma. The formalization keeps the weak limit and reads off its
+  properties by testing against explicit $`L^2` functions (indicators, $`1_K\operatorname{sign} g`)
+  and smooth compactly supported functions (for the Fourier eigen-equation, through
+  $`\int\widehat u\,\Phi = \int u\,\widehat\Phi`).
+* *Origin correction.* Cohn–Gonçalves normalize the minimizing sequence with their Lemma 3.1
+  ($`\widehat{f_n} = -f_n`, $`f_n(0) = 0`) and deduce $`f(0) = 0` for the limit from minimality.
+  In the report's class $`\mathcal{E}_-(d)` both conditions are part of the definition, and the
+  origin correction ({bpref "lemma_cg19_3_1_origin_correction"}[]) is applied once, to the
+  continuous representative of the weak limit, which a priori only satisfies $`f(0) \ge 0`.
+
+The infinitely-many-roots part of Theorem 1.4 is not formalized.
 
 # Schwartz approximation with a bump mollifier
 

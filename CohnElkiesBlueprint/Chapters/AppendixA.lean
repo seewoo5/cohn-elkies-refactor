@@ -259,6 +259,16 @@ pointwise, $`G \ne 0`, $`G(0) = -\int g \ge 0`, and $`G \ge 0` on $`\{|x| \ge a\
 exterior, hence everywhere by continuity). Finally {uses "lemma_cg19_3_1_origin_correction"}[]
 with $`R = a` produces $`h \in \mathcal{E}_-(d)` with $`r(h) \le a`, and $`r(h) \ge \mathsf{A}_-(d) = a`
 by definition of the infimum.
+
+This differs from the proof of Cohn–Gonçalves in three places: their uniform negative-mass bound
+$`\int_{B} f_n \le K < 0` is deduced from Nazarov's uncertainty principle in Jaming's form (or
+from the Amrein–Berthier inequality), here from the compactness lemma
+{uses "lemma_fourier_eigenfunction_no_concentration"}[]; they pass from weak to almost-everywhere
+and $`L^2` convergence by Mazur's lemma before applying Fatou's lemma, whereas here the weak limit is
+only tested against explicit $`L^2` and smooth compactly supported functions; and they normalize
+the minimizing sequence by their Lemma 3.1 and infer $`f(0) = 0` for the limit from minimality,
+whereas here every element of $`\mathcal{E}_-(d)` already has $`\widehat g = -g` and $`g(0) = 0`,
+and the origin correction is applied once, to the limit.
 :::
 
 :::theorem "cor_a_plus_lt_a_minus" (lean := "CohnElkies.signUncertaintyConstant_one_lt_neg_one")

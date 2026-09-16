@@ -24,9 +24,18 @@ the comparison `A₊(d) < A₋(d)` of the sign-uncertainty constants
 (`signUncertaintyConstant_pos_lt_top`).
 
 Write `A = A₋(d)`, `0 < A < ∞` (`CohnElkies.SignUncertainty.Finiteness`), `a = A.toReal`. The
-existence proof follows Cohn–Gonçalves, with their quantitative input (Nazarov's uncertainty
-principle) replaced by the qualitative compactness statement of
-`CohnElkiesForMathlib.Analysis.Fourier.EigenfunctionConcentration`.
+existence proof follows Cohn–Gonçalves §3.2 with three deviations. (i) Their uniform
+negative-mass bound comes from a quantitative uncertainty principle (Nazarov, in Jaming's
+higher-dimensional form, or Amrein–Berthier); here it comes from the qualitative compactness
+statement of `CohnElkiesForMathlib.Analysis.Fourier.EigenfunctionConcentration` (eigenfunctions of
+`𝓕` cannot concentrate on a ball). (ii) They upgrade the weak `L²` convergence to a.e. and `L²`
+convergence by Mazur's lemma (convexity of the class) before applying Fatou; here Mazur's lemma
+is not used: every property of the weak limit (integrability, the sign outside the ball, the
+Fourier eigen-equation, nonvanishing) is read off by testing the weak convergence against
+explicit `L²` functions and smooth compactly supported functions. (iii) They normalize the
+minimizing sequence by Lemma 3.1 (`𝓕 f_n = -f_n`, `f_n(0) = 0`) and deduce `f(0) = 0` for the
+limit from minimality; here every element of `𝓔₋(d)` already satisfies both conditions, and the
+origin correction of Lemma 3.1 is applied once, to the continuous representative of the limit.
 
 1. *Minimizing sequence* (`IsMinimizingSequence`, `exists_isMinimizingSequence`): `L¹`-normalized
    `f n ∈ 𝓔₋(d)` with `r(f n) ≤ a + 1/(n+1)`; then `|f n| ≤ 1`, `∫ f n = 0`, and `f n ≥ 0` outside
