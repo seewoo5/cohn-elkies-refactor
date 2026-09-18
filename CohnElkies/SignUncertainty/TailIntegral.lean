@@ -26,11 +26,11 @@ variable {d : ℕ}
 def tailIntegral (d : ℕ) (g : Euclidean d → ℝ) (x : Euclidean d) : ℝ :=
   if x = 0 then 0 else (d / 2 : ℝ) / 2 * ∫ t in Ioi (1 : ℝ), t ^ ((d / 2 : ℝ) - 1) * g (t • x)
 
-@[simp] theorem tailIntegral_zero (g : Euclidean d → ℝ) : tailIntegral d g 0 = 0 := if_pos rfl
+@[simp] theorem tailIntegral_zero (g : Euclidean d → ℝ) : tailIntegral d g 0 = 0 := ite_eq_left rfl
 
 theorem tailIntegral_of_ne_zero (g : Euclidean d → ℝ) {x : Euclidean d} (hx : x ≠ 0) :
     tailIntegral d g x = (d / 2 : ℝ) / 2 * ∫ t in Ioi (1 : ℝ), t ^ ((d / 2 : ℝ) - 1) * g (t • x) :=
-  if_neg hx
+  ite_eq_right hx
 
 /-- For `g(0) = 0` the large-scale formula (87) also holds at `x = 0`. -/
 theorem tailIntegral_eq_of_zero (g : Euclidean d → ℝ) (hg : g 0 = 0) (x : Euclidean d) :

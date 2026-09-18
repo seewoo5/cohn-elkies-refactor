@@ -231,7 +231,7 @@ theorem poissonLogistic_characteristic (t : ℝ) :
   · simp only [Complex.ofReal_zero, mul_zero, zero_mul, Complex.exp_zero, mul_one, ↓reduceIte]
     rw [← Complex.ofReal_one, ← integral_poissonLogisticDensity]
     exact integral_ofReal
-  rw [if_neg ht]
+  rw [ite_eq_right ht]
   set w : ℂ := I * (t / π : ℝ) with hw
   calc (∫ u : ℝ, (poissonLogisticDensity u : ℂ) * Complex.exp (I * (t : ℂ) * (u : ℂ)))
       = Complex.betaIntegral (1 + w) (1 - w) := by
@@ -538,7 +538,8 @@ theorem integral_poissonLogistic_mul_wallisPhaseKernel {t : ℝ} (ht : 0 < t) :
           t * exp (-t) * ∫ u : ℝ, poissonLogisticDensity u) / t ^ 2 := by
         rw [integral_div, integral_sub h1 h2, integral_const_mul, integral_const_mul]
     _ = ((1 - exp (-t)) * (t / sinh t) - t * exp (-t)) / t ^ 2 := by
-        rw [poissonLogistic_cosine_transform t, if_neg ht.ne', integral_poissonLogisticDensity]
+        rw [poissonLogistic_cosine_transform t, ite_eq_right ht.ne',
+          integral_poissonLogisticDensity]
         ring
     _ = Real.Wallis.laplaceKernel t := by
         have hsinh : sinh t ≠ 0 := sinh_ne_zero.mpr ht.ne'
@@ -580,8 +581,9 @@ theorem tendsto_integral_wallisPhaseKernel (u : ℝ) :
     linarith [Nat.cast_nonneg (α := ℝ) n]
   rw [Real.norm_eq_abs]
   by_cases hone : t ≤ 1
-  · simpa only [wallisPhaseMajorant, if_pos hone] using abs_wallisPhaseKernel_le_moment h0 h1 u ht
-  · simpa only [wallisPhaseMajorant, if_neg hone] using
+  · simpa only [wallisPhaseMajorant, ite_eq_left hone] using
+      abs_wallisPhaseKernel_le_moment h0 h1 u ht
+  · simpa only [wallisPhaseMajorant, ite_eq_right hone] using
       abs_wallisPhaseKernel_le_tail h0 u (not_le.mp hone).le
 
 /-- The real part of the Frullani antiderivative `1 + z log z - (z + 1) log (z + 1)`. -/

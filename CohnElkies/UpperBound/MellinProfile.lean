@@ -893,8 +893,9 @@ theorem saddleGaussianPoleRepresentative_weighted_horizontalStrip_bound {r A B :
       = r ^ (-a) * exp ((a + (2 * n : ℝ)) ^ 2) *
           (exp (-t ^ 2) * (|t| / ‖(a : ℂ) + (t : ℂ) * I + (2 * n : ℂ)‖)) := by ring
     _ ≤ r ^ (-a) * exp ((a + (2 * n : ℝ)) ^ 2) * 1 :=
-        mul_le_mul_of_nonneg_left (mul_le_one₀ (Real.exp_le_one_iff.2 (neg_nonpos.2 (sq_nonneg t)))
-          (by positivity) ((div_le_one hdenpos).2 hden)) (by positivity)
+        mul_le_mul_of_nonneg_left ((mul_le_of_le_one_left (by positivity)
+          (Real.exp_le_one_iff.2 (neg_nonpos.2 (sq_nonneg t)))).trans ((div_le_one hdenpos).2 hden))
+          (by positivity)
     _ = r ^ (-a) * exp ((a + (2 * n : ℝ)) ^ 2) := mul_one _
     _ ≤ C := hC (mem_image_of_mem _ ha)
 

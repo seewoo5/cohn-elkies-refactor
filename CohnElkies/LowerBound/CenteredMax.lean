@@ -178,7 +178,7 @@ theorem lowerGammaScaledCappedClipped_antitoneOn (d : ℕ) (c D n : ℝ) :
       · exact le_rfl
       · exact min_le_right _ _
     · have hypos : 0 < y := hxpos.trans_le hxy
-      simp only [h_ℓD, if_neg hxpos.ne', if_neg hypos.ne']
+      simp only [h_ℓD, ite_eq_right hxpos.ne', ite_eq_right hypos.ne']
       exact min_le_min (lowerGammaBoundaryLog_dimension_antitoneOn _ (mem_Ioi.mpr hxpos)
         (mem_Ioi.mpr hypos) hxy) le_rfl
   intro x hx y hy hxy
@@ -201,7 +201,7 @@ theorem lowerGammaScaledCappedClipped_support {d : ℕ} (hd : 2 ≤ d) {c D n : 
       rw [h, abs_zero] at hyone; linarith
     refine hY ?_
     unfold lowerGammaScaledCappedClipped
-    rw [h_ℓD, if_neg harg]
+    rw [h_ℓD, ite_eq_right harg]
     exact max_eq_right (by
       linarith [min_le_left (h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * Y)) D,
         lowerGammaBoundaryLog_dimension_scaled_le_neg_of_large hd hc hn hlarge])
@@ -366,12 +366,12 @@ theorem lowerGammaScaledCapped_poisson_tendsto {d : ℕ} (hd : 0 < d) {c σ : �
     (fun n ↦ (lowerGammaScaledCapped_poisson_product_integrable hd (R := c * √d) (D := (n : ℝ))
       hbelow habove s).aestronglyMeasurable) (fun n ↦ ?_) ?_
   · filter_upwards [Measure.ae_ne (volume : Measure ℝ) 0] with Y hY
-    rw [h_ℓD, if_neg (mul_ne_zero hℓ.ne' hY)]
+    rw [h_ℓD, ite_eq_right (mul_ne_zero hℓ.ne' hY)]
     exact (abs_clip_le_abs (Nat.cast_nonneg n)).2
   · filter_upwards [Measure.ae_ne (volume : Measure ℝ) 0] with Y hY
     filter_upwards [(tendsto_natCast_atTop_atTop (R := ℝ)).eventually_ge_atTop
       (h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * Y))] with n hn
-    rw [h_ℓD, if_neg (mul_ne_zero hℓ.ne' hY), min_eq_left hn]
+    rw [h_ℓD, ite_eq_right (mul_ne_zero hℓ.ne' hY), min_eq_left hn]
 
 theorem lowerGammaScaled_poisson_convolution_max {d : ℕ} (hd : 2 ≤ d) {c σ : ℝ} (hc : 0 < c)
     (hbelow : -1 < σ) (habove : σ < 1) (s : ℝ) :

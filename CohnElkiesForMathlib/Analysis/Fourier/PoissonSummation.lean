@@ -278,7 +278,7 @@ lemma summable_norm_restrict_translate (K : TopologicalSpace.Compacts (Euclidean
     Metric.closedBall_subset_closedBall (le_max_left r 0) (hrK hx)
   have hfin : {ℓ : Λ | ‖(ℓ : EuclideanSpace ℝ (Fin d))‖ ≤ R}.Finite := by
     have hcl : IsClosed (X := EuclideanSpace ℝ (Fin d)) (Λ : Set (EuclideanSpace ℝ (Fin d))) :=
-      @AddSubgroup.isClosed_of_discrete _ _ _ _ _ Λ.toAddSubgroup
+      @AddSubgroup.isClosed_of_discreteTopology _ _ _ _ _ Λ.toAddSubgroup
         (inferInstanceAs (DiscreteTopology Λ))
     refine ((Metric.finite_isBounded_inter_isClosed DiscreteTopology.isDiscrete
       (Metric.isBounded_closedBall (x := (0 : EuclideanSpace ℝ (Fin d))) (r := R))

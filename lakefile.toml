@@ -17,21 +17,21 @@ maxSynthPendingDepth = 3
 [[require]]
 name = "Comparator"
 git = "https://github.com/leanprover/comparator.git"
-rev = "v4.33.0"
+rev = "v4.34.0"
 
 # The blueprint (natural-language statements and proofs linked to the Lean declarations);
 # rendered with `lake exe vbp build` (see `scripts/ci-pages.sh`).
 [[require]]
 name = "VersoBlueprint"
 git = "https://github.com/leanprover/verso-blueprint"
-rev = "v4.33.0"
+rev = "v4.34.0"
 
 # Mathlib last, so that its pins of shared dependencies (proofwidgets, batteries, …) take
 # precedence over those of Comparator and VersoBlueprint (needed for `lake exe cache get`).
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
-rev = "v4.33.1"
+rev = "v4.34.0"
 
 # Material with no project-specific content, ready for Mathlib (mirrors Mathlib's tree).
 [[lean_lib]]
@@ -40,11 +40,9 @@ name = "CohnElkiesForMathlib"
 [[lean_lib]]
 name = "CohnElkies"
 
-# The original single-file formalization (untouched reference) and the refactored single file
-# assembled from `CohnElkiesForMathlib/` and `CohnElkies/` (Step 1 of the plan).
-[[lean_lib]]
-name = "SpherePacking"
-
+# The refactored single file assembled from `CohnElkiesForMathlib/` and `CohnElkies/` (Step 1 of
+# the plan; `scripts/assemble_single_file.py`). The original `SpherePacking.lean` of
+# `openai/ten-proofs` (Lean v4.33.1) is no longer kept in the repository.
 [[lean_lib]]
 name = "SpherePackingRefactored"
 

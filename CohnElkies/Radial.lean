@@ -145,7 +145,7 @@ def radialLineIsometry {d : ℕ} (hd : 0 < d) : ℝ →ₗᵢ[ℝ] Euclidean d :
 def radialSchwartzProfile {d : ℕ} (hd : 0 < d) (f : TestFunction d) : 𝓢(ℝ, ℂ) :=
   SchwartzMap.compCLMOfAntilipschitz ℂ
     (radialLineIsometry hd).toContinuousLinearMap.hasTemperateGrowth
-    (radialLineIsometry hd).isometry.antilipschitz f
+    (radialLineIsometry hd).isometry.antilipschitzWith f
 
 @[simp] theorem radialSchwartzProfile_apply {d : ℕ} (hd : 0 < d) (f : TestFunction d) (r : ℝ) :
     radialSchwartzProfile hd f r = radialProfile hd f r := rfl
