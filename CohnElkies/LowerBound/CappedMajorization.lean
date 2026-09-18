@@ -126,7 +126,7 @@ theorem exists_abs_h_ℓD_le {d : ℕ} (hd : 0 < d) (R D : ℝ) :
   · calc |h_ℓD ((d : ℝ) / 2) R D y| ≤ K := by simpa using hK y (abs_le.mp hy.le)
       _ ≤ A := hKA
       _ ≤ A * (1 + |y|) := hfactor
-  · rw [h_ℓD, if_neg (show y ≠ 0 by rintro rfl; norm_num at hy)]
+  · rw [h_ℓD, ite_eq_right (show y ≠ 0 by rintro rfl; norm_num at hy)]
     rcases le_total (h_ℓ ((d : ℝ) / 2) R y) D with hmin | hmin
     · rw [min_eq_left hmin]
       exact (htail y hy).trans (mul_le_mul_of_nonneg_right hA₀A (by positivity))
@@ -827,7 +827,7 @@ theorem exists_norm_Z_g_bottom_le_exp_h_ℓD {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
       _ ≤ Real.exp D := Real.exp_le_exp.mpr hD
   rcases eq_or_ne y 0 with rfl | hy
   · simpa [h_ℓD] using hexp
-  · rw [h_ℓD, if_neg hy]
+  · rw [h_ℓD, ite_eq_right hy]
     rcases le_total (h_ℓ ((d : ℝ) / 2) R y) D with hmin | hmin
     · rw [min_eq_left hmin]
       exact g.norm_Z_g_bottom_le_exp_h_ℓ hd hR y hy

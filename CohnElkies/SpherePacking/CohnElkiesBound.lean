@@ -146,7 +146,7 @@ lemma nonnegative_weighted_nonzero_frequency_sum (f : 𝓢(EuclideanSpace ℝ (F
   refine tsum_nonneg fun m ↦ ?_
   by_cases hm : m = 0
   · simp [hm]
-  · rw [if_neg hm]
+  · rw [ite_eq_right hm]
     have hf : 0 ≤ (𝓕 ⇑f (m : EuclideanSpace ℝ (Fin d))).re := by
       simpa using! hCohnElkies₂ (m : EuclideanSpace ℝ (Fin d))
     exact mul_nonneg hf (sq_nonneg _)
@@ -321,17 +321,17 @@ lemma real_lattice_sum_bounded_by_origin_term {f : 𝓢(EuclideanSpace ℝ (Fin 
   by_cases hxy : x = y
   · subst hxy
     have hmajor : Summable fun ℓ : P.lattice ↦ if ℓ = 0 then (f 0).re else 0 :=
-      summable_of_ne_finset_zero (s := {0}) fun ℓ hℓ ↦ if_neg fun h ↦ hℓ (by simp [h])
+      summable_of_ne_finset_zero (s := {0}) fun ℓ hℓ ↦ ite_eq_right fun h ↦ hℓ (by simp [h])
     have hle : (∑' ℓ : P.lattice, (f ((x : E) - (x : E) + (ℓ : E))).re) ≤
         ∑' ℓ : P.lattice, if ℓ = 0 then (f 0).re else 0 := by
       refine Summable.tsum_le_tsum (fun ℓ ↦ ?_) hsum hmajor
       by_cases hℓ : ℓ = 0
       · simp [hℓ]
-      · rw [if_neg hℓ]
+      · rw [ite_eq_right hℓ]
         refine hnonpos ℓ fun heq ↦ hℓ (Subtype.ext ?_)
         simpa using congrArg (fun z : E ↦ z - (x : E)) heq
     simpa using hle
-  · simp only [if_neg hxy]
+  · simp only [ite_eq_right hxy]
     have hterms (ℓ : P.lattice) : (f ((x : E) - (y : E) + (ℓ : E))).re ≤ 0 := by
       refine hnonpos ℓ fun heq ↦ hxy (Subtype.ext ?_)
       have hℓ : ℓ = (0 : P.lattice) := (hD_unique_covers (x : E)).unique

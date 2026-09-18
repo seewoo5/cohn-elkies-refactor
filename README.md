@@ -3,7 +3,7 @@
 **[Blueprint](https://seewoo5.github.io/cohn-elkies-refactor/)**
 
 This repository contains a refactored version of [OpenAI's formalization](https://github.com/openai/ten-proofs) of [their results](https://cdn.openai.com/pdf/ten-proofs-oai.pdf) on the Cohn–Elkies linear programming bound for sphere packings and Bourgain-Clozel-Kahane's sign uncertainty principle for Fourier eigenfunctions.
-One-file version can be found in `SpherePackingRefactored.lean`, and the original OpenAI formalization is preserved in `SpherePacking.lean`, where the former is about 44\% of the latter in term of LoC.
+One-file version can be found in `SpherePackingRefactored.lean`, which is about 55\% of the original [`SpherePacking.lean`](https://github.com/openai/ten-proofs/blob/94bc0feb/SpherePacking.lean) (55,616 lines) in terms of LoC while containing several additional results. (A copy of the original file, which builds with Lean `v4.33.1`, was kept in this repository until the toolchain was updated to `v4.34.0`.)
 More organized formalization are under `CohnElkies` and `CohnElkiesForMathlib`, with a blueprint of the statements and proofs in `CohnElkiesBlueprint`.
 
 Some results in the original report were missing in their formalization, and we have added them here. In particular, we have formalized both signs of the uncertainty principle, the self-Fourier function $f_0$, $L^1$ to Schwartz reduction, and radial reduction.

@@ -35,9 +35,9 @@ sources:
     author_endorsement: "not-contacted"
   - title: "SpherePacking.lean of the repository openai/ten-proofs (the original single-file formalization)"
     authors: ["OpenAI"]
-    id: "https://github.com/openai/ten-proofs/blob/main/SpherePacking.lean"
+    id: "https://github.com/openai/ten-proofs/blob/94bc0feb/SpherePacking.lean"
     type: "formalization"
-    location: "SpherePacking.lean (55,616 lines)"
+    location: "SpherePacking.lean (55,616 lines, commit 94bc0feb, Lean v4.33.1; a copy was kept in this repository until the update to v4.34.0)"
     relationship: "adapts"
     note: >-
       Refactored (renamed, golfed, split into modules), the numeric certificate removed, and
@@ -161,7 +161,7 @@ automation:
       cost:
         wall_time: "≈ 4 days (2026-09-12 to 2026-09-15) of largely unattended agent work"
         spend_usd: "subscription-based usage"
-        hardware: "one laptop (16 GB RAM), Lean 4.33.1 + Mathlib v4.33.1; API-only models"
+        hardware: "one laptop (16 GB RAM), Lean 4.33.1 + Mathlib v4.33.1 (updated to v4.34.0 on 2026-09-18); API-only models"
       prompting_notes: >-
         Task specifications in natural language with the report's statements, hard rules
         (default maxHeartbeats, no sorry, standard axioms, verification with `lake env lean`,

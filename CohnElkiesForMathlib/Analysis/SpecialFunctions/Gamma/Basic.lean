@@ -46,7 +46,7 @@ vertical lines. -/
 theorem Complex.abs_im_pow_mul_norm_Gamma_le {z : ℂ} (hz : ∀ j : ℕ, z + (j : ℂ) ≠ 0) (k : ℕ)
     (hshift : 0 < z.re + k) : |z.im| ^ k * ‖Complex.Gamma z‖ ≤ Real.Gamma (z.re + k) := by
   have hprod : |z.im| ^ k ≤ ∏ j ∈ Finset.range k, ‖z + (j : ℂ)‖ := by
-    simpa using Finset.prod_le_prod (s := Finset.range k) (f := fun _ : ℕ ↦ |z.im|)
+    simpa using Finset.prod_le_prod₀ (s := Finset.range k) (f := fun _ : ℕ ↦ |z.im|)
       (g := fun j : ℕ ↦ ‖z + (j : ℂ)‖) (fun _ _ ↦ abs_nonneg _)
       (fun j _ ↦ by simpa using Complex.abs_im_le_norm (z + (j : ℂ)))
   calc |z.im| ^ k * ‖Complex.Gamma z‖

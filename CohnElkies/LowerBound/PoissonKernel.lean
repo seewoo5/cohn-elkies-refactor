@@ -299,7 +299,7 @@ theorem norm_stripRegularizedHolomorphicPoissonKernel_of_nonneg {ℓ : ℝ} (h�
     (le_mul_of_one_le_left hsin.le (le_max_left _ _)).trans (norm_E_ℓ_sub_one_ge hℓ hz y)
   have hnorm : ‖K'_ℓ ℓ z y‖ =
       exp (π * (z.re - y) / (2 * ℓ)) / (2 * ℓ * ‖E_ℓ ℓ z y - 1‖) := by
-    rw [K'_ℓ_eq hℓ hz, if_pos hy, norm_div, norm_mul, norm_E_ℓ]
+    rw [K'_ℓ_eq hℓ hz, ite_eq_left hy, norm_div, norm_mul, norm_E_ℓ]
     simp [abs_of_pos hℓ]
   rw [hnorm]
   exact div_le_div_of_nonneg_left (exp_pos _).le (by positivity)
@@ -316,7 +316,7 @@ theorem norm_stripRegularizedHolomorphicPoissonKernel_of_neg {ℓ : ℝ} (hℓ :
       ‖E_ℓ ℓ z y - 1‖ :=
     (mul_le_mul_of_nonneg_right (le_max_right _ _) hsin.le).trans (norm_E_ℓ_sub_one_ge hℓ hz y)
   have hnorm : ‖K'_ℓ ℓ z y‖ = 1 / (2 * ℓ * ‖E_ℓ ℓ z y - 1‖) := by
-    rw [K'_ℓ_eq hℓ hz, if_neg (not_le.mpr hy), norm_div, norm_mul]
+    rw [K'_ℓ_eq hℓ hz, ite_eq_right (not_le.mpr hy), norm_div, norm_mul]
     simp [abs_of_pos hℓ]
   rw [hnorm, exp_neg]
   calc 1 / (2 * ℓ * ‖E_ℓ ℓ z y - 1‖)
@@ -338,7 +338,7 @@ theorem stripRegularizedHolomorphicPoissonKernel_continuousOn_Ioi {ℓ : ℝ} (h
       I * E_ℓ ℓ z y / (2 * (ℓ : ℂ) * (E_ℓ ℓ z y - 1)) :=
     (continuous_const.mul hc).div (continuous_const.mul (hc.sub continuous_const)) hne
   refine hform.continuousOn.congr fun y hy ↦ ?_
-  rw [K'_ℓ_eq hℓ hz, if_pos (mem_Ioi.mp hy).le]
+  rw [K'_ℓ_eq hℓ hz, ite_eq_left (mem_Ioi.mp hy).le]
 
 theorem stripRegularizedHolomorphicPoissonKernel_continuousOn_Iio {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) :
@@ -350,7 +350,7 @@ theorem stripRegularizedHolomorphicPoissonKernel_continuousOn_Iio {ℓ : ℝ} (h
   have hform : Continuous fun y : ℝ ↦ I / (2 * (ℓ : ℂ) * (E_ℓ ℓ z y - 1)) :=
     continuous_const.div (continuous_const.mul (hc.sub continuous_const)) hne
   refine hform.continuousOn.congr fun y hy ↦ ?_
-  rw [K'_ℓ_eq hℓ hz, if_neg (not_le.mpr (mem_Iio.mp hy)), mul_one]
+  rw [K'_ℓ_eq hℓ hz, ite_eq_right (not_le.mpr (mem_Iio.mp hy)), mul_one]
 
 /-- The complex derivative of `z ↦ K'_ℓ ℓ z y`. -/
 def stripRegularizedHolomorphicPoissonKernelDeriv (ℓ : ℝ) (z : ℂ) (y : ℝ) : ℂ :=

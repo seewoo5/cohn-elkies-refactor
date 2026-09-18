@@ -57,7 +57,7 @@ protected theorem tsum_comp_le_of_injective {φ : α → β} (hφ : Injective φ
 protected theorem tsum_le_tsum_comp_of_surjective {φ : α → β} (hφ : Surjective φ) (g : β → ℕ∞) :
     ∑' y, g y ≤ ∑' x, g (φ x) :=
   calc ∑' y, g y = ∑' y, g (φ (surjInv hφ y)) := by simp [surjInv_eq hφ]
-    _ ≤ ∑' x, g (φ x) := ENat.tsum_comp_le_of_injective (injective_surjInv hφ) _
+    _ ≤ ∑' x, g (φ x) := ENat.tsum_comp_le_of_injective (injective_surjInv hφ) fun x ↦ g (φ x)
 
 protected theorem tsum_comp_of_bijective {φ : α → β} (hφ : φ.Bijective) (g : β → ℕ∞) :
     ∑' x, g (φ x) = ∑' y, g y :=

@@ -183,7 +183,8 @@ theorem integral_poissonLogisticDensity_mul_logSqrtKernel (x : ℝ) {t : ℝ} (h
           exp (-x * t) * ∫ u : ℝ, poissonLogisticDensity u * cos (t * u)) / t := by
         rw [integral_div, integral_sub h1 h2, integral_const_mul, integral_const_mul]
     _ = logMomentKernel x t := by
-        rw [integral_poissonLogisticDensity, poissonLogistic_cosine_transform t, if_neg ht.ne']
+        rw [integral_poissonLogisticDensity, poissonLogistic_cosine_transform t,
+          ite_eq_right ht.ne']
         unfold logMomentKernel
         field_simp
 

@@ -991,19 +991,20 @@ namespace MeasureTheory
 variable {α E : Type*} [MeasurableSpace α] {μ : Measure α} [NormedAddCommGroup E] {p : ℝ≥0∞}
   {s : Set α} {f : α → E} {M : ℝ}
 
-/-- The `Lᵖ` seminorm of the restriction of a function bounded by `M` to a measurable set `s` is
-at most `μ s ^ (1 / p) * M`. -/
-theorem eLpNorm_indicator_le_of_ae_norm_le (hs : MeasurableSet s) (hM : ∀ᵐ x ∂μ, ‖f x‖ ≤ M) :
+/-- The `Lᵖ` seminorm of the restriction of a measurable function bounded by `M` to a measurable
+set `s` is at most `μ s ^ (1 / p) * M`. -/
+theorem eLpNorm_indicator_le_of_ae_norm_le (hs : MeasurableSet s) (hf : AEStronglyMeasurable f μ)
+    (hM : ∀ᵐ x ∂μ, ‖f x‖ ≤ M) :
     eLpNorm (s.indicator f) p μ ≤ μ s ^ p.toReal⁻¹ * ENNReal.ofReal M := by
   rw [eLpNorm_indicator_eq_eLpNorm_restrict hs, ← Measure.restrict_apply_univ s]
-  exact eLpNorm_le_of_ae_bound (ae_restrict_of_ae hM)
+  exact eLpNorm_le_of_ae_bound hf.restrict (ae_restrict_of_ae hM)
 
 /-- A bounded measurable function vanishing outside a set of finite measure lies in every `Lᵖ`. -/
 theorem memLp_indicator_of_ae_norm_le (hs : MeasurableSet s) (hμs : μ s ≠ ∞)
     (hf : AEStronglyMeasurable f μ) (hM : ∀ᵐ x ∂μ, ‖f x‖ ≤ M) : MemLp (s.indicator f) p μ :=
-  ⟨hf.indicator hs, (eLpNorm_indicator_le_of_ae_norm_le hs hM).trans_lt
+  (eLpNorm_indicator_le_of_ae_norm_le hs hf hM).trans_lt
     (ENNReal.mul_lt_top (ENNReal.rpow_lt_top_of_nonneg (inv_nonneg.2 ENNReal.toReal_nonneg) hμs)
-      ENNReal.ofReal_lt_top)⟩
+      ENNReal.ofReal_lt_top)
 
 end MeasureTheory
 
@@ -1189,7 +1190,8 @@ theorem exists_pos_le_setIntegral_norm_compl_closedBall_of_fourier_eq_mul [Nontr
     rw [Lp.norm_toLp]
     exact ENNReal.toReal_mono (ENNReal.mul_ne_top
       (ENNReal.rpow_lt_top_of_nonneg (inv_nonneg.2 ENNReal.toReal_nonneg) hBμ).ne
-      ENNReal.ofReal_ne_top) (eLpNorm_indicator_le_of_ae_norm_le hBm (.of_forall (hbdd n)))
+      ENNReal.ofReal_ne_top) (eLpNorm_indicator_le_of_ae_norm_le hBm (hf n).aestronglyMeasurable
+        (.of_forall (hbdd n)))
   have : Fact ((2 : ℝ≥0∞) ≠ ∞) := ⟨ENNReal.ofNat_ne_top⟩
   obtain ⟨φ, g, hφ, -, hg⟩ := InnerProductSpace.tendsto_subseq_inner_right_of_norm_le ℂ hnorm
   -- Identify the weak limit through the truncated Fourier kernels.
@@ -1612,7 +1614,7 @@ lemma summable_norm_restrict_translate (K : TopologicalSpace.Compacts (Euclidean
     Metric.closedBall_subset_closedBall (le_max_left r 0) (hrK hx)
   have hfin : {ℓ : Λ | ‖(ℓ : EuclideanSpace ℝ (Fin d))‖ ≤ R}.Finite := by
     have hcl : IsClosed (X := EuclideanSpace ℝ (Fin d)) (Λ : Set (EuclideanSpace ℝ (Fin d))) :=
-      @AddSubgroup.isClosed_of_discrete _ _ _ _ _ Λ.toAddSubgroup
+      @AddSubgroup.isClosed_of_discreteTopology _ _ _ _ _ Λ.toAddSubgroup
         (inferInstanceAs (DiscreteTopology Λ))
     refine ((Metric.finite_isBounded_inter_isClosed DiscreteTopology.isDiscrete
       (Metric.isBounded_closedBall (x := (0 : EuclideanSpace ℝ (Fin d))) (r := R))
@@ -2641,7 +2643,7 @@ vertical lines. -/
 theorem Complex.abs_im_pow_mul_norm_Gamma_le {z : ℂ} (hz : ∀ j : ℕ, z + (j : ℂ) ≠ 0) (k : ℕ)
     (hshift : 0 < z.re + k) : |z.im| ^ k * ‖Complex.Gamma z‖ ≤ Real.Gamma (z.re + k) := by
   have hprod : |z.im| ^ k ≤ ∏ j ∈ Finset.range k, ‖z + (j : ℂ)‖ := by
-    simpa using Finset.prod_le_prod (s := Finset.range k) (f := fun _ : ℕ ↦ |z.im|)
+    simpa using Finset.prod_le_prod₀ (s := Finset.range k) (f := fun _ : ℕ ↦ |z.im|)
       (g := fun j : ℕ ↦ ‖z + (j : ℂ)‖) (fun _ _ ↦ abs_nonneg _)
       (fun j _ ↦ by simpa using Complex.abs_im_le_norm (z + (j : ℂ)))
   calc |z.im| ^ k * ‖Complex.Gamma z‖
@@ -3303,7 +3305,7 @@ protected theorem tsum_comp_le_of_injective {φ : α → β} (hφ : Injective φ
 protected theorem tsum_le_tsum_comp_of_surjective {φ : α → β} (hφ : Surjective φ) (g : β → ℕ∞) :
     ∑' y, g y ≤ ∑' x, g (φ x) :=
   calc ∑' y, g y = ∑' y, g (φ (surjInv hφ y)) := by simp [surjInv_eq hφ]
-    _ ≤ ∑' x, g (φ x) := ENat.tsum_comp_le_of_injective (injective_surjInv hφ) _
+    _ ≤ ∑' x, g (φ x) := ENat.tsum_comp_le_of_injective (injective_surjInv hφ) fun x ↦ g (φ x)
 
 protected theorem tsum_comp_of_bijective {φ : α → β} (hφ : φ.Bijective) (g : β → ℕ∞) :
     ∑' x, g (φ x) = ∑' y, g y :=
@@ -5088,7 +5090,7 @@ def radialLineIsometry {d : ℕ} (hd : 0 < d) : ℝ →ₗᵢ[ℝ] Euclidean d :
 def radialSchwartzProfile {d : ℕ} (hd : 0 < d) (f : TestFunction d) : 𝓢(ℝ, ℂ) :=
   SchwartzMap.compCLMOfAntilipschitz ℂ
     (radialLineIsometry hd).toContinuousLinearMap.hasTemperateGrowth
-    (radialLineIsometry hd).isometry.antilipschitz f
+    (radialLineIsometry hd).isometry.antilipschitzWith f
 
 @[simp] theorem radialSchwartzProfile_apply {d : ℕ} (hd : 0 < d) (f : TestFunction d) (r : ℝ) :
     radialSchwartzProfile hd f r = radialProfile hd f r := rfl
@@ -6629,7 +6631,7 @@ theorem norm_stripRegularizedHolomorphicPoissonKernel_of_nonneg {ℓ : ℝ} (h�
     (le_mul_of_one_le_left hsin.le (le_max_left _ _)).trans (norm_E_ℓ_sub_one_ge hℓ hz y)
   have hnorm : ‖K'_ℓ ℓ z y‖ =
       exp (π * (z.re - y) / (2 * ℓ)) / (2 * ℓ * ‖E_ℓ ℓ z y - 1‖) := by
-    rw [K'_ℓ_eq hℓ hz, if_pos hy, norm_div, norm_mul, norm_E_ℓ]
+    rw [K'_ℓ_eq hℓ hz, ite_eq_left hy, norm_div, norm_mul, norm_E_ℓ]
     simp [abs_of_pos hℓ]
   rw [hnorm]
   exact div_le_div_of_nonneg_left (exp_pos _).le (by positivity)
@@ -6646,7 +6648,7 @@ theorem norm_stripRegularizedHolomorphicPoissonKernel_of_neg {ℓ : ℝ} (hℓ :
       ‖E_ℓ ℓ z y - 1‖ :=
     (mul_le_mul_of_nonneg_right (le_max_right _ _) hsin.le).trans (norm_E_ℓ_sub_one_ge hℓ hz y)
   have hnorm : ‖K'_ℓ ℓ z y‖ = 1 / (2 * ℓ * ‖E_ℓ ℓ z y - 1‖) := by
-    rw [K'_ℓ_eq hℓ hz, if_neg (not_le.mpr hy), norm_div, norm_mul]
+    rw [K'_ℓ_eq hℓ hz, ite_eq_right (not_le.mpr hy), norm_div, norm_mul]
     simp [abs_of_pos hℓ]
   rw [hnorm, exp_neg]
   calc 1 / (2 * ℓ * ‖E_ℓ ℓ z y - 1‖)
@@ -6668,7 +6670,7 @@ theorem stripRegularizedHolomorphicPoissonKernel_continuousOn_Ioi {ℓ : ℝ} (h
       I * E_ℓ ℓ z y / (2 * (ℓ : ℂ) * (E_ℓ ℓ z y - 1)) :=
     (continuous_const.mul hc).div (continuous_const.mul (hc.sub continuous_const)) hne
   refine hform.continuousOn.congr fun y hy ↦ ?_
-  rw [K'_ℓ_eq hℓ hz, if_pos (mem_Ioi.mp hy).le]
+  rw [K'_ℓ_eq hℓ hz, ite_eq_left (mem_Ioi.mp hy).le]
 
 theorem stripRegularizedHolomorphicPoissonKernel_continuousOn_Iio {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) :
@@ -6680,7 +6682,7 @@ theorem stripRegularizedHolomorphicPoissonKernel_continuousOn_Iio {ℓ : ℝ} (h
   have hform : Continuous fun y : ℝ ↦ I / (2 * (ℓ : ℂ) * (E_ℓ ℓ z y - 1)) :=
     continuous_const.div (continuous_const.mul (hc.sub continuous_const)) hne
   refine hform.continuousOn.congr fun y hy ↦ ?_
-  rw [K'_ℓ_eq hℓ hz, if_neg (not_le.mpr (mem_Iio.mp hy)), mul_one]
+  rw [K'_ℓ_eq hℓ hz, ite_eq_right (not_le.mpr (mem_Iio.mp hy)), mul_one]
 
 /-- The complex derivative of `z ↦ K'_ℓ ℓ z y`. -/
 def stripRegularizedHolomorphicPoissonKernelDeriv (ℓ : ℝ) (z : ℂ) (y : ℝ) : ℂ :=
@@ -7959,7 +7961,7 @@ theorem poissonLogistic_characteristic (t : ℝ) :
   · simp only [Complex.ofReal_zero, mul_zero, zero_mul, Complex.exp_zero, mul_one, ↓reduceIte]
     rw [← Complex.ofReal_one, ← integral_poissonLogisticDensity]
     exact integral_ofReal
-  rw [if_neg ht]
+  rw [ite_eq_right ht]
   set w : ℂ := I * (t / π : ℝ) with hw
   calc (∫ u : ℝ, (poissonLogisticDensity u : ℂ) * Complex.exp (I * (t : ℂ) * (u : ℂ)))
       = Complex.betaIntegral (1 + w) (1 - w) := by
@@ -8266,7 +8268,8 @@ theorem integral_poissonLogistic_mul_wallisPhaseKernel {t : ℝ} (ht : 0 < t) :
           t * exp (-t) * ∫ u : ℝ, poissonLogisticDensity u) / t ^ 2 := by
         rw [integral_div, integral_sub h1 h2, integral_const_mul, integral_const_mul]
     _ = ((1 - exp (-t)) * (t / sinh t) - t * exp (-t)) / t ^ 2 := by
-        rw [poissonLogistic_cosine_transform t, if_neg ht.ne', integral_poissonLogisticDensity]
+        rw [poissonLogistic_cosine_transform t, ite_eq_right ht.ne',
+          integral_poissonLogisticDensity]
         ring
     _ = Real.Wallis.laplaceKernel t := by
         have hsinh : sinh t ≠ 0 := sinh_ne_zero.mpr ht.ne'
@@ -8308,8 +8311,9 @@ theorem tendsto_integral_wallisPhaseKernel (u : ℝ) :
     linarith [Nat.cast_nonneg (α := ℝ) n]
   rw [Real.norm_eq_abs]
   by_cases hone : t ≤ 1
-  · simpa only [wallisPhaseMajorant, if_pos hone] using abs_wallisPhaseKernel_le_moment h0 h1 u ht
-  · simpa only [wallisPhaseMajorant, if_neg hone] using
+  · simpa only [wallisPhaseMajorant, ite_eq_left hone] using
+      abs_wallisPhaseKernel_le_moment h0 h1 u ht
+  · simpa only [wallisPhaseMajorant, ite_eq_right hone] using
       abs_wallisPhaseKernel_le_tail h0 u (not_le.mp hone).le
 
 /-- The real part of the Frullani antiderivative `1 + z log z - (z + 1) log (z + 1)`. -/
@@ -8631,7 +8635,7 @@ theorem integrable_exp_mul_h_ℓD {ℓ a : ℝ} (hℓ : 0 < ℓ) (ha : 0 < a) (R
       (lowerGammaBoundaryCapped_continuous hℓ R D)).aestronglyMeasurable) ?_
   filter_upwards [Measure.ae_ne (volume : Measure ℝ) 0] with y hy
   have hcap : |h_ℓD ℓ R D y| ≤ |h_ℓ ℓ R y| + |D| := by
-    rw [h_ℓD, if_neg hy]
+    rw [h_ℓD, ite_eq_right hy]
     rcases le_total (h_ℓ ℓ R y) D with h | h
     · rw [min_eq_left h]; exact le_add_of_nonneg_right (abs_nonneg D)
     · rw [min_eq_right h]; exact le_add_of_nonneg_left (abs_nonneg _)
@@ -8957,7 +8961,7 @@ theorem exists_abs_h_ℓD_le {d : ℕ} (hd : 0 < d) (R D : ℝ) :
   · calc |h_ℓD ((d : ℝ) / 2) R D y| ≤ K := by simpa using hK y (abs_le.mp hy.le)
       _ ≤ A := hKA
       _ ≤ A * (1 + |y|) := hfactor
-  · rw [h_ℓD, if_neg (show y ≠ 0 by rintro rfl; norm_num at hy)]
+  · rw [h_ℓD, ite_eq_right (show y ≠ 0 by rintro rfl; norm_num at hy)]
     rcases le_total (h_ℓ ((d : ℝ) / 2) R y) D with hmin | hmin
     · rw [min_eq_left hmin]
       exact (htail y hy).trans (mul_le_mul_of_nonneg_right hA₀A (by positivity))
@@ -9658,7 +9662,7 @@ theorem exists_norm_Z_g_bottom_le_exp_h_ℓD {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
       _ ≤ Real.exp D := Real.exp_le_exp.mpr hD
   rcases eq_or_ne y 0 with rfl | hy
   · simpa [h_ℓD] using hexp
-  · rw [h_ℓD, if_neg hy]
+  · rw [h_ℓD, ite_eq_right hy]
     rcases le_total (h_ℓ ((d : ℝ) / 2) R y) D with hmin | hmin
     · rw [min_eq_left hmin]
       exact g.norm_Z_g_bottom_le_exp_h_ℓ hd hR y hy
@@ -9886,7 +9890,7 @@ theorem lowerGammaScaledCappedClipped_antitoneOn (d : ℕ) (c D n : ℝ) :
       · exact le_rfl
       · exact min_le_right _ _
     · have hypos : 0 < y := hxpos.trans_le hxy
-      simp only [h_ℓD, if_neg hxpos.ne', if_neg hypos.ne']
+      simp only [h_ℓD, ite_eq_right hxpos.ne', ite_eq_right hypos.ne']
       exact min_le_min (lowerGammaBoundaryLog_dimension_antitoneOn _ (mem_Ioi.mpr hxpos)
         (mem_Ioi.mpr hypos) hxy) le_rfl
   intro x hx y hy hxy
@@ -9909,7 +9913,7 @@ theorem lowerGammaScaledCappedClipped_support {d : ℕ} (hd : 2 ≤ d) {c D n : 
       rw [h, abs_zero] at hyone; linarith
     refine hY ?_
     unfold lowerGammaScaledCappedClipped
-    rw [h_ℓD, if_neg harg]
+    rw [h_ℓD, ite_eq_right harg]
     exact max_eq_right (by
       linarith [min_le_left (h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * Y)) D,
         lowerGammaBoundaryLog_dimension_scaled_le_neg_of_large hd hc hn hlarge])
@@ -10074,12 +10078,12 @@ theorem lowerGammaScaledCapped_poisson_tendsto {d : ℕ} (hd : 0 < d) {c σ : �
     (fun n ↦ (lowerGammaScaledCapped_poisson_product_integrable hd (R := c * √d) (D := (n : ℝ))
       hbelow habove s).aestronglyMeasurable) (fun n ↦ ?_) ?_
   · filter_upwards [Measure.ae_ne (volume : Measure ℝ) 0] with Y hY
-    rw [h_ℓD, if_neg (mul_ne_zero hℓ.ne' hY)]
+    rw [h_ℓD, ite_eq_right (mul_ne_zero hℓ.ne' hY)]
     exact (abs_clip_le_abs (Nat.cast_nonneg n)).2
   · filter_upwards [Measure.ae_ne (volume : Measure ℝ) 0] with Y hY
     filter_upwards [(tendsto_natCast_atTop_atTop (R := ℝ)).eventually_ge_atTop
       (h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * Y))] with n hn
-    rw [h_ℓD, if_neg (mul_ne_zero hℓ.ne' hY), min_eq_left hn]
+    rw [h_ℓD, ite_eq_right (mul_ne_zero hℓ.ne' hY), min_eq_left hn]
 
 theorem lowerGammaScaled_poisson_convolution_max {d : ℕ} (hd : 2 ≤ d) {c σ : ℝ} (hc : 0 < c)
     (hbelow : -1 < σ) (habove : σ < 1) (s : ℝ) :
@@ -13037,8 +13041,9 @@ theorem saddleGaussianPoleRepresentative_weighted_horizontalStrip_bound {r A B :
       = r ^ (-a) * exp ((a + (2 * n : ℝ)) ^ 2) *
           (exp (-t ^ 2) * (|t| / ‖(a : ℂ) + (t : ℂ) * I + (2 * n : ℂ)‖)) := by ring
     _ ≤ r ^ (-a) * exp ((a + (2 * n : ℝ)) ^ 2) * 1 :=
-        mul_le_mul_of_nonneg_left (mul_le_one₀ (Real.exp_le_one_iff.2 (neg_nonpos.2 (sq_nonneg t)))
-          (by positivity) ((div_le_one hdenpos).2 hden)) (by positivity)
+        mul_le_mul_of_nonneg_left ((mul_le_of_le_one_left (by positivity)
+          (Real.exp_le_one_iff.2 (neg_nonpos.2 (sq_nonneg t)))).trans ((div_le_one hdenpos).2 hden))
+          (by positivity)
     _ = r ^ (-a) * exp ((a + (2 * n : ℝ)) ^ 2) := mul_one _
     _ ≤ C := hC (mem_image_of_mem _ ha)
 
@@ -23008,7 +23013,8 @@ theorem integral_poissonLogisticDensity_mul_logSqrtKernel (x : ℝ) {t : ℝ} (h
           exp (-x * t) * ∫ u : ℝ, poissonLogisticDensity u * cos (t * u)) / t := by
         rw [integral_div, integral_sub h1 h2, integral_const_mul, integral_const_mul]
     _ = logMomentKernel x t := by
-        rw [integral_poissonLogisticDensity, poissonLogistic_cosine_transform t, if_neg ht.ne']
+        rw [integral_poissonLogisticDensity, poissonLogistic_cosine_transform t,
+          ite_eq_right ht.ne']
         unfold logMomentKernel
         field_simp
 
@@ -25222,7 +25228,7 @@ lemma nonnegative_weighted_nonzero_frequency_sum (f : 𝓢(EuclideanSpace ℝ (F
   refine tsum_nonneg fun m ↦ ?_
   by_cases hm : m = 0
   · simp [hm]
-  · rw [if_neg hm]
+  · rw [ite_eq_right hm]
     have hf : 0 ≤ (𝓕 ⇑f (m : EuclideanSpace ℝ (Fin d))).re := by
       simpa using! hCohnElkies₂ (m : EuclideanSpace ℝ (Fin d))
     exact mul_nonneg hf (sq_nonneg _)
@@ -25397,17 +25403,17 @@ lemma real_lattice_sum_bounded_by_origin_term {f : 𝓢(EuclideanSpace ℝ (Fin 
   by_cases hxy : x = y
   · subst hxy
     have hmajor : Summable fun ℓ : P.lattice ↦ if ℓ = 0 then (f 0).re else 0 :=
-      summable_of_ne_finset_zero (s := {0}) fun ℓ hℓ ↦ if_neg fun h ↦ hℓ (by simp [h])
+      summable_of_ne_finset_zero (s := {0}) fun ℓ hℓ ↦ ite_eq_right fun h ↦ hℓ (by simp [h])
     have hle : (∑' ℓ : P.lattice, (f ((x : E) - (x : E) + (ℓ : E))).re) ≤
         ∑' ℓ : P.lattice, if ℓ = 0 then (f 0).re else 0 := by
       refine Summable.tsum_le_tsum (fun ℓ ↦ ?_) hsum hmajor
       by_cases hℓ : ℓ = 0
       · simp [hℓ]
-      · rw [if_neg hℓ]
+      · rw [ite_eq_right hℓ]
         refine hnonpos ℓ fun heq ↦ hℓ (Subtype.ext ?_)
         simpa using congrArg (fun z : E ↦ z - (x : E)) heq
     simpa using hle
-  · simp only [if_neg hxy]
+  · simp only [ite_eq_right hxy]
     have hterms (ℓ : P.lattice) : (f ((x : E) - (y : E) + (ℓ : E))).re ≤ 0 := by
       refine hnonpos ℓ fun heq ↦ hxy (Subtype.ext ?_)
       have hℓ : ℓ = (0 : P.lattice) := (hD_unique_covers (x : E)).unique
@@ -27460,11 +27466,11 @@ variable {d : ℕ}
 def tailIntegral (d : ℕ) (g : Euclidean d → ℝ) (x : Euclidean d) : ℝ :=
   if x = 0 then 0 else (d / 2 : ℝ) / 2 * ∫ t in Ioi (1 : ℝ), t ^ ((d / 2 : ℝ) - 1) * g (t • x)
 
-@[simp] theorem tailIntegral_zero (g : Euclidean d → ℝ) : tailIntegral d g 0 = 0 := if_pos rfl
+@[simp] theorem tailIntegral_zero (g : Euclidean d → ℝ) : tailIntegral d g 0 = 0 := ite_eq_left rfl
 
 theorem tailIntegral_of_ne_zero (g : Euclidean d → ℝ) {x : Euclidean d} (hx : x ≠ 0) :
     tailIntegral d g x = (d / 2 : ℝ) / 2 * ∫ t in Ioi (1 : ℝ), t ^ ((d / 2 : ℝ) - 1) * g (t • x) :=
-  if_neg hx
+  ite_eq_right hx
 
 /-- For `g(0) = 0` the large-scale formula (87) also holds at `x = 0`. -/
 theorem tailIntegral_eq_of_zero (g : Euclidean d → ℝ) (hg : g 0 = 0) (x : Euclidean d) :

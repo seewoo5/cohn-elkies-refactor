@@ -540,8 +540,9 @@ quotient, Admissible}`, `PackingBounds.FullAdmissible` (with `FullAdmissible.rad
 
 Lake targets: `defaultTargets = ["CohnElkiesForMathlib", "CohnElkies", "ComparatorChallenges",
 "SpherePackingRefactored"]`; the original `SpherePacking` library (the 55,616-line reference file)
-is kept but no longer a default target, so `lake build` and the CI (`lean-action`) build only the
-refactored code. Because the modules form a DAG, Lake starts one Lean process per core; each one
+was kept, but not as a default target, until the toolchain update to Lean/Mathlib `v4.34.0`
+(2026-09-18), when the copy was removed (it is `openai/ten-proofs` at commit `94bc0feb`, for Lean
+`v4.33.1`); `lake build` and the CI (`lean-action`) build only the refactored code. Because the modules form a DAG, Lake starts one Lean process per core; each one
 needs 2–4 GB, so the workflows and `scripts/ci-pages.sh` set `LEAN_NUM_THREADS=2` (verified to
 cap Lake at two concurrent processes).
 
@@ -557,9 +558,9 @@ such headers.
 
 ## 3. Step 3 — blueprint
 
-Tooling: `verso-blueprint` is versioned by branches/tags; the plan points at the `v4.34.0`
-template (toolchain `v4.34.0-rc2`), while this project is on `v4.33.1`, so the `v4.33.0` tag
-(toolchain `v4.33.1`) is used, with the same layout as the template: the library
+Tooling: `verso-blueprint` is versioned by branches/tags matching the Lean toolchain; the project
+used the `v4.33.0` tag while on Lean `v4.33.1` and the `v4.34.0` tag since the toolchain update
+(2026-09-18, see §6), with the same layout as the template: the library
 `CohnElkiesBlueprint` in the same Lake workspace (`lakefile.toml`: `require VersoBlueprint`,
 `lean_lib CohnElkiesBlueprint`; Mathlib is required *last* so that its pins of the shared
 dependencies win over Verso's — otherwise `lake update` switches `proofwidgets` and invalidates
@@ -815,8 +816,8 @@ Scoped exceptions: **none**.
 
 ## 4. Comparator
 
-Set up as in `openai/ten-proofs`: `lakefile.toml` requires `Comparator` (tag `v4.33.0`, matching the
-toolchain) and defines the library `ComparatorChallenges` with the single module
+Set up as in `openai/ten-proofs`: `lakefile.toml` requires `Comparator` (the tag matching the
+toolchain, `v4.34.0` since 2026-09-18) and defines the library `ComparatorChallenges` with the single module
 `ComparatorChallenges/CohnElkies.lean`, which imports only Mathlib and states (with `sorry`)
 Theorem 1.1 in both forms (`PackingBounds.FullMain.exact_limit`, `exact_binary_exponent`), the
 packing consequences (`PackingBounds.PackingBridge.sphere_packing_le_linear_program`, which was
@@ -932,3 +933,27 @@ is what Mathlib's `IsHaarMeasure` provides. The two forms agree because the Haar
 compact group `O(d)` is inversion invariant, but Mathlib v4.33.1 has `IsInvInvariant` only for
 commutative groups and no unimodularity API, so the equivalence is documented in the module
 docstring rather than proved.
+
+## 6. Toolchain update to Lean/Mathlib `v4.34.0` (2026-09-18)
+
+At the owner's request the project moved from Lean `v4.33.1` + Mathlib `v4.33.1` to Lean `v4.34.0`
++ Mathlib `v4.34.0` (`lean-toolchain`, `lakefile.toml`: `mathlib`, `Comparator` and
+`VersoBlueprint` all at their `v4.34.0` tags; `lake update`, Mathlib cache fetched). The reference
+copy of OpenAI's `SpherePacking.lean` (which builds only with `v4.33.1`) and its `SpherePacking`
+library were removed from the repository; the file is `openai/ten-proofs` at commit `94bc0feb`.
+The library needed very few changes:
+
+- `CohnElkiesForMathlib`: `Finset.prod_le_prod` (ordered semiring version) is now
+  `Finset.prod_le_prod₀`; `eLpNorm_le_of_ae_bound` takes an `AEStronglyMeasurable` argument, and
+  `MemLp f p μ` is now *defined* as `eLpNorm f p μ < ∞` (with `eLpNorm f p μ = ∞` for
+  non-measurable `f`), so `memLp_indicator_of_ae_norm_le` no longer builds a pair
+  (`eLpNorm_indicator_le_of_ae_norm_le` gained the measurability hypothesis);
+  `AddSubgroup.isClosed_of_discrete` → `isClosed_of_discreteTopology`; in
+  `Topology/Algebra/InfiniteSum/ENat.lean` one higher-order unification needed the function made
+  explicit.
+- `CohnElkies`: no errors at all; deprecations `if_pos`/`if_neg` → `ite_eq_left`/`ite_eq_right`
+  (25 occurrences), `Isometry.antilipschitz` → `antilipschitzWith`, and `mul_le_one₀` (removed,
+  replaced by `mul_le_of_le_one_left` + `trans`).
+- Blueprint and comparator: unchanged sources; the `v4.34.0` tags build.
+
+Full gate (`LEAN_NUM_THREADS=2 lake build`), blueprint library, site and comparator run as before.

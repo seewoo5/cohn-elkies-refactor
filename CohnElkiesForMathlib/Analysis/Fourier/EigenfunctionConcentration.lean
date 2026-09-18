@@ -49,19 +49,20 @@ namespace MeasureTheory
 variable {α E : Type*} [MeasurableSpace α] {μ : Measure α} [NormedAddCommGroup E] {p : ℝ≥0∞}
   {s : Set α} {f : α → E} {M : ℝ}
 
-/-- The `Lᵖ` seminorm of the restriction of a function bounded by `M` to a measurable set `s` is
-at most `μ s ^ (1 / p) * M`. -/
-theorem eLpNorm_indicator_le_of_ae_norm_le (hs : MeasurableSet s) (hM : ∀ᵐ x ∂μ, ‖f x‖ ≤ M) :
+/-- The `Lᵖ` seminorm of the restriction of a measurable function bounded by `M` to a measurable
+set `s` is at most `μ s ^ (1 / p) * M`. -/
+theorem eLpNorm_indicator_le_of_ae_norm_le (hs : MeasurableSet s) (hf : AEStronglyMeasurable f μ)
+    (hM : ∀ᵐ x ∂μ, ‖f x‖ ≤ M) :
     eLpNorm (s.indicator f) p μ ≤ μ s ^ p.toReal⁻¹ * ENNReal.ofReal M := by
   rw [eLpNorm_indicator_eq_eLpNorm_restrict hs, ← Measure.restrict_apply_univ s]
-  exact eLpNorm_le_of_ae_bound (ae_restrict_of_ae hM)
+  exact eLpNorm_le_of_ae_bound hf.restrict (ae_restrict_of_ae hM)
 
 /-- A bounded measurable function vanishing outside a set of finite measure lies in every `Lᵖ`. -/
 theorem memLp_indicator_of_ae_norm_le (hs : MeasurableSet s) (hμs : μ s ≠ ∞)
     (hf : AEStronglyMeasurable f μ) (hM : ∀ᵐ x ∂μ, ‖f x‖ ≤ M) : MemLp (s.indicator f) p μ :=
-  ⟨hf.indicator hs, (eLpNorm_indicator_le_of_ae_norm_le hs hM).trans_lt
+  (eLpNorm_indicator_le_of_ae_norm_le hs hf hM).trans_lt
     (ENNReal.mul_lt_top (ENNReal.rpow_lt_top_of_nonneg (inv_nonneg.2 ENNReal.toReal_nonneg) hμs)
-      ENNReal.ofReal_lt_top)⟩
+      ENNReal.ofReal_lt_top)
 
 end MeasureTheory
 
@@ -247,7 +248,8 @@ theorem exists_pos_le_setIntegral_norm_compl_closedBall_of_fourier_eq_mul [Nontr
     rw [Lp.norm_toLp]
     exact ENNReal.toReal_mono (ENNReal.mul_ne_top
       (ENNReal.rpow_lt_top_of_nonneg (inv_nonneg.2 ENNReal.toReal_nonneg) hBμ).ne
-      ENNReal.ofReal_ne_top) (eLpNorm_indicator_le_of_ae_norm_le hBm (.of_forall (hbdd n)))
+      ENNReal.ofReal_ne_top) (eLpNorm_indicator_le_of_ae_norm_le hBm (hf n).aestronglyMeasurable
+        (.of_forall (hbdd n)))
   have : Fact ((2 : ℝ≥0∞) ≠ ∞) := ⟨ENNReal.ofNat_ne_top⟩
   obtain ⟨φ, g, hφ, -, hg⟩ := InnerProductSpace.tendsto_subseq_inner_right_of_norm_le ℂ hnorm
   -- Identify the weak limit through the truncated Fourier kernels.

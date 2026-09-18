@@ -106,7 +106,7 @@ theorem integrable_exp_mul_h_ℓD {ℓ a : ℝ} (hℓ : 0 < ℓ) (ha : 0 < a) (R
       (lowerGammaBoundaryCapped_continuous hℓ R D)).aestronglyMeasurable) ?_
   filter_upwards [Measure.ae_ne (volume : Measure ℝ) 0] with y hy
   have hcap : |h_ℓD ℓ R D y| ≤ |h_ℓ ℓ R y| + |D| := by
-    rw [h_ℓD, if_neg hy]
+    rw [h_ℓD, ite_eq_right hy]
     rcases le_total (h_ℓ ℓ R y) D with h | h
     · rw [min_eq_left h]; exact le_add_of_nonneg_right (abs_nonneg D)
     · rw [min_eq_right h]; exact le_add_of_nonneg_left (abs_nonneg _)
