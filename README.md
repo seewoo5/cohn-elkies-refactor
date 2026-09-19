@@ -3,12 +3,13 @@
 **[Blueprint](https://seewoo5.github.io/cohn-elkies-refactor/)**
 
 This repository contains a refactored version of [OpenAI's formalization](https://github.com/openai/ten-proofs) of [their results](https://cdn.openai.com/pdf/ten-proofs-oai.pdf) on the Cohn–Elkies linear programming bound for sphere packings and Bourgain-Clozel-Kahane's sign uncertainty principle for Fourier eigenfunctions.
-One-file version can be found in `SpherePackingRefactored.lean`, which is about 55\% of the original [`SpherePacking.lean`](https://github.com/openai/ten-proofs/blob/94bc0feb/SpherePacking.lean) (55,616 lines) in terms of LoC while containing several additional results. (A copy of the original file, which builds with Lean `v4.33.1`, was kept in this repository until the toolchain was updated to `v4.34.0`.)
+One-file version can be found in `SpherePackingRefactored.lean`, which is about 55\% of the original [`SpherePacking.lean`](https://github.com/openai/ten-proofs/blob/94bc0feb/SpherePacking.lean) (55,616 lines) in terms of LoC while containing several additional results.
 More organized formalization are under `CohnElkies` and `CohnElkiesForMathlib`, with a blueprint of the statements and proofs in `CohnElkiesBlueprint`.
 
-Some results in the original report were missing in their formalization, and we have added them here. In particular, we have formalized both signs of the uncertainty principle, the self-Fourier function $f_0$, $L^1$ to Schwartz reduction, and radial reduction.
+Some results in the original report were missing in their formalization, and we have added them here. 
+In particular, we have formalized both signs of the uncertainty principle, the self-Fourier function $f_0$, $L^1$ to Schwartz reduction, and radial reduction.
 The 30-digits approximation of the Cohn-Elkies exponent is removed, since it is unnecessary.
-The Proposition A.1 of the report (the tail-integration operator $T_d$) is also missing in the original formalization; here it is formalized in $L^1$ generality. The comparison $\mathsf A_+(d) < \mathsf A_-(d)$ of the appendix needs an extremizer attaining $\mathsf A_-(d)$, which is Theorem 1.4 of [Cohn–Gonçalves (2019)](https://arxiv.org/abs/1712.04438); its existence part is formalized as well (`CohnElkies.exists_signRadius_eq_signUncertaintyConstant_neg_one`, with Nazarov's uncertainty principle replaced by a compactness argument), so that $\mathsf A_+(d) < \mathsf A_-(d)$ holds for every $d \ge 1$ (`CohnElkies.signUncertaintyConstant_one_lt_neg_one`, see `RefactoringResult.md`, §1.6).
+The Proposition A.1 of the report ($A_+(d) < A_-(d)$) is also missing in the original formalization; here it is formalized in $L^1$ generality. It needs an extremizer attaining $A_-(d)$, which is Theorem 1.4 of [Cohn–Gonçalves (2019)](https://arxiv.org/abs/1712.04438); its existence part is formalized as well, with Nazarov's uncertainty principle replaced by a compactness argument.
 
 Every code is written by Claude (mostly Fable 5.1 and Opus 5), where the details can be found under `formalization.yaml`.
 It was asked to follow `RefactoringPlan.md` (which is completely human-written) with the original OpenAI's report, original Lean file, and my two blog posts as references, and the result is summarized in `RefactoringResult.md`.
