@@ -25,19 +25,19 @@ Proposition 3.7 for `L¹` functions, the self-Fourier function `f₀`, the const
 
 (filled in as the work progresses)
 
-### 1.0 Result in numbers (final state, 2026-09-16)
+### 1.0 Result in numbers (final state, 2026-09-19)
 
 | | lines |
 |---|---|
 | original `SpherePacking.lean` | 55,616 |
 | `CohnElkies/` after golfing, before the new theorems (Step 1, 52 modules) | 24,242 (−56 %) |
 | `CohnElkies/` at the end of Step 3 (53 modules, including the new material: `SignUncertainty/*` ≈ 2,350 lines, `UpperBound/SelfFourier` ≈ 220, Propositions 3.1/3.7; 2026-09-14) | 24,647 |
-| final `CohnElkies/` (59 modules; adds Appendix A ≈ 890 lines, the Cohn–Gonçalves existence theorem ≈ 1,340 lines, the general Poisson principle and (22) ≈ 470 lines, §1.6) | 26,768 |
-| final `CohnElkiesForMathlib/` (17 modules; adds `coth`, the compact-support theorem, weak sequential compactness, the no-concentration lemma, Gauss's digamma integral) | 3,276 |
-| total (single file `SpherePackingRefactored.lean`, assembled from both) | 30,368 (−45 %) |
+| final `CohnElkies/` (61 modules; adds Appendix A ≈ 890 lines, the Cohn–Gonçalves existence theorem ≈ 1,340 lines, the general Poisson principle and (22) ≈ 470 lines, the conformal transfer strip ↔ half-plane and the report's proof of Lemma 3.2 ≈ 640 lines, §1.6, §7) | 27,408 |
+| final `CohnElkiesForMathlib/` (20 modules; adds `coth`, the compact-support theorem, weak sequential compactness, the no-concentration lemma, Gauss's digamma integral, subharmonic functions and the half-plane Poisson principle ≈ 1,490 lines) | 4,775 |
+| total (single file `SpherePackingRefactored.lean`, assembled from both) | 32,527 (−42 %) |
 
-Excluding the newly formalized material (≈ 6,100 lines: both signs of Propositions 3.1/3.7, `f₀`,
-the `L¹` theory, Appendix A, the existence of extremizers, the Poisson principle and (22)), the
+Excluding the newly formalized material (≈ 8,200 lines: both signs of Propositions 3.1/3.7, `f₀`,
+the `L¹` theory, Appendix A, the existence of extremizers, the Poisson principles and (22)), the
 refactored code is ≈ 56 % shorter than the original. The whole library compiles with the lakefile options
 (`maxSynthPendingDepth = 3`, Mathlib's standard linter set) under the default `maxHeartbeats`,
 with no `set_option backward.*`, no `sorry`, no axiom beyond `propext`, `Classical.choice`,
@@ -165,19 +165,23 @@ a different argument, that argument was kept (rewriting it would not make the fi
 The blueprint (Step 3) has a chapter "Report versus formalization" with the precise statements;
 the list:
 
-- **Lemma 3.2, interior bound (Poisson principle → Phragmén–Lindelöf).** The report maps the strip
-  to the upper half-plane and applies the Poisson principle to `log|Z|`. The formalization stays on
-  the strip: the Poisson principle for the strip is proved for continuous boundary data of linear
-  growth (`norm_le_exp_integral_P_σ_of_strip` in `CohnElkies/LowerBound/CappedMajorization.lean`,
-  2026-09-16; before, only its instance for `Z_g` and `h_{λ,D}` was proved) by building the
-  holomorphic Poisson integral `W_b` of the boundary datum and applying a Phragmén–Lindelöf maximum
-  principle for a horizontal strip to `e^{-W_b} Z`
+- **Lemma 3.2, interior bound (no longer a difference since 2026-09-19).** The report maps the
+  strip to the upper half-plane and applies the Poisson principle to `log|Z|`; this is now the
+  proof of the Poisson principle for the strip (`norm_le_exp_integral_P_σ_of_strip` in
+  `CohnElkies/LowerBound/CappedMajorization.lean`, §7), on top of a subharmonic-function library
+  and the half-plane Poisson principle in `CohnElkiesForMathlib/Analysis/Complex/`. The earlier
+  proof, which stays on the strip — the holomorphic Poisson integral `W_b` of the boundary datum
+  and a Phragmén–Lindelöf maximum principle for a horizontal strip applied to `e^{-W_b} Z`
   (`PhragmenLindelof.horizontal_strip_norm_extension` in
-  `CohnElkiesForMathlib/Analysis/Complex/PhragmenLindelof.lean`), where only the *modulus* of the
-  function is assumed to extend continuously to the closed strip. Mathlib's
-  `PhragmenLindelof.horizontal_strip` cannot be used directly for that reason (it needs
-  `DiffContOnCl`). Lemma 3.2's capped bound is the instance with the capped majorant `h_{λ,D}`, and
-  the uncapped bound is recovered by dominated convergence in `D`.
+  `CohnElkiesForMathlib/Analysis/Complex/PhragmenLindelof.lean`, where only the *modulus* of the
+  function is assumed to extend continuously to the closed strip; Mathlib's
+  `PhragmenLindelof.horizontal_strip` needs `DiffContOnCl`) — is kept as an alternative proof in
+  the leaf module `CohnElkies/LowerBound/PhragmenLindelofMajorization.lean`
+  (`norm_le_exp_integral_P_σ_of_strip_of_isBigO`, for Phragmén–Lindelöf growth instead of
+  boundedness; `norm_le_exp_integral_P_σ_of_strip_phragmenLindelof`,
+  `norm_Z_g_le_exp_integral_of_cap_phragmenLindelof`). Lemma 3.2's capped bound is the instance
+  with the capped majorant `h_{λ,D}`, and the uncapped bound is recovered by dominated convergence
+  in `D`.
 - **Lemma 3.3 (one-sided).** Only the upper half of the two-sided Riemann-sum estimate (19) is
   proved, with a unified error term for even and odd `d` (`LowerBound/CenteredMax*.lean`).
 - **Lemma 3.5 (single tail majorant).** Instead of integrating the bounds (24), (25) separately
@@ -443,17 +447,19 @@ lattice with Schwartz functions.
 
 - **The two report lemmas the formal proofs bypass** (2026-09-16, at the owner's request, so that
   every blueprint node is formalized):
-  - *Poisson principle for the strip* (`norm_le_exp_integral_P_σ_of_strip`,
-    `CohnElkies/LowerBound/CappedMajorization.lean`): for `ℓ > 0`, a function `Z` holomorphic on
-    the open strip `|Im z| < ℓ`, continuous on its closure, of Phragmén–Lindelöf growth
-    `O(exp(B e^{c|Re z|}))` with `c < π/(2ℓ)` (in particular bounded:
-    `norm_le_exp_integral_P_σ_of_strip_of_norm_le`), and a continuous `b` with `|b y| ≤ A(1+|y|)`
-    such that `‖Z(y − iℓ)‖ ≤ e^{b y}` and `‖Z(y + iℓ)‖ ≤ 1`, one has
+  - *Poisson principle for the strip* (2026-09-16, by Phragmén–Lindelöf; since 2026-09-19
+    `norm_le_exp_integral_P_σ_of_strip_of_isBigO` in
+    `CohnElkies/LowerBound/PhragmenLindelofMajorization.lean`, see §7): for `ℓ > 0`, a function
+    `Z` holomorphic on the open strip `|Im z| < ℓ`, continuous on its closure, of
+    Phragmén–Lindelöf growth `O(exp(B e^{c|Re z|}))` with `c < π/(2ℓ)` (in particular bounded:
+    `norm_le_exp_integral_P_σ_of_strip_phragmenLindelof`), and a continuous `b` with
+    `|b y| ≤ A(1+|y|)` such that `‖Z(y − iℓ)‖ ≤ e^{b y}` and `‖Z(y + iℓ)‖ ≤ 1`, one has
     `‖Z(s + iσℓ)‖ ≤ exp(∫ P_σ(T) b(s − ℓT) dT)` for `−1 < σ < 1`. This is the form in which the
     report applies the principle (to `log|Z|` with the continuous capped majorant `min{h_λ, D}`);
     the proof generalizes the earlier `Z_g`/`h_{λ,D}`-specific argument (holomorphic Poisson
     integral `W_b`, edge traces, Phragmén–Lindelöf), and Lemma 3.2's capped bound
-    `norm_Z_g_le_exp_integral_of_cap` is now its instance. The `W_D`-specific lemmas were deleted
+    `norm_Z_g_le_exp_integral_of_cap` was its instance until the report's own proof through the
+    upper half-plane replaced it on the main chain (§7). The `W_D`-specific lemmas were deleted
     (−229/+317 lines in `CappedMajorization.lean`, four unused declarations removed from
     `CappedMajorant.lean`).
   - *Gauss's digamma integral* `Real.digamma_eq_integral (hm : 0 < m) : digamma m = ∫ t in Ioi 0,
@@ -494,7 +500,7 @@ modules, 2,193 lines.
 | `Radial`, `MellinFourier` | `v_d`, radial profiles, `X_f`, the multiplier `m_ℓ`, the Mellin–Fourier functional equation (report §2.2) |
 | `SchwartzTools` | `dilate`, `IsRadial.fourier`, `IsRealValued.fourier_of_radial`, exponential tilts, the change of variables `r = R e^v` |
 | `Admissible/{Nonempty, Radialization}` | `𝒜_d^rad ≠ ∅` via a bump autocorrelation; the radial reduction of report §2.1 (`Admissible.radialize`, `LP_eq_radial`) |
-| `LowerBound/{Balanced, LogProfile, MellinStrip, PoissonKernel, GammaBoundary, LimitingDensity, CappedMajorant, CappedMajorization, CenteredMax, Main, LogMomentDigamma}` | report §3: `φ_g`, `Z_g`, the strip and its boundary values, `P_σ`, `h_ℓ`, the Poisson principle for the strip and Lemma 3.2 (capped), Lemma 3.3–3.6, Propositions 3.1 and 3.7; the log-moment identity (22) |
+| `LowerBound/{Balanced, LogProfile, MellinStrip, PoissonKernel, GammaBoundary, LimitingDensity, CappedMajorant, StripToHalfPlane, CappedMajorization, CenteredMax, Main, LogMomentDigamma, PhragmenLindelofMajorization}` | report §3: `φ_g`, `Z_g`, the strip and its boundary values, `P_σ`, `h_ℓ`, the conformal map strip → upper half-plane and the harmonic-measure identity, the Poisson principle for the strip (the report's proof, through the half-plane) and Lemma 3.2 (capped), Lemma 3.3–3.6, Propositions 3.1 and 3.7; the log-moment identity (22); the alternative Phragmén–Lindelöf proof of the strip principle (leaf module) |
 | `UpperBound/{Envelope, MellinProfile, Residues, WallisRadius, ShellEstimates, SaddleDamping, FourierPair, SmallRadius, Schwartz, SaddleContour, GammaPhase, SaddleTails, GaussianError, Coverage, Signs, SelfFourier}` | report §4: envelope and generic `mellinProfile`, residues, the radius `R_{ε,d}`, Lemmas 4.2–4.10 (generic in the polynomial), `f₊`, `f₋`, `f₀`, exterior signs |
 | `Asymptotics/{Framework, Stirling, Main, Manuscript}` | the sandwich argument, Stirling for `v_d`, Theorem 1.1 in all its forms |
 | `SpherePacking/{Basic, Periodic, PeriodicApproximation, CohnElkiesBound, Radialization}` | packings, periodic packings, the Cohn–Elkies bound via Poisson summation, the `O(d)` radial symmetrization of test functions |
@@ -503,7 +509,7 @@ modules, 2,193 lines.
 | `SignUncertainty/{MellinCancellation, TailIntegral, AppendixA}` | Appendix A: `T_d`, Proposition A.1, the existence of extremizers for `A₋(d)` (Cohn–Gonçalves, Theorem 1.4) and `A₊(d) < A₋(d)` (§1.6) |
 | `SignUncertainty/{OriginCorrection, Finiteness}` | Cohn–Gonçalves 2019: Lemma 3.1 (origin correction), `0 < A_ς(d)` and `A₋(d) < ∞` for every `d ≥ 1` (§1.6) |
 
-Root `CohnElkies.lean` imports `PackingBound`, `Manuscript` and `SignUncertainty.Main`. Import graph (scratchpad
+Root `CohnElkies.lean` imports `PackingBound`, `Manuscript`, `SignUncertainty.Main`, `SignUncertainty.AppendixA` and the leaves `LowerBound.LogMomentDigamma`, `LowerBound.PhragmenLindelofMajorization`. Import graph (scratchpad
 `depgraph_after.txt`): shared infrastructure `Basic`, `Parameters`, `Radial`, `MellinFourier`,
 `SchwartzTools`; `LowerBound/*` imports none of `UpperBound/*` and vice versa; the two bounds meet
 in `Asymptotics/Main`; the sphere-packing modules depend only on `Basic` and `Asymptotics`.
@@ -513,6 +519,9 @@ in `Asymptotics/Main`; the sphere-packing modules depend only on `Basic` and `As
 | module | content |
 |---|---|
 | `Analysis/Complex/PhragmenLindelof` | maximum principle in a horizontal strip for a function whose *modulus* extends continuously (`PhragmenLindelof.horizontal_strip_norm_extension`) |
+| `Analysis/Complex/PoissonHalfPlane` | the Poisson kernel `P(z, x) = π⁻¹ Im z/((x − Re z)² + (Im z)²)` and the Poisson integral `P[b]` of the upper half-plane for data with `b(x)/(1+x²)` integrable: mass `1`, harmonicity (as `Im` of the holomorphic Nevanlinna integral), monotonicity, boundary values `P[b](z) → b(x₀)` at continuity points, monotone convergence of the truncations `P[max b (−n)]` (§7) |
+| `Analysis/Complex/Subharmonic/Basic` | `SubharmonicOn u U` for `u : ℂ → EReal` (upper semicontinuous, `≠ ⊤`, sub-mean-value inequality through the truncations `EReal.truncateToReal`), harmonic ⇒ subharmonic, `u + h` for harmonic `h`, `log ‖f‖` subharmonic for analytic `f` (Jensen), the strong maximum principle `SubharmonicOn.eqOn_const_of_isMaxOn` and the weak one `SubharmonicOn.le_zero_of_limsup_frontier` (§7) |
+| `Analysis/Complex/Subharmonic/HalfPlane` | the extended maximum principle on the upper half-plane with a finite exceptional boundary set (`SubharmonicOn.le_zero_of_halfPlane`), Ahlfors's Poisson principle `SubharmonicOn.le_poissonIntegralHalfPlane` and its form `AnalyticOnNhd.log_norm_le_poissonIntegralHalfPlane` for `log ‖f‖` (§7) |
 | `Analysis/Complex/Trigonometric` | the hyperbolic cotangent `Real.coth = cosh / sinh`, which Mathlib lacks (it has `tanh`, `artanh`, `cot`): positivity, derivative, antitonicity of `coth` and of `log ∘ coth`, the bounds `log (coth x) ≤ 4 exp (-2x)` and `abs_log_coth_div_le`, and the integrability of `log (coth (π|y|/2))` and of its damped quotient |
 | `Analysis/Fourier/CompactSupport` | a function and its Fourier transform cannot both be compactly supported (`Real.ae_eq_zero_of_hasCompactSupport_fourierIntegral`), via the entire Fourier–Laplace transform along a ray |
 | `Analysis/Fourier/EigenfunctionConcentration` | eigenfunctions of the Fourier transform do not concentrate on a ball (`Real.exists_pos_le_setIntegral_norm_compl_closedBall_of_fourier_eq_mul`), by weak compactness and the compact-support theorem |
@@ -957,3 +966,125 @@ The library needed very few changes:
 - Blueprint and comparator: unchanged sources; the `v4.34.0` tags build.
 
 Full gate (`LEAN_NUM_THREADS=2 lake build`), blueprint library, site and comparator run as before.
+## 7. The upper half-plane Poisson principle and the report's proof of Lemma 3.2 (2026-09-19)
+
+The report proves the interior bound of Lemma 3.2 ("the strip Poisson principle [Ahl79]") by
+mapping the strip conformally onto the upper half-plane and applying the Poisson principle to the
+subharmonic function `log|Z|`, with the lower-boundary majorant `min{h_λ, D}` and the
+upper-boundary majorant `0`. Until now the formalization proved the strip principle by a
+Phragmén–Lindelöf argument inside the strip (§1.3, §1.6). At the owner's request ("formalize the
+upper half plane Poisson principle and use it to give another proof of Lemma 3.2 … formalize *the*
+proof of the report") the half-plane route is now formalized and is the proof on the main chain;
+the Phragmén–Lindelöf proof is kept as an alternative in a leaf module. Branch `poisson-principle`.
+
+**What Mathlib (v4.34.0) has and lacks.** Harmonic functions on inner product spaces
+(`InnerProductSpace.HarmonicAt/HarmonicOnNhd/HarmonicContOnCl`, the mean value property
+`HarmonicOnNhd.circleAverage_eq`, Liouville, harmonic conjugates on balls and on `ℂ`,
+`AnalyticAt.harmonicAt_re/_im/_log_norm` away from zeros), the Poisson kernel and the Poisson/
+Herglotz–Riesz formula for *discs* (`poissonKernel`, `herglotzRieszKernel`), Jensen's formula
+(`AnalyticOnNhd.circleAverage_log_norm`, `MeromorphicOn.circleIntegrable_log_norm`), the maximum
+modulus principle, the Phragmén–Lindelöf principles for strips, quadrants and half-planes (all
+requiring `DiffContOnCl`), `UpperSemicontinuous.measurable`, `UpperHalfPlane.isOpen_upperHalfPlaneSet`.
+Missing: subharmonic functions altogether, the Poisson kernel/integral of the half-plane, harmonic
+measure, the Dirichlet problem, Fatou-type boundary theory. Two conventions shape the design:
+`Real.log 0 = 0`, so the real-valued `log ‖f‖` is *not* subharmonic at the zeros of `f` and the
+theory must be `EReal`-valued (`⊥ = −∞` at zeros); and circle integrals of `EReal`-valued
+functions do not exist, so the sub-mean-value inequality is required for all truncations
+`max u a`, `a : ℝ`, which are bounded and measurable on circles.
+
+**New Mathlib-candidate modules** (`CohnElkiesForMathlib/Analysis/Complex/`, 1,497 lines, only
+`import Mathlib`, standard axioms):
+
+- `Subharmonic/Basic.lean` (518 lines): `EReal.truncateToReal a x = (max x a).toReal` with its
+  API; `SubharmonicOn u U` (`u : ℂ → EReal`: `UpperSemicontinuousOn`, `u ≠ ⊤`, and
+  `∀ z ∈ U, ∀ᶠ r in 𝓝[>] 0, ∀ a, u z ≤ circleAverage (truncateToReal a ∘ u) z r`);
+  `HarmonicOnNhd.subharmonicOn`, `SubharmonicOn.add_harmonic/sub_harmonic/add_const/sub_const`,
+  `AnalyticOnNhd.subharmonicOn_log_enorm` and `subharmonicOn_log_norm` (`log ‖f‖` with `⊥` at
+  zeros, via Jensen's formula: the divisor term is nonnegative, and `log ‖f‖` and the truncation of
+  `ENNReal.log ‖f‖ₑ` differ only on the discrete zero set); the upper semicontinuous
+  regularization `x ↦ limsup u (𝓝[s] x)` (`upperSemicontinuous_limsup_nhdsWithin`,
+  `UpperSemicontinuousOn.limsup_nhdsWithin_eq`); the strong maximum principle
+  `SubharmonicOn.eqOn_const_of_isMaxOn` (an interior maximum forces `u = max` near the point: the
+  sub-mean-value inequality for the truncations gives `u = max` a.e. on small circles, and the set
+  `{u < max}` is open) and the weak one `SubharmonicOn.le_zero_of_limsup_frontier` on a bounded
+  open preconnected set with boundary condition `limsup u (𝓝[Ω] ζ) ≤ 0` (the regularization
+  attains its maximum on the compact closure).
+- `PoissonHalfPlane.lean` (597 lines, namespace `Complex`): `poissonKernelHalfPlane z x =
+  π⁻¹ Im z / ((x − Re z)² + (Im z)²)`, positivity, mass `1`, `P(z,x) ≤ C(A,η)/(1+x²)` for `z` in a
+  compact part of `ℍ`, harmonicity in `z`; `poissonIntegralHalfPlane b z = ∫ P(z,x) b(x) dx` for
+  `b(x)/(1+x²)` integrable, with `_const/_add/_sub/_neg/_const_mul/_mono`, the bounds
+  `inf b ≤ P[b] ≤ sup b`; the Nevanlinna integral `π⁻¹ ∫ ((x − z)⁻¹ − x/(1+x²)) b(x) dx`,
+  holomorphic on `ℍ` by differentiation under the integral sign (`hasDerivAt_integral_of_dominated_loc_of_deriv_le`),
+  whose imaginary part is `P[b]` (`harmonicOnNhd_poissonIntegralHalfPlane`); the boundary values
+  `tendsto_poissonIntegralHalfPlane_of_continuousAt : P[b](z) → b(x₀)` as `z → x₀` within `ℍ` at
+  continuity points; the monotone convergence `P[max b (−n)] → P[b]`.
+- `Subharmonic/HalfPlane.lean` (382 lines): the auxiliary harmonic functions
+  `logNormRatio x₀ z = log ‖(z − x₀)/(z − x₀ + 2i)‖ ≤ 0` (`→ −∞` at `x₀`) and
+  `negLogNormAddI z = −log ‖z + i‖ ≤ −log(‖z‖ − 1)`; the **extended maximum principle**
+  `SubharmonicOn.le_zero_of_halfPlane` (subharmonic on `ℍ`, bounded above, `limsup ≤ 0` at every
+  real point outside a finite set `E` ⇒ `u ≤ 0`; proof: `u + ε h ≤ 0` on half-discs of radius `R`
+  with `M − ε log(R − 2) ≤ 0`, then `ε → 0`); **Ahlfors's Poisson principle**
+  `SubharmonicOn.le_poissonIntegralHalfPlane` (`limsup u ≤ b x` outside `E`, `b` continuous
+  outside `E` with `b/(1+x²)` integrable ⇒ `u ≤ P[b]` on `ℍ`; proof: `u − P[bₙ]` for the
+  truncations `bₙ = max b (−n)`, then `n → ∞`) and its form
+  `AnalyticOnNhd.log_norm_le_poissonIntegralHalfPlane` for bounded analytic `f` (`‖f‖ ≤ exp P[b]`),
+  with the helper `Filter.Tendsto.limsup_log_norm_le` converting a limit `f → f₀`, `‖f₀‖ ≤ e^c`
+  into `limsup log ‖f‖ ≤ c`.
+
+**The conformal transfer** (`CohnElkies/LowerBound/StripToHalfPlane.lean`, 464 lines):
+`stripToHalfPlane ℓ t = exp(π(t + iℓ)/(2ℓ))` (`= E_ℓ ℓ t 0`) and its inverse
+`halfPlaneToStrip ℓ w = (2ℓ/π) log w − iℓ` (principal branch; analytic on `ℍ`, mapping `ℍ` into
+the open strip, continuous up to `ℝ ∖ {0}` with `w → x > 0 ↦ (2ℓ/π) log x − iℓ` on the lower edge
+and `w → x < 0 ↦ (2ℓ/π) log(−x) + iℓ` on the upper edge, by
+`Complex.tendsto_log_nhdsWithin_im_nonneg_of_re_neg_of_im_zero`); the edge images `y − iℓ ↦
+e^{πy/(2ℓ)}`, `y + iℓ ↦ −e^{πy/(2ℓ)}`, `s + iσℓ ↦ e^{πs/(2ℓ)} e^{iθ σ}`; the transported datum
+`halfPlaneDatum ℓ b x = b((2ℓ/π) log x)` for `x > 0`, `0` for `x ≤ 0` (continuous off `0`;
+`halfPlaneDatum ℓ b x / (1 + x²)` integrable for continuous `b` with `|b y| ≤ A(1+|y|)`, by
+`x = e^u` and the weight bound `e^u/(1 + e^{2u}) ≤ e^{−|u|}`); and the **harmonic-measure
+identity** `poissonIntegralHalfPlane_halfPlaneDatum : P[halfPlaneDatum ℓ b](Φ(s + iσℓ)) =
+∫ P_σ(T) b(s − ℓT) dT` for every `b`, from the algebraic identity
+`π⁻¹ ρ sin θ/((x − ρ cos θ)² + ρ² sin² θ) · (π/(2ℓ)) x = sin θ/(4ℓ((ρ/x + x/ρ)/2 − cos θ))` under
+`x = e^{πy/(2ℓ)}` (`MeasureTheory.integral_comp_exp`) and `stripPoisson_integral_changeVariables`;
+the masses `M_σ` of the lower edge and `(1+σ)/2` of the upper edge
+(`poissonIntegralHalfPlane_halfPlaneDatum_one`, `poissonIntegralHalfPlane_indicator_Iic`).
+
+**The report's proof of the strip principle** (`CohnElkies/LowerBound/CappedMajorization.lean`,
+now 283 lines, imports `StripToHalfPlane`, `CappedMajorant` and `Subharmonic/HalfPlane`):
+`norm_le_exp_integral_P_σ_of_strip` keeps its name and its statement for *bounded* `Z`
+(`DiffContOnCl` on the strip, `‖Z‖ ≤ K`, continuous `b` with `|b y| ≤ A(1+|y|)`,
+`‖Z(y − iℓ)‖ ≤ e^{b y}`, `‖Z(y + iℓ)‖ ≤ 1` ⇒ `‖Z(s + iσℓ)‖ ≤ exp ∫ P_σ(T) b(s − ℓT) dT`; the
+unused `0 ≤ A` hypothesis was dropped) and is proved in 40 lines: `F = Z ∘ halfPlaneToStrip ℓ` is
+analytic and bounded on `ℍ`, `F → Z(t)` at the real points `x ≠ 0` with `t` the corresponding
+edge point, `Filter.Tendsto.limsup_log_norm_le` gives `limsup log ‖F‖ ≤ halfPlaneDatum ℓ b x`,
+`AnalyticOnNhd.log_norm_le_poissonIntegralHalfPlane` with `E = {0}` gives `‖F‖ ≤ exp P[datum]`,
+and at `w = Φ(s + iσℓ)` the inverse relation and the harmonic-measure identity finish. Lemma 3.2's
+capped bound `norm_Z_g_le_exp_integral_of_cap` and `exists_capped_poisson_majorization` are its
+instances as before (statements unchanged, so `CenteredMax.lean` and everything downstream are
+untouched apart from `CenteredMax` now importing `LimitingDensity` directly). The
+Phragmén–Lindelöf material (kernel first-moment bounds, `W_b`, its traces, the PL argument) moved
+verbatim to the leaf module `CohnElkies/LowerBound/PhragmenLindelofMajorization.lean` (751 lines,
+imported only by the root): `norm_le_exp_integral_P_σ_of_strip_of_isBigO` (the growth version,
+formerly `norm_le_exp_integral_P_σ_of_strip`), `norm_le_exp_integral_P_σ_of_strip_phragmenLindelof`
+(the bounded case, a second proof of the main theorem) and
+`norm_Z_g_le_exp_integral_of_cap_phragmenLindelof`, `exists_capped_poisson_majorization_phragmenLindelof`
+(Lemma 3.2 by Phragmén–Lindelöf). Blueprint: new group "Subharmonic functions and the Poisson
+principle for the half-plane" in the preliminaries chapter (`def_subharmonic`,
+`lemma_log_norm_subharmonic`, `lemma_subharmonic_maximum_principle`, `def_halfplane_poisson_kernel`,
+`lemma_halfplane_poisson_harmonic`, `lemma_halfplane_extended_maximum_principle`,
+`thm_halfplane_poisson_principle`, `cor_halfplane_poisson_principle_log`), the harmonic-measure
+node `lemma_strip_harmonic_measure`, `lemma_strip_poisson_principle` restated for bounded `Z` with
+the report's proof, and in the Differences chapter the Phragmén–Lindelöf section rewritten as an
+alternative proof (`lemma_strip_poisson_principle_phragmen_lindelof`) plus a section on the Mathlib
+gaps listed above.
+
+**Incident (2026-09-19).** A `lake serve` process started by an old `lean-lsp-mcp` instance
+*before* the toolchain bump (Lean `v4.33.1`) answered an agent's single `lean_diagnostic_messages`
+request, ran `lake setup-file` with the wrong toolchain and rewrote 502 dependency `.olean`s
+(Batteries, Aesop, Qq, ProofWidgets, parts of Mathlib) in `v4.33.1` format, breaking every compile
+("incompatible header"). Repaired with the Mathlib cache (`lake exe cache get`, or
+`lake env .lake/packages/mathlib/.lake/build/bin/cache unpack!`), which restores the dependency
+oleans without a Lake build; the project's own `.lake/build` was not affected. Lessons: after a
+toolchain change kill every language server (`pkill -f "lake serve"`, and the MCP servers that
+own them) before any LSP request; the lean-lsp tools trigger `lake setup-file` builds of a file's
+imports, which is also hazardous while other agents edit imported modules — with agents running,
+verify only with `lake env lean`.

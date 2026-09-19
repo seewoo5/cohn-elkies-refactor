@@ -1,4 +1,5 @@
 import CohnElkies.LowerBound.CappedMajorization
+import CohnElkies.LowerBound.LimitingDensity
 
 /-!
 # The Poisson majorant is maximal at the centre and negative (report §3.3, Lemmas 3.3–3.4)
