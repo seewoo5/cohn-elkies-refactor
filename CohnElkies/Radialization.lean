@@ -1,18 +1,17 @@
 import CohnElkies.Basic
 import CohnElkies.SchwartzTools
+import CohnElkiesForMathlib.MeasureTheory.Measure.Haar.Compact
 
 /-!
 # Rotational averaging over the orthogonal group (report §2.1)
 
 The orthogonal group `O(d)` with its Haar probability measure and its tautological action on `ℝ^d`
 by linear isometries (transitive on spheres), and the **rotational average**
-`ℛg(x) = ∫_{O(d)} g(U⁻¹ x) dU` of a function `g : ℝ^d → E`.
+`ℛg(x) = ∫_{O(d)} g(Ux) dU` of a function `g : ℝ^d → E`.
 
-The `U⁻¹` of the report is what makes `ℛ` an action-compatible averaging operator, and only the
-*left* invariance of the Haar measure is used below. The function `x ↦ ∫_{O(d)} g(Ux) dU` is the
-same, by inversion invariance of the Haar measure of a compact group; Mathlib proves inversion
-invariance only for abelian groups (`IsHaarMeasure.isInvInvariant_of_regular`), so the two forms
-are not identified here.
+The rotation invariance `ℛg(Ax) = ℛg(x)` is the substitution `U ↦ UA`, that is, the *right*
+invariance of the Haar measure of `O(d)`, which holds because compact groups are unimodular
+(`IsHaarMeasure.isMulRightInvariant_of_compactSpace`).
 
 `ℛg` is rotation invariant, hence radial (`rotationalAverage_eq_of_norm_eq`); it satisfies
 `ℛg(0) = g(0)`, preserves real values and the sign of the real part, in particular outside a ball
@@ -172,16 +171,9 @@ section Rotations
 
 variable {E : Type*} [NormedAddCommGroup E]
 
-theorem continuous_comp_orthogonalAction_inv {g : Euclidean d → E} (hg : Continuous g) :
-    Continuous fun p : OrthogonalGroup d × Euclidean d ↦ g (orthogonalAction p.1⁻¹ p.2) := by
-  have heq : (fun p : OrthogonalGroup d × Euclidean d ↦ g (orthogonalAction p.1⁻¹ p.2)) =
-      g ∘ (fun p : OrthogonalGroup d × Euclidean d ↦ orthogonalAction p.1 p.2) ∘
-        fun p : OrthogonalGroup d × Euclidean d ↦ (p.1⁻¹, p.2) := by
-    funext p
-    simp only [Function.comp_apply]
-  rw [heq]
-  exact hg.comp ((orthogonalAction_joint_continuous d).comp
-    ((continuous_inv.comp continuous_fst).prodMk continuous_snd))
+theorem continuous_comp_orthogonalAction_prod {g : Euclidean d → E} (hg : Continuous g) :
+    Continuous fun p : OrthogonalGroup d × Euclidean d ↦ g (orthogonalAction p.1 p.2) :=
+  hg.comp (orthogonalAction_joint_continuous d)
 
 theorem integrable_comp_orthogonalAction {g : Euclidean d → E} (hg : Integrable g)
     (U : OrthogonalGroup d) : Integrable fun x ↦ g (orthogonalAction U x) :=
@@ -194,12 +186,12 @@ theorem integral_norm_comp_orthogonalAction (g : Euclidean d → E) (U : Orthogo
     (orthogonalLinearIsometry U).toHomeomorph.measurableEmbedding fun x ↦ ‖g x‖
 
 /-- On the compact group `O(d)`, the rotations of a continuous function are integrable. -/
-theorem integrable_comp_orthogonalAction_inv {g : Euclidean d → E} (hg : Continuous g)
+theorem integrable_comp_orthogonalAction_haar {g : Euclidean d → E} (hg : Continuous g)
     (x : Euclidean d) :
-    Integrable (fun U : OrthogonalGroup d ↦ g (orthogonalAction U⁻¹ x))
+    Integrable (fun U : OrthogonalGroup d ↦ g (orthogonalAction U x))
       (radialOrthogonalHaar d) := by
-  have hcont : Continuous fun U : OrthogonalGroup d ↦ g (orthogonalAction U⁻¹ x) :=
-    hg.comp ((continuous_orthogonalAction x).comp continuous_inv)
+  have hcont : Continuous fun U : OrthogonalGroup d ↦ g (orthogonalAction U x) :=
+    hg.comp (continuous_orthogonalAction x)
   simpa using hcont.continuousOn.integrableOn_compact isCompact_univ
 
 end Rotations
@@ -210,25 +202,19 @@ section Average
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
-/-- The rotational average `ℛg(x) = ∫_{O(d)} g(U⁻¹x) dU` of a function on `ℝ^d` (report §2.1),
+/-- The rotational average `ℛg(x) = ∫_{O(d)} g(Ux) dU` of a function on `ℝ^d` (report §2.1),
 with respect to the Haar probability measure of `O(d)`. -/
 def rotationalAverage (g : Euclidean d → E) (x : Euclidean d) : E :=
-  ∫ U : OrthogonalGroup d, g (orthogonalAction U⁻¹ x) ∂radialOrthogonalHaar d
+  ∫ U : OrthogonalGroup d, g (orthogonalAction U x) ∂radialOrthogonalHaar d
 
+/-- `ℛg(Ax) = ℛg(x)`: the substitution `U ↦ UA`, by right invariance of the Haar measure of the
+compact group `O(d)`. -/
 theorem rotationalAverage_comp_orthogonal (g : Euclidean d → E) (A : OrthogonalGroup d)
     (x : Euclidean d) : rotationalAverage g (orthogonalAction A x) = rotationalAverage g x := by
   unfold rotationalAverage
-  calc (∫ U : OrthogonalGroup d, g (orthogonalAction U⁻¹ (orthogonalAction A x))
-          ∂radialOrthogonalHaar d)
-      = ∫ U : OrthogonalGroup d, g (orthogonalAction (A * U)⁻¹ (orthogonalAction A x))
-          ∂radialOrthogonalHaar d :=
-        (integral_mul_left_eq_self (μ := radialOrthogonalHaar d) (fun U : OrthogonalGroup d ↦
-          g (orthogonalAction U⁻¹ (orthogonalAction A x))) A).symm
-    _ = ∫ U : OrthogonalGroup d, g (orthogonalAction U⁻¹ x) ∂radialOrthogonalHaar d := by
-        refine integral_congr_ae (.of_forall fun U ↦ ?_)
-        simp only [mul_inv_rev, orthogonalAction_mul]
-        rw [← orthogonalAction_mul A⁻¹ A x]
-        simp
+  simp_rw [← orthogonalAction_mul]
+  exact integral_mul_right_eq_self (μ := radialOrthogonalHaar d)
+    (fun U : OrthogonalGroup d ↦ g (orthogonalAction U x)) A
 
 /-- The rotational average is radial. -/
 theorem rotationalAverage_eq_of_norm_eq (g : Euclidean d → E) :
@@ -260,48 +246,48 @@ omit [SecondCountableTopology E] in
 theorem continuous_rotationalAverage {g : Euclidean d → E} (hg : Continuous g) :
     Continuous (rotationalAverage g) := by
   have hunc : Continuous (Function.uncurry fun (x : Euclidean d) (U : OrthogonalGroup d) ↦
-      g (orthogonalAction U⁻¹ x)) := by
+      g (orthogonalAction U x)) := by
     have heq : (Function.uncurry fun (x : Euclidean d) (U : OrthogonalGroup d) ↦
-        g (orthogonalAction U⁻¹ x)) =
-        (fun p : OrthogonalGroup d × Euclidean d ↦ g (orthogonalAction p.1⁻¹ p.2)) ∘
+        g (orthogonalAction U x)) =
+        (fun p : OrthogonalGroup d × Euclidean d ↦ g (orthogonalAction p.1 p.2)) ∘
           Prod.swap := by
       funext p
       rfl
     rw [heq]
-    exact (continuous_comp_orthogonalAction_inv hg).comp continuous_swap
+    exact (continuous_comp_orthogonalAction_prod hg).comp continuous_swap
   have h : rotationalAverage g = fun x ↦
-      ∫ U in univ, g (orthogonalAction U⁻¹ x) ∂radialOrthogonalHaar d := by
+      ∫ U in univ, g (orthogonalAction U x) ∂radialOrthogonalHaar d := by
     rw [Measure.restrict_univ]
     rfl
   rw [h]
   exact continuous_parametric_integral_of_continuous hunc isCompact_univ
 
 omit [NormedSpace ℝ E] in
-theorem integrable_prod_comp_orthogonalAction_inv {g : Euclidean d → E} (hg : Continuous g)
+theorem integrable_prod_comp_orthogonalAction {g : Euclidean d → E} (hg : Continuous g)
     (hi : Integrable g) :
-    Integrable (fun p : OrthogonalGroup d × Euclidean d ↦ g (orthogonalAction p.1⁻¹ p.2))
+    Integrable (fun p : OrthogonalGroup d × Euclidean d ↦ g (orthogonalAction p.1 p.2))
       ((radialOrthogonalHaar d).prod volume) := by
-  refine (integrable_prod_iff (continuous_comp_orthogonalAction_inv hg).aestronglyMeasurable).2
-    ⟨.of_forall fun U ↦ integrable_comp_orthogonalAction hi U⁻¹, ?_⟩
+  refine (integrable_prod_iff (continuous_comp_orthogonalAction_prod hg).aestronglyMeasurable).2
+    ⟨.of_forall fun U ↦ integrable_comp_orthogonalAction hi U, ?_⟩
   exact (integrable_const (∫ x, ‖g x‖)).congr
-    (.of_forall fun U ↦ (integral_norm_comp_orthogonalAction g U⁻¹).symm)
+    (.of_forall fun U ↦ (integral_norm_comp_orthogonalAction g U).symm)
 
 theorem integrable_rotationalAverage {g : Euclidean d → E} (hg : Continuous g)
     (hi : Integrable g) : Integrable (rotationalAverage g) :=
-  (integrable_prod_comp_orthogonalAction_inv hg hi).integral_prod_right
+  (integrable_prod_comp_orthogonalAction hg hi).integral_prod_right
 
 /-- `‖ℛg‖₁ ≤ ‖g‖₁`. -/
 theorem integral_norm_rotationalAverage_le {g : Euclidean d → E} (hg : Continuous g)
     (hi : Integrable g) : ∫ x, ‖rotationalAverage g x‖ ≤ ∫ x, ‖g x‖ := by
-  have hF := (integrable_prod_comp_orthogonalAction_inv hg hi).norm
+  have hF := (integrable_prod_comp_orthogonalAction hg hi).norm
   calc ∫ x, ‖rotationalAverage g x‖
-      ≤ ∫ x, ∫ U : OrthogonalGroup d, ‖g (orthogonalAction U⁻¹ x)‖ ∂radialOrthogonalHaar d :=
+      ≤ ∫ x, ∫ U : OrthogonalGroup d, ‖g (orthogonalAction U x)‖ ∂radialOrthogonalHaar d :=
         integral_mono_of_nonneg (.of_forall fun x ↦ norm_nonneg _) hF.integral_prod_right
           (.of_forall fun x ↦ norm_integral_le_integral_norm _)
-    _ = ∫ U : OrthogonalGroup d, (∫ x, ‖g (orthogonalAction U⁻¹ x)‖) ∂radialOrthogonalHaar d :=
-        (integral_integral_swap (f := fun U x ↦ ‖g (orthogonalAction U⁻¹ x)‖) hF).symm
+    _ = ∫ U : OrthogonalGroup d, (∫ x, ‖g (orthogonalAction U x)‖) ∂radialOrthogonalHaar d :=
+        (integral_integral_swap (f := fun U x ↦ ‖g (orthogonalAction U x)‖) hF).symm
     _ = ∫ U : OrthogonalGroup d, (∫ x, ‖g x‖) ∂radialOrthogonalHaar d :=
-        integral_congr_ae (.of_forall fun U ↦ integral_norm_comp_orthogonalAction g U⁻¹)
+        integral_congr_ae (.of_forall fun U ↦ integral_norm_comp_orthogonalAction g U)
     _ = ∫ x, ‖g x‖ := by simp
 
 end Complete
@@ -311,7 +297,7 @@ end Complete
 /-- The real part of the rotational average is the rotational average of the real part. -/
 theorem rotationalAverage_re {g : Euclidean d → ℂ} (hg : Continuous g) (x : Euclidean d) :
     (rotationalAverage g x).re = rotationalAverage (fun y ↦ (g y).re) x :=
-  (integral_re (integrable_comp_orthogonalAction_inv hg x)).symm
+  (integral_re (integrable_comp_orthogonalAction_haar hg x)).symm
 
 /-- Rotational averaging preserves real values. -/
 theorem rotationalAverage_im_eq_zero {g : Euclidean d → ℂ} (hg : IsRealValued g) :
@@ -371,32 +357,32 @@ theorem integral_fourierCharacter_mul (g : Euclidean d → ℂ) (ξ : Euclidean 
 theorem fourier_rotationalAverage {g : Euclidean d → ℂ} (hg : Continuous g) (hi : Integrable g)
     (ξ : Euclidean d) : 𝓕 (rotationalAverage g) ξ = rotationalAverage (𝓕 g) ξ := by
   have hkernel : Integrable (Function.uncurry fun (U : OrthogonalGroup d) (x : Euclidean d) ↦
-        fourierCharacter ξ x * g (orthogonalAction U⁻¹ x))
+        fourierCharacter ξ x * g (orthogonalAction U x))
       ((radialOrthogonalHaar d).prod volume) := by
     have hmeas : AEStronglyMeasurable (fun p : OrthogonalGroup d × Euclidean d ↦
-          fourierCharacter ξ p.2 * g (orthogonalAction p.1⁻¹ p.2))
+          fourierCharacter ξ p.2 * g (orthogonalAction p.1 p.2))
         ((radialOrthogonalHaar d).prod volume) :=
       (((continuous_fourierCharacter ξ).comp continuous_snd).mul
-        (continuous_comp_orthogonalAction_inv hg)).aestronglyMeasurable
+        (continuous_comp_orthogonalAction_prod hg)).aestronglyMeasurable
     refine (integrable_prod_iff hmeas).2 ⟨.of_forall fun U ↦
-      integrable_fourierCharacter_mul hi ξ U⁻¹, ?_⟩
+      integrable_fourierCharacter_mul hi ξ U, ?_⟩
     exact (integrable_const (∫ x, ‖g x‖)).congr (.of_forall fun U ↦
-      (integral_norm_fourierCharacter_mul g ξ U⁻¹).symm)
+      (integral_norm_fourierCharacter_mul g ξ U).symm)
   calc 𝓕 (rotationalAverage g) ξ
       = ∫ x : Euclidean d, fourierCharacter ξ x * rotationalAverage g x := by
         rw [Real.fourier_eq']
         rfl
     _ = ∫ x : Euclidean d, ∫ U : OrthogonalGroup d,
-          fourierCharacter ξ x * g (orthogonalAction U⁻¹ x) ∂radialOrthogonalHaar d := by
+          fourierCharacter ξ x * g (orthogonalAction U x) ∂radialOrthogonalHaar d := by
         refine integral_congr_ae (.of_forall fun x ↦ ?_)
         dsimp only
         unfold rotationalAverage
         rw [integral_const_mul]
     _ = ∫ U : OrthogonalGroup d, (∫ x : Euclidean d,
-          fourierCharacter ξ x * g (orthogonalAction U⁻¹ x)) ∂radialOrthogonalHaar d :=
+          fourierCharacter ξ x * g (orthogonalAction U x)) ∂radialOrthogonalHaar d :=
         (integral_integral_swap hkernel).symm
     _ = rotationalAverage (𝓕 g) ξ :=
-        integral_congr_ae (.of_forall fun U ↦ integral_fourierCharacter_mul g ξ U⁻¹)
+        integral_congr_ae (.of_forall fun U ↦ integral_fourierCharacter_mul g ξ U)
 
 end
 
@@ -480,10 +466,9 @@ theorem continuous_iteratedFDeriv_compIsometry {d : ℕ} (f : TestFunction d) (n
 theorem aestronglyMeasurable_iteratedFDeriv_compIsometry {d : ℕ} (f : TestFunction d) (n : ℕ)
     (x : Euclidean d) :
     AEStronglyMeasurable (fun U : OrthogonalGroup d ↦ iteratedFDeriv ℝ n
-        (compIsometry (orthogonalLinearIsometry U⁻¹) f : Euclidean d → ℂ) x)
+        (compIsometry (orthogonalLinearIsometry U) f : Euclidean d → ℂ) x)
       (radialOrthogonalHaar d) :=
-  ((continuous_iteratedFDeriv_compIsometry f n x).comp
-    continuous_inv).aestronglyMeasurable_of_compactSpace
+  (continuous_iteratedFDeriv_compIsometry f n x).aestronglyMeasurable_of_compactSpace
 
 section ProbabilityAverage
 
@@ -598,20 +583,20 @@ end ProbabilityAverage
 /-- The rotational average of a test function, as a test function (report §2.1). -/
 def rotationalAverageSchwartz {d : ℕ} (f : TestFunction d) : TestFunction d := by
   refine schwartzAverage (radialOrthogonalHaar d)
-    (fun U : OrthogonalGroup d ↦ compIsometry (orthogonalLinearIsometry U⁻¹) f)
+    (fun U : OrthogonalGroup d ↦ compIsometry (orthogonalLinearIsometry U) f)
     (fun k n ↦ SchwartzMap.seminorm ℂ k n f) ?_ ?_ ?_
   · refine contDiff_of_differentiable_iteratedFDeriv fun n _ ↦ ?_
     rw [funext fun x ↦ iteratedFDeriv_integral (radialOrthogonalHaar d) _ _
       (fun n x ↦ aestronglyMeasurable_iteratedFDeriv_compIsometry f n x)
-      (fun U k n ↦ (seminorm_compIsometry (orthogonalLinearIsometry U⁻¹) f k n).le) n x]
+      (fun U k n ↦ (seminorm_compIsometry (orthogonalLinearIsometry U) f k n).le) n x]
     exact fun x ↦ (hasFDerivAt_integral_iteratedFDeriv (radialOrthogonalHaar d) _ _
       (fun n x ↦ aestronglyMeasurable_iteratedFDeriv_compIsometry f n x)
-      (fun U k n ↦ (seminorm_compIsometry (orthogonalLinearIsometry U⁻¹) f k n).le)
+      (fun U k n ↦ (seminorm_compIsometry (orthogonalLinearIsometry U) f k n).le)
       n x).differentiableAt
   · exact fun n x ↦ iteratedFDeriv_integral (radialOrthogonalHaar d) _ _
       (fun n x ↦ aestronglyMeasurable_iteratedFDeriv_compIsometry f n x)
-      (fun U k n ↦ (seminorm_compIsometry (orthogonalLinearIsometry U⁻¹) f k n).le) n x
-  · exact fun k n U x ↦ compIsometry_le_seminorm (orthogonalLinearIsometry U⁻¹) f k n x
+      (fun U k n ↦ (seminorm_compIsometry (orthogonalLinearIsometry U) f k n).le) n x
+  · exact fun k n U x ↦ compIsometry_le_seminorm (orthogonalLinearIsometry U) f k n x
 
 @[simp] theorem rotationalAverageSchwartz_apply {d : ℕ} (f : TestFunction d) (x : Euclidean d) :
     rotationalAverageSchwartz f x = rotationalAverage (f : Euclidean d → ℂ) x := rfl

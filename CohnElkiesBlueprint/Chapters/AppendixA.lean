@@ -30,7 +30,7 @@ Integrating the radial tail of $`g` therefore produces a self-Fourier function w
 smaller last-sign radius. Throughout, $`d \ge 1`, $`\lambda = d/2`, and $`g` denotes the continuous
 Fourier-inversion representative, as in {bpref "def_sign_eigenfunction_class"}[].
 
-:::definition "eq_87_tail_integration" (lean := "CohnElkies.tailIntegral")
+:::definition "eq_87_tail_integration" (lean := "CohnElkies.tailIntegral, CohnElkies.tailIntegral_of_ne_zero")
 Let $`g \in \mathcal{E}_-(d)` ({uses "def_sign_eigenfunction_class"}[]) be radial, i.e.
 $`0 \ne g \in L^1_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})` with $`\widehat g = -g` and $`g(0) = 0`.
 Define $`T_dg(0) = 0` and, for $`x \ne 0` (equation (87)),
@@ -40,18 +40,26 @@ $`(T_dg)(r) = \dfrac{\lambda}{2}r^{-\lambda}\int_r^\infty s^{\lambda-1}g(s)\,ds`
 (large-scale representation).
 :::
 
+:::lemma_ "lemma_eigenfunction_bounded_weighted" (lean := "CohnElkies.SignEigenfunction.continuous, CohnElkies.SignEigenfunction.norm_apply_le, CohnElkies.integrable_mul_norm_rpow_neg_half")
+Let $`g` be as in {uses "eq_87_tail_integration"}[]. Then $`g` is bounded and continuous, and
+$`\int_{\mathbb{R}^d}|g(x)||x|^{-\lambda}\,dx < \infty`.
+:::
+
+:::proof "lemma_eigenfunction_bounded_weighted"
+Since $`g = -\widehat g \in L^1`, Fourier inversion makes $`g` bounded and continuous
+({uses "def_fourier_convention"}[]); splitting at $`|x| = 1` and using $`\lambda < d` gives the
+finiteness of $`\int|g||x|^{-\lambda}`.
+:::
+
 :::lemma_ "eq_88_central_mellin_cancellation" (lean := "CohnElkies.SignEigenfunction.integral_mul_norm_rpow_eq_zero")
-Let $`g` be as in {uses "eq_87_tail_integration"}[]. Then $`g` is bounded and continuous,
-$`\int_{\mathbb{R}^d}|g(x)||x|^{-\lambda}\,dx < \infty`, and the central Mellin moment vanishes
-(equation (88)): $`M_g(\lambda) = \int_0^\infty g(r)\,r^{\lambda-1}\,dr = 0`, the integral
-converging
-absolutely.
+Let $`g` be as in {uses "eq_87_tail_integration"}[]. Then the central Mellin moment vanishes
+(equation (88)): $`\int_{\mathbb{R}^d}g(x)|x|^{-\lambda}\,dx = 0`, i.e.
+$`M_g(\lambda) = \int_0^\infty g(r)\,r^{\lambda-1}\,dr = 0`, the integrals converging absolutely
+by {uses "lemma_eigenfunction_bounded_weighted"}[].
 :::
 
 :::proof "eq_88_central_mellin_cancellation"
-Since $`g = -\widehat g \in L^1`, Fourier inversion makes $`g` bounded and continuous
-({uses "def_fourier_convention"}[]); splitting at $`|x| = 1` and using $`\lambda < d` gives the
-finiteness of $`\int|g||x|^{-\lambda}`. The Mellin–Fourier identity (9) was established only for
+The Mellin–Fourier identity (9) was established only for
 Schwartz functions, so we verify its central consequence directly. Set
 $`J(t) = \int_{\mathbb{R}^d}g(x)e^{-\pi t|x|^2}\,dx` for $`t > 0`. Gaussian duality
 $`e^{-\pi t|x|^2} = t^{-\lambda}\widehat{e^{-\pi|\cdot|^2/t}}(x)`, the pairing
@@ -65,62 +73,82 @@ Hence the substitution $`t \mapsto 1/t` makes $`\int_0^\infty t^{\lambda/2-1}J(t
 own negative, so it vanishes. On the other hand, Fubini and Gaussian integration express the
 same quantity as
 $`\dfrac{\Gamma(\lambda/2)}{\pi^{\lambda/2}}\int_{\mathbb{R}^d}g(x)|x|^{-\lambda}\,dx`,
-which in polar coordinates ({uses "def_sphere_area_polar"}[]) equals
+which in polar coordinates ({uses "lemma_polar_integration"}[]) equals
 $`\dfrac{\Gamma(\lambda/2)}{\pi^{\lambda/2}}S_d\int_0^\infty g(r)r^{\lambda-1}\,dr`. This proves
 (88).
 :::
 
-:::lemma_ "eq_89_small_scale_representation" (lean := "CohnElkies.SignEigenfunction.tailIntegral_eq_neg_integral_Ioo")
+:::lemma_ "lemma_tail_integral_integrable" (lean := "CohnElkies.SignEigenfunction.integrable_tailIntegral_kernel, CohnElkies.SignEigenfunction.integrable_tailIntegral, CohnElkies.SignEigenfunction.integral_norm_tailIntegral_le")
 Let $`g` be as in {uses "eq_87_tail_integration"}[]. The integral defining $`T_dg(x)` converges
-absolutely for $`x \ne 0`, $`T_dg` is integrable with $`\|T_dg\|_1 \le \tfrac12\|g\|_1`, and
-(equation (89))
-$`\widehat{T_dg}(\xi) = \dfrac{\lambda}{2}\int_1^\infty t^{\lambda-d-1}\widehat g(\xi/t)\,dt`
-$`= -\dfrac{\lambda}{2}\int_0^1s^{\lambda-1}g(s\xi)\,ds`,
-which equals $`\dfrac{\lambda}{2}\int_1^\infty s^{\lambda-1}g(s\xi)\,ds = T_dg(\xi)` for every
-$`\xi`. The small-scale representation $`-\tfrac\lambda2\int_0^1s^{\lambda-1}g(sx)\,ds` is
-continuous on all of $`\mathbb{R}^d`, equals $`T_dg(x)` for $`x \ne 0`, and equals $`-g(0)/2 = 0` at
-$`x = 0`. Hence $`T_dg` is continuous, radial, $`\widehat{T_dg} = T_dg`, and $`T_dg(0) = 0`.
+absolutely for $`x \ne 0`, and $`T_dg` is integrable with $`\|T_dg\|_1 \le \tfrac12\|g\|_1`.
 :::
 
-:::proof "eq_89_small_scale_representation"
+:::proof "lemma_tail_integral_integrable"
 For $`x \ne 0`, in the radial profile
 $`\int_1^\infty t^{\lambda-1}|g(tx)|\,dt = |x|^{-\lambda}\int_{|x|}^\infty s^{\lambda-1}|g(s)|\,ds`,
 and $`s^{\lambda-1} \le |x|^{-\lambda}s^{d-1}` for $`s \ge |x|`, so the integral is at most
 $`|x|^{-d}\|g\|_1/S_d`: absolute convergence. Tonelli and $`d = 2\lambda` give
-$`\|T_dg\|_1 \le \tfrac\lambda2\|g\|_1\int_1^\infty t^{-\lambda-1}\,dt = \tfrac12\|g\|_1`, which
-also
-justifies Fourier transformation under the integral. Fourier scaling
-$`\widehat{g(t\,\cdot)}(\xi) = t^{-d}\widehat g(\xi/t)` and $`\widehat g = -g` give the first two
-expressions in (89) after the substitution $`s = 1/t`. By
-{uses "eq_88_central_mellin_cancellation"}[], for $`\xi \ne 0`,
-$`\int_0^\infty s^{\lambda-1}g(s\xi)\,ds = |\xi|^{-\lambda}M_g(\lambda) = 0`, so
-$`-\int_0^1 = \int_1^\infty`, giving $`\widehat{T_dg}(\xi) = T_dg(\xi)`; at $`\xi = 0` both sides
-equal $`-g(0)/2 = 0`. Continuity of the small-scale representation follows from dominated
-convergence, $`g` being bounded and continuous, and its value at $`0` is
+$`\|T_dg\|_1 \le \tfrac\lambda2\|g\|_1\int_1^\infty t^{-\lambda-1}\,dt = \tfrac12\|g\|_1`.
+:::
+
+:::lemma_ "eq_89_small_scale_representation" (lean := "CohnElkies.SignEigenfunction.tailIntegral_eq_neg_integral_Ioo, CohnElkies.SignEigenfunction.continuous_tailIntegral")
+Let $`g` be as in {uses "eq_87_tail_integration"}[]. For every $`x`,
+$`T_dg(x) = -\dfrac{\lambda}{2}\int_0^1s^{\lambda-1}g(sx)\,ds` (small-scale representation,
+equation (89)); this representation is continuous on all of $`\mathbb{R}^d` and equals
+$`-g(0)/2 = 0` at $`x = 0`. Hence $`T_dg` is continuous and radial with $`T_dg(0) = 0`.
+:::
+
+:::proof "eq_89_small_scale_representation"
+By {uses "eq_88_central_mellin_cancellation"}[], for $`x \ne 0`,
+$`\int_0^\infty s^{\lambda-1}g(sx)\,ds = |x|^{-\lambda}M_g(\lambda) = 0`, so
+$`-\int_0^1 = \int_1^\infty`; at $`x = 0` both sides vanish. Continuity of the small-scale
+representation follows from dominated convergence, $`g` being bounded and continuous
+({uses "lemma_eigenfunction_bounded_weighted"}[]), and its value at $`0` is
 $`-\tfrac\lambda2g(0)\int_0^1s^{\lambda-1}ds = -g(0)/2 = 0`.
 :::
 
-:::proposition "prop_a_1" (lean := "CohnElkies.SignEigenfunction.tailIntegral")
+:::lemma_ "eq_89_self_fourier" (lean := "CohnElkies.SignEigenfunction.fourier_tailIntegral")
+Let $`g` be as in {uses "eq_87_tail_integration"}[]. Then (equation (89))
+$`\widehat{T_dg}(\xi) = \dfrac{\lambda}{2}\int_1^\infty t^{\lambda-d-1}\widehat g(\xi/t)\,dt`
+$`= -\dfrac{\lambda}{2}\int_0^1s^{\lambda-1}g(s\xi)\,ds = T_dg(\xi)`
+for every $`\xi`: $`\widehat{T_dg} = T_dg`.
+:::
+
+:::proof "eq_89_self_fourier"
+The absolute convergence of {uses "lemma_tail_integral_integrable"}[] justifies Fourier
+transformation under the integral. Fourier scaling
+$`\widehat{g(t\,\cdot)}(\xi) = t^{-d}\widehat g(\xi/t)` and $`\widehat g = -g` give the first two
+expressions after the substitution $`s = 1/t`, and {uses "eq_89_small_scale_representation"}[]
+identifies the last one with $`T_dg(\xi)`.
+:::
+
+:::proposition "prop_a_1" (lean := "CohnElkies.SignEigenfunction.tailIntegral, CohnElkies.SignEigenfunction.tailIntegral_ne_zero")
 Let $`d \ge 1`, $`\lambda = d/2`, and let $`0 \ne g \in L^1_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})`
 satisfy $`\widehat g = -g` and $`g(0) = 0`, with $`T_dg` as in {uses "eq_87_tail_integration"}[].
 Then $`T_dg` is nonzero, continuous, radial and integrable, with
 $`\widehat{T_dg} = T_dg`, $`T_dg(0) = 0`, $`\|T_dg\|_1 \le \tfrac12\|g\|_1`;
-in particular $`T_dg \in \mathcal{E}_+(d)`. Moreover $`r(T_dg) \le r(g)`, and if
-$`r(g) < \infty` then $`T_dg > 0` on $`\{|x| \ge r(g)\}` and $`r(T_dg) < r(g)`
-({uses "def_sign_radius"}[]).
+in particular $`T_dg \in \mathcal{E}_+(d)`.
 :::
 
 :::proof "prop_a_1"
-Continuity, integrability, the norm bound, self-Fourier property and vanishing at the origin are
-{uses "eq_89_small_scale_representation"}[]. Differentiating the large-scale representation of
+Continuity and vanishing at the origin are {uses "eq_89_small_scale_representation"}[],
+integrability and the norm bound {uses "lemma_tail_integral_integrable"}[], and the
+self-Fourier property {uses "eq_89_self_fourier"}[]. Differentiating the large-scale representation of
 {uses "eq_87_tail_integration"}[] in $`r` gives
 $`(r\tfrac{d}{dr} + \lambda)T_dg = -\tfrac\lambda2g`,
 i.e. $`(x\cdot\nabla + \lambda)T_dg = -\lambda g/2`; since $`g \ne 0`, also $`T_dg \ne 0`. If $`g`
 is Schwartz, differentiating the small-scale representation gives smoothness at the origin, and
 differentiating the large-scale representation gives rapid decay at infinity; thus $`T_dg` is
 Schwartz.
+:::
 
-Sign radius. Let $`R = r(g) < \infty`. Then $`R > 0`: otherwise $`g \ge 0` everywhere and
+:::proposition "prop_a_1_sign_radius" (lean := "CohnElkies.SignEigenfunction.tailIntegral_pos, CohnElkies.SignEigenfunction.signRadius_tailIntegral_le, CohnElkies.SignEigenfunction.signRadius_tailIntegral_lt")
+In the situation of {uses "prop_a_1"}[], $`r(T_dg) \le r(g)`, and if $`r(g) < \infty` then
+$`T_dg > 0` on $`\{|x| \ge r(g)\}` and $`r(T_dg) < r(g)` ({uses "def_sign_radius"}[]).
+:::
+
+:::proof "prop_a_1_sign_radius"
+Let $`R = r(g) < \infty`. Then $`R > 0`: otherwise $`g \ge 0` everywhere and
 $`\int g = \widehat g(0) = -g(0) = 0` would force the continuous nonnegative $`g` to vanish. For
 $`r \ge R` we have $`g(s) \ge 0` for all $`s \ge r`, so by (87)
 $`(T_dg)(r) = \tfrac\lambda2r^{-\lambda}\int_r^\infty s^{\lambda-1}g(s)\,ds \ge 0`, and in fact
@@ -132,38 +160,54 @@ $`\delta > 0`, hence $`T_dg \ge 0` on $`\{|x| \ge R - \delta\}` and $`r(T_dg) \l
 
 :::definition "def_cg19_gaussian_difference" (lean := "CohnElkies.gaussianDifference")
 (Cohn–Gonçalves 2019, (3.1).) For $`t > 0` let
-$`\varphi_t(x) = \dfrac{e^{-t\pi|x|^2} - e^{-2t\pi|x|^2}}{t^{-d/2} - (2t)^{-d/2}}`
-and $`\psi_t = \varphi_t - \widehat{\varphi_t}`.
+$`\varphi_t(x) = \dfrac{e^{-t\pi|x|^2} - e^{-2t\pi|x|^2}}{t^{-d/2} - (2t)^{-d/2}}`.
 :::
 
-:::lemma_ "lemma_cg19_gaussian_difference_properties" (lean := "CohnElkies.fourierGaussianDifference_neg_of_lt")
-Let $`d \ge 1` and $`t > 0`, with $`\varphi_t`, $`\psi_t` as in {uses "def_cg19_gaussian_difference"}[].
-Then $`\varphi_t \ge 0`, $`\varphi_t(0) = 0`, $`\widehat{\varphi_t}(0) = 1`,
+:::definition "def_cg19_gaussian_perturbation" (lean := "CohnElkies.gaussianPerturbation")
+With $`\varphi_t` as in {uses "def_cg19_gaussian_difference"}[], let
+$`\psi_t = \varphi_t - \widehat{\varphi_t}`.
+:::
+
+:::lemma_ "lemma_cg19_gaussian_difference_properties" (lean := "CohnElkies.fourier_gaussianDifference, CohnElkies.gaussianDifference_nonneg, CohnElkies.gaussianDifference_apply_zero, CohnElkies.fourier_gaussianDifference_zero, CohnElkies.fourier_fourier_gaussianDifference, CohnElkies.fourierGaussianDifference_neg_of_lt")
+Let $`d \ge 1` and $`t > 0`, with $`\varphi_t` as in {uses "def_cg19_gaussian_difference"}[].
+Then
+$`\widehat{\varphi_t}(\xi) = \dfrac{t^{-d/2}e^{-\pi|\xi|^2/t} - (2t)^{-d/2}e^{-\pi|\xi|^2/(2t)}}{t^{-d/2} - (2t)^{-d/2}}`,
+$`\varphi_t \ge 0`, $`\varphi_t(0) = 0`, $`\widehat{\varphi_t}(0) = 1`,
 $`\widehat{\widehat{\varphi_t}} = \varphi_t`, and $`\widehat{\varphi_t}(\xi) < 0` whenever
-$`|\xi|^2 > t\,d\log 2/\pi` (nonpositive when $`\ge`). Consequently $`\widehat{\psi_t} = -\psi_t`,
-$`\psi_t(0) = -1`, and $`\psi_t > 0` outside the ball of radius $`\sqrt{t\,d\log 2/\pi}`.
+$`|\xi|^2 > t\,d\log 2/\pi` (nonpositive when $`\ge`).
 :::
 
 :::proof "lemma_cg19_gaussian_difference_properties"
-The Fourier transform of $`e^{-b\pi|x|^2}` is $`b^{-d/2}e^{-\pi|\xi|^2/b}`, so
-$`\widehat{\varphi_t}(\xi) = \dfrac{t^{-d/2}e^{-\pi|\xi|^2/t} - (2t)^{-d/2}e^{-\pi|\xi|^2/(2t)}}{t^{-d/2} - (2t)^{-d/2}}`;
+The Fourier transform of $`e^{-b\pi|x|^2}` is $`b^{-d/2}e^{-\pi|\xi|^2/b}`, which gives the formula;
 taking logarithms, $`t^{-d/2}e^{-\pi|\xi|^2/t} < (2t)^{-d/2}e^{-\pi|\xi|^2/(2t)}` if and only
 if $`\pi|\xi|^2/(2t) > (d/2)\log 2`, i.e. $`|\xi|^2 > t\,d\log 2/\pi`. Applying the transform
-formula twice gives $`\widehat{\widehat{\varphi_t}} = \varphi_t`; the properties of $`\psi_t`
-follow.
+formula twice gives $`\widehat{\widehat{\varphi_t}} = \varphi_t`.
 :::
 
-:::lemma_ "lemma_cg19_3_1_origin_correction" (lean := "CohnElkies.originCorrection")
+:::lemma_ "lemma_cg19_gaussian_perturbation_properties" (lean := "CohnElkies.fourier_gaussianPerturbation, CohnElkies.gaussianPerturbation_apply_zero, CohnElkies.gaussianPerturbation_pos")
+Let $`d \ge 1` and $`t > 0`, with $`\psi_t` as in {uses "def_cg19_gaussian_perturbation"}[].
+Then $`\widehat{\psi_t} = -\psi_t`, $`\psi_t(0) = -1`, and $`\psi_t > 0` outside the ball of
+radius $`\sqrt{t\,d\log 2/\pi}`.
+:::
+
+:::proof "lemma_cg19_gaussian_perturbation_properties"
+Immediate from {uses "lemma_cg19_gaussian_difference_properties"}[]:
+$`\widehat{\psi_t} = \widehat{\varphi_t} - \varphi_t = -\psi_t`,
+$`\psi_t(0) = 0 - 1`, and $`\psi_t = \varphi_t - \widehat{\varphi_t} > 0` where
+$`\widehat{\varphi_t} < 0`.
+:::
+
+:::lemma_ "lemma_cg19_3_1_origin_correction" (lean := "CohnElkies.originCorrection, CohnElkies.originCorrection_nonneg_outside, CohnElkies.originCorrection_eq_of_zero")
 (Cohn–Gonçalves 2019, Lemma 3.1, last paragraph.) Let $`d \ge 1`, $`R > 0`, and let
 $`g \in L^1(\mathbb{R}^d;\mathbb{R})` satisfy $`\widehat g = -g` pointwise, $`g \ne 0`,
 $`g \ge 0` on $`\{|x| \ge R\}` and $`g(0) \ge 0`. With $`t = \pi R^2/(d\log 2)` and $`\psi_t` as in
-{uses "def_cg19_gaussian_difference"}[], the function $`h = g + g(0)\psi_t` belongs to
+{uses "def_cg19_gaussian_perturbation"}[], the function $`h = g + g(0)\psi_t` belongs to
 $`\mathcal{E}_-(d)` ({uses "def_sign_eigenfunction_class"}[]) and satisfies $`h \ge 0` on
 $`\{|x| \ge R\}`, so $`r(h) \le R`; moreover $`h = g` if $`g(0) = 0`.
 :::
 
 :::proof "lemma_cg19_3_1_origin_correction"
-By {uses "lemma_cg19_gaussian_difference_properties"}[], $`\widehat h = -g + g(0)(-\psi_t) = -h`,
+By {uses "lemma_cg19_gaussian_perturbation_properties"}[], $`\widehat h = -g + g(0)(-\psi_t) = -h`,
 $`h(0) = g(0) + g(0)\psi_t(0) = 0`, and for $`|x| \ge R` one has $`|x|^2 \ge t\,d\log 2/\pi`, so
 $`\psi_t(x) \ge 0` and $`h(x) \ge g(x) \ge 0`. If $`g(0) > 0` then $`h(x) > g(x) \ge 0` for
 $`|x| > R`, so $`h \ne 0`; if $`g(0) = 0` then $`h = g \ne 0`.
@@ -182,20 +226,27 @@ so $`\tfrac12 \le \operatorname{vol}(B_\rho)`; choosing $`\rho` with
 $`\operatorname{vol}(B_\rho) < \tfrac12` shows $`\mathsf{A}_\varsigma(d) \ge \rho > 0`.
 :::
 
-:::lemma_ "lemma_sign_uncertainty_constant_neg_one_lt_top" (lean := "CohnElkies.signUncertaintyConstant_neg_one_lt_top")
-For every $`d \ge 1`, $`\mathsf{A}_-(d) < \infty` ({uses "def_sign_uncertainty_constant"}[]):
-with $`\psi_t` as in {uses "def_cg19_gaussian_difference"}[], $`G = \psi_{1/4} - \psi_{1/2}`
-belongs to $`\mathcal{E}_-(d)` and is positive outside a ball.
+:::lemma_ "lemma_explicit_eigenfunction" (lean := "CohnElkies.explicitSignEigenfunction, CohnElkies.explicitEigenfunction_pos_of_le, CohnElkies.signRadius_explicitSignEigenfunction_lt_top")
+For every $`d \ge 1`, with $`\psi_t` as in {uses "def_cg19_gaussian_perturbation"}[],
+$`G = \psi_{1/4} - \psi_{1/2}` belongs to $`\mathcal{E}_-(d)` and is positive outside a ball, so
+$`r(G) < \infty`.
 :::
 
-:::proof "lemma_sign_uncertainty_constant_neg_one_lt_top"
+:::proof "lemma_explicit_eigenfunction"
 $`G` satisfies $`\widehat G = -G` and $`G(0) = -1 - (-1) = 0`
-({uses "lemma_cg19_gaussian_difference_properties"}[]). Writing $`E_b(x) = e^{-\pi b|x|^2}`,
+({uses "lemma_cg19_gaussian_perturbation_properties"}[]). Writing $`E_b(x) = e^{-\pi b|x|^2}`,
 $`D = 2^d - 2^{d/2}`, $`D' = 2^{d/2} - 1`,
 $`\psi_{1/4} = (E_{1/4} - E_{1/2} - 2^dE_4 + 2^{d/2}E_2)/D` and $`\psi_{1/2} = (E_{1/2} - 2^{d/2}E_2)/D'`,
 so that $`G \ge E_{1/4}\bigl(1 - e^{-\pi|x|^2/4}(1 + D/D' + 2^d)\bigr)/D > 0` once
-$`|x|^2 > (4/\pi)\log(1 + D/D' + 2^d)`; hence $`G \ne 0`, $`G \in \mathcal{E}_-(d)` and
-$`\mathsf{A}_-(d) \le r(G) < \infty`.
+$`|x|^2 > (4/\pi)\log(1 + D/D' + 2^d)`; hence $`G \ne 0` and $`G \in \mathcal{E}_-(d)`.
+:::
+
+:::lemma_ "lemma_sign_uncertainty_constant_neg_one_lt_top" (lean := "CohnElkies.signUncertaintyConstant_neg_one_lt_top")
+For every $`d \ge 1`, $`\mathsf{A}_-(d) < \infty` ({uses "def_sign_uncertainty_constant"}[]).
+:::
+
+:::proof "lemma_sign_uncertainty_constant_neg_one_lt_top"
+$`\mathsf{A}_-(d) \le r(G) < \infty` for the explicit $`G` of {uses "lemma_explicit_eigenfunction"}[].
 :::
 
 :::lemma_ "lemma_weak_sequential_compactness" (lean := "InnerProductSpace.tendsto_subseq_inner_left_of_norm_le")
@@ -279,11 +330,12 @@ For every $`d \ge 1`, $`\mathsf{A}_+(d) < \mathsf{A}_-(d)` ({uses "def_sign_unce
 By {uses "thm_cg19_1_4_existence"}[] there is an extremizer $`g \in \mathcal{E}_-(d)`,
 $`r(g) = \mathsf{A}_-(d) < \infty` ({uses "lemma_sign_uncertainty_constant_neg_one_lt_top"}[]). Put
 $`h = \mathcal{R}g`, a nonzero radial element of $`\mathcal{E}_-(d)` with $`r(h) \le r(g)`
-({uses "lemma_rotational_average_properties"}[], {uses "lemma_rotational_average_nonzero"}[]).
-By {uses "prop_a_1"}[], $`\mathsf{A}_+(d) \le r(T_dh) < r(h) \le r(g) = \mathsf{A}_-(d)`.
+({uses "lemma_rotational_average_eigenfunction"}[], {uses "lemma_rotational_average_signs"}[]).
+By {uses "prop_a_1"}[] and {uses "prop_a_1_sign_radius"}[],
+$`\mathsf{A}_+(d) \le r(T_dh) < r(h) \le r(g) = \mathsf{A}_-(d)`.
 :::
 
-:::theorem "cor_sign_uncertainty_constant_lt_top" (lean := "CohnElkies.signUncertaintyConstant_lt_top")
+:::theorem "cor_sign_uncertainty_constant_lt_top" (lean := "CohnElkies.signUncertaintyConstant_lt_top, CohnElkies.signUncertaintyConstant_pos_lt_top")
 For every $`d \ge 1` and $`\varsigma = \pm 1`, $`\mathsf{A}_\varsigma(d) < \infty`
 ({uses "def_sign_uncertainty_constant"}[]); together with
 {uses "lemma_sign_uncertainty_constant_pos"}[], $`0 < \mathsf{A}_\varsigma(d) < \infty`.

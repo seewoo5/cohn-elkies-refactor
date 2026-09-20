@@ -241,7 +241,7 @@ theorem radialMellinMultiplier {d : ℕ} (hd : 0 < d) (f : TestFunction d) (hf :
     congr 1
     ring
   rw [hphase, show (d : ℂ) - (d / 2 - I * t) = d / 2 + I * t by ring] at h
-  unfold X_fℝ Xline m_ℓ
+  unfold X_fℝ m_ℓ
   simpa [mul_neg, sub_neg_eq_add] using h
 
 end

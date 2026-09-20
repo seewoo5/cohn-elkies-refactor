@@ -33,8 +33,8 @@ Proposition 3.7 for `L¹` functions, the self-Fourier function `f₀`, the const
 | `CohnElkies/` after golfing, before the new theorems (Step 1, 52 modules) | 24,242 (−56 %) |
 | `CohnElkies/` at the end of Step 3 (53 modules, including the new material: `SignUncertainty/*` ≈ 2,350 lines, `UpperBound/SelfFourier` ≈ 220, Propositions 3.1/3.7; 2026-09-14) | 24,647 |
 | final `CohnElkies/` (61 modules; adds Appendix A ≈ 890 lines, the Cohn–Gonçalves existence theorem ≈ 1,340 lines, the general Poisson principle and (22) ≈ 470 lines, the conformal transfer strip ↔ half-plane and the report's proof of Lemma 3.2 ≈ 500 lines, §1.6, §7) | 27,265 |
-| final `CohnElkiesForMathlib/` (21 modules; adds `coth`, the compact-support theorem, weak sequential compactness, the no-concentration lemma, Gauss's digamma integral, subharmonic functions and the half-plane Poisson principle ≈ 1,240 lines) | 4,518 |
-| total (single file `SpherePackingRefactored.lean`, assembled from both) | 32,132 (−42 %) |
+| final `CohnElkiesForMathlib/` (22 modules; adds `coth`, the compact-support theorem, weak sequential compactness, the no-concentration lemma, Gauss's digamma integral, subharmonic functions and the half-plane Poisson principle, the right invariance of Haar measures on compact groups ≈ 1,280 lines) | 4,585 |
+| total (single file `SpherePackingRefactored.lean`, assembled from both) | 32,199 (−42 %) |
 
 Excluding the newly formalized material (≈ 7,800 lines: both signs of Propositions 3.1/3.7, `f₀`,
 the `L¹` theory, Appendix A, the existence of extremizers, the Poisson principles and (22)), the
@@ -155,7 +155,6 @@ notations `P₊`, `P₋`, `f₊`, `f₋`, `f₀` available for statements). Defi
 | V_s (49) | `upperShortShellVariance` | `V_s` |
 | V_B (49) | `upperPositiveShellVariance` | `V_B` |
 | M₃ (48) | `upperSaddleThirdMoment` | `M₃` |
-| X for a profile | `mellinFrequency` | `Xline` |
 | X_f(t) (8) | `radialMellinFrequency` | `X_fℝ` |
 
 ### 1.3 Differences from the report that were kept (proof arguments)
@@ -209,11 +208,12 @@ the list:
 - **Stirling input.** Mathlib has Stirling's formula for `n!` but not for `Real.Gamma`; the
   asymptotics of `v_d^{1/d} √d` are therefore derived from `Stirling.tendsto_stirlingSeq_sqrt_pi`
   through an even/odd split in `d` (`Asymptotics/Stirling.lean`).
-- **Rotational average.** The report writes `ℛf(x) = ∫_{O(d)} f(Ux) dU`; the formalization uses
-  `∫_{O(d)} f(U⁻¹x) dU` (inherited from the original file and kept). The two agree, since the Haar
-  measure of the compact group `O(d)` is inversion invariant, and only *left* invariance is needed
-  for the rotation invariance of the average in the `U⁻¹` form, which is what Mathlib's
-  `IsHaarMeasure` supplies. See §5.1.
+- **Rotational average.** The report writes `ℛf(x) = ∫_{O(d)} f(Ux) dU`, and so does the
+  formalization (`rotationalAverage`). Until 2026-09-20 it used `∫_{O(d)} f(U⁻¹x) dU`, inherited
+  from the original file, because the rotation invariance of that form only needs the *left*
+  invariance of the Haar measure; the `Ux` form needs its *right* invariance, which holds because
+  compact groups are unimodular and is now proved in
+  `CohnElkiesForMathlib/MeasureTheory/Measure/Haar/Compact.lean`. See §5.1 and §8.
 - **Radial reduction.** The passage from unrestricted to radial admissible functions (report §2.1)
   is done by averaging over the Haar probability measure of `O(d)` exactly as in the report
   (`Radialization.lean`, `Admissible/Radialization.lean`); no change.
@@ -319,7 +319,7 @@ lattice with Schwartz functions.
   `CohnElkies/SignUncertainty/Basic.lean`); `signRadius g = r(g)` and
   `signUncertaintyConstant ς d = A_ς(d)` are `ℝ≥0∞`-valued infima (scoped notations `A₊`, `A₋`).
   The reduction of §2.1 is formalized in `CohnElkies/SignUncertainty/`:
-  `Radialization.lean` (the rotational average `rotationalAverage g x = ∫ g (U⁻¹ x) dU` over the
+  `Radialization.lean` (the rotational average `rotationalAverage g x = ∫ g (U x) dU` over the
   Haar probability measure of `O(d)`: continuous, integrable, radial, `𝓕(Rg) = R(𝓕 g)`,
   `‖Rg‖₁ ≤ ‖g‖₁`, signs preserved; `SignEigenfunction.rotationalAverage_ne_zero` for an
   eigenfunction nonnegative outside a ball, via the entire Fourier–Laplace transform along rays
@@ -531,9 +531,10 @@ in `Asymptotics/Main`; the sphere-packing modules depend only on `Basic` and `As
 | `Analysis/Fourier/PoissonSummation` | Poisson summation for lattices in `ℝ^d` and Schwartz functions (from the Sphere-Packing-Lean project) |
 | `Analysis/InnerProductSpace/WeakSequentialCompactness` | weak sequential compactness of bounded sequences in separable Hilbert spaces (`InnerProductSpace.tendsto_subseq_inner_left_of_norm_le`), from Mathlib's sequential Banach–Alaoglu via the Riesz isometry |
 | `Analysis/SpecialFunctions/FrullaniIntegral` | real and complex exponential Frullani integrals, the Wallis product as a Laplace integral (`Frullani.*`, `Real.Wallis.*`) |
-| `Analysis/SpecialFunctions/Gamma/{Basic, Beta, Digamma, DigammaIntegral}` | `Γ(z+k)`, `‖Γ z‖ ≤ Γ(Re z)`, residues, `‖Γ(½+ix)‖²`, `‖Γ(ix)‖²`, the `coth` form of their quotient (`Complex.log_norm_Gamma_I_mul_sub_log_norm_Gamma_one_half_add_I_mul`); `Real.digamma := logDeriv Real.Gamma` with recurrence, `log(x−1) ≤ ψ ≤ log x`, `ψ − log → 0`, the harmonic representation and `Real.digamma_eq_complex_re`; Gauss's integral `Real.digamma_eq_integral` (a Mathlib TODO) |
+| `Analysis/SpecialFunctions/Gamma/{Basic, Beta, Digamma, DigammaIntegral}` | `Γ(z+k)`, `‖Γ z‖ ≤ Γ(Re z)`, residues, `‖Γ(½+ix)‖²`, `‖Γ(ix)‖²`, the `coth` form of their quotient (`Complex.log_norm_Gamma_I_mul_sub_log_norm_Gamma_one_half_add_I_mul`); `Real.digamma x := (Complex.digamma x).re` (the real part of Mathlib's `Complex.digamma`, as `Real.Gamma` is the real part of `Complex.Gamma`), identified with `logDeriv Real.Gamma` (`Real.digamma_eq_logDeriv_Gamma`, `Complex.digamma_ofReal`), with recurrence, `log(x−1) ≤ ψ ≤ log x`, `ψ − log → 0` and the harmonic representation; Gauss's integral `Real.digamma_eq_integral` (a Mathlib TODO) |
 | `Analysis/SpecialFunctions/ImproperIntegrals` | integrability of even functions, `e^{-a|x|}`, `|x|^n e^{-a|x|}`, `e^{-a|x|}|log|x||` |
 | `Analysis/SpecialFunctions/Stirling` | `log k!/k − log k → −1` |
+| `MeasureTheory/Measure/Haar/Compact` | a Haar measure on a compact group is right invariant (`IsHaarMeasure.isMulRightInvariant_of_compactSpace`, with the additive version): compact groups are unimodular |
 | `Topology/Algebra/InfiniteSum/ENat` | the `ℕ∞`-valued `tsum` API |
 | `Topology/Sequences` | `Filter.tendsto_of_even_odd` |
 
@@ -922,7 +923,7 @@ probability measure:
 
 ```
 def rotationalAverage (g : Euclidean d → E) (x : Euclidean d) : E :=
-  ∫ U : OrthogonalGroup d, g (orthogonalAction U⁻¹ x) ∂radialOrthogonalHaar d
+  ∫ U : OrthogonalGroup d, g (orthogonalAction U x) ∂radialOrthogonalHaar d
 def rotationalAverageSchwartz (f : TestFunction d) : TestFunction d
 @[simp] theorem rotationalAverageSchwartz_apply : rotationalAverageSchwartz f x = rotationalAverage f x
 theorem fourier_rotationalAverageSchwartz : 𝓕 (rotationalAverageSchwartz f) = rotationalAverageSchwartz (𝓕 f)
@@ -937,12 +938,15 @@ is gone; the three radialization modules went from 1,062 to 945 lines. Three lem
 `Continuous g` hypothesis, which the `ℂ`-valued statement genuinely needs (`integral_re` requires
 integrability); the Schwartz call sites supply it.
 
-**Why `g(U⁻¹x)` and not `g(Ux)`**: only *left* invariance of the Haar measure is then needed for
-rotation invariance of the average (the substitution `U ↦ AU` gives `(AU)⁻¹(Ax) = U⁻¹x`), and that
-is what Mathlib's `IsHaarMeasure` provides. The two forms agree because the Haar measure of the
-compact group `O(d)` is inversion invariant, but Mathlib v4.33.1 has `IsInvInvariant` only for
-commutative groups and no unimodularity API, so the equivalence is documented in the module
-docstring rather than proved.
+**`g(Ux)` versus `g(U⁻¹x)`**: the module first used `g(U⁻¹x)`, because only *left* invariance of
+the Haar measure is then needed for rotation invariance of the average (the substitution `U ↦ AU`
+gives `(AU)⁻¹(Ax) = U⁻¹x`), and that is what Mathlib's `IsHaarMeasure` provides, whereas Mathlib
+has `IsInvInvariant` only for commutative groups and no unimodularity API. On 2026-09-20 (§8) the
+definition was changed to the report's `g(Ux)`, whose invariance is the substitution `U ↦ UA`,
+i.e. the *right* invariance of the Haar measure; this is now proved for every Haar measure on a
+compact group (`CohnElkiesForMathlib/MeasureTheory/Measure/Haar/Compact.lean`: right translation
+is left translation followed by conjugation, a continuous automorphism, which preserves the Haar
+measure by `MonoidHom.measurePreserving`).
 
 ## 6. Toolchain update to Lean/Mathlib `v4.34.0` (2026-09-18)
 
@@ -1133,3 +1137,58 @@ directory `CohnElkiesForMathlib/Analysis/Complex/Subharmonic/` was kept: it mirr
 `Mathlib/Analysis/Complex/Harmonic/` (harmonic functions on `ℂ`), next to which
 `PoissonHalfPlane.lean` mirrors `Mathlib/Analysis/Complex/Poisson.lean` (the disc kernel).
 
+## 8. API changes at the owner's request (2026-09-20)
+
+- **`Real.digamma` as the real part of `Complex.digamma`.** `Real.digamma x` is now defined as
+  `(Complex.digamma x).re`, following Mathlib's convention for the real versions of complex
+  functions (`Real.Gamma s = (Complex.Gamma s).re`), instead of `logDeriv Real.Gamma`. The former
+  definition is the theorem `Real.digamma_eq_logDeriv_Gamma` (for every real `x`, both sides
+  vanishing at the poles), and `Complex.digamma_ofReal : Complex.digamma x = Real.digamma x` says
+  that `Complex.digamma` is real on the real axis; the bridge is
+  `Complex.deriv_Gamma_ofReal : deriv Complex.Gamma x = deriv Real.Gamma x` away from the poles
+  (uniqueness of the derivative of `y ↦ (Γ y : ℂ)`). The rest of the file
+  (`Analysis/SpecialFunctions/Gamma/Digamma.lean`) and everything downstream is unchanged, as all
+  uses go through `digamma_eq_deriv_log_comp_Gamma`; `Real.digamma_eq_complex_re` (now `rfl`) is
+  gone.
+- **The rotational average is `∫ g(Ux) dU`**, as in the report, instead of `∫ g(U⁻¹x) dU`; the
+  right invariance of the Haar measure of the compact group `O(d)` that its rotation invariance
+  needs is the new Mathlib-candidate module `MeasureTheory/Measure/Haar/Compact.lean` (§5.1).
+  Renamed: `continuous_comp_orthogonalAction_inv` → `continuous_comp_orthogonalAction_prod`,
+  `integrable_comp_orthogonalAction_inv` → `integrable_comp_orthogonalAction_haar`,
+  `integrable_prod_comp_orthogonalAction_inv` → `integrable_prod_comp_orthogonalAction`;
+  `Radialization.lean` lost 22 lines.
+- **`Xline` removed.** `X_fℝ hd f t` is defined directly as `mellin (radialProfile hd f) (d/2 - I t)`
+  (`Radial.lean`); the general-line version `Xline ℓ g t` and its lemma `mellinFrequency_eq_fourier`
+  had no other use (`radialMellinFrequency_eq_fourier` now calls Mathlib's `mellin_eq_fourier`).
+- **Structure fields documented.** Every field of `PackingBounds.FullAdmissible`, `SpherePacking`,
+  `PeriodicSpherePacking` and `CohnElkies.SignEigenfunction` carries a docstring, so that the
+  Verso blueprint no longer warns (`'… is not documented'`) when it renders these structures.
+- **`le_zero_of_halfPlane` docstrings.** The module and theorem docstrings of
+  `Subharmonic/HalfPlane.lean` described the proof as "Phragmén–Lindelöf"; they now say what the
+  proof does (auxiliary harmonic barriers + `SubharmonicOn.add_harmonic` + the weak maximum
+  principle `SubharmonicOn.le_zero_of_limsup_frontier`), noting that the barrier device is the
+  one of Phragmén–Lindelöf but that no Phragmén–Lindelöf theorem is invoked.
+- **Blueprint: one Lean declaration per claim.** Nodes that stated several claims (or defined
+  several objects) under a single `lean :=` link were split — 114 → 208 nodes — each claim now
+  linked to its own declaration (several tightly related declarations may share a node through
+  `(lean := "A, B")`). Examples: (13) is four lemmas (`integral_abs_logProfile`,
+  `integral_logProfile`, `setIntegral_Iic_abs_logProfile`,
+  `normalizedRadialMellinStrip_shifted_eq_fourier`); (15)/(18) are `def_strip_poisson_kernel`
+  (`P_σ`, `θ`), `lemma_strip_poisson_kernel_properties`, `def_strip_poisson_mass` (`M_σ`),
+  `def_strip_poisson_majorant` (`H_σ`); Lemma 3.2 is holomorphy/boundedness, (16), (17) and the
+  interior bound `norm_Z_g_le_exp_H_σ`; Lemmas 3.3–3.6, the harmonic-measure lemma, the
+  rotational-average lemma, (7), (8), the Poisson kernel/integral, Lemmas 4.2–4.10, (38)–(49),
+  Theorems 1.1/1.2 (equivalent forms), Proposition A.1 and the Cohn–Gonçalves lemmas were split
+  likewise. Every `lean :=` name is checked by a `#check @Name` scratch file
+  (`scratchpad/CheckNames.lean`, 382 names).
+- **Blueprint: group titles.** The body of a `:::group` directive is rendered as the group's
+  title, so the six groups now have two-to-four-word titles ("Radial reduction", "Radial Mellin
+  transform", "Poisson principle", "Mellin-strip estimates", "Mellin ansatz", "Saddle geometry");
+  their former descriptions are ordinary prose after the directive.
+- **Blueprint: the upper-bound ansatz.** The "Outline of the construction" of the upper-bound
+  chapter, previously a paraphrase of the report's §4.1, was rewritten (concisely) after the
+  owner's blog digest: Mellin data `X_{f_j} = E_λ P_j(t/λ)` with the polynomials chosen for the
+  Fourier symmetries, reality, the origin values and the signs of `P_j(iu)`; the contour shift and
+  the definition of `v(u)` by `L_u'(0) = 0`; the damping `D_u` as an integral against
+  `μ + λ w cosh`, hence the ideal density `w_*`, why it cannot be used, the truncation/taper `w_s`
+  and the positive shell `w_B`; and the limiting radius `1/π` via Wallis.

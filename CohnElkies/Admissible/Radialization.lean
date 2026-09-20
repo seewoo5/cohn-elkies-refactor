@@ -22,7 +22,7 @@ noncomputable section
 open MeasureTheory
 open scoped FourierTransform SchwartzMap
 
-/-- The rotational average `ℛf = ∫_{O(d)} f(U⁻¹ ·) dU` of an admissible function, as a radial
+/-- The rotational average `ℛf = ∫_{O(d)} f(U ·) dU` of an admissible function, as a radial
 admissible function (report §2.1): rotational averaging preserves every sign condition of (2). -/
 def Admissible.radialize {d : ℕ} (f : Admissible d) : RadialAdmissible d :=
   have hreal : IsRealValued (rotationalAverageSchwartz f.function) := fun x ↦ by
@@ -51,10 +51,10 @@ theorem Admissible.radialize_function {d : ℕ} (f : Admissible d) :
     f.radialize.function = rotationalAverageSchwartz f.function :=
   rfl
 
-/-- `ℛf(x) = ∫_{O(d)} f(U⁻¹x) dU`, for the Haar probability measure of `O(d)`. -/
+/-- `ℛf(x) = ∫_{O(d)} f(Ux) dU`, for the Haar probability measure of `O(d)`. -/
 theorem Admissible.radialize_apply {d : ℕ} (f : Admissible d) (x : Euclidean d) :
     f.radialize.function x =
-      ∫ U : OrthogonalGroup d, f.function (orthogonalAction U⁻¹ x) ∂radialOrthogonalHaar d :=
+      ∫ U : OrthogonalGroup d, f.function (orthogonalAction U x) ∂radialOrthogonalHaar d :=
   rfl
 
 /-- `ℛf(0) = f(0)`. -/

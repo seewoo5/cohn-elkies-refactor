@@ -108,25 +108,17 @@ theorem integral_radialProfile_cpow {d : ℕ} (hd : 0 < d) (f : TestFunction d) 
           mul_left_comm, ← Complex.cpow_add _ _ (Complex.ofReal_ne_zero.2 hr.ne'), Nat.cast_pred hd,
           show (d : ℂ) - 1 + (s - d) = s - 1 by ring, mul_comm]
 
-/-- `X_g(t) = M g (ℓ - it)`: the Mellin transform of a profile `g` on the line `Re z = ℓ`
-(report (8)). -/
-def Xline (ℓ : ℝ) (profile : ℝ → ℂ) (t : ℝ) : ℂ := mellin profile (ℓ - I * t)
-
-/-- `X_g` is the Fourier transform of `v ↦ e^{-ℓ v} g(e^{-v})`. -/
-theorem mellinFrequency_eq_fourier (ℓ : ℝ) (profile : ℝ → ℂ) (t : ℝ) :
-    Xline ℓ profile t = 𝓕 (fun u : ℝ ↦ exp (-ℓ * u) • profile (exp (-u))) (-t / (2 * π)) := by
-  unfold Xline
-  simpa using mellin_eq_fourier profile (s := ℓ - I * t)
-
 /-- `X_f(t) = M g(λ - it)`: the Mellin transform of the radial profile `g` of `f` on the critical
 line `Re z = λ = d/2` (report (8)). -/
 def X_fℝ {d : ℕ} (hd : 0 < d) (f : TestFunction d) (t : ℝ) : ℂ :=
-  Xline (d / 2) (radialProfile hd f) t
+  mellin (radialProfile hd f) ((d / 2 : ℝ) - I * t)
 
+/-- `X_f` is the Fourier transform of `v ↦ e^{-λ v} g(e^{-v})`. -/
 theorem radialMellinFrequency_eq_fourier {d : ℕ} (hd : 0 < d) (f : TestFunction d) (t : ℝ) :
     X_fℝ hd f t =
-      𝓕 (fun u : ℝ ↦ exp (-(d / 2) * u) • radialProfile hd f (exp (-u))) (-t / (2 * π)) :=
-  mellinFrequency_eq_fourier _ _ t
+      𝓕 (fun u : ℝ ↦ exp (-(d / 2) * u) • radialProfile hd f (exp (-u))) (-t / (2 * π)) := by
+  unfold X_fℝ
+  simpa using mellin_eq_fourier (radialProfile hd f) (s := (d / 2 : ℝ) - I * t)
 
 end
 
