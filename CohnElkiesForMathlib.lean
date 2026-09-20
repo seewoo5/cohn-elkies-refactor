@@ -17,5 +17,6 @@ import CohnElkiesForMathlib.Analysis.SpecialFunctions.Gamma.Digamma
 import CohnElkiesForMathlib.Analysis.SpecialFunctions.Gamma.DigammaIntegral
 import CohnElkiesForMathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import CohnElkiesForMathlib.Analysis.SpecialFunctions.Stirling
+import CohnElkiesForMathlib.MeasureTheory.Measure.Haar.Compact
 import CohnElkiesForMathlib.Topology.Algebra.InfiniteSum.ENat
 import CohnElkiesForMathlib.Topology.Sequences

@@ -17,15 +17,10 @@ open Informal
 
 #doc (Manual) "The Cohn–Elkies exponent and sign uncertainty" =>
 
-This blueprint follows Chapter 1 of the report *Ten proofs* (OpenAI): the exact exponential rate
+This blueprint follows Chapter 1 of the report [*Ten proofs*](https://cdn.openai.com/pdf/ten-proofs-oai.pdf) (OpenAI): the exact exponential rate
 $`\mathrm{LP}_d^{1/d} \to \sqrt{e/(2\pi)}` of the Cohn–Elkies linear programming bound for sphere
 packings (Theorem 1.1) and the asymptotics $`\mathsf{A}_\pm(d)/\sqrt d \to 1/\pi` of the
-sign-uncertainty constants (Theorem 1.2). Every node links to its Lean counterpart in the
-`CohnElkies` library. The chapter *The Cohn–Elkies bound* proves the linear-programming bound
-$`\Delta_d \le \mathrm{LP}_d`, which the report cites as an external input; the chapter *Report
-versus formalization* records where the formal proofs deviate from the report; Appendix A is
-formalized in full, including the existence of extremizers (Cohn–Gonçalves 2019, Theorem 1.4)
-that its strict inequality needs.
+sign-uncertainty constants (Theorem 1.2).
 
 {include 0 CohnElkiesBlueprint.Chapters.Introduction}
 {include 0 CohnElkiesBlueprint.Chapters.CohnElkiesBound}

@@ -39,10 +39,10 @@ ball forces `𝓕 g = 0` and `g = 0`. -/
 theorem eq_zero_of_rotationalAverage_eq_zero {g : Euclidean d → ℝ} (hg : Continuous g) {R : ℝ}
     (hR : ∀ x : Euclidean d, R ≤ ‖x‖ → 0 ≤ g x) (h0 : rotationalAverage g = 0)
     {x : Euclidean d} (hx : R ≤ ‖x‖) : g x = 0 := by
-  set φ : OrthogonalGroup d → ℝ := fun U ↦ g (orthogonalAction U⁻¹ x) with hφdef
-  have hφ : Continuous φ := hg.comp ((continuous_orthogonalAction x).comp continuous_inv)
+  set φ : OrthogonalGroup d → ℝ := fun U ↦ g (orthogonalAction U x) with hφdef
+  have hφ : Continuous φ := hg.comp (continuous_orthogonalAction x)
   have hφ0 : 0 ≤ φ := fun U ↦ hR _ (by rw [norm_orthogonalAction]; exact hx)
-  have hint : Integrable φ (radialOrthogonalHaar d) := integrable_comp_orthogonalAction_inv hg x
+  have hint : Integrable φ (radialOrthogonalHaar d) := integrable_comp_orthogonalAction_haar hg x
   have hzero : ∫ U, φ U ∂radialOrthogonalHaar d = 0 := congrFun h0 x
   have heq : φ = 0 := (hφ.ae_eq_iff_eq (radialOrthogonalHaar d) continuous_const).1
     ((integral_eq_zero_iff_of_nonneg hφ0 hint).1 hzero)

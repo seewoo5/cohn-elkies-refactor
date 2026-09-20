@@ -1172,13 +1172,17 @@ finite exceptional set `E`:
 together with the corollary `AnalyticOnNhd.log_norm_le_poissonIntegralHalfPlane` for the
 function `log ‖f‖` of an analytic function `f` bounded on `ℍ`: `‖f z‖ ≤ exp (P[b] z)` on `ℍ`.
 
-The extended maximum principle is proved by a Phragmén–Lindelöf-type argument. For `ε > 0`, the
+The extended maximum principle is proved from the weak maximum principle for subharmonic
+functions on bounded open sets (`SubharmonicOn.le_zero_of_limsup_frontier`). For `ε > 0`, the
 auxiliary harmonic function `h z = ∑ x₀ ∈ E, log ‖(z - x₀) / (z - x₀ + 2i)‖ - log ‖z + i‖` is
-nonpositive on the closed upper half-plane, tends to `-∞` at every point of `E` and as
-`‖z‖ → ∞`, so the weak maximum principle `SubharmonicOn.le_zero_of_limsup_frontier` on the
-half-disc `{‖z‖ < R} ∩ ℍ` gives `u + ε h ≤ 0` there for `R` large; then let `ε → 0`. The Poisson
-principle follows by applying it to `u - P[bₙ]` for the truncations `bₙ = max b (-n)`, which
-are bounded below, and letting `n → ∞`.
+nonpositive on the closed upper half-plane and tends to `-∞` at every point of `E` and as
+`‖z‖ → ∞`; `u + ε h` is subharmonic on `ℍ` (`SubharmonicOn.add_harmonic`), and the weak maximum
+principle on the half-disc `{‖z‖ < R} ∩ ℍ` gives `u + ε h ≤ 0` there for `R` large; then let
+`ε → 0`. (The auxiliary function `ε h`, which absorbs the exceptional points and the point at
+infinity, is the device of the Phragmén–Lindelöf principle; no Phragmén–Lindelöf theorem for
+analytic functions is used.) The Poisson principle follows by applying the extended maximum
+principle to `u - P[bₙ]` for the truncations `bₙ = max b (-n)`, which are bounded below, and
+letting `n → ∞`.
 -/
 
 open Filter InnerProductSpace MeasureTheory Metric Set Topology
@@ -1229,7 +1233,8 @@ namespace Complex
 The functions `logNormRatio x₀ z = log ‖(z - x₀) / (z - x₀ + 2i)‖` (for a real `x₀`) and
 `negLogNormAddI z = -log ‖z + i‖` are harmonic on `ℍ` and nonpositive on the closed upper
 half-plane, and they tend to `-∞` as `z → x₀`, respectively as `‖z‖ → ∞`. They are the barriers
-of the Phragmén–Lindelöf argument for the extended maximum principle below.
+of the extended maximum principle below: added to `u` with a small weight `ε`, they absorb the
+exceptional points and the point at infinity.
 -/
 
 /-- `logNormRatio x₀ z = log ‖(z - x₀) / (z - x₀ + 2i)‖`: a harmonic function on `ℍ` which is
@@ -1318,14 +1323,18 @@ variable {u : ℂ → EReal}
 that is bounded above by a real constant and satisfies `limsup u (𝓝[ℍ] x) ≤ 0` at every real
 point `x` outside a finite set `E` is nonpositive on `ℍ`.
 
-Proof (Phragmén–Lindelöf): for `ε > 0`, the harmonic function
-`h z = ∑ x₀ ∈ E, log ‖(z - x₀) / (z - x₀ + 2i)‖ - log ‖z + i‖` is nonpositive on the closed upper
-half-plane, tends to `-∞` at the points of `E`, and satisfies `h z ≤ -log (‖z‖ - 1)`. Hence
-`u + ε h ≤ 0` on the half-disc `Ω_R = {‖z‖ < R} ∩ ℍ` by the weak maximum principle, once
-`R` is so large that `M - ε log (R - 2) ≤ 0`: at real boundary points outside `E` the boundary
-condition holds since `ε h ≤ 0`, at points of `E` since `u ≤ M` and `ε h → -∞`, and at boundary
-points of modulus `R` since `u + ε h ≤ M - ε log (R - 2)` near them. Thus `u z ≤ -ε h z` for every
-`z ∈ ℍ` and every `ε > 0`; let `ε → 0`. -/
+Proof: let `u ≤ M` on `ℍ` and `ε > 0`. The harmonic function
+`h z = ∑ x₀ ∈ E, log ‖(z - x₀) / (z - x₀ + 2i)‖ - log ‖z + i‖` (`Complex.logNormRatio`,
+`Complex.negLogNormAddI`) is nonpositive on the closed upper half-plane, tends to `-∞` at the
+points of `E`, and satisfies `h z ≤ -log (‖z‖ - 1)`. The function `u + ε h` is subharmonic on `ℍ`
+(`SubharmonicOn.add_harmonic`), and the weak maximum principle for subharmonic functions
+(`SubharmonicOn.le_zero_of_limsup_frontier`) on the half-disc `Ω_R = {‖z‖ < R} ∩ ℍ` gives
+`u + ε h ≤ 0` there, once `R` is so large that `M - ε log (R - 2) ≤ 0`: at real boundary points
+outside `E` the boundary condition holds since `ε h ≤ 0`, at points of `E` since `u ≤ M` and
+`ε h → -∞`, and at boundary points of modulus `R` since `u + ε h ≤ M - ε log (R - 2)` near them.
+Thus `u z ≤ -ε h z` for every `z ∈ ℍ` and every `ε > 0`; let `ε → 0`. (The auxiliary function
+`ε h` is the device of the Phragmén–Lindelöf principle, but no Phragmén–Lindelöf theorem for
+analytic functions is used: everything rests on the subharmonic maximum principle.) -/
 theorem le_zero_of_halfPlane {E : Finset ℝ} {M : ℝ}
     (hu : SubharmonicOn u {z | 0 < z.im}) (hM : ∀ z : ℂ, 0 < z.im → u z ≤ M)
     (hbdry : ∀ x : ℝ, x ∉ E → limsup u (𝓝[{z | 0 < z.im}] (x : ℂ)) ≤ 0) :
@@ -4108,12 +4117,14 @@ section CohnElkiesForMathlib_Analysis_SpecialFunctions_Gamma_Digamma
 /-!
 # The real digamma function
 
-`Real.digamma := logDeriv Real.Gamma` is the logarithmic derivative `ψ = Γ'/Γ` of the real Gamma
-function. For `x > 0` it agrees with `(log ∘ Γ)' x` and with the real part of `Complex.digamma x`.
-We prove the recurrence `ψ(x + 1) = ψ(x) + 1/x`, the bounds `log (x - 1) ≤ ψ(x) ≤ log x` for
-`x > 1` (from the log-convexity of `Γ`), the asymptotics `ψ(x) - log x → 0` as `x → ∞`, the
-harmonic representation `ψ(m) = lim (log n - ∑_{k ≤ n} (m + k)⁻¹)` and the continuity of `ψ` on
-`(0, ∞)`.
+`Real.digamma x := (Complex.digamma x).re` is the real digamma function `ψ = Γ'/Γ`, the real part
+of Mathlib's `Complex.digamma` (as `Real.Gamma` is the real part of `Complex.Gamma`). It is the
+logarithmic derivative of the real Gamma function (`Real.digamma_eq_logDeriv_Gamma`; in fact
+`Complex.digamma` is real on the real axis, `Complex.digamma_ofReal`), and for `x > 0` it agrees
+with `(log ∘ Γ)' x`. We prove the recurrence `ψ(x + 1) = ψ(x) + 1/x`, the bounds
+`log (x - 1) ≤ ψ(x) ≤ log x` for `x > 1` (from the log-convexity of `Γ`), the asymptotics
+`ψ(x) - log x → 0` as `x → ∞`, the harmonic representation
+`ψ(m) = lim (log n - ∑_{k ≤ n} (m + k)⁻¹)` and the continuity of `ψ` on `(0, ∞)`.
 -/
 
 open Filter Real Set
@@ -4121,10 +4132,43 @@ open scoped Topology
 
 namespace Real
 
-/-- The digamma function `ψ = Γ'/Γ = (log Γ)'`. -/
-noncomputable def digamma : ℝ → ℝ := logDeriv Gamma
+/-- The real digamma function `ψ = Γ'/Γ`, the real part of `Complex.digamma`. -/
+noncomputable def digamma (x : ℝ) : ℝ := (Complex.digamma x).re
 
-theorem digamma_def : digamma = logDeriv Gamma := rfl
+theorem digamma_def (x : ℝ) : digamma x = (Complex.digamma x).re := rfl
+
+/-- On the real axis and away from the poles, the derivative of `Complex.Gamma` is the derivative
+of `Real.Gamma`. -/
+theorem _root_.Complex.deriv_Gamma_ofReal {x : ℝ} (hx : ∀ m : ℕ, x ≠ -m) :
+    deriv Complex.Gamma (x : ℂ) = deriv Gamma x := by
+  have hx' : ∀ m : ℕ, (x : ℂ) ≠ -m := by
+    simp_rw [← Complex.ofReal_natCast, ← Complex.ofReal_neg, Ne, Complex.ofReal_inj]
+    exact hx
+  have h : HasDerivAt (fun y : ℝ ↦ (Gamma y : ℂ)) (deriv Complex.Gamma (x : ℂ)) x := by
+    simpa only [Complex.Gamma_ofReal] using
+      (Complex.differentiableAt_Gamma _ hx').hasDerivAt.comp_ofReal
+  exact h.unique (differentiableAt_Gamma hx).hasDerivAt.ofReal_comp
+
+/-- On the real axis, `Complex.digamma` is the logarithmic derivative of `Real.Gamma` (at the poles
+`0, -1, -2, …` both sides are `0`, as `Γ` vanishes there by convention). -/
+theorem _root_.Complex.digamma_ofReal_eq_logDeriv_Gamma (x : ℝ) :
+    Complex.digamma x = ((logDeriv Gamma x : ℝ) : ℂ) := by
+  rw [Complex.digamma_def, logDeriv_apply, logDeriv_apply, Complex.ofReal_div,
+    ← Complex.Gamma_ofReal]
+  by_cases hx : ∀ m : ℕ, x ≠ -m
+  · rw [Complex.deriv_Gamma_ofReal hx]
+  · push Not at hx
+    obtain ⟨m, rfl⟩ := hx
+    push_cast
+    rw [Complex.Gamma_neg_nat_eq_zero, div_zero, div_zero]
+
+/-- The real digamma function is the logarithmic derivative of the real Gamma function. -/
+theorem digamma_eq_logDeriv_Gamma (x : ℝ) : digamma x = logDeriv Gamma x := by
+  rw [digamma_def, Complex.digamma_ofReal_eq_logDeriv_Gamma, Complex.ofReal_re]
+
+/-- `Complex.digamma` is real on the real axis. -/
+theorem _root_.Complex.digamma_ofReal (x : ℝ) : Complex.digamma x = digamma x := by
+  rw [Complex.digamma_ofReal_eq_logDeriv_Gamma, digamma_eq_logDeriv_Gamma]
 
 theorem differentiableAt_Gamma_of_pos {x : ℝ} (hx : 0 < x) : DifferentiableAt ℝ Gamma x :=
   differentiableAt_Gamma fun n ↦ ((neg_nonpos.2 (Nat.cast_nonneg n)).trans_lt hx).ne'
@@ -4140,8 +4184,10 @@ theorem differentiableAt_log_comp_Gamma {x : ℝ} (hx : 0 < x) :
 
 /-- For `x > 0`, `ψ x = (log Γ)' x`. -/
 theorem digamma_eq_deriv_log_comp_Gamma {x : ℝ} (hx : 0 < x) :
-    digamma x = deriv (log ∘ Gamma) x :=
-  (deriv_log_comp_eq_logDeriv (differentiableAt_Gamma_of_pos hx) (Gamma_pos_of_pos hx).ne').symm
+    digamma x = deriv (log ∘ Gamma) x := by
+  rw [digamma_eq_logDeriv_Gamma]
+  exact (deriv_log_comp_eq_logDeriv (differentiableAt_Gamma_of_pos hx)
+    (Gamma_pos_of_pos hx).ne').symm
 
 /-- `log (x - 1) ≤ ψ(x) ≤ log x` for `x > 1`, from the convexity of `log Γ`. -/
 theorem log_sub_one_le_digamma_le_log {x : ℝ} (hx : 1 < x) :
@@ -4231,19 +4277,6 @@ theorem tendsto_digamma_harmonic {m : ℝ} (hm : 0 < m) :
   rw [show m + ((n : ℝ) + 1) = m + (n : ℝ) + 1 by ring] at hrec
   linarith
 
-/-- For `x > 0`, the real digamma function is the real part of the complex one. -/
-theorem digamma_eq_complex_re {x : ℝ} (hx : 0 < x) : digamma x = (Complex.digamma (x : ℂ)).re := by
-  have hcomplex : DifferentiableAt ℂ Complex.Gamma (x : ℂ) := by
-    refine Complex.differentiableAt_Gamma _ fun n h ↦ ?_
-    have hre := congrArg Complex.re h
-    simp at hre
-    linarith [Nat.cast_nonneg (α := ℝ) n]
-  have hreal : HasDerivAt Real.Gamma (deriv Complex.Gamma (x : ℂ)).re x := by
-    simpa only [Complex.Gamma_ofReal, Complex.ofReal_re] using hcomplex.hasDerivAt.real_of_complex
-  unfold digamma
-  rw [logDeriv_apply, hreal.deriv, Complex.digamma_def, logDeriv_apply, Complex.Gamma_ofReal,
-    Complex.div_ofReal_re]
-
 theorem _root_.Complex.continuousOn_digamma_re_pos :
     ContinuousOn Complex.digamma {z : ℂ | 0 < z.re} := by
   have hopen : IsOpen {z : ℂ | 0 < z.re} := Complex.continuous_re.isOpen_preimage _ isOpen_Ioi
@@ -4261,9 +4294,8 @@ theorem _root_.Complex.continuousOn_digamma_re_pos :
 theorem continuousOn_digamma_Ioi : ContinuousOn digamma (Ioi (0 : ℝ)) := by
   have hmap : MapsTo (fun x : ℝ ↦ (x : ℂ)) (Ioi (0 : ℝ)) {z : ℂ | 0 < z.re} :=
     fun x hx ↦ by simpa using hx
-  exact (Complex.continuous_re.continuousOn.comp (Complex.continuousOn_digamma_re_pos.comp
-    Complex.continuous_ofReal.continuousOn hmap) fun x _ ↦ mem_univ _).congr
-    fun x hx ↦ digamma_eq_complex_re hx
+  exact Complex.continuous_re.continuousOn.comp (Complex.continuousOn_digamma_re_pos.comp
+    Complex.continuous_ofReal.continuousOn hmap) fun x _ ↦ mem_univ _
 
 end Real
 
@@ -4503,6 +4535,46 @@ theorem Stirling.tendsto_log_factorial_div_sub_log :
 
 end CohnElkiesForMathlib_Analysis_SpecialFunctions_Stirling
 
+/-! ## Module `CohnElkiesForMathlib.MeasureTheory.Measure.Haar.Compact` -/
+
+section CohnElkiesForMathlib_MeasureTheory_Measure_Haar_Compact
+
+/-!
+# Haar measures on compact groups are right invariant
+
+Compact groups are unimodular: a Haar measure on a compact group is right invariant
+(`MeasureTheory.Measure.IsHaarMeasure.isMulRightInvariant_of_compactSpace`). Right translation by
+`g` is left translation by `g` followed by conjugation by `g⁻¹`, a continuous surjective group
+homomorphism of the compact group, which preserves every Haar measure by
+`MonoidHom.measurePreserving`.
+-/
+
+namespace MeasureTheory.Measure
+
+/-- A Haar measure on a compact group is right invariant (compact groups are unimodular). -/
+@[to_additive
+/-- An additive Haar measure on a compact additive group is right invariant. -/]
+instance (priority := 100) IsHaarMeasure.isMulRightInvariant_of_compactSpace
+    {G : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G]
+    [MeasurableSpace G] [BorelSpace G] (μ : Measure G) [IsHaarMeasure μ] :
+    IsMulRightInvariant μ := by
+  constructor
+  intro g
+  have hconj : MeasurePreserving (MulAut.conj g⁻¹ : G →* G) μ μ :=
+    MonoidHom.measurePreserving (show Continuous fun x : G ↦ g⁻¹ * x * g⁻¹⁻¹ by fun_prop)
+      (MulAut.conj g⁻¹).surjective rfl
+  calc map (· * g) μ = map ((MulAut.conj g⁻¹ : G →* G) ∘ (g * ·)) μ := by
+        congr 1
+        funext x
+        simp
+    _ = μ := by
+        rw [← map_map hconj.measurable (measurable_const_mul g), map_mul_left_eq_self μ g,
+          hconj.map_eq]
+
+end MeasureTheory.Measure
+
+end CohnElkiesForMathlib_MeasureTheory_Measure_Haar_Compact
+
 /-! ## Module `CohnElkiesForMathlib.Topology.Algebra.InfiniteSum.ENat` -/
 
 section CohnElkiesForMathlib_Topology_Algebra_InfiniteSum_ENat
@@ -4664,14 +4736,20 @@ namespace PackingBounds
 /-- The admissible class `𝒜_d` of the report, equation (2): real Schwartz functions `f` with
 `𝓕 f ≥ 0`, `𝓕 f (0) > 0` and `f ≤ 0` outside the unit ball (no radiality assumed). -/
 structure FullAdmissible (d : ℕ) where
+  /-- The Schwartz function `f : ℝ^d → ℂ`. -/
   function : CohnElkies.TestFunction d
+  /-- `f` is real-valued. -/
   real : ∀ x : CohnElkies.Euclidean d, (function x).im = 0
+  /-- `𝓕 f` is real-valued. -/
   fourier_real :
     ∀ x : CohnElkies.Euclidean d, ((𝓕 function) x).im = 0
+  /-- `𝓕 f ≥ 0` on `ℝ^d`. -/
   fourier_nonneg :
     ∀ x : CohnElkies.Euclidean d, 0 ≤ ((𝓕 function) x).re
+  /-- `𝓕 f (0) > 0`. -/
   fourier_zero_pos :
     0 < ((𝓕 function) (0 : CohnElkies.Euclidean d)).re
+  /-- `f ≤ 0` outside the open unit ball. -/
   outside_nonpos :
     ∀ x : CohnElkies.Euclidean d, 1 ≤ ‖x‖ → (function x).re ≤ 0
 
@@ -4693,9 +4771,13 @@ end PackingBounds
 
 /-- A sphere packing: a set of centers with pairwise distances at least `separation`. -/
 structure SpherePacking (d : ℕ) where
+  /-- The centers of the balls. -/
   centers : Set (EuclideanSpace ℝ (Fin d))
+  /-- The minimal distance between centers; the balls have radius `separation / 2`. -/
   separation : ℝ
+  /-- The separation is positive. -/
   separation_pos : 0 < separation := by positivity
+  /-- Distinct centers are at distance at least `separation`. -/
   centers_dist : Pairwise (separation ≤ dist · · : centers → centers → Prop)
 
 @[reducible] def SpherePacking.occupiedBallRegion {d : ℕ} (S : SpherePacking d) :
@@ -4721,10 +4803,15 @@ where `ς = ±1`. Pointwise values refer to the continuous Fourier-inversion rep
 requiring `𝓕 g = ς g` *everywhere* (not only almost everywhere) forces `g` to be that
 representative, since the Fourier transform of an integrable function is continuous. -/
 structure SignEigenfunction (d : ℕ) (ς : ℤˣ) where
+  /-- The function `g : ℝ^d → ℝ`. -/
   toFun : Euclidean d → ℝ
+  /-- `g` is integrable. -/
   integrable : Integrable toFun
+  /-- `𝓕 g = ς g` everywhere. -/
   fourier_eq : ∀ ξ : Euclidean d, 𝓕 (fun x ↦ (toFun x : ℂ)) ξ = ((ς : ℤ) : ℂ) * toFun ξ
+  /-- `g` is not the zero function. -/
   ne_zero : toFun ≠ 0
+  /-- `g(0) = 0`. -/
   zero : toFun 0 = 0
 
 /-- The last-sign radius `r(g) = inf {R ≥ 0 : g(x) ≥ 0 for ‖x‖ ≥ R}` of (5), with `r(g) = ⊤` when
@@ -5366,13 +5453,11 @@ section CohnElkies_Radialization
 
 The orthogonal group `O(d)` with its Haar probability measure and its tautological action on `ℝ^d`
 by linear isometries (transitive on spheres), and the **rotational average**
-`ℛg(x) = ∫_{O(d)} g(U⁻¹ x) dU` of a function `g : ℝ^d → E`.
+`ℛg(x) = ∫_{O(d)} g(Ux) dU` of a function `g : ℝ^d → E`.
 
-The `U⁻¹` of the report is what makes `ℛ` an action-compatible averaging operator, and only the
-*left* invariance of the Haar measure is used below. The function `x ↦ ∫_{O(d)} g(Ux) dU` is the
-same, by inversion invariance of the Haar measure of a compact group; Mathlib proves inversion
-invariance only for abelian groups (`IsHaarMeasure.isInvInvariant_of_regular`), so the two forms
-are not identified here.
+The rotation invariance `ℛg(Ax) = ℛg(x)` is the substitution `U ↦ UA`, that is, the *right*
+invariance of the Haar measure of `O(d)`, which holds because compact groups are unimodular
+(`IsHaarMeasure.isMulRightInvariant_of_compactSpace`).
 
 `ℛg` is rotation invariant, hence radial (`rotationalAverage_eq_of_norm_eq`); it satisfies
 `ℛg(0) = g(0)`, preserves real values and the sign of the real part, in particular outside a ball
@@ -5532,16 +5617,9 @@ section Rotations
 
 variable {E : Type*} [NormedAddCommGroup E]
 
-theorem continuous_comp_orthogonalAction_inv {g : Euclidean d → E} (hg : Continuous g) :
-    Continuous fun p : OrthogonalGroup d × Euclidean d ↦ g (orthogonalAction p.1⁻¹ p.2) := by
-  have heq : (fun p : OrthogonalGroup d × Euclidean d ↦ g (orthogonalAction p.1⁻¹ p.2)) =
-      g ∘ (fun p : OrthogonalGroup d × Euclidean d ↦ orthogonalAction p.1 p.2) ∘
-        fun p : OrthogonalGroup d × Euclidean d ↦ (p.1⁻¹, p.2) := by
-    funext p
-    simp only [Function.comp_apply]
-  rw [heq]
-  exact hg.comp ((orthogonalAction_joint_continuous d).comp
-    ((continuous_inv.comp continuous_fst).prodMk continuous_snd))
+theorem continuous_comp_orthogonalAction_prod {g : Euclidean d → E} (hg : Continuous g) :
+    Continuous fun p : OrthogonalGroup d × Euclidean d ↦ g (orthogonalAction p.1 p.2) :=
+  hg.comp (orthogonalAction_joint_continuous d)
 
 theorem integrable_comp_orthogonalAction {g : Euclidean d → E} (hg : Integrable g)
     (U : OrthogonalGroup d) : Integrable fun x ↦ g (orthogonalAction U x) :=
@@ -5554,12 +5632,12 @@ theorem integral_norm_comp_orthogonalAction (g : Euclidean d → E) (U : Orthogo
     (orthogonalLinearIsometry U).toHomeomorph.measurableEmbedding fun x ↦ ‖g x‖
 
 /-- On the compact group `O(d)`, the rotations of a continuous function are integrable. -/
-theorem integrable_comp_orthogonalAction_inv {g : Euclidean d → E} (hg : Continuous g)
+theorem integrable_comp_orthogonalAction_haar {g : Euclidean d → E} (hg : Continuous g)
     (x : Euclidean d) :
-    Integrable (fun U : OrthogonalGroup d ↦ g (orthogonalAction U⁻¹ x))
+    Integrable (fun U : OrthogonalGroup d ↦ g (orthogonalAction U x))
       (radialOrthogonalHaar d) := by
-  have hcont : Continuous fun U : OrthogonalGroup d ↦ g (orthogonalAction U⁻¹ x) :=
-    hg.comp ((continuous_orthogonalAction x).comp continuous_inv)
+  have hcont : Continuous fun U : OrthogonalGroup d ↦ g (orthogonalAction U x) :=
+    hg.comp (continuous_orthogonalAction x)
   simpa using hcont.continuousOn.integrableOn_compact isCompact_univ
 
 end Rotations
@@ -5570,25 +5648,19 @@ section Average
 
 variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 
-/-- The rotational average `ℛg(x) = ∫_{O(d)} g(U⁻¹x) dU` of a function on `ℝ^d` (report §2.1),
+/-- The rotational average `ℛg(x) = ∫_{O(d)} g(Ux) dU` of a function on `ℝ^d` (report §2.1),
 with respect to the Haar probability measure of `O(d)`. -/
 def rotationalAverage (g : Euclidean d → E) (x : Euclidean d) : E :=
-  ∫ U : OrthogonalGroup d, g (orthogonalAction U⁻¹ x) ∂radialOrthogonalHaar d
+  ∫ U : OrthogonalGroup d, g (orthogonalAction U x) ∂radialOrthogonalHaar d
 
+/-- `ℛg(Ax) = ℛg(x)`: the substitution `U ↦ UA`, by right invariance of the Haar measure of the
+compact group `O(d)`. -/
 theorem rotationalAverage_comp_orthogonal (g : Euclidean d → E) (A : OrthogonalGroup d)
     (x : Euclidean d) : rotationalAverage g (orthogonalAction A x) = rotationalAverage g x := by
   unfold rotationalAverage
-  calc (∫ U : OrthogonalGroup d, g (orthogonalAction U⁻¹ (orthogonalAction A x))
-          ∂radialOrthogonalHaar d)
-      = ∫ U : OrthogonalGroup d, g (orthogonalAction (A * U)⁻¹ (orthogonalAction A x))
-          ∂radialOrthogonalHaar d :=
-        (integral_mul_left_eq_self (μ := radialOrthogonalHaar d) (fun U : OrthogonalGroup d ↦
-          g (orthogonalAction U⁻¹ (orthogonalAction A x))) A).symm
-    _ = ∫ U : OrthogonalGroup d, g (orthogonalAction U⁻¹ x) ∂radialOrthogonalHaar d := by
-        refine integral_congr_ae (.of_forall fun U ↦ ?_)
-        simp only [mul_inv_rev, orthogonalAction_mul]
-        rw [← orthogonalAction_mul A⁻¹ A x]
-        simp
+  simp_rw [← orthogonalAction_mul]
+  exact integral_mul_right_eq_self (μ := radialOrthogonalHaar d)
+    (fun U : OrthogonalGroup d ↦ g (orthogonalAction U x)) A
 
 /-- The rotational average is radial. -/
 theorem rotationalAverage_eq_of_norm_eq (g : Euclidean d → E) :
@@ -5620,48 +5692,48 @@ omit [SecondCountableTopology E] in
 theorem continuous_rotationalAverage {g : Euclidean d → E} (hg : Continuous g) :
     Continuous (rotationalAverage g) := by
   have hunc : Continuous (Function.uncurry fun (x : Euclidean d) (U : OrthogonalGroup d) ↦
-      g (orthogonalAction U⁻¹ x)) := by
+      g (orthogonalAction U x)) := by
     have heq : (Function.uncurry fun (x : Euclidean d) (U : OrthogonalGroup d) ↦
-        g (orthogonalAction U⁻¹ x)) =
-        (fun p : OrthogonalGroup d × Euclidean d ↦ g (orthogonalAction p.1⁻¹ p.2)) ∘
+        g (orthogonalAction U x)) =
+        (fun p : OrthogonalGroup d × Euclidean d ↦ g (orthogonalAction p.1 p.2)) ∘
           Prod.swap := by
       funext p
       rfl
     rw [heq]
-    exact (continuous_comp_orthogonalAction_inv hg).comp continuous_swap
+    exact (continuous_comp_orthogonalAction_prod hg).comp continuous_swap
   have h : rotationalAverage g = fun x ↦
-      ∫ U in univ, g (orthogonalAction U⁻¹ x) ∂radialOrthogonalHaar d := by
+      ∫ U in univ, g (orthogonalAction U x) ∂radialOrthogonalHaar d := by
     rw [Measure.restrict_univ]
     rfl
   rw [h]
   exact continuous_parametric_integral_of_continuous hunc isCompact_univ
 
 omit [NormedSpace ℝ E] in
-theorem integrable_prod_comp_orthogonalAction_inv {g : Euclidean d → E} (hg : Continuous g)
+theorem integrable_prod_comp_orthogonalAction {g : Euclidean d → E} (hg : Continuous g)
     (hi : Integrable g) :
-    Integrable (fun p : OrthogonalGroup d × Euclidean d ↦ g (orthogonalAction p.1⁻¹ p.2))
+    Integrable (fun p : OrthogonalGroup d × Euclidean d ↦ g (orthogonalAction p.1 p.2))
       ((radialOrthogonalHaar d).prod volume) := by
-  refine (integrable_prod_iff (continuous_comp_orthogonalAction_inv hg).aestronglyMeasurable).2
-    ⟨.of_forall fun U ↦ integrable_comp_orthogonalAction hi U⁻¹, ?_⟩
+  refine (integrable_prod_iff (continuous_comp_orthogonalAction_prod hg).aestronglyMeasurable).2
+    ⟨.of_forall fun U ↦ integrable_comp_orthogonalAction hi U, ?_⟩
   exact (integrable_const (∫ x, ‖g x‖)).congr
-    (.of_forall fun U ↦ (integral_norm_comp_orthogonalAction g U⁻¹).symm)
+    (.of_forall fun U ↦ (integral_norm_comp_orthogonalAction g U).symm)
 
 theorem integrable_rotationalAverage {g : Euclidean d → E} (hg : Continuous g)
     (hi : Integrable g) : Integrable (rotationalAverage g) :=
-  (integrable_prod_comp_orthogonalAction_inv hg hi).integral_prod_right
+  (integrable_prod_comp_orthogonalAction hg hi).integral_prod_right
 
 /-- `‖ℛg‖₁ ≤ ‖g‖₁`. -/
 theorem integral_norm_rotationalAverage_le {g : Euclidean d → E} (hg : Continuous g)
     (hi : Integrable g) : ∫ x, ‖rotationalAverage g x‖ ≤ ∫ x, ‖g x‖ := by
-  have hF := (integrable_prod_comp_orthogonalAction_inv hg hi).norm
+  have hF := (integrable_prod_comp_orthogonalAction hg hi).norm
   calc ∫ x, ‖rotationalAverage g x‖
-      ≤ ∫ x, ∫ U : OrthogonalGroup d, ‖g (orthogonalAction U⁻¹ x)‖ ∂radialOrthogonalHaar d :=
+      ≤ ∫ x, ∫ U : OrthogonalGroup d, ‖g (orthogonalAction U x)‖ ∂radialOrthogonalHaar d :=
         integral_mono_of_nonneg (.of_forall fun x ↦ norm_nonneg _) hF.integral_prod_right
           (.of_forall fun x ↦ norm_integral_le_integral_norm _)
-    _ = ∫ U : OrthogonalGroup d, (∫ x, ‖g (orthogonalAction U⁻¹ x)‖) ∂radialOrthogonalHaar d :=
-        (integral_integral_swap (f := fun U x ↦ ‖g (orthogonalAction U⁻¹ x)‖) hF).symm
+    _ = ∫ U : OrthogonalGroup d, (∫ x, ‖g (orthogonalAction U x)‖) ∂radialOrthogonalHaar d :=
+        (integral_integral_swap (f := fun U x ↦ ‖g (orthogonalAction U x)‖) hF).symm
     _ = ∫ U : OrthogonalGroup d, (∫ x, ‖g x‖) ∂radialOrthogonalHaar d :=
-        integral_congr_ae (.of_forall fun U ↦ integral_norm_comp_orthogonalAction g U⁻¹)
+        integral_congr_ae (.of_forall fun U ↦ integral_norm_comp_orthogonalAction g U)
     _ = ∫ x, ‖g x‖ := by simp
 
 end Complete
@@ -5671,7 +5743,7 @@ end Complete
 /-- The real part of the rotational average is the rotational average of the real part. -/
 theorem rotationalAverage_re {g : Euclidean d → ℂ} (hg : Continuous g) (x : Euclidean d) :
     (rotationalAverage g x).re = rotationalAverage (fun y ↦ (g y).re) x :=
-  (integral_re (integrable_comp_orthogonalAction_inv hg x)).symm
+  (integral_re (integrable_comp_orthogonalAction_haar hg x)).symm
 
 /-- Rotational averaging preserves real values. -/
 theorem rotationalAverage_im_eq_zero {g : Euclidean d → ℂ} (hg : IsRealValued g) :
@@ -5731,32 +5803,32 @@ theorem integral_fourierCharacter_mul (g : Euclidean d → ℂ) (ξ : Euclidean 
 theorem fourier_rotationalAverage {g : Euclidean d → ℂ} (hg : Continuous g) (hi : Integrable g)
     (ξ : Euclidean d) : 𝓕 (rotationalAverage g) ξ = rotationalAverage (𝓕 g) ξ := by
   have hkernel : Integrable (Function.uncurry fun (U : OrthogonalGroup d) (x : Euclidean d) ↦
-        fourierCharacter ξ x * g (orthogonalAction U⁻¹ x))
+        fourierCharacter ξ x * g (orthogonalAction U x))
       ((radialOrthogonalHaar d).prod volume) := by
     have hmeas : AEStronglyMeasurable (fun p : OrthogonalGroup d × Euclidean d ↦
-          fourierCharacter ξ p.2 * g (orthogonalAction p.1⁻¹ p.2))
+          fourierCharacter ξ p.2 * g (orthogonalAction p.1 p.2))
         ((radialOrthogonalHaar d).prod volume) :=
       (((continuous_fourierCharacter ξ).comp continuous_snd).mul
-        (continuous_comp_orthogonalAction_inv hg)).aestronglyMeasurable
+        (continuous_comp_orthogonalAction_prod hg)).aestronglyMeasurable
     refine (integrable_prod_iff hmeas).2 ⟨.of_forall fun U ↦
-      integrable_fourierCharacter_mul hi ξ U⁻¹, ?_⟩
+      integrable_fourierCharacter_mul hi ξ U, ?_⟩
     exact (integrable_const (∫ x, ‖g x‖)).congr (.of_forall fun U ↦
-      (integral_norm_fourierCharacter_mul g ξ U⁻¹).symm)
+      (integral_norm_fourierCharacter_mul g ξ U).symm)
   calc 𝓕 (rotationalAverage g) ξ
       = ∫ x : Euclidean d, fourierCharacter ξ x * rotationalAverage g x := by
         rw [Real.fourier_eq']
         rfl
     _ = ∫ x : Euclidean d, ∫ U : OrthogonalGroup d,
-          fourierCharacter ξ x * g (orthogonalAction U⁻¹ x) ∂radialOrthogonalHaar d := by
+          fourierCharacter ξ x * g (orthogonalAction U x) ∂radialOrthogonalHaar d := by
         refine integral_congr_ae (.of_forall fun x ↦ ?_)
         dsimp only
         unfold rotationalAverage
         rw [integral_const_mul]
     _ = ∫ U : OrthogonalGroup d, (∫ x : Euclidean d,
-          fourierCharacter ξ x * g (orthogonalAction U⁻¹ x)) ∂radialOrthogonalHaar d :=
+          fourierCharacter ξ x * g (orthogonalAction U x)) ∂radialOrthogonalHaar d :=
         (integral_integral_swap hkernel).symm
     _ = rotationalAverage (𝓕 g) ξ :=
-        integral_congr_ae (.of_forall fun U ↦ integral_fourierCharacter_mul g ξ U⁻¹)
+        integral_congr_ae (.of_forall fun U ↦ integral_fourierCharacter_mul g ξ U)
 
 end
 
@@ -5840,10 +5912,9 @@ theorem continuous_iteratedFDeriv_compIsometry {d : ℕ} (f : TestFunction d) (n
 theorem aestronglyMeasurable_iteratedFDeriv_compIsometry {d : ℕ} (f : TestFunction d) (n : ℕ)
     (x : Euclidean d) :
     AEStronglyMeasurable (fun U : OrthogonalGroup d ↦ iteratedFDeriv ℝ n
-        (compIsometry (orthogonalLinearIsometry U⁻¹) f : Euclidean d → ℂ) x)
+        (compIsometry (orthogonalLinearIsometry U) f : Euclidean d → ℂ) x)
       (radialOrthogonalHaar d) :=
-  ((continuous_iteratedFDeriv_compIsometry f n x).comp
-    continuous_inv).aestronglyMeasurable_of_compactSpace
+  (continuous_iteratedFDeriv_compIsometry f n x).aestronglyMeasurable_of_compactSpace
 
 section ProbabilityAverage
 
@@ -5958,20 +6029,20 @@ end ProbabilityAverage
 /-- The rotational average of a test function, as a test function (report §2.1). -/
 def rotationalAverageSchwartz {d : ℕ} (f : TestFunction d) : TestFunction d := by
   refine schwartzAverage (radialOrthogonalHaar d)
-    (fun U : OrthogonalGroup d ↦ compIsometry (orthogonalLinearIsometry U⁻¹) f)
+    (fun U : OrthogonalGroup d ↦ compIsometry (orthogonalLinearIsometry U) f)
     (fun k n ↦ SchwartzMap.seminorm ℂ k n f) ?_ ?_ ?_
   · refine contDiff_of_differentiable_iteratedFDeriv fun n _ ↦ ?_
     rw [funext fun x ↦ iteratedFDeriv_integral (radialOrthogonalHaar d) _ _
       (fun n x ↦ aestronglyMeasurable_iteratedFDeriv_compIsometry f n x)
-      (fun U k n ↦ (seminorm_compIsometry (orthogonalLinearIsometry U⁻¹) f k n).le) n x]
+      (fun U k n ↦ (seminorm_compIsometry (orthogonalLinearIsometry U) f k n).le) n x]
     exact fun x ↦ (hasFDerivAt_integral_iteratedFDeriv (radialOrthogonalHaar d) _ _
       (fun n x ↦ aestronglyMeasurable_iteratedFDeriv_compIsometry f n x)
-      (fun U k n ↦ (seminorm_compIsometry (orthogonalLinearIsometry U⁻¹) f k n).le)
+      (fun U k n ↦ (seminorm_compIsometry (orthogonalLinearIsometry U) f k n).le)
       n x).differentiableAt
   · exact fun n x ↦ iteratedFDeriv_integral (radialOrthogonalHaar d) _ _
       (fun n x ↦ aestronglyMeasurable_iteratedFDeriv_compIsometry f n x)
-      (fun U k n ↦ (seminorm_compIsometry (orthogonalLinearIsometry U⁻¹) f k n).le) n x
-  · exact fun k n U x ↦ compIsometry_le_seminorm (orthogonalLinearIsometry U⁻¹) f k n x
+      (fun U k n ↦ (seminorm_compIsometry (orthogonalLinearIsometry U) f k n).le) n x
+  · exact fun k n U x ↦ compIsometry_le_seminorm (orthogonalLinearIsometry U) f k n x
 
 @[simp] theorem rotationalAverageSchwartz_apply {d : ℕ} (f : TestFunction d) (x : Euclidean d) :
     rotationalAverageSchwartz f x = rotationalAverage (f : Euclidean d → ℂ) x := rfl
@@ -6022,7 +6093,7 @@ noncomputable section
 open MeasureTheory
 open scoped FourierTransform SchwartzMap
 
-/-- The rotational average `ℛf = ∫_{O(d)} f(U⁻¹ ·) dU` of an admissible function, as a radial
+/-- The rotational average `ℛf = ∫_{O(d)} f(U ·) dU` of an admissible function, as a radial
 admissible function (report §2.1): rotational averaging preserves every sign condition of (2). -/
 def Admissible.radialize {d : ℕ} (f : Admissible d) : RadialAdmissible d :=
   have hreal : IsRealValued (rotationalAverageSchwartz f.function) := fun x ↦ by
@@ -6051,10 +6122,10 @@ theorem Admissible.radialize_function {d : ℕ} (f : Admissible d) :
     f.radialize.function = rotationalAverageSchwartz f.function :=
   rfl
 
-/-- `ℛf(x) = ∫_{O(d)} f(U⁻¹x) dU`, for the Haar probability measure of `O(d)`. -/
+/-- `ℛf(x) = ∫_{O(d)} f(Ux) dU`, for the Haar probability measure of `O(d)`. -/
 theorem Admissible.radialize_apply {d : ℕ} (f : Admissible d) (x : Euclidean d) :
     f.radialize.function x =
-      ∫ U : OrthogonalGroup d, f.function (orthogonalAction U⁻¹ x) ∂radialOrthogonalHaar d :=
+      ∫ U : OrthogonalGroup d, f.function (orthogonalAction U x) ∂radialOrthogonalHaar d :=
   rfl
 
 /-- `ℛf(0) = f(0)`. -/
@@ -6312,25 +6383,17 @@ theorem integral_radialProfile_cpow {d : ℕ} (hd : 0 < d) (f : TestFunction d) 
           mul_left_comm, ← Complex.cpow_add _ _ (Complex.ofReal_ne_zero.2 hr.ne'), Nat.cast_pred hd,
           show (d : ℂ) - 1 + (s - d) = s - 1 by ring, mul_comm]
 
-/-- `X_g(t) = M g (ℓ - it)`: the Mellin transform of a profile `g` on the line `Re z = ℓ`
-(report (8)). -/
-def Xline (ℓ : ℝ) (profile : ℝ → ℂ) (t : ℝ) : ℂ := mellin profile (ℓ - I * t)
-
-/-- `X_g` is the Fourier transform of `v ↦ e^{-ℓ v} g(e^{-v})`. -/
-theorem mellinFrequency_eq_fourier (ℓ : ℝ) (profile : ℝ → ℂ) (t : ℝ) :
-    Xline ℓ profile t = 𝓕 (fun u : ℝ ↦ exp (-ℓ * u) • profile (exp (-u))) (-t / (2 * π)) := by
-  unfold Xline
-  simpa using mellin_eq_fourier profile (s := ℓ - I * t)
-
 /-- `X_f(t) = M g(λ - it)`: the Mellin transform of the radial profile `g` of `f` on the critical
 line `Re z = λ = d/2` (report (8)). -/
 def X_fℝ {d : ℕ} (hd : 0 < d) (f : TestFunction d) (t : ℝ) : ℂ :=
-  Xline (d / 2) (radialProfile hd f) t
+  mellin (radialProfile hd f) ((d / 2 : ℝ) - I * t)
 
+/-- `X_f` is the Fourier transform of `v ↦ e^{-λ v} g(e^{-v})`. -/
 theorem radialMellinFrequency_eq_fourier {d : ℕ} (hd : 0 < d) (f : TestFunction d) (t : ℝ) :
     X_fℝ hd f t =
-      𝓕 (fun u : ℝ ↦ exp (-(d / 2) * u) • radialProfile hd f (exp (-u))) (-t / (2 * π)) :=
-  mellinFrequency_eq_fourier _ _ t
+      𝓕 (fun u : ℝ ↦ exp (-(d / 2) * u) • radialProfile hd f (exp (-u))) (-t / (2 * π)) := by
+  unfold X_fℝ
+  simpa using mellin_eq_fourier (radialProfile hd f) (s := (d / 2 : ℝ) - I * t)
 
 end
 
@@ -6855,7 +6918,7 @@ theorem radialMellinMultiplier {d : ℕ} (hd : 0 < d) (f : TestFunction d) (hf :
     congr 1
     ring
   rw [hphase, show (d : ℂ) - (d / 2 - I * t) = d / 2 + I * t by ring] at h
-  unfold X_fℝ Xline m_ℓ
+  unfold X_fℝ m_ℓ
   simpa [mul_neg, sub_neg_eq_add] using h
 
 end
@@ -25099,9 +25162,13 @@ section Definitions
 /-- A periodic sphere packing: a sphere packing whose set of centers is invariant under
 translation by a full-rank lattice. -/
 structure PeriodicSpherePacking (d : ℕ) extends SpherePacking d where
+  /-- The lattice of periods. -/
   lattice : Submodule ℤ (EuclideanSpace ℝ (Fin d))
+  /-- The set of centers is invariant under translation by the lattice. -/
   lattice_action : ∀ ⦃x y⦄, x ∈ lattice → y ∈ centers → x + y ∈ centers
+  /-- The lattice is discrete. -/
   lattice_discrete : DiscreteTopology lattice := by infer_instance
+  /-- The lattice has full rank. -/
   lattice_isZLattice : IsZLattice ℝ lattice := by infer_instance
 
 variable {d : ℕ}
@@ -28755,10 +28822,10 @@ ball forces `𝓕 g = 0` and `g = 0`. -/
 theorem eq_zero_of_rotationalAverage_eq_zero {g : Euclidean d → ℝ} (hg : Continuous g) {R : ℝ}
     (hR : ∀ x : Euclidean d, R ≤ ‖x‖ → 0 ≤ g x) (h0 : rotationalAverage g = 0)
     {x : Euclidean d} (hx : R ≤ ‖x‖) : g x = 0 := by
-  set φ : OrthogonalGroup d → ℝ := fun U ↦ g (orthogonalAction U⁻¹ x) with hφdef
-  have hφ : Continuous φ := hg.comp ((continuous_orthogonalAction x).comp continuous_inv)
+  set φ : OrthogonalGroup d → ℝ := fun U ↦ g (orthogonalAction U x) with hφdef
+  have hφ : Continuous φ := hg.comp (continuous_orthogonalAction x)
   have hφ0 : 0 ≤ φ := fun U ↦ hR _ (by rw [norm_orthogonalAction]; exact hx)
-  have hint : Integrable φ (radialOrthogonalHaar d) := integrable_comp_orthogonalAction_inv hg x
+  have hint : Integrable φ (radialOrthogonalHaar d) := integrable_comp_orthogonalAction_haar hg x
   have hzero : ∫ U, φ U ∂radialOrthogonalHaar d = 0 := congrFun h0 x
   have heq : φ = 0 := (hφ.ae_eq_iff_eq (radialOrthogonalHaar d) continuous_const).1
     ((integral_eq_zero_iff_of_nonneg hφ0 hint).1 hzero)

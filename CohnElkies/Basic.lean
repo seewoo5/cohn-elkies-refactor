@@ -37,14 +37,20 @@ namespace PackingBounds
 /-- The admissible class `𝒜_d` of the report, equation (2): real Schwartz functions `f` with
 `𝓕 f ≥ 0`, `𝓕 f (0) > 0` and `f ≤ 0` outside the unit ball (no radiality assumed). -/
 structure FullAdmissible (d : ℕ) where
+  /-- The Schwartz function `f : ℝ^d → ℂ`. -/
   function : CohnElkies.TestFunction d
+  /-- `f` is real-valued. -/
   real : ∀ x : CohnElkies.Euclidean d, (function x).im = 0
+  /-- `𝓕 f` is real-valued. -/
   fourier_real :
     ∀ x : CohnElkies.Euclidean d, ((𝓕 function) x).im = 0
+  /-- `𝓕 f ≥ 0` on `ℝ^d`. -/
   fourier_nonneg :
     ∀ x : CohnElkies.Euclidean d, 0 ≤ ((𝓕 function) x).re
+  /-- `𝓕 f (0) > 0`. -/
   fourier_zero_pos :
     0 < ((𝓕 function) (0 : CohnElkies.Euclidean d)).re
+  /-- `f ≤ 0` outside the open unit ball. -/
   outside_nonpos :
     ∀ x : CohnElkies.Euclidean d, 1 ≤ ‖x‖ → (function x).re ≤ 0
 
@@ -66,9 +72,13 @@ end PackingBounds
 
 /-- A sphere packing: a set of centers with pairwise distances at least `separation`. -/
 structure SpherePacking (d : ℕ) where
+  /-- The centers of the balls. -/
   centers : Set (EuclideanSpace ℝ (Fin d))
+  /-- The minimal distance between centers; the balls have radius `separation / 2`. -/
   separation : ℝ
+  /-- The separation is positive. -/
   separation_pos : 0 < separation := by positivity
+  /-- Distinct centers are at distance at least `separation`. -/
   centers_dist : Pairwise (separation ≤ dist · · : centers → centers → Prop)
 
 @[reducible] def SpherePacking.occupiedBallRegion {d : ℕ} (S : SpherePacking d) :
@@ -94,10 +104,15 @@ where `ς = ±1`. Pointwise values refer to the continuous Fourier-inversion rep
 requiring `𝓕 g = ς g` *everywhere* (not only almost everywhere) forces `g` to be that
 representative, since the Fourier transform of an integrable function is continuous. -/
 structure SignEigenfunction (d : ℕ) (ς : ℤˣ) where
+  /-- The function `g : ℝ^d → ℝ`. -/
   toFun : Euclidean d → ℝ
+  /-- `g` is integrable. -/
   integrable : Integrable toFun
+  /-- `𝓕 g = ς g` everywhere. -/
   fourier_eq : ∀ ξ : Euclidean d, 𝓕 (fun x ↦ (toFun x : ℂ)) ξ = ((ς : ℤ) : ℂ) * toFun ξ
+  /-- `g` is not the zero function. -/
   ne_zero : toFun ≠ 0
+  /-- `g(0) = 0`. -/
   zero : toFun 0 = 0
 
 /-- The last-sign radius `r(g) = inf {R ≥ 0 : g(x) ≥ 0 for ‖x‖ ≥ R}` of (5), with `r(g) = ⊤` when

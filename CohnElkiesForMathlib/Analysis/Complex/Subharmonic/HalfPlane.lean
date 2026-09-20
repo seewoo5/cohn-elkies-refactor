@@ -19,13 +19,17 @@ finite exceptional set `E`:
 together with the corollary `AnalyticOnNhd.log_norm_le_poissonIntegralHalfPlane` for the
 function `log ‖f‖` of an analytic function `f` bounded on `ℍ`: `‖f z‖ ≤ exp (P[b] z)` on `ℍ`.
 
-The extended maximum principle is proved by a Phragmén–Lindelöf-type argument. For `ε > 0`, the
+The extended maximum principle is proved from the weak maximum principle for subharmonic
+functions on bounded open sets (`SubharmonicOn.le_zero_of_limsup_frontier`). For `ε > 0`, the
 auxiliary harmonic function `h z = ∑ x₀ ∈ E, log ‖(z - x₀) / (z - x₀ + 2i)‖ - log ‖z + i‖` is
-nonpositive on the closed upper half-plane, tends to `-∞` at every point of `E` and as
-`‖z‖ → ∞`, so the weak maximum principle `SubharmonicOn.le_zero_of_limsup_frontier` on the
-half-disc `{‖z‖ < R} ∩ ℍ` gives `u + ε h ≤ 0` there for `R` large; then let `ε → 0`. The Poisson
-principle follows by applying it to `u - P[bₙ]` for the truncations `bₙ = max b (-n)`, which
-are bounded below, and letting `n → ∞`.
+nonpositive on the closed upper half-plane and tends to `-∞` at every point of `E` and as
+`‖z‖ → ∞`; `u + ε h` is subharmonic on `ℍ` (`SubharmonicOn.add_harmonic`), and the weak maximum
+principle on the half-disc `{‖z‖ < R} ∩ ℍ` gives `u + ε h ≤ 0` there for `R` large; then let
+`ε → 0`. (The auxiliary function `ε h`, which absorbs the exceptional points and the point at
+infinity, is the device of the Phragmén–Lindelöf principle; no Phragmén–Lindelöf theorem for
+analytic functions is used.) The Poisson principle follows by applying the extended maximum
+principle to `u - P[bₙ]` for the truncations `bₙ = max b (-n)`, which are bounded below, and
+letting `n → ∞`.
 -/
 
 open Filter InnerProductSpace MeasureTheory Metric Set Topology
@@ -76,7 +80,8 @@ namespace Complex
 The functions `logNormRatio x₀ z = log ‖(z - x₀) / (z - x₀ + 2i)‖` (for a real `x₀`) and
 `negLogNormAddI z = -log ‖z + i‖` are harmonic on `ℍ` and nonpositive on the closed upper
 half-plane, and they tend to `-∞` as `z → x₀`, respectively as `‖z‖ → ∞`. They are the barriers
-of the Phragmén–Lindelöf argument for the extended maximum principle below.
+of the extended maximum principle below: added to `u` with a small weight `ε`, they absorb the
+exceptional points and the point at infinity.
 -/
 
 /-- `logNormRatio x₀ z = log ‖(z - x₀) / (z - x₀ + 2i)‖`: a harmonic function on `ℍ` which is
@@ -165,14 +170,18 @@ variable {u : ℂ → EReal}
 that is bounded above by a real constant and satisfies `limsup u (𝓝[ℍ] x) ≤ 0` at every real
 point `x` outside a finite set `E` is nonpositive on `ℍ`.
 
-Proof (Phragmén–Lindelöf): for `ε > 0`, the harmonic function
-`h z = ∑ x₀ ∈ E, log ‖(z - x₀) / (z - x₀ + 2i)‖ - log ‖z + i‖` is nonpositive on the closed upper
-half-plane, tends to `-∞` at the points of `E`, and satisfies `h z ≤ -log (‖z‖ - 1)`. Hence
-`u + ε h ≤ 0` on the half-disc `Ω_R = {‖z‖ < R} ∩ ℍ` by the weak maximum principle, once
-`R` is so large that `M - ε log (R - 2) ≤ 0`: at real boundary points outside `E` the boundary
-condition holds since `ε h ≤ 0`, at points of `E` since `u ≤ M` and `ε h → -∞`, and at boundary
-points of modulus `R` since `u + ε h ≤ M - ε log (R - 2)` near them. Thus `u z ≤ -ε h z` for every
-`z ∈ ℍ` and every `ε > 0`; let `ε → 0`. -/
+Proof: let `u ≤ M` on `ℍ` and `ε > 0`. The harmonic function
+`h z = ∑ x₀ ∈ E, log ‖(z - x₀) / (z - x₀ + 2i)‖ - log ‖z + i‖` (`Complex.logNormRatio`,
+`Complex.negLogNormAddI`) is nonpositive on the closed upper half-plane, tends to `-∞` at the
+points of `E`, and satisfies `h z ≤ -log (‖z‖ - 1)`. The function `u + ε h` is subharmonic on `ℍ`
+(`SubharmonicOn.add_harmonic`), and the weak maximum principle for subharmonic functions
+(`SubharmonicOn.le_zero_of_limsup_frontier`) on the half-disc `Ω_R = {‖z‖ < R} ∩ ℍ` gives
+`u + ε h ≤ 0` there, once `R` is so large that `M - ε log (R - 2) ≤ 0`: at real boundary points
+outside `E` the boundary condition holds since `ε h ≤ 0`, at points of `E` since `u ≤ M` and
+`ε h → -∞`, and at boundary points of modulus `R` since `u + ε h ≤ M - ε log (R - 2)` near them.
+Thus `u z ≤ -ε h z` for every `z ∈ ℍ` and every `ε > 0`; let `ε → 0`. (The auxiliary function
+`ε h` is the device of the Phragmén–Lindelöf principle, but no Phragmén–Lindelöf theorem for
+analytic functions is used: everything rests on the subharmonic maximum principle.) -/
 theorem le_zero_of_halfPlane {E : Finset ℝ} {M : ℝ}
     (hu : SubharmonicOn u {z | 0 < z.im}) (hM : ∀ z : ℂ, 0 < z.im → u z ≤ M)
     (hbdry : ∀ x : ℝ, x ∉ E → limsup u (𝓝[{z | 0 < z.im}] (x : ℂ)) ≤ 0) :

@@ -94,14 +94,17 @@ $`|Z(s + i\sigma\lambda)|`
 $`\le \exp\Bigl(\int_{\mathbb{R}}P_\sigma(T)\,h_{\lambda,D}(s - \lambda T)\,dT\Bigr)`,
 where $`h_{\lambda,D}(y) = \min\{h_\lambda(y), D\}` for $`y \ne 0` and $`h_{\lambda,D}(0) = D`
 ({uses "def_lower_boundary_majorant"}[], {uses "def_strip_poisson_kernel"}[]). Letting
-$`D \to \infty` (dominated convergence) recovers the uncapped bound (18) of {bpref "lemma_3_2"}[].
+$`D \to \infty` (dominated convergence) recovers the uncapped bound (18) of {bpref "lemma_3_2"}[]
+({uses "def_strip_poisson_majorant"}[]).
 :::
 
 :::proof "lemma_3_2_capped"
 The bottom boundary values of $`Z` satisfy $`|Z(y - i\lambda)| \le e^{h_\lambda(y)}` for $`y \ne 0`
-({bpref "lemma_3_2"}[]) and $`Z` is bounded on the closed strip, so for $`D \ge D_0 :=
+({uses "eq_17_lower_boundary"}[]) and $`Z` is bounded on the closed strip
+({uses "lemma_3_2_holomorphic"}[]), so for $`D \ge D_0 :=
 \max\{0, \sup_y \log|Z(y - i\lambda)|\}` also $`|Z(y - i\lambda)| \le e^{h_{\lambda,D}(y)}` for all
-$`y`; the top boundary values satisfy $`|Z(y + i\lambda)| \le 1`. The capped majorant
+$`y`; the top boundary values satisfy $`|Z(y + i\lambda)| \le 1` ({uses "eq_16_upper_boundary"}[]).
+The capped majorant
 $`h_{\lambda,D}` is continuous with $`|h_{\lambda,D}(y)| \le A(1 + |y|)` (it is $`-\lambda\log|y| +
 O(1)` at infinity). The Poisson principle for the strip ({uses "lemma_strip_poisson_principle"}[])
 gives the claim.
@@ -113,32 +116,47 @@ The report's Lemma 3.3 states the two-sided weighted error estimate (19). The fo
 only the one-sided upper bound that is needed later, with a unified error term for both parities
 that is independent of the dimension.
 
+:::definition "def_endpoint_phase" (lean := "CohnElkies.lowerEndpointPhase, CohnElkies.lowerRiemannErrorMajorant")
+The endpoint phase is
+$`\Lambda(T) = -\tfrac{\pi|T|}{4} - \tfrac12\log(1 + \tfrac{T^2}{4}) + \tfrac{|T|}{2}\arctan\tfrac{|T|}{2}`,
+and the dimension-free Riemann error majorant is
+$`E(T) = 3|f_T(0)| + 2|f_T(1)| + \tfrac12\log\coth\tfrac{\pi|T|}{2}`, with $`f_T` from
+{uses "def_lower_endpoint_expectation"}[].
+:::
+
+:::lemma_ "lemma_endpoint_phase_integral" (lean := "CohnElkies.integral_lowerRiemannLog")
+For $`T \ne 0`, with $`f_T` from {uses "def_lower_endpoint_expectation"}[] and $`\Lambda` from
+{uses "def_endpoint_phase"}[], one has the exact identity $`-\int_0^1f_T(x)\,dx = 1 + \Lambda(T)`.
+:::
+
+:::proof "lemma_endpoint_phase_integral"
+An elementary integration: $`x \mapsto x\log\sqrt{x^2 + T^2/4} - x + \tfrac{|T|}{2}\arctan\tfrac{2x}{|T|}`
+is a primitive of $`f_T` (`CohnElkies.lowerRiemannLogPrimitive`).
+:::
+
 :::lemma_ "lemma_3_3_one_sided" (lean := "CohnElkies.lowerGammaBoundaryLog_dimension_scaled_riemann_le")
-For $`d \ge 2`, $`c > 0`, $`T \ne 0`, with $`f_T` as in {bpref "lemma_3_3"}[] and the endpoint phase
-$`\Lambda(T) = -\tfrac{\pi|T|}{4} - \tfrac12\log(1 + \tfrac{T^2}{4})`
-$`+ \tfrac{|T|}{2}\arctan\tfrac{|T|}{2}`,
-one has the exact identity
-$`-\int_0^1f_T(x)\,dx = 1 + \Lambda(T)`
-and the one-sided bound
-$`h_\lambda(\lambda T) \le \lambda\bigl(\log(2\pi ec^2) + \Lambda(T)\bigr) + E(T)`,
-$`E(T) = 3|f_T(0)| + 2|f_T(1)| + \tfrac12\log\coth\tfrac{\pi|T|}{2}`,
-for $`h_\lambda` as in {uses "def_lower_boundary_majorant"}[] with $`R = c\sqrt d`. Consequently,
-for $`0 \le \sigma < 1`,
+For $`d \ge 2`, $`c > 0` and $`T \ne 0`, with $`\Lambda`, $`E` from {uses "def_endpoint_phase"}[],
+one has the one-sided bound
+$`h_\lambda(\lambda T) \le \lambda\bigl(\log(2\pi ec^2) + \Lambda(T)\bigr) + E(T)`
+for $`h_\lambda` as in {uses "def_lower_boundary_majorant"}[] with $`R = c\sqrt d`. Integrating
+against $`P_\sigma` ({uses "def_strip_poisson_kernel"}[], {uses "def_strip_poisson_mass"}[])
+gives, for $`0 \le \sigma < 1`,
 $`H_\sigma(0) \le \lambda M_\sigma\bigl(\log(2\pi c^2) + J_\sigma\bigr) + E_\sigma`
-with $`J_\sigma = 1 + \int(P_\sigma/M_\sigma)\Lambda` and $`E_\sigma = \int P_\sigma E`
-finite and independent of $`d` and $`c`: this is the upper half of (20) with an $`O_\sigma(1)`
-error. Uses {uses "def_strip_poisson_kernel"}[].
+with $`J_\sigma = 1 + \int(P_\sigma/M_\sigma)\Lambda` ({uses "def_lower_endpoint_expectation"}[])
+and $`E_\sigma = \int P_\sigma E` finite and independent of $`d` and $`c`: this is the upper half
+of (20) with an $`O_\sigma(1)` error, {bpref "lemma_3_3"}[].
 :::
 
 :::proof "lemma_3_3_one_sided"
 The same even/odd Riemann-sum computation as in the report's proof of Lemma 3.3, keeping only
-the upper estimates: the gamma product formulas of {uses "eq_7_gamma_identities"}[] express
+the upper estimates: the gamma product formulas of {uses "eq_7_gamma_identities"}[] and
+{uses "lemma_gamma_iterated_recurrence"}[] express
 $`h_\lambda(\lambda T)` through a left (even $`d`) or midpoint (odd $`d`) Riemann sum of $`f_T` on
 $`[0,1]`, and monotonicity of $`f_T` bounds the Riemann-sum errors by $`f_T(1) - f_T(0)`
 (`CohnElkies.monotone_leftRiemann_error`, `CohnElkies.monotone_midpointIntegral_error`); the
 odd-dimensional endpoint correction $`\tfrac12\log(2\coth(\pi\lambda|T|/2)/|T|)` is at most
 $`|f_T(0)| + \tfrac12\log\coth(\pi|T|/2)`, which makes $`E(T)` independent of $`d`. The identity
-for $`\int_0^1 f_T` is an elementary integration (`CohnElkies.lowerRiemannLogPrimitive`), and the
+{uses "lemma_endpoint_phase_integral"}[] converts the integral of $`f_T` into $`\Lambda`, and the
 central bound follows by integrating against $`P_\sigma` and using its mass $`M_\sigma`.
 :::
 
@@ -150,31 +168,52 @@ expectation of the endpoint phase against the limiting density $`p` of (21) by e
 $`u`-integral with a Frullani-type integral in a parameter $`t`, which produces the Laplace kernel
 of the Wallis product already used for (33).
 
-:::lemma_ "lemma_3_4_frullani" (lean := "CohnElkies.integral_poissonLogistic_mul_wallisPhaseKernel")
-Let $`p` be the density of {uses "eq_21_sech_characteristic"}[] and $`\Lambda` the endpoint phase of
-{uses "lemma_3_3_one_sided"}[]. For $`t > 0` and $`u \in \mathbb{R}` put
+:::definition "def_frullani_phase_kernel" (lean := "CohnElkies.wallisPhaseKernel")
+For $`t > 0` and $`u \in \mathbb{R}` put
 $`K(u,t) = \dfrac{(1 - e^{-t})\cos(ut) - te^{-t}}{t^2}`, the real part of the complex Frullani kernel
-$`((1 - e^{-t})e^{-zt} - te^{-t})/t^2` at $`z = -iu`. Then
-$`\int_0^\infty K(u,t)\,dt = 1 + \Lambda(2u)` for every $`u`,
-$`\int_{\mathbb{R}}p(u)K(u,t)\,du = \dfrac{e^{-t}(1 - e^{-t})}{t(1 + e^{-t})}` for every $`t > 0`,
-and consequently
-$`\int_{\mathbb{R}}p(u)\bigl(1 + \Lambda(2u)\bigr)\,du = \log\dfrac{\pi}{2}`,
-$`\int_{\mathbb{R}}p(u)\Lambda(2u)\,du = \log\dfrac{\pi}{2} - 1`.
+$`((1 - e^{-t})e^{-zt} - te^{-t})/t^2` at $`z = -iu`.
 :::
 
-:::proof "lemma_3_4_frullani"
+:::lemma_ "lemma_frullani_phase_integral" (lean := "CohnElkies.integral_wallisPhaseKernel_zero")
+With $`K` from {uses "def_frullani_phase_kernel"}[] and $`\Lambda` from
+{uses "def_endpoint_phase"}[], $`\int_0^\infty K(u,t)\,dt = 1 + \Lambda(2u)` for every $`u`.
+:::
+
+:::proof "lemma_frullani_phase_integral"
 The $`t`-integral of $`K(u,t)` is evaluated through the antiderivative
 $`1 + z\log z - (z+1)\log(z+1)` of the complex Frullani kernel at $`z = a - iu`
 (`CohnElkies.integral_wallisPhaseKernel`, `CohnElkies.wallisComplexLogPhase`), letting
 $`a \downarrow 0` by dominated convergence (`CohnElkies.tendsto_integral_wallisPhaseKernel`); the
-real part at $`z = -iu` is $`1 + \Lambda(2u)` (`CohnElkies.wallisComplexLogPhase_neg_I_mul`). The
-$`u`-integral of $`p(u)K(u,t)` reduces, through the cosine transform of $`p` in
+real part at $`z = -iu` is $`1 + \Lambda(2u)` (`CohnElkies.wallisComplexLogPhase_neg_I_mul`).
+:::
+
+:::lemma_ "lemma_3_4_frullani" (lean := "CohnElkies.integral_poissonLogistic_mul_wallisPhaseKernel")
+With $`p` the density of {uses "eq_21_sech_characteristic"}[] and $`K` from
+{uses "def_frullani_phase_kernel"}[], for every $`t > 0`,
+$`\int_{\mathbb{R}}p(u)K(u,t)\,du = \dfrac{e^{-t}(1 - e^{-t})}{t(1 + e^{-t})}`, the Laplace kernel
+of the Wallis product.
+:::
+
+:::proof "lemma_3_4_frullani"
+The $`u`-integral of $`p(u)K(u,t)` reduces, through the cosine transform of $`p` in
 {uses "eq_21_sech_characteristic"}[], $`\int p(u)\cos(tu)\,du = t/\sinh t`, to
-$`((1-e^{-t})\,t/\sinh t - te^{-t})/t^2`, which is the Laplace kernel. Fubini (the double integral
-converges absolutely, `CohnElkies.poissonLogistic_wallisPhase_integrable`) exchanges the two
-integrals, and $`\int_0^\infty e^{-t}(1-e^{-t})/(t(1+e^{-t}))\,dt = \log(\pi/2)` is the Wallis
-product, {uses "eq_32_ideal_density"}[] (`Real.Wallis.integral_laplaceKernel`). Subtracting
-$`\int p = 1` gives the last identity.
+$`((1-e^{-t})\,t/\sinh t - te^{-t})/t^2`, which is the Laplace kernel.
+:::
+
+:::lemma_ "lemma_3_4_endpoint_expectation" (lean := "CohnElkies.integral_poissonLogistic_one_add_lowerEndpointPhase, CohnElkies.integral_poissonLogistic_lowerEndpointPhase")
+With $`p` from {uses "eq_21_sech_characteristic"}[] and $`\Lambda` from
+{uses "def_endpoint_phase"}[],
+$`\int_{\mathbb{R}}p(u)\bigl(1 + \Lambda(2u)\bigr)\,du = \log\dfrac{\pi}{2}` and
+$`\int_{\mathbb{R}}p(u)\Lambda(2u)\,du = \log\dfrac{\pi}{2} - 1`.
+:::
+
+:::proof "lemma_3_4_endpoint_expectation"
+Fubini (the double integral converges absolutely,
+`CohnElkies.poissonLogistic_wallisPhase_integrable`) exchanges the two integrals of
+{uses "lemma_frullani_phase_integral"}[] and {uses "lemma_3_4_frullani"}[], and
+$`\int_0^\infty e^{-t}(1-e^{-t})/(t(1+e^{-t}))\,dt = \log(\pi/2)` is the Wallis product,
+{uses "eq_32_ideal_density"}[] (`Real.Wallis.integral_laplaceKernel`). Subtracting $`\int p = 1`
+gives the last identity.
 :::
 
 # Inverse-quadratic tail majorant in Lemma 3.5
@@ -186,23 +225,24 @@ $`|s| > B\lambda`, the formalization averages them into a single integrable majo
 For every $`0 < c < 1/\pi` there are $`\sigma \in (0,1)` and $`\gamma, C > 0` such that, for all
 sufficiently large $`d` and all $`S \in \mathbb{R}`,
 $`\exp\bigl(H_\sigma(\lambda S)\bigr) \le \dfrac{Ce^{-\gamma\lambda}}{(1 + |S|)^2}`, with
-$`H_\sigma` from {uses "def_strip_poisson_kernel"}[] and $`R = c\sqrt d`. Consequently
+$`H_\sigma` from {uses "def_strip_poisson_majorant"}[] and $`R = c\sqrt d`. Consequently
 $`\int_{\mathbb{R}}|Z(s + i\sigma\lambda)|\,ds \le CJ\lambda e^{-\gamma\lambda}` with
-$`J = \int_{\mathbb{R}}(1 + |S|)^{-2}\,dS`, which is (26) of {bpref "lemma_3_5"}[].
+$`J = \int_{\mathbb{R}}(1 + |S|)^{-2}\,dS`, which is (26) of {bpref "eq_26_integral_bound"}[].
 :::
 
 :::proof "lemma_3_5_inverse_quadratic"
-Combine the uniform negativity $`H_\sigma(s) \le -\gamma\lambda`, which follows from the central
-bound and the maximum property of {uses "lemma_3_3"}[] together with the negativity of the
-bracket from {uses "lemma_3_4"}[], with the logarithmic tail
-$`H_\sigma(\lambda S) \le -\kappa\lambda\log(|S|/A)` for $`|S| \ge B`, which follows from the
-gamma identities of {uses "eq_7_gamma_identities"}[] applied to the majorant and the exponential
-decay of the kernel of {uses "def_strip_poisson_kernel"}[]
-(`CohnElkies.exists_lowerStripPoissonMajorant_logarithmic_tail`, with
-$`\kappa = \int_{-1}^1P_\sigma(T)\,dT/2 > 0`): for large $`d`, $`\kappa\lambda \ge 4`, and averaging
-the two bounds (halving $`\gamma`) gives the inverse-square decay; the bounded interval
-$`|S| \le B` is absorbed into $`C`. Then $`|Z(s+i\sigma\lambda)| \le e^{H_\sigma(s)}`
-({uses "lemma_3_2"}[]) and the substitution $`s = \lambda S` give the $`L^1` bound.
+Combine the uniform negativity $`H_\sigma(s) \le -\gamma\lambda` of {uses "lemma_3_5"}[], which
+follows from the central bound {uses "lemma_3_3"}[] and the maximum property
+{uses "lemma_3_3_max_at_zero"}[] together with the negativity of the bracket from
+{uses "eq_23_sharp_coefficient"}[], with the logarithmic tail
+$`H_\sigma(\lambda S) \le -\kappa\lambda\log(|S|/A)` for $`|S| \ge B` of
+{uses "eq_25_logarithmic_tail"}[], which follows from the gamma identities of
+{uses "eq_7_gamma_identities"}[] applied to the majorant and the exponential decay of the kernel
+({uses "lemma_strip_poisson_kernel_properties"}[]; with $`\kappa = \int_{-1}^1P_\sigma(T)\,dT/2 > 0`):
+for large $`d`, $`\kappa\lambda \ge 4`, and averaging the two bounds (halving $`\gamma`) gives the
+inverse-square decay; the bounded interval $`|S| \le B` is absorbed into $`C`. Then
+$`|Z(s+i\sigma\lambda)| \le e^{H_\sigma(s)}` ({uses "lemma_3_2"}[]) and the substitution
+$`s = \lambda S` give the $`L^1` bound.
 :::
 
 # Parameters of the upper construction
@@ -297,8 +337,9 @@ for the gamma damping density ({bpref "lemma_4_4"}[]), the exponentiated Binet r
 The original file defines the digamma function ad hoc, as the derivative of
 $`\log \circ \Gamma` on the reals, and reproves the needed estimates. The real digamma function
 `Real.digamma` of {bpref "def_digamma"}[] now lives in the project's Mathlib-candidate library
-(`CohnElkiesForMathlib.Analysis.SpecialFunctions.Gamma.Digamma`), identified with the real part of
-Mathlib's `Complex.digamma`, together with its recurrence, the bounds
+(`CohnElkiesForMathlib.Analysis.SpecialFunctions.Gamma.Digamma`), defined as the real part of
+Mathlib's `Complex.digamma` (as `Real.Gamma` is the real part of `Complex.Gamma`) and identified
+with the logarithmic derivative of `Real.Gamma`, together with its recurrence, the bounds
 $`\log(x-1) \le \psi(x) \le \log x`, the harmonic representation
 $`\psi(m) = \lim_n(\log n - \sum_{k \le n}(m+k)^{-1})` and Gauss's integral representation
 ({bpref "lemma_digamma_gauss_integral"}[], listed as a TODO in Mathlib's digamma file). Mathlib (as
@@ -325,7 +366,7 @@ circle averages are handled through truncations because Mathlib's convention `Re
 makes the real-valued $`\log|f|` unusable at zeros; the strong and weak maximum principles
 ({bpref "lemma_subharmonic_maximum_principle"}[]); the subharmonicity of $`\log|f|` from Jensen's
 formula ({bpref "lemma_log_norm_subharmonic"}[]); the Poisson kernel and integral of the
-half-plane with harmonicity and boundary values ({bpref "def_halfplane_poisson_kernel"}[],
+half-plane with harmonicity and boundary values ({bpref "def_halfplane_poisson_integral"}[],
 {bpref "lemma_halfplane_poisson_harmonic"}[]); the extended maximum principle with a finite
 exceptional set ({bpref "lemma_halfplane_extended_maximum_principle"}[]); and the Poisson
 principle ({bpref "thm_halfplane_poisson_principle"}[]). The conformal transfer to the strip and
@@ -400,17 +441,19 @@ $`\eta_n(x) = e^{-\pi|x|^2/n^2}` ({bpref "def_schwartz_approximation"}[]). The f
 convolves with a compactly supported normalized flat bump instead, which makes the smoothness and
 the Schwartz decay of the approximant elementary, and keeps the Gaussians only on the Fourier side.
 
-:::lemma_ "lemma_schwartz_approximation_bump" (lean := "CohnElkies.fourier_approximant_apply")
+:::lemma_ "lemma_schwartz_approximation_bump" (lean := "CohnElkies.bumpKernel, CohnElkies.fourier_approximant_apply, CohnElkies.exists_eigenTest")
 Let $`\varphi` be a smooth nonnegative radial function with compact support and
 $`\int\varphi = 1`, $`\varphi_n(x) = n^d\varphi(nx)`, and let
 $`g \in L^1_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})` be continuous with $`\widehat g = \varsigma g`.
 Then $`q_n = (\eta_n g) * \varphi_n` is a real radial Schwartz function with
 $`\widehat{q_n} = \varsigma\,(g * \kappa_n)\,\widehat{\varphi_n}`, and $`q_n \to g`,
-$`\widehat{q_n} \to \varsigma g` in $`L^1`. Moreover, for a bump $`\varphi` as above, one of
-$`\varphi + \varsigma\widehat\varphi` and $`\varphi(2\cdot) + \varsigma\widehat{\varphi(2\cdot)}` is a
-real radial Schwartz function $`\psi_\varsigma` with $`\widehat{\psi_\varsigma} = \varsigma\psi_\varsigma`
-and $`\psi_\varsigma(0) \ne 0` (the corrector of {bpref "def_schwartz_approximation"}[], in place of
-the Gaussian and Hermite functions $`\psi_\pm` of the report).
+$`\widehat{q_n} \to \varsigma g` in $`L^1` ({uses "lemma_approximant_properties"}[]). Moreover, for
+a bump $`\varphi` as above, one of $`\varphi + \varsigma\widehat\varphi` and
+$`\varphi(2\cdot) + \varsigma\widehat{\varphi(2\cdot)}` is a real radial Schwartz function
+$`\psi_\varsigma` with $`\widehat{\psi_\varsigma} = \varsigma\psi_\varsigma` and
+$`\psi_\varsigma(0) \ne 0` ({uses "lemma_eigen_corrector"}[]), the corrector of
+{bpref "lemma_schwartz_approximation"}[], in place of the Gaussian and Hermite functions
+$`\psi_\pm` of the report.
 :::
 
 :::proof "lemma_schwartz_approximation_bump"

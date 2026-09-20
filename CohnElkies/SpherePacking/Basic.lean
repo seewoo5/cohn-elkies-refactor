@@ -39,9 +39,13 @@ section Definitions
 /-- A periodic sphere packing: a sphere packing whose set of centers is invariant under
 translation by a full-rank lattice. -/
 structure PeriodicSpherePacking (d : ℕ) extends SpherePacking d where
+  /-- The lattice of periods. -/
   lattice : Submodule ℤ (EuclideanSpace ℝ (Fin d))
+  /-- The set of centers is invariant under translation by the lattice. -/
   lattice_action : ∀ ⦃x y⦄, x ∈ lattice → y ∈ centers → x + y ∈ centers
+  /-- The lattice is discrete. -/
   lattice_discrete : DiscreteTopology lattice := by infer_instance
+  /-- The lattice has full rank. -/
   lattice_isZLattice : IsZLattice ℝ lattice := by infer_instance
 
 variable {d : ℕ}

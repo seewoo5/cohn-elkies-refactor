@@ -3,12 +3,14 @@ import Mathlib
 /-!
 # The real digamma function
 
-`Real.digamma := logDeriv Real.Gamma` is the logarithmic derivative `ψ = Γ'/Γ` of the real Gamma
-function. For `x > 0` it agrees with `(log ∘ Γ)' x` and with the real part of `Complex.digamma x`.
-We prove the recurrence `ψ(x + 1) = ψ(x) + 1/x`, the bounds `log (x - 1) ≤ ψ(x) ≤ log x` for
-`x > 1` (from the log-convexity of `Γ`), the asymptotics `ψ(x) - log x → 0` as `x → ∞`, the
-harmonic representation `ψ(m) = lim (log n - ∑_{k ≤ n} (m + k)⁻¹)` and the continuity of `ψ` on
-`(0, ∞)`.
+`Real.digamma x := (Complex.digamma x).re` is the real digamma function `ψ = Γ'/Γ`, the real part
+of Mathlib's `Complex.digamma` (as `Real.Gamma` is the real part of `Complex.Gamma`). It is the
+logarithmic derivative of the real Gamma function (`Real.digamma_eq_logDeriv_Gamma`; in fact
+`Complex.digamma` is real on the real axis, `Complex.digamma_ofReal`), and for `x > 0` it agrees
+with `(log ∘ Γ)' x`. We prove the recurrence `ψ(x + 1) = ψ(x) + 1/x`, the bounds
+`log (x - 1) ≤ ψ(x) ≤ log x` for `x > 1` (from the log-convexity of `Γ`), the asymptotics
+`ψ(x) - log x → 0` as `x → ∞`, the harmonic representation
+`ψ(m) = lim (log n - ∑_{k ≤ n} (m + k)⁻¹)` and the continuity of `ψ` on `(0, ∞)`.
 -/
 
 open Filter Real Set
@@ -16,10 +18,43 @@ open scoped Topology
 
 namespace Real
 
-/-- The digamma function `ψ = Γ'/Γ = (log Γ)'`. -/
-noncomputable def digamma : ℝ → ℝ := logDeriv Gamma
+/-- The real digamma function `ψ = Γ'/Γ`, the real part of `Complex.digamma`. -/
+noncomputable def digamma (x : ℝ) : ℝ := (Complex.digamma x).re
 
-theorem digamma_def : digamma = logDeriv Gamma := rfl
+theorem digamma_def (x : ℝ) : digamma x = (Complex.digamma x).re := rfl
+
+/-- On the real axis and away from the poles, the derivative of `Complex.Gamma` is the derivative
+of `Real.Gamma`. -/
+theorem _root_.Complex.deriv_Gamma_ofReal {x : ℝ} (hx : ∀ m : ℕ, x ≠ -m) :
+    deriv Complex.Gamma (x : ℂ) = deriv Gamma x := by
+  have hx' : ∀ m : ℕ, (x : ℂ) ≠ -m := by
+    simp_rw [← Complex.ofReal_natCast, ← Complex.ofReal_neg, Ne, Complex.ofReal_inj]
+    exact hx
+  have h : HasDerivAt (fun y : ℝ ↦ (Gamma y : ℂ)) (deriv Complex.Gamma (x : ℂ)) x := by
+    simpa only [Complex.Gamma_ofReal] using
+      (Complex.differentiableAt_Gamma _ hx').hasDerivAt.comp_ofReal
+  exact h.unique (differentiableAt_Gamma hx).hasDerivAt.ofReal_comp
+
+/-- On the real axis, `Complex.digamma` is the logarithmic derivative of `Real.Gamma` (at the poles
+`0, -1, -2, …` both sides are `0`, as `Γ` vanishes there by convention). -/
+theorem _root_.Complex.digamma_ofReal_eq_logDeriv_Gamma (x : ℝ) :
+    Complex.digamma x = ((logDeriv Gamma x : ℝ) : ℂ) := by
+  rw [Complex.digamma_def, logDeriv_apply, logDeriv_apply, Complex.ofReal_div,
+    ← Complex.Gamma_ofReal]
+  by_cases hx : ∀ m : ℕ, x ≠ -m
+  · rw [Complex.deriv_Gamma_ofReal hx]
+  · push Not at hx
+    obtain ⟨m, rfl⟩ := hx
+    push_cast
+    rw [Complex.Gamma_neg_nat_eq_zero, div_zero, div_zero]
+
+/-- The real digamma function is the logarithmic derivative of the real Gamma function. -/
+theorem digamma_eq_logDeriv_Gamma (x : ℝ) : digamma x = logDeriv Gamma x := by
+  rw [digamma_def, Complex.digamma_ofReal_eq_logDeriv_Gamma, Complex.ofReal_re]
+
+/-- `Complex.digamma` is real on the real axis. -/
+theorem _root_.Complex.digamma_ofReal (x : ℝ) : Complex.digamma x = digamma x := by
+  rw [Complex.digamma_ofReal_eq_logDeriv_Gamma, digamma_eq_logDeriv_Gamma]
 
 theorem differentiableAt_Gamma_of_pos {x : ℝ} (hx : 0 < x) : DifferentiableAt ℝ Gamma x :=
   differentiableAt_Gamma fun n ↦ ((neg_nonpos.2 (Nat.cast_nonneg n)).trans_lt hx).ne'
@@ -35,8 +70,10 @@ theorem differentiableAt_log_comp_Gamma {x : ℝ} (hx : 0 < x) :
 
 /-- For `x > 0`, `ψ x = (log Γ)' x`. -/
 theorem digamma_eq_deriv_log_comp_Gamma {x : ℝ} (hx : 0 < x) :
-    digamma x = deriv (log ∘ Gamma) x :=
-  (deriv_log_comp_eq_logDeriv (differentiableAt_Gamma_of_pos hx) (Gamma_pos_of_pos hx).ne').symm
+    digamma x = deriv (log ∘ Gamma) x := by
+  rw [digamma_eq_logDeriv_Gamma]
+  exact (deriv_log_comp_eq_logDeriv (differentiableAt_Gamma_of_pos hx)
+    (Gamma_pos_of_pos hx).ne').symm
 
 /-- `log (x - 1) ≤ ψ(x) ≤ log x` for `x > 1`, from the convexity of `log Γ`. -/
 theorem log_sub_one_le_digamma_le_log {x : ℝ} (hx : 1 < x) :
@@ -126,19 +163,6 @@ theorem tendsto_digamma_harmonic {m : ℝ} (hm : 0 < m) :
   rw [show m + ((n : ℝ) + 1) = m + (n : ℝ) + 1 by ring] at hrec
   linarith
 
-/-- For `x > 0`, the real digamma function is the real part of the complex one. -/
-theorem digamma_eq_complex_re {x : ℝ} (hx : 0 < x) : digamma x = (Complex.digamma (x : ℂ)).re := by
-  have hcomplex : DifferentiableAt ℂ Complex.Gamma (x : ℂ) := by
-    refine Complex.differentiableAt_Gamma _ fun n h ↦ ?_
-    have hre := congrArg Complex.re h
-    simp at hre
-    linarith [Nat.cast_nonneg (α := ℝ) n]
-  have hreal : HasDerivAt Real.Gamma (deriv Complex.Gamma (x : ℂ)).re x := by
-    simpa only [Complex.Gamma_ofReal, Complex.ofReal_re] using hcomplex.hasDerivAt.real_of_complex
-  unfold digamma
-  rw [logDeriv_apply, hreal.deriv, Complex.digamma_def, logDeriv_apply, Complex.Gamma_ofReal,
-    Complex.div_ofReal_re]
-
 theorem _root_.Complex.continuousOn_digamma_re_pos :
     ContinuousOn Complex.digamma {z : ℂ | 0 < z.re} := by
   have hopen : IsOpen {z : ℂ | 0 < z.re} := Complex.continuous_re.isOpen_preimage _ isOpen_Ioi
@@ -156,8 +180,7 @@ theorem _root_.Complex.continuousOn_digamma_re_pos :
 theorem continuousOn_digamma_Ioi : ContinuousOn digamma (Ioi (0 : ℝ)) := by
   have hmap : MapsTo (fun x : ℝ ↦ (x : ℂ)) (Ioi (0 : ℝ)) {z : ℂ | 0 < z.re} :=
     fun x hx ↦ by simpa using hx
-  exact (Complex.continuous_re.continuousOn.comp (Complex.continuousOn_digamma_re_pos.comp
-    Complex.continuous_ofReal.continuousOn hmap) fun x _ ↦ mem_univ _).congr
-    fun x hx ↦ digamma_eq_complex_re hx
+  exact Complex.continuous_re.continuousOn.comp (Complex.continuousOn_digamma_re_pos.comp
+    Complex.continuous_ofReal.continuousOn hmap) fun x _ ↦ mem_univ _
 
 end Real

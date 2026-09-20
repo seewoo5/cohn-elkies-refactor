@@ -9,7 +9,7 @@ open Informal
 
 #doc (Manual) "Introduction" =>
 
-This blueprint follows Chapter 1 of the report *Ten proofs* (OpenAI, 2026), which determines the
+This blueprint follows Chapter 1 of the report [*Ten proofs*](https://cdn.openai.com/pdf/ten-proofs-oai.pdf) (OpenAI), which determines the
 exact exponential growth rate of the Cohn–Elkies sphere-packing linear program and the sharp
 asymptotics of the two Fourier sign-uncertainty constants. The chapters follow the report. This
 introduction fixes the setting and states the main results. The next chapter proves the
@@ -22,7 +22,6 @@ the lower bound proves the universal obstruction (Proposition 3.1) and the packi
 (Theorem 4.1). The appendix compares the two sign-uncertainty constants (Proposition A.1 and
 $`\mathsf{A}_+(d) < \mathsf{A}_-(d)`, through the existence of extremizers, Cohn–Gonçalves 2019,
 Theorem 1.4), and a final chapter records where the Lean formalization deviates from the report.
-Every node names its Lean counterpart in the `CohnElkies` library.
 
 # The sphere-packing problem and the Cohn–Elkies linear program
 
@@ -104,8 +103,7 @@ value at the origin is $`(\int\varphi)^2 > 0`.
 :::theorem "thm_cohn_elkies_bound" (lean := "PackingBounds.PackingBridge.sphere_packing_le_admissible")
 (Gorbachev; Cohn–Elkies.) For every $`d \ge 1` and every $`f \in \mathcal{A}_d`, the packing
 density of {uses "def_packing_density"}[] satisfies
-$`\Delta_d \le \dfrac{v_d}{2^d}\,\dfrac{f(0)}{\widehat f(0)}`. Consequently (equation (4))
-$`\Delta_d \le \mathrm{LP}_d`, with $`\mathrm{LP}_d` as in {uses "def_lp"}[].
+$`\Delta_d \le \dfrac{v_d}{2^d}\,\dfrac{f(0)}{\widehat f(0)}`.
 :::
 
 :::proof "thm_cohn_elkies_bound"
@@ -115,21 +113,39 @@ nonnegative and whose term at the origin already gives the bound
 ({uses "thm_lp_bound_periodic"}[]); arbitrary packings are approximated by periodic ones
 ({uses "thm_periodic_packing_constant"}[]), giving {uses "thm_lp_bound"}[] in the form
 $`\Delta_d \le \operatorname{vol}(B(0,1/2))\,f(0)/\widehat f(0)`. The volume of the half ball is
-$`v_d/2^d` ({uses "def_ball_volume"}[]), which gives the bound for a single $`f`; taking the
-infimum over $`f \in \mathcal{A}_d` ({uses "def_lp"}[]) gives $`\Delta_d \le \mathrm{LP}_d`, and
-the radial reduction {uses "lemma_lp_radial_reduction"}[] identifies the radial and the full
-program.
+$`v_d/2^d` ({uses "def_ball_volume"}[]).
+:::
+
+:::theorem "eq_4_cohn_elkies_bound" (lean := "PackingBounds.PackingBridge.sphere_packing_le_linear_program")
+For every $`d \ge 1` (equation (4)), $`\Delta_d \le \mathrm{LP}_d`, with $`\mathrm{LP}_d` as in
+{uses "def_lp"}[].
+:::
+
+:::proof "eq_4_cohn_elkies_bound"
+Take the infimum over $`f \in \mathcal{A}_d` in {uses "thm_cohn_elkies_bound"}[]; the radial
+reduction {uses "lemma_lp_radial_reduction"}[] identifies the radial and the full program.
 :::
 
 The first main theorem determines the exponential rate of the linear program, as conjectured by
 Afkhami-Jeddi, Cohn, Hartman, de Laat and Tajdini.
 
-:::theorem "thm_1_1" (lean := "CohnElkies.sharpPackingRootAsymptotic")
+:::theorem "thm_1_1" (lean := "CohnElkies.sharpPackingRootAsymptotic, PackingBounds.FullMain.exact_limit")
 As $`d \to \infty`, $`\mathrm{LP}_d^{1/d} \longrightarrow \sqrt{e/(2\pi)}`, where
-$`\mathrm{LP}_d` is defined in {uses "def_lp"}[]. Equivalently,
-$`\log \mathrm{LP}_d/d \to \tfrac12\log(e/(2\pi))`,
-$`\mathrm{LP}_d = (\sqrt{e/(2\pi)} + o(1))^d`, and
+$`\mathrm{LP}_d` is defined in {uses "def_lp"}[].
+:::
+
+:::theorem "thm_1_1_equivalent_forms" (lean := "CohnElkies.sharpLogAsymptotic, CohnElkies.sharpBinaryLogAsymptotic, CohnElkies.sharpQuotientAsymptotic, CohnElkies.exists_manuscriptPackingIsLittleO, CohnElkies.exists_manuscriptQuotientRootIsLittleO")
+Equivalently to {uses "thm_1_1"}[]: $`\log \mathrm{LP}_d/d \to \tfrac12\log(e/(2\pi))`,
+$`\log_2\mathrm{LP}_d/d \to -\tfrac12\log_2(2\pi/e)`, $`\mathrm{LP}_d = (\sqrt{e/(2\pi)} + o(1))^d`,
+$`\inf_{f\in\mathcal{A}_d}(f(0)/\widehat f(0))^{1/d}/\sqrt d \to 1/\pi`, and
 $`\inf_{f\in\mathcal{A}_d}(f(0)/\widehat f(0))^{1/d} = (1/\pi + o(1))\sqrt d`.
+:::
+
+:::proof "thm_1_1_equivalent_forms"
+$`\mathrm{LP}_d = (v_d/2^d)\inf_f f(0)/\widehat f(0)` with $`(v_d/2^d)^{1/d}\sqrt d \to \sqrt{2\pi e}/2`
+({uses "lemma_stirling_ball_volume"}[]) and $`\sqrt{2\pi e}/(2\pi) = \sqrt{e/(2\pi)}`; the
+logarithmic forms follow by continuity of $`\log` and $`\log_2` at the positive limit, and the
+$`o(1)` forms by taking $`d`-th roots.
 :::
 
 :::proof "thm_1_1"
@@ -151,7 +167,7 @@ $`\inf_{f\in\mathcal{A}_d}(f(0)/\widehat f(0))^{1/d}/\sqrt d \to 1/\pi` directly
 Stirling's formula gives the claim.
 :::
 
-:::theorem "cor_packing_exponent" (lean := "PackingBounds.PackingBridge.sphere_packing_sharp_asymptotic_upper")
+:::theorem "cor_packing_exponent" (lean := "PackingBounds.PackingBridge.sphere_packing_sharp_asymptotic_upper, PackingBounds.FullMain.exact_binary_exponent")
 $`\Delta_d \le \mathrm{LP}_d = 2^{-(\alpha_* + o(1))d}` as $`d \to \infty`, where
 $`\alpha_* = \tfrac12 \log_2(2\pi/e) = 0.6044\ldots`; equivalently
 $`\Delta_d \le (\sqrt{e/(2\pi)} + o(1))^d`. This improves the Kabatianskii–Levenshtein
@@ -160,7 +176,8 @@ Cohn–Elkies auxiliary function can improve this exponent.
 :::
 
 :::proof "cor_packing_exponent"
-Combine {uses "thm_cohn_elkies_bound"}[] with {uses "thm_1_1"}[]:
+Combine {uses "eq_4_cohn_elkies_bound"}[] with {uses "thm_1_1"}[] and
+{uses "thm_1_1_equivalent_forms"}[]:
 $`\mathrm{LP}_d = (\sqrt{e/(2\pi)} + o(1))^d = 2^{-(\frac12\log_2(2\pi/e) + o(1))d}`.
 :::
 
@@ -204,7 +221,7 @@ with $`r(g)` from {uses "def_sign_radius"}[] and $`\mathcal{E}_\varsigma(d)` fro
 (Bourgain–Clozel–Kahane) and the complementary (Cohn–Gonçalves) uncertainty problems.
 :::
 
-:::theorem "thm_1_2" (lean := "CohnElkies.signUncertaintyConstant_div_sqrt_tendsto")
+:::theorem "thm_1_2" (lean := "CohnElkies.signUncertaintyConstant_div_sqrt_tendsto, CohnElkies.tendsto_toReal_signUncertaintyConstant_div_sqrt, CohnElkies.eventually_signUncertaintyConstant_lt_top")
 The sign-uncertainty constants of {uses "def_sign_uncertainty_constant"}[] satisfy
 $`\lim_{d\to\infty} \mathsf{A}_+(d)/\sqrt d = \lim_{d\to\infty} \mathsf{A}_-(d)/\sqrt d = 1/\pi`.
 In particular $`\mathsf{A}_\pm(d) < \infty` for all sufficiently large $`d`.
