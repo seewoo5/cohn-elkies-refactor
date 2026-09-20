@@ -7,10 +7,10 @@ One-file version can be found in `SpherePackingRefactored.lean`, which is about 
 More organized formalization are under `CohnElkies` and `CohnElkiesForMathlib`, with a blueprint of the statements and proofs in `CohnElkiesBlueprint`.
 
 Some results in the original report were missing in their formalization, and we have added them here. 
-In particular, we have formalized both signs of the uncertainty principle, the self-Fourier function $f_0$, $L^1$ to Schwartz reduction, and radial reduction.
+In particular, we have formalized both signs of the uncertainty principle, the self-Fourier function $f_0$, $L^1$ to Schwartz reduction, radial reduction. and Proposition A.1 ($A_+(d) < A_-(d)$ for all $d \ge 1$).
+Also, the proof of Lemma 3.2, whose original formal proof uses the Phragmén–Lindelöf principle on a strip, is replaced by a proof using Poisson principle for subharmonic functions (following the informal proof).
+The Phragmén–Lindelöf principle based proof is still kept.
 The 30-digits approximation of the Cohn-Elkies exponent is removed, since it is unnecessary.
-The Proposition A.1 of the report ($A_+(d) < A_-(d)$) is also missing in the original formalization; here it is formalized in $L^1$ generality. It needs an extremizer attaining $A_-(d)$, which is Theorem 1.4 of [Cohn–Gonçalves (2019)](https://arxiv.org/abs/1712.04438); its existence part is formalized as well, with Nazarov's uncertainty principle replaced by a compactness argument.
-The interior bound of Lemma 3.2 (the Poisson principle for the strip) is proved as in the report, by mapping the strip onto the upper half-plane and applying the Poisson principle for subharmonic functions; since Mathlib has neither subharmonic functions nor the Poisson integral of the half-plane, these are developed in `CohnElkiesForMathlib/Analysis/Complex/` (`Subharmonic/Defs.lean`, `Subharmonic/Basic.lean`, `PoissonHalfPlane.lean`, `Subharmonic/HalfPlane.lean`). The original formalization's Phragmén–Lindelöf argument on the strip is kept as an alternative proof (`CohnElkies/LowerBound/PhragmenLindelofMajorization.lean`).
 
 Every code is written by Claude (mostly Fable 5.1 and Opus 5), where the details can be found under `formalization.yaml`.
 It was asked to follow `RefactoringPlan.md` (which is completely human-written) with the original OpenAI's report, original Lean file, and my two blog posts as references, and the result is summarized in `RefactoringResult.md`.
