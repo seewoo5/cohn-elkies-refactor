@@ -32,11 +32,11 @@ Proposition 3.7 for `L¹` functions, the self-Fourier function `f₀`, the const
 | original `SpherePacking.lean` | 55,616 |
 | `CohnElkies/` after golfing, before the new theorems (Step 1, 52 modules) | 24,242 (−56 %) |
 | `CohnElkies/` at the end of Step 3 (53 modules, including the new material: `SignUncertainty/*` ≈ 2,350 lines, `UpperBound/SelfFourier` ≈ 220, Propositions 3.1/3.7; 2026-09-14) | 24,647 |
-| final `CohnElkies/` (61 modules; adds Appendix A ≈ 890 lines, the Cohn–Gonçalves existence theorem ≈ 1,340 lines, the general Poisson principle and (22) ≈ 470 lines, the conformal transfer strip ↔ half-plane and the report's proof of Lemma 3.2 ≈ 640 lines, §1.6, §7) | 27,408 |
-| final `CohnElkiesForMathlib/` (20 modules; adds `coth`, the compact-support theorem, weak sequential compactness, the no-concentration lemma, Gauss's digamma integral, subharmonic functions and the half-plane Poisson principle ≈ 1,490 lines) | 4,775 |
-| total (single file `SpherePackingRefactored.lean`, assembled from both) | 32,527 (−42 %) |
+| final `CohnElkies/` (61 modules; adds Appendix A ≈ 890 lines, the Cohn–Gonçalves existence theorem ≈ 1,340 lines, the general Poisson principle and (22) ≈ 470 lines, the conformal transfer strip ↔ half-plane and the report's proof of Lemma 3.2 ≈ 500 lines, §1.6, §7) | 27,265 |
+| final `CohnElkiesForMathlib/` (20 modules; adds `coth`, the compact-support theorem, weak sequential compactness, the no-concentration lemma, Gauss's digamma integral, subharmonic functions and the half-plane Poisson principle ≈ 1,200 lines) | 4,478 |
+| total (single file `SpherePackingRefactored.lean`, assembled from both) | 32,087 (−42 %) |
 
-Excluding the newly formalized material (≈ 8,200 lines: both signs of Propositions 3.1/3.7, `f₀`,
+Excluding the newly formalized material (≈ 7,800 lines: both signs of Propositions 3.1/3.7, `f₀`,
 the `L¹` theory, Appendix A, the existence of extremizers, the Poisson principles and (22)), the
 refactored code is ≈ 56 % shorter than the original. The whole library compiles with the lakefile options
 (`maxSynthPendingDepth = 3`, Mathlib's standard linter set) under the default `maxHeartbeats`,
@@ -992,10 +992,11 @@ theory must be `EReal`-valued (`⊥ = −∞` at zeros); and circle integrals of
 functions do not exist, so the sub-mean-value inequality is required for all truncations
 `max u a`, `a : ℝ`, which are bounded and measurable on circles.
 
-**New Mathlib-candidate modules** (`CohnElkiesForMathlib/Analysis/Complex/`, 1,497 lines, only
-`import Mathlib`, standard axioms):
+**New Mathlib-candidate modules** (`CohnElkiesForMathlib/Analysis/Complex/`, 1,200 lines, only
+`import Mathlib`, standard axioms; the line counts are after the `/cleanup` pass described at
+the end of this section):
 
-- `Subharmonic/Basic.lean` (518 lines): `EReal.truncateToReal a x = (max x a).toReal` with its
+- `Subharmonic/Basic.lean` (432 lines): `EReal.truncateToReal a x = (max x a).toReal` with its
   API; `SubharmonicOn u U` (`u : ℂ → EReal`: `UpperSemicontinuousOn`, `u ≠ ⊤`, and
   `∀ z ∈ U, ∀ᶠ r in 𝓝[>] 0, ∀ a, u z ≤ circleAverage (truncateToReal a ∘ u) z r`);
   `HarmonicOnNhd.subharmonicOn`, `SubharmonicOn.add_harmonic/sub_harmonic/add_const/sub_const`,
@@ -1009,16 +1010,15 @@ functions do not exist, so the sub-mean-value inequality is required for all tru
   `{u < max}` is open) and the weak one `SubharmonicOn.le_zero_of_limsup_frontier` on a bounded
   open preconnected set with boundary condition `limsup u (𝓝[Ω] ζ) ≤ 0` (the regularization
   attains its maximum on the compact closure).
-- `PoissonHalfPlane.lean` (597 lines, namespace `Complex`): `poissonKernelHalfPlane z x =
+- `PoissonHalfPlane.lean` (452 lines, namespace `Complex`): `poissonKernelHalfPlane z x =
   π⁻¹ Im z / ((x − Re z)² + (Im z)²)`, positivity, mass `1`, `P(z,x) ≤ C(A,η)/(1+x²)` for `z` in a
   compact part of `ℍ`, harmonicity in `z`; `poissonIntegralHalfPlane b z = ∫ P(z,x) b(x) dx` for
-  `b(x)/(1+x²)` integrable, with `_const/_add/_sub/_neg/_const_mul/_mono`, the bounds
-  `inf b ≤ P[b] ≤ sup b`; the Nevanlinna integral `π⁻¹ ∫ ((x − z)⁻¹ − x/(1+x²)) b(x) dx`,
+  `b(x)/(1+x²)` integrable, with `_const/_add/_mono` and the bounds `inf b ≤ P[b] ≤ sup b`; the Nevanlinna integral `π⁻¹ ∫ ((x − z)⁻¹ − x/(1+x²)) b(x) dx`,
   holomorphic on `ℍ` by differentiation under the integral sign (`hasDerivAt_integral_of_dominated_loc_of_deriv_le`),
   whose imaginary part is `P[b]` (`harmonicOnNhd_poissonIntegralHalfPlane`); the boundary values
   `tendsto_poissonIntegralHalfPlane_of_continuousAt : P[b](z) → b(x₀)` as `z → x₀` within `ℍ` at
   continuity points; the monotone convergence `P[max b (−n)] → P[b]`.
-- `Subharmonic/HalfPlane.lean` (382 lines): the auxiliary harmonic functions
+- `Subharmonic/HalfPlane.lean` (316 lines): the auxiliary harmonic functions
   `logNormRatio x₀ z = log ‖(z − x₀)/(z − x₀ + 2i)‖ ≤ 0` (`→ −∞` at `x₀`) and
   `negLogNormAddI z = −log ‖z + i‖ ≤ −log(‖z‖ − 1)`; the **extended maximum principle**
   `SubharmonicOn.le_zero_of_halfPlane` (subharmonic on `ℍ`, bounded above, `limsup ≤ 0` at every
@@ -1031,7 +1031,7 @@ functions do not exist, so the sub-mean-value inequality is required for all tru
   with the helper `Filter.Tendsto.limsup_log_norm_le` converting a limit `f → f₀`, `‖f₀‖ ≤ e^c`
   into `limsup log ‖f‖ ≤ c`.
 
-**The conformal transfer** (`CohnElkies/LowerBound/StripToHalfPlane.lean`, 464 lines):
+**The conformal transfer** (`CohnElkies/LowerBound/StripToHalfPlane.lean`, 328 lines):
 `stripToHalfPlane ℓ t = exp(π(t + iℓ)/(2ℓ))` (`= E_ℓ ℓ t 0`) and its inverse
 `halfPlaneToStrip ℓ w = (2ℓ/π) log w − iℓ` (principal branch; analytic on `ℍ`, mapping `ℍ` into
 the open strip, continuous up to `ℝ ∖ {0}` with `w → x > 0 ↦ (2ℓ/π) log x − iℓ` on the lower edge
@@ -1049,11 +1049,11 @@ the masses `M_σ` of the lower edge and `(1+σ)/2` of the upper edge
 (`poissonIntegralHalfPlane_halfPlaneDatum_one`, `poissonIntegralHalfPlane_indicator_Iic`).
 
 **The report's proof of the strip principle** (`CohnElkies/LowerBound/CappedMajorization.lean`,
-now 283 lines, imports `StripToHalfPlane`, `CappedMajorant` and `Subharmonic/HalfPlane`):
+now 276 lines, imports `StripToHalfPlane`, `CappedMajorant` and `Subharmonic/HalfPlane`):
 `norm_le_exp_integral_P_σ_of_strip` keeps its name and its statement for *bounded* `Z`
 (`DiffContOnCl` on the strip, `‖Z‖ ≤ K`, continuous `b` with `|b y| ≤ A(1+|y|)`,
 `‖Z(y − iℓ)‖ ≤ e^{b y}`, `‖Z(y + iℓ)‖ ≤ 1` ⇒ `‖Z(s + iσℓ)‖ ≤ exp ∫ P_σ(T) b(s − ℓT) dT`; the
-unused `0 ≤ A` hypothesis was dropped) and is proved in 40 lines: `F = Z ∘ halfPlaneToStrip ℓ` is
+unused `0 ≤ A` hypothesis was dropped) and is proved in 35 lines: `F = Z ∘ halfPlaneToStrip ℓ` is
 analytic and bounded on `ℍ`, `F → Z(t)` at the real points `x ≠ 0` with `t` the corresponding
 edge point, `Filter.Tendsto.limsup_log_norm_le` gives `limsup log ‖F‖ ≤ halfPlaneDatum ℓ b x`,
 `AnalyticOnNhd.log_norm_le_poissonIntegralHalfPlane` with `E = {0}` gives `‖F‖ ≤ exp P[datum]`,
@@ -1088,3 +1088,32 @@ toolchain change kill every language server (`pkill -f "lake serve"`, and the MC
 own them) before any LSP request; the lean-lsp tools trigger `lake setup-file` builds of a file's
 imports, which is also hazardous while other agents edit imported modules — with agents running,
 verify only with `lake env lean`.
+
+**`/cleanup` pass (2026-09-20, at the owner's request, to make the pull request easier to
+review).** The five new/rewritten Lean files were audited declaration by declaration with the
+mathlib-quality `/cleanup` procedure (audit report, `have` scan, simp squeezing, deep golf with
+`lean_multi_attempt`, verification with `lean_diagnostic_messages` and a final lint run with
+Mathlib's standard linter set), one worker agent per file, two files at a time (files in the
+same import chain never concurrently; oleans of a round rebuilt with `lake build <module>` before
+the next round), under the project's contract: no statement, name, visibility or declaration
+order changed (checked by a script comparing every declaration header with `HEAD`), `fun x ↦`,
+default heartbeats, docstrings kept. Result: 2,244 → 1,804 lines (−20 %):
+`Subharmonic/Basic.lean` 518 → 432, `PoissonHalfPlane.lean` 597 → 452 (9 unused lemmas
+deleted: `poissonKernelHalfPlane_nonneg`, `poissonKernelHalfPlane_le`,
+`harmonicOnNhd_poissonKernelHalfPlane`, `poissonIntegralHalfPlane_neg/_sub/_const_mul`,
+`abs_poissonIntegralHalfPlane_le`, `continuousOn_poissonIntegralHalfPlane`,
+`antitone_poissonIntegralHalfPlane_max`), `Subharmonic/HalfPlane.lean` 382 → 316,
+`StripToHalfPlane.lean` 464 → 328 (13 unused lemmas deleted: the `stripToHalfPlane_re`/`norm`/
+`ne_zero`/`hasDerivAt`/`differentiable`/`continuous` facts, `stripToHalfPlane_halfPlaneToStrip`,
+`halfPlaneToStrip_analyticOnNhd`/`differentiableOn`, the edge images
+`stripToHalfPlane_ofReal_sub_I_mul`/`_add_I_mul`, `halfPlaneDatum_exp`,
+`poissonIntegralHalfPlane_halfPlaneDatum_of_mem_strip`), `CappedMajorization.lean` 283 → 276.
+Typical simplifications: single-use `have`s inlined, tactic blocks turned into terms
+(`(le_max_left x a).trans_eq (coe_truncateToReal hx).symm`, `toReal_le_toReal …`), `calc`
+chains collapsed to `.trans`, `abs_le` case splits replaced by `abs_le_max_abs_abs`,
+`Metric.eventually_closedBall_subset`/`eventually_nhds_nhdsWithin` instead of ε-extractions,
+`Finset.sum_le_sum_of_subset_of_nonpos` instead of `add_sum_erase`, `normSq_pos` instead of a
+`nlinarith` argument, majorants chosen so that their integrability is a term. Mathlib-naming
+facts recorded on the way: `LE.le.not_lt`/`LT.lt.not_le` are now `LE.le.not_gt`/`LT.lt.not_ge`;
+`Set.setOf_subset_setOf` is deprecated; `field_simp` discharges `(π : ℂ) ≠ 0` by itself.
+

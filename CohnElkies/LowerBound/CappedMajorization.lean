@@ -147,18 +147,12 @@ theorem exists_abs_h_ℓD_le {d : ℕ} (hd : 0 < d) (R D : ℝ) :
 /-- The bottom edge `y - iℓ` lies in the closure of the strip `|Im z| < ℓ`. -/
 theorem ofReal_sub_I_mul_mem_closure_strip {ℓ : ℝ} (hℓ : 0 < ℓ) (y : ℝ) :
     (y : ℂ) - I * (ℓ : ℂ) ∈ closure (Complex.im ⁻¹' Ioo (-ℓ) ℓ) := by
-  rw [Complex.closure_preimage_im, closure_Ioo (by linarith : (-ℓ) ≠ ℓ)]
-  simp only [mem_preimage, mem_Icc, Complex.sub_im, Complex.ofReal_im, Complex.mul_im,
-    Complex.I_re, Complex.I_im, Complex.ofReal_re, zero_mul, one_mul, zero_add, zero_sub]
-  constructor <;> linarith
+  simp [Complex.closure_preimage_im, closure_Ioo (neg_lt_self hℓ).ne, hℓ.le]
 
 /-- The top edge `y + iℓ` lies in the closure of the strip `|Im z| < ℓ`. -/
 theorem ofReal_add_I_mul_mem_closure_strip {ℓ : ℝ} (hℓ : 0 < ℓ) (y : ℝ) :
     (y : ℂ) + I * (ℓ : ℂ) ∈ closure (Complex.im ⁻¹' Ioo (-ℓ) ℓ) := by
-  rw [Complex.closure_preimage_im, closure_Ioo (by linarith : (-ℓ) ≠ ℓ)]
-  simp only [mem_preimage, mem_Icc, Complex.add_im, Complex.ofReal_im, Complex.mul_im,
-    Complex.I_re, Complex.I_im, Complex.ofReal_re, zero_mul, one_mul, zero_add]
-  constructor <;> linarith
+  simp [Complex.closure_preimage_im, closure_Ioo (neg_lt_self hℓ).ne, hℓ.le]
 
 /-- **The Poisson principle for the strip** (the report's proof of Lemma 3.2, through the upper
 half-plane). Let `Z` be holomorphic and bounded on the open strip `|Im z| < ℓ` and continuous on
@@ -182,11 +176,10 @@ theorem norm_le_exp_integral_P_σ_of_strip {ℓ : ℝ} (hℓ : 0 < ℓ) {Z : ℂ
     (htop : ∀ y : ℝ, ‖Z ((y : ℂ) + I * (ℓ : ℂ))‖ ≤ 1)
     {σ : ℝ} (hσbelow : -1 < σ) (hσabove : σ < 1) (s : ℝ) :
     ‖Z ((s : ℂ) + I * (σ * ℓ : ℂ))‖ ≤ Real.exp (∫ T : ℝ, P_σ σ T * b (s - ℓ * T)) := by
-  have hstrip : IsOpen (Complex.im ⁻¹' Ioo (-ℓ) ℓ) := isOpen_Ioo.preimage Complex.continuous_im
   -- the transplanted function `F = Z ∘ Φ⁻¹` is analytic and bounded on the half-plane
   have hF : AnalyticOnNhd ℂ (Z ∘ halfPlaneToStrip ℓ) {w : ℂ | 0 < w.im} := fun w hw ↦
-    (hZ.differentiableOn.analyticOnNhd hstrip _ (halfPlaneToStrip_mem_strip hℓ hw)).comp
-      (halfPlaneToStrip_analyticAt ℓ hw)
+    (hZ.differentiableOn.analyticOnNhd (isOpen_Ioo.preimage Complex.continuous_im) _
+      (halfPlaneToStrip_mem_strip hℓ hw)).comp (halfPlaneToStrip_analyticAt ℓ hw)
   have hFK : ∀ w : ℂ, 0 < w.im → ‖(Z ∘ halfPlaneToStrip ℓ) w‖ ≤ K := fun w hw ↦
     hK _ (halfPlaneToStrip_mem_strip hℓ hw)
   -- boundary values of `F` at the real points `x ≠ 0`
@@ -201,7 +194,7 @@ theorem norm_le_exp_integral_P_σ_of_strip {ℓ : ℝ} (hℓ : 0 < ℓ) {Z : ℂ
         ((Real.log ‖(Z ∘ halfPlaneToStrip ℓ) w‖ : ℝ) : EReal))
         (𝓝[{w : ℂ | 0 < w.im}] (x : ℂ)) ≤ (halfPlaneDatum ℓ b x : EReal) := by
     intro x hx
-    rcases (show x ≠ 0 by simpa using hx).lt_or_gt with hx | hx
+    rcases (Finset.notMem_singleton.1 hx).lt_or_gt with hx | hx
     · rw [halfPlaneDatum_of_nonpos hx.le]
       exact (hlim (ofReal_add_I_mul_mem_closure_strip hℓ _)
         (tendsto_halfPlaneToStrip_ofReal_of_neg ℓ hx)).limsup_log_norm_le
@@ -213,7 +206,7 @@ theorem norm_le_exp_integral_P_σ_of_strip {ℓ : ℝ} (hℓ : 0 < ℓ) {Z : ℂ
   have hmem := ofReal_add_I_mul_mul_mem_strip hℓ hσbelow hσabove s
   have h := hF.log_norm_le_poissonIntegralHalfPlane hFK
     (integrable_halfPlaneDatum_div_one_add_sq hℓ hb hbound)
-    (fun x hx ↦ halfPlaneDatum_continuousAt hb (by simpa using hx)) hbdry _
+    (fun x hx ↦ halfPlaneDatum_continuousAt hb (Finset.notMem_singleton.1 hx)) hbdry _
     (stripToHalfPlane_im_pos hℓ hmem)
   rwa [Function.comp_apply, halfPlaneToStrip_stripToHalfPlane hℓ hmem,
     poissonIntegralHalfPlane_halfPlaneDatum hℓ hσbelow hσabove s b] at h

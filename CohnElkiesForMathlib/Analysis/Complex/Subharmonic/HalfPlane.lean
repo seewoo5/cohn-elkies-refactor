@@ -41,13 +41,9 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDim
 
 /-- Finite sums of harmonic functions are harmonic. -/
 theorem HarmonicAt.sum {ι : Type*} {s : Finset ι} {f : ι → E → F} {x : E}
-    (h : ∀ i ∈ s, HarmonicAt (f i) x) : HarmonicAt (fun y ↦ ∑ i ∈ s, f i y) x := by
-  classical
-  induction s using Finset.induction_on with
-  | empty => simp
-  | insert a s ha ih =>
-    simp_rw [Finset.sum_insert ha]
-    exact (h a (Finset.mem_insert_self a s)).add (ih fun i hi ↦ h i (Finset.mem_insert_of_mem hi))
+    (h : ∀ i ∈ s, HarmonicAt (f i) x) : HarmonicAt (fun y ↦ ∑ i ∈ s, f i y) x :=
+  Finset.sum_fn s f ▸ Finset.sum_induction f (HarmonicAt · x) (fun _ _ ↦ HarmonicAt.add)
+    (harmonicAt_const 0) h
 
 /-- Finite sums of harmonic functions are harmonic. -/
 theorem HarmonicOnNhd.sum {ι : Type*} {s : Finset ι} {f : ι → E → F} {U : Set E}
@@ -66,13 +62,11 @@ conditions enter the Poisson principle for `log ‖f‖`. -/
 theorem Filter.Tendsto.limsup_log_norm_le {α : Type*} {l : Filter α} {f : α → ℂ} {f₀ : ℂ} {c : ℝ}
     (hf : Tendsto f l (𝓝 f₀)) (hf₀ : ‖f₀‖ ≤ Real.exp c) :
     limsup (fun z ↦ if f z = 0 then ⊥ else ((Real.log ‖f z‖ : ℝ) : EReal)) l ≤ (c : EReal) := by
-  refine EReal.le_of_forall_lt_iff_le.1 fun d hd ↦ ?_
-  refine limsup_le_of_le (by isBoundedDefault) ?_
+  refine EReal.le_of_forall_lt_iff_le.1 fun d hd ↦ limsup_le_of_le (by isBoundedDefault) ?_
   filter_upwards [hf.norm.eventually
     (gt_mem_nhds (hf₀.trans_lt (Real.exp_lt_exp.2 (EReal.coe_lt_coe_iff.1 hd))))] with z hz
   split_ifs with hfz
-  · exact bot_le
-  · exact EReal.coe_le_coe_iff.2 ((Real.log_le_iff_le_exp (norm_pos_iff.2 hfz)).2 hz.le)
+  exacts [bot_le, EReal.coe_le_coe_iff.2 ((Real.log_le_iff_le_exp (norm_pos_iff.2 hfz)).2 hz.le)]
 
 namespace Complex
 
@@ -94,88 +88,66 @@ closed upper half-plane and tends to `-∞` as `‖z‖ → ∞`. -/
 noncomputable def negLogNormAddI (z : ℂ) : ℝ := -Real.log ‖z + I‖
 
 /-- `z - x₀ ≠ 0` for `z` in the upper half-plane and real `x₀`. -/
-theorem sub_ofReal_ne_zero_of_im_pos {x₀ : ℝ} {z : ℂ} (hz : 0 < z.im) : z - x₀ ≠ 0 := fun h ↦ by
-  have := congrArg Complex.im h
-  simp at this
-  linarith
+theorem sub_ofReal_ne_zero_of_im_pos {x₀ : ℝ} {z : ℂ} (hz : 0 < z.im) : z - x₀ ≠ 0 :=
+  ne_of_apply_ne Complex.im (by simpa using hz.ne')
 
 /-- `z - x₀ + 2i ≠ 0` for `z` in the closed upper half-plane and real `x₀`. -/
 theorem sub_ofReal_add_two_mul_I_ne_zero {x₀ : ℝ} {z : ℂ} (hz : 0 ≤ z.im) :
-    z - x₀ + 2 * I ≠ 0 := fun h ↦ by
-  have := congrArg Complex.im h
-  simp at this
-  linarith
+    z - x₀ + 2 * I ≠ 0 :=
+  ne_of_apply_ne Complex.im (by simpa using (by positivity : z.im + 2 ≠ 0))
 
+/-- `logNormRatio x₀` is harmonic on the upper half-plane. -/
 theorem harmonicOnNhd_logNormRatio (x₀ : ℝ) :
-    HarmonicOnNhd (logNormRatio x₀) {z | 0 < z.im} := by
-  intro z hz
-  have hz' : (0 : ℝ) < z.im := hz
-  have h₁ : z - x₀ ≠ 0 := sub_ofReal_ne_zero_of_im_pos hz'
-  have h₂ : z - x₀ + 2 * I ≠ 0 := sub_ofReal_add_two_mul_I_ne_zero hz'.le
-  have hf : AnalyticAt ℂ (fun w : ℂ ↦ (w - x₀) / (w - x₀ + 2 * I)) z := by
-    fun_prop (disch := exact h₂)
-  exact hf.harmonicAt_log_norm (div_ne_zero h₁ h₂)
+    HarmonicOnNhd (logNormRatio x₀) {z | 0 < z.im} := fun z hz ↦
+  have h₂ : z - x₀ + 2 * I ≠ 0 := sub_ofReal_add_two_mul_I_ne_zero (le_of_lt hz)
+  AnalyticAt.harmonicAt_log_norm (by fun_prop (disch := exact h₂))
+    (div_ne_zero (sub_ofReal_ne_zero_of_im_pos hz) h₂)
 
 /-- `‖w‖ ≤ ‖w + 2i‖` for `Im w ≥ 0`, as `‖w + 2i‖² = ‖w‖² + 4 Im w + 4`. -/
 theorem norm_le_norm_add_two_mul_I {w : ℂ} (hw : 0 ≤ w.im) : ‖w‖ ≤ ‖w + 2 * I‖ := by
-  rw [norm_def, norm_def]
   refine Real.sqrt_le_sqrt ?_
   simp only [normSq_apply, add_re, add_im, mul_re, mul_im, I_re, I_im, re_ofNat, im_ofNat]
-  nlinarith
+  linarith
 
-theorem logNormRatio_nonpos {x₀ : ℝ} {z : ℂ} (hz : 0 ≤ z.im) : logNormRatio x₀ z ≤ 0 := by
-  refine Real.log_nonpos (norm_nonneg _) ?_
-  rw [norm_div]
-  exact div_le_one_of_le₀ (norm_le_norm_add_two_mul_I (by simpa using hz)) (norm_nonneg _)
+/-- `logNormRatio x₀` is nonpositive on the closed upper half-plane. -/
+theorem logNormRatio_nonpos {x₀ : ℝ} {z : ℂ} (hz : 0 ≤ z.im) : logNormRatio x₀ z ≤ 0 :=
+  Real.log_nonpos (norm_nonneg _) <| (norm_div _ _).trans_le <|
+    div_le_one_of_le₀ (norm_le_norm_add_two_mul_I (by simpa using hz)) (norm_nonneg _)
 
 /-- `logNormRatio x₀ z → -∞` as `z → x₀` within the upper half-plane. -/
 theorem tendsto_logNormRatio_atBot (x₀ : ℝ) :
     Tendsto (logNormRatio x₀) (𝓝[{z | 0 < z.im}] (x₀ : ℂ)) atBot := by
   refine Real.tendsto_log_nhdsGT_zero.comp (tendsto_nhdsWithin_iff.2 ⟨?_, ?_⟩)
   · have hc : ContinuousAt (fun w : ℂ ↦ ‖(w - x₀) / (w - x₀ + 2 * I)‖) x₀ := by
-      have h₂ : (x₀ : ℂ) - x₀ + 2 * I ≠ 0 := sub_ofReal_add_two_mul_I_ne_zero (by simp)
-      fun_prop (disch := exact h₂)
+      fun_prop (disch := exact sub_ofReal_add_two_mul_I_ne_zero (by simp))
     simpa using hc.tendsto.mono_left nhdsWithin_le_nhds
-  · filter_upwards [self_mem_nhdsWithin] with z hz
-    exact norm_pos_iff.2 (div_ne_zero (sub_ofReal_ne_zero_of_im_pos hz)
-      (sub_ofReal_add_two_mul_I_ne_zero (le_of_lt hz)))
+  · exact eventually_nhdsWithin_of_forall fun z hz ↦ norm_pos_iff.2 (div_ne_zero
+      (sub_ofReal_ne_zero_of_im_pos hz) (sub_ofReal_add_two_mul_I_ne_zero (le_of_lt hz)))
 
-theorem harmonicOnNhd_negLogNormAddI : HarmonicOnNhd negLogNormAddI {z | 0 < z.im} := by
-  intro z hz
-  have hz' : (0 : ℝ) < z.im := hz
-  have h : z + I ≠ 0 := fun h ↦ by
-    have := congrArg Complex.im h
-    simp at this
-    linarith
-  exact ((analyticAt_id.add analyticAt_const).harmonicAt_log_norm h).neg
+/-- `negLogNormAddI` is harmonic on the upper half-plane. -/
+theorem harmonicOnNhd_negLogNormAddI : HarmonicOnNhd negLogNormAddI {z | 0 < z.im} :=
+  fun z (hz : 0 < z.im) ↦ ((analyticAt_id.add analyticAt_const).harmonicAt_log_norm
+    (ne_of_apply_ne Complex.im (by simpa using (by positivity : z.im + 1 ≠ 0)))).neg
 
-theorem negLogNormAddI_nonpos {z : ℂ} (hz : 0 ≤ z.im) : negLogNormAddI z ≤ 0 := by
-  refine neg_nonpos.2 (Real.log_nonneg ?_)
-  have := im_le_norm (z + I)
-  rw [add_im, I_im] at this
-  linarith
+/-- `negLogNormAddI` is nonpositive on the closed upper half-plane. -/
+theorem negLogNormAddI_nonpos {z : ℂ} (hz : 0 ≤ z.im) : negLogNormAddI z ≤ 0 :=
+  neg_nonpos.2 (Real.log_nonneg (le_trans (by simpa using hz) (im_le_norm (z + I))))
 
 /-- `-log ‖z + i‖ ≤ -log (R - 1)` for `‖z‖ ≥ R > 1`. -/
 theorem negLogNormAddI_le {z : ℂ} {R : ℝ} (hR : 1 < R) (hz : R ≤ ‖z‖) :
-    negLogNormAddI z ≤ -Real.log (R - 1) := by
-  refine neg_le_neg (Real.log_le_log (by linarith) ?_)
-  have := norm_sub_le (z + I) I
-  rw [add_sub_cancel_right, norm_I] at this
-  linarith
+    negLogNormAddI z ≤ -Real.log (R - 1) :=
+  neg_le_neg (Real.log_le_log (by linarith) (by linarith [norm_le_add_norm_add z I, norm_I]))
 
 /-- A boundary point `ζ` of the half-disc `{‖z‖ < R} ∩ ℍ` lies in the closed upper half-plane,
 and it is either real or of modulus at least `R`. -/
 theorem frontier_ball_inter_halfPlane_subset (R : ℝ) :
     frontier (ball (0 : ℂ) R ∩ {z | 0 < z.im}) ⊆ {ζ | 0 ≤ ζ.im ∧ (ζ.im = 0 ∨ R ≤ ‖ζ‖)} := by
-  intro ζ hζ
-  rw [(isOpen_ball.inter UpperHalfPlane.isOpen_upperHalfPlaneSet).frontier_eq] at hζ
-  obtain ⟨hcl, hnot⟩ := hζ
-  have hcl' : ζ ∈ closedBall (0 : ℂ) R ∩ {z | 0 ≤ z.im} :=
-    closure_minimal (inter_subset_inter ball_subset_closedBall fun z hz ↦ le_of_lt hz)
-      (isClosed_closedBall.inter (isClosed_le continuous_const continuous_im)) hcl
-  refine ⟨hcl'.2, ?_⟩
-  by_contra! h
-  exact hnot ⟨mem_ball_zero_iff.2 h.2, lt_of_le_of_ne hcl'.2 (Ne.symm h.1)⟩
+  rw [(isOpen_ball.inter UpperHalfPlane.isOpen_upperHalfPlaneSet).frontier_eq]
+  rintro ζ ⟨hcl, hnot⟩
+  have him : 0 ≤ ζ.im :=
+    closure_lt_subset_le continuous_const continuous_im (closure_mono inter_subset_right hcl)
+  exact ⟨him, or_iff_not_imp_left.2 fun h ↦ le_of_not_gt fun hR ↦
+    hnot ⟨mem_ball_zero_iff.2 hR, him.lt_of_ne' h⟩⟩
 
 end Complex
 
@@ -206,95 +178,69 @@ theorem le_zero_of_halfPlane {E : Finset ℝ} {M : ℝ}
     (hbdry : ∀ x : ℝ, x ∉ E → limsup u (𝓝[{z | 0 < z.im}] (x : ℂ)) ≤ 0) :
     ∀ z : ℂ, 0 < z.im → u z ≤ 0 := by
   intro z hz
-  set h : ℂ → ℝ := fun w ↦ ∑ x₀ ∈ E, logNormRatio x₀ w + negLogNormAddI w with hh
+  set h : ℂ → ℝ := fun w ↦ ∑ x₀ ∈ E, logNormRatio x₀ w + negLogNormAddI w
   have hharm : HarmonicOnNhd h {w | 0 < w.im} :=
     (HarmonicOnNhd.sum fun x₀ _ ↦ harmonicOnNhd_logNormRatio x₀).add harmonicOnNhd_negLogNormAddI
-  have hle : ∀ w : ℂ, 0 ≤ w.im → h w ≤ negLogNormAddI w := fun w hw ↦ by
-    have := Finset.sum_nonpos fun x₀ (_ : x₀ ∈ E) ↦ logNormRatio_nonpos (x₀ := x₀) hw
-    simp only [hh]
-    linarith
-  have hneg : ∀ w : ℂ, 0 ≤ w.im → h w ≤ 0 := fun w hw ↦
-    (hle w hw).trans (negLogNormAddI_nonpos hw)
+  have hle : ∀ w : ℂ, 0 ≤ w.im → h w ≤ negLogNormAddI w := fun w hw ↦
+    add_le_of_nonpos_left (Finset.sum_nonpos fun x₀ _ ↦ logNormRatio_nonpos hw)
   -- for every `ε > 0`, `u z ≤ -ε h z`
   have key : ∀ ε : ℝ, 0 < ε → u z ≤ ((-(ε * h z) : ℝ) : EReal) := by
     intro ε hε
-    obtain ⟨R, hR₂, hRz, hRlog⟩ : ∃ R : ℝ, 2 < R ∧ ‖z‖ < R ∧ M / ε ≤ Real.log (R - 1 - 1) := by
-      refine ⟨Real.exp (M / ε) + 2 + ‖z‖, ?_, ?_, ?_⟩
-      · linarith [Real.exp_pos (M / ε), norm_nonneg z]
-      · linarith [Real.exp_pos (M / ε)]
-      · calc M / ε = Real.log (Real.exp (M / ε)) := (Real.log_exp _).symm
-          _ ≤ _ := Real.log_le_log (Real.exp_pos _) (by linarith [norm_nonneg z])
+    obtain ⟨R, hR₂, hRz, hRlog⟩ : ∃ R : ℝ, 2 < R ∧ ‖z‖ < R ∧ M / ε ≤ Real.log (R - 1 - 1) :=
+      ⟨Real.exp (M / ε) + 2 + ‖z‖, by linarith [Real.exp_pos (M / ε), norm_nonneg z],
+        by linarith [Real.exp_pos (M / ε)], (Real.log_exp (M / ε)).symm.trans_le
+          (Real.log_le_log (Real.exp_pos _) (by linarith [norm_nonneg z]))⟩
     -- the values `u w + ε h w` are nonpositive wherever `h w ≤ -M / ε`
     have hbound : ∀ w : ℂ, 0 < w.im → h w ≤ -(M / ε) → u w + ((ε * h w : ℝ) : EReal) ≤ 0 := by
       intro w hw hhw
-      have h₁ : ε * h w ≤ -M := by
-        have := mul_le_mul_of_nonneg_left hhw hε.le
-        have : ε * (M / ε) = M := by field_simp
-        linarith
-      calc u w + ((ε * h w : ℝ) : EReal) ≤ (M : EReal) + ((ε * h w : ℝ) : EReal) :=
-            add_le_add_left (hM w hw) _
-        _ = ((M + ε * h w : ℝ) : EReal) := (EReal.coe_add _ _).symm
-        _ ≤ 0 := by rw [← EReal.coe_zero, EReal.coe_le_coe_iff]; linarith
+      have h₁ : ε * h w ≤ -M := (mul_le_mul_of_nonneg_left hhw hε.le).trans_eq (by field_simp)
+      exact (add_le_add_left (hM w hw) _).trans (by norm_cast; linarith)
     -- the weak maximum principle on the half-disc `Ω`
-    set Ω : Set ℂ := ball 0 R ∩ {w | 0 < w.im} with hΩ
+    set Ω : Set ℂ := ball 0 R ∩ {w | 0 < w.im}
     have hΩsub : Ω ⊆ {w | 0 < w.im} := inter_subset_right
     have hw : SubharmonicOn (fun w ↦ u w + ((ε * h w : ℝ) : EReal)) Ω :=
       (hu.add_harmonic UpperHalfPlane.isOpen_upperHalfPlaneSet
         (hharm.const_smul (c := ε))).mono hΩsub
     have hfr : ∀ ζ ∈ frontier Ω, limsup (fun w ↦ u w + ((ε * h w : ℝ) : EReal)) (𝓝[Ω] ζ) ≤ 0 := by
       intro ζ hζ
-      obtain ⟨hζim, hζ'⟩ := frontier_ball_inter_halfPlane_subset R hζ
-      rcases hζ' with him | hnorm
-      · -- a real boundary point `x = ζ.re`
-        have hζx : ((ζ.re : ℝ) : ℂ) = ζ := Complex.ext (by simp) (by simp [him])
-        rw [← hζx]
-        by_cases hE : ζ.re ∈ E
+      obtain ⟨-, him | hnorm⟩ := frontier_ball_inter_halfPlane_subset R hζ
+      · -- a real boundary point `x`
+        obtain ⟨x, rfl⟩ : ∃ x : ℝ, (x : ℂ) = ζ := ⟨ζ.re, Complex.ext rfl him.symm⟩
+        by_cases hE : x ∈ E
         · -- `x ∈ E`: `u ≤ M` and `ε h → -∞`
           refine limsup_le_of_le (by isBoundedDefault) ?_
-          have h₁ : ∀ᶠ w in 𝓝[{w | 0 < w.im}] (ζ.re : ℂ), logNormRatio ζ.re w ≤ -(M / ε) :=
-            (tendsto_logNormRatio_atBot ζ.re).eventually (eventually_le_atBot _)
-          filter_upwards [nhdsWithin_mono _ hΩsub h₁, self_mem_nhdsWithin] with w hw₁ hwΩ
+          filter_upwards [nhdsWithin_mono _ hΩsub
+            ((tendsto_logNormRatio_atBot x).eventually (eventually_le_atBot (-(M / ε)))),
+            self_mem_nhdsWithin] with w hw₁ hwΩ
           have hwim : 0 < w.im := hΩsub hwΩ
-          refine hbound w hwim (le_trans ?_ hw₁)
-          have h₂ := Finset.sum_nonpos fun x₀ (_ : x₀ ∈ E.erase ζ.re) ↦
-            logNormRatio_nonpos (x₀ := x₀) hwim.le
-          have h₃ := negLogNormAddI_nonpos hwim.le
-          simp only [hh]
-          rw [← Finset.add_sum_erase E _ hE]
-          linarith
+          have hsum : ∑ x₀ ∈ E, logNormRatio x₀ w ≤ logNormRatio x w :=
+            (Finset.sum_le_sum_of_subset_of_nonpos (Finset.singleton_subset_iff.2 hE)
+              fun i _ _ ↦ logNormRatio_nonpos (x₀ := i) hwim.le).trans_eq (Finset.sum_singleton _ _)
+          exact hbound w hwim ((add_le_of_nonpos_right (negLogNormAddI_nonpos hwim.le)).trans
+            (hsum.trans hw₁))
         · -- `x ∉ E`: the boundary condition, as `ε h ≤ 0`
-          calc limsup (fun w ↦ u w + ((ε * h w : ℝ) : EReal)) (𝓝[Ω] (ζ.re : ℂ))
-              ≤ limsup u (𝓝[Ω] (ζ.re : ℂ)) := by
-                refine limsup_le_limsup (eventually_nhdsWithin_of_forall fun w hw ↦ ?_)
-                exact add_le_of_nonpos_right (EReal.coe_nonpos.2
-                  (mul_nonpos_of_nonneg_of_nonpos hε.le (hneg w (hΩsub hw).le)))
-            _ ≤ limsup u (𝓝[{w | 0 < w.im}] (ζ.re : ℂ)) :=
-                limsup_le_limsup_of_le (nhdsWithin_mono _ hΩsub)
-            _ ≤ 0 := hbdry ζ.re hE
+          refine (limsup_le_limsup (eventually_nhdsWithin_of_forall fun w hw ↦ ?_)).trans
+            ((limsup_le_limsup_of_le (nhdsWithin_mono _ hΩsub)).trans (hbdry x hE))
+          exact add_le_of_nonpos_right (EReal.coe_nonpos.2 (mul_nonpos_of_nonneg_of_nonpos hε.le
+            ((hle w (hΩsub hw).le).trans (negLogNormAddI_nonpos (hΩsub hw).le))))
       · -- a boundary point of modulus `R`: `u + ε h ≤ 0` nearby
         refine limsup_le_of_le (by isBoundedDefault) ?_
-        have h₁ : ∀ᶠ w in 𝓝 ζ, R - 1 < ‖w‖ :=
-          (continuous_norm.tendsto ζ).eventually (lt_mem_nhds (by linarith))
-        filter_upwards [eventually_nhdsWithin_of_eventually_nhds h₁, self_mem_nhdsWithin]
-          with w hw₁ hwΩ
+        filter_upwards [eventually_nhdsWithin_of_eventually_nhds
+          ((continuous_norm.tendsto ζ).eventually (lt_mem_nhds (by linarith : R - 1 < ‖ζ‖))),
+          self_mem_nhdsWithin] with w hw₁ hwΩ
         have hwim : 0 < w.im := hΩsub hwΩ
-        refine hbound w hwim ?_
-        have h₂ := negLogNormAddI_le (R := R - 1) (by linarith) hw₁.le
-        linarith [hle w hwim.le]
-    have hΩz : z ∈ Ω := ⟨mem_ball_zero_iff.2 hRz, hz⟩
+        exact hbound w hwim <| by
+          linarith [hle w hwim.le, negLogNormAddI_le (R := R - 1) (by linarith) hw₁.le]
     have hz₀ := hw.le_zero_of_limsup_frontier
       (isOpen_ball.inter UpperHalfPlane.isOpen_upperHalfPlaneSet)
       (isBounded_ball.subset inter_subset_left)
-      ((convex_ball 0 R).inter (convex_halfSpace_im_gt 0)).isPreconnected hfr z hΩz
-    have := (EReal.le_sub_iff_add_le (.inl (EReal.coe_ne_bot _)) (.inl (EReal.coe_ne_top _))).2 hz₀
-    rwa [zero_sub, ← EReal.coe_neg] at this
+      ((convex_ball 0 R).inter (convex_halfSpace_im_gt 0)).isPreconnected hfr z
+      ⟨mem_ball_zero_iff.2 hRz, hz⟩
+    exact EReal.sub_nonpos.1 (by rwa [sub_eq_add_neg, ← EReal.coe_neg, neg_neg])
   -- let `ε → 0`
-  have hlim : Tendsto (fun ε : ℝ ↦ ((-(ε * h z) : ℝ) : EReal)) (𝓝[>] 0) (𝓝 0) := by
-    rw [← EReal.coe_zero]
-    refine EReal.tendsto_coe.2 ?_
-    have : Tendsto (fun ε : ℝ ↦ -(ε * h z)) (𝓝 0) (𝓝 (-(0 * h z))) :=
-      ((continuous_id.mul continuous_const).neg).tendsto 0
-    simpa using this.mono_left nhdsWithin_le_nhds
+  have hlim : Tendsto (fun ε : ℝ ↦ ((-(ε * h z) : ℝ) : EReal)) (𝓝[>] 0) (𝓝 0) :=
+    ((continuous_coe_real_ereal.comp (by fun_prop)).tendsto' 0 0 (by simp)).mono_left
+      nhdsWithin_le_nhds
   exact ge_of_tendsto hlim (eventually_nhdsWithin_of_forall key)
 
 /-- **Poisson principle for the upper half-plane** (Ahlfors): let `u` be subharmonic on `ℍ` and
@@ -318,35 +264,26 @@ theorem le_poissonIntegralHalfPlane {b : ℝ → ℝ} {E : Finset ℝ} {M : ℝ}
     intro n
     have hbn : Integrable fun x ↦ max (b x) (-(n : ℝ)) / (1 + x ^ 2) :=
       integrable_max_neg_div_one_add_sq hb n
-    set P : ℂ → ℝ := poissonIntegralHalfPlane fun x ↦ max (b x) (-(n : ℝ)) with hP
-    have hPge : ∀ w : ℂ, 0 < w.im → -(n : ℝ) ≤ P w := fun w hw ↦
-      le_poissonIntegralHalfPlane_of_le hbn (fun x ↦ le_max_right _ _) hw
-    have hv : SubharmonicOn (fun w ↦ u w - (P w : EReal)) {z | 0 < z.im} :=
-      hu.sub_harmonic UpperHalfPlane.isOpen_upperHalfPlaneSet
-        (harmonicOnNhd_poissonIntegralHalfPlane hbn)
-    have hvM : ∀ w : ℂ, 0 < w.im → u w - (P w : EReal) ≤ ((M + n : ℝ) : EReal) := fun w hw ↦ by
-      calc u w - (P w : EReal) ≤ (M : EReal) - ((-(n : ℝ) : ℝ) : EReal) :=
-            EReal.sub_le_sub (hM w hw) (EReal.coe_le_coe_iff.2 (hPge w hw))
-        _ = ((M + n : ℝ) : EReal) := by rw [← EReal.coe_sub, sub_neg_eq_add]
+    set P : ℂ → ℝ := poissonIntegralHalfPlane fun x ↦ max (b x) (-(n : ℝ))
+    have hvM : ∀ w : ℂ, 0 < w.im → u w - (P w : EReal) ≤ ((M + n : ℝ) : EReal) := fun w hw ↦
+      (EReal.sub_le_sub (hM w hw) (EReal.coe_le_coe_iff.2
+        (le_poissonIntegralHalfPlane_of_le hbn (fun x ↦ le_max_right _ _) hw))).trans_eq
+        (by rw [← EReal.coe_sub, sub_neg_eq_add])
     have hvb : ∀ x : ℝ, x ∉ E →
         limsup (fun w ↦ u w - (P w : EReal)) (𝓝[{z | 0 < z.im}] (x : ℂ)) ≤ 0 := by
       intro x hx
       have hPt : Tendsto P (𝓝[{z | 0 < z.im}] (x : ℂ)) (𝓝 (max (b x) (-(n : ℝ)))) :=
         tendsto_poissonIntegralHalfPlane_of_continuousAt hbn ((hbc x hx).max continuousAt_const)
-      refine EReal.le_of_forall_lt_iff_le.1 fun δ hδ ↦ ?_
+      refine EReal.le_of_forall_lt_iff_le.1 fun δ hδ ↦ limsup_le_of_le (by isBoundedDefault) ?_
       have hδ' : 0 < δ := EReal.coe_pos.1 hδ
-      refine limsup_le_of_le (by isBoundedDefault) ?_
-      have h₁ : ∀ᶠ w in 𝓝[{z | 0 < z.im}] (x : ℂ), u w < ((b x + δ / 2 : ℝ) : EReal) :=
-        eventually_lt_of_limsup_lt
-          ((hbdry x hx).trans_lt (EReal.coe_lt_coe_iff.2 (by linarith)))
-      have h₂ : ∀ᶠ w in 𝓝[{z | 0 < z.im}] (x : ℂ), b x - δ / 2 < P w :=
-        hPt.eventually (lt_mem_nhds (by linarith [le_max_left (b x) (-(n : ℝ))]))
-      filter_upwards [h₁, h₂] with w hw₁ hw₂
-      calc u w - (P w : EReal) ≤ ((b x + δ / 2 : ℝ) : EReal) - (P w : EReal) :=
-            EReal.sub_le_sub hw₁.le le_rfl
-        _ = ((b x + δ / 2 - P w : ℝ) : EReal) := (EReal.coe_sub _ _).symm
-        _ ≤ (δ : EReal) := EReal.coe_le_coe_iff.2 (by linarith)
-    exact EReal.sub_nonpos.1 (hv.le_zero_of_halfPlane hvM hvb z hz)
+      filter_upwards [eventually_lt_of_limsup_lt
+        ((hbdry x hx).trans_lt (EReal.coe_lt_coe_iff.2 (by linarith : b x < b x + δ / 2))),
+        hPt.eventually (lt_mem_nhds (by linarith [le_max_left (b x) (-n : ℝ)] : b x - δ / 2 < _))]
+        with w hw₁ hw₂
+      exact (EReal.sub_le_sub hw₁.le le_rfl).trans ((EReal.coe_sub _ _).symm.trans_le
+        (EReal.coe_le_coe_iff.2 (by linarith)))
+    exact EReal.sub_nonpos.1 ((hu.sub_harmonic UpperHalfPlane.isOpen_upperHalfPlaneSet
+      (harmonicOnNhd_poissonIntegralHalfPlane hbn)).le_zero_of_halfPlane hvM hvb z hz)
   -- let `n → ∞`
   exact ge_of_tendsto' (EReal.tendsto_coe.2 (tendsto_poissonIntegralHalfPlane_max hb hz)) key
 
@@ -368,15 +305,12 @@ theorem _root_.AnalyticOnNhd.log_norm_le_poissonIntegralHalfPlane {f : ℂ → �
       (if f w = 0 then ⊥ else ((Real.log ‖f w‖ : ℝ) : EReal)) ≤ (Real.log (max K 1) : EReal) := by
     intro w hw
     split_ifs with hfw
-    · exact bot_le
-    · exact EReal.coe_le_coe_iff.2
-        (Real.log_le_log (norm_pos_iff.2 hfw) ((hK w hw).trans (le_max_left _ _)))
+    exacts [bot_le, EReal.coe_le_coe_iff.2
+      (Real.log_le_log (norm_pos_iff.2 hfw) ((hK w hw).trans (le_max_left _ _)))]
   have h := (hf.subharmonicOn_log_norm UpperHalfPlane.isOpen_upperHalfPlaneSet)
     |>.le_poissonIntegralHalfPlane hM hb hbc hbdry z hz
   by_cases hfz : f z = 0
-  · rw [hfz, norm_zero]
-    exact (Real.exp_pos _).le
-  · rw [ite_eq_right hfz, EReal.coe_le_coe_iff] at h
-    exact (Real.log_le_iff_le_exp (norm_pos_iff.2 hfz)).1 h
+  · exact hfz ▸ norm_zero.trans_le (Real.exp_pos _).le
+  · exact (Real.log_le_iff_le_exp (norm_pos_iff.2 hfz)).1 (by simpa [hfz] using h)
 
 end SubharmonicOn

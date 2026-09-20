@@ -236,22 +236,17 @@ open scoped Real Topology
 `1 + x²`, uniformly for `a + i h` in a compact subset of the upper half-plane. -/
 theorem one_add_sq_le_mul_sub_sq_add_sq {A η a h x : ℝ} (hη : 0 < η) (ha : |a| ≤ A)
     (hh : η ≤ h) : 1 + x ^ 2 ≤ (2 + (1 + 2 * A ^ 2) / η ^ 2) * ((x - a) ^ 2 + h ^ 2) := by
-  have h1 : 1 + x ^ 2 ≤ 2 * (x - a) ^ 2 + (1 + 2 * a ^ 2) := by nlinarith [sq_nonneg (x - 2 * a)]
-  have h2 : a ^ 2 ≤ A ^ 2 := by simpa [sq_abs] using pow_le_pow_left₀ (abs_nonneg a) ha 2
   have h3 : 1 + 2 * A ^ 2 ≤ (1 + 2 * A ^ 2) / η ^ 2 * h ^ 2 := by
     rw [div_mul_eq_mul_div, le_div_iff₀ (by positivity)]
-    have : η ^ 2 ≤ h ^ 2 := pow_le_pow_left₀ hη.le hh 2
-    nlinarith
+    nlinarith [pow_le_pow_left₀ hη.le hh 2]
   have h4 : 0 ≤ (1 + 2 * A ^ 2) / η ^ 2 * (x - a) ^ 2 := by positivity
-  nlinarith
+  nlinarith [sq_nonneg (x - 2 * a), abs_nonneg a, sq_abs a]
 
 /-- Truncating from below does not increase the absolute value: `|max a (-c)| ≤ |a|` for
 `0 ≤ c`. -/
-theorem abs_max_neg_le_abs {a c : ℝ} (hc : 0 ≤ c) : |max a (-c)| ≤ |a| := by
-  rcases le_total (-c) a with h | h
-  · rw [max_eq_left h]
-  · rw [max_eq_right h, abs_neg, abs_of_nonneg hc, abs_of_nonpos (h.trans (by linarith))]
-    linarith
+theorem abs_max_neg_le_abs {a c : ℝ} (hc : 0 ≤ c) : |max a (-c)| ≤ |a| :=
+  abs_le.2 ⟨(neg_abs_le a).trans (le_max_left _ _),
+    max_le (le_abs_self a) ((neg_nonpos.2 hc).trans (abs_nonneg a))⟩
 
 namespace Complex
 
@@ -260,49 +255,26 @@ noncomputable def poissonKernelHalfPlane (z : ℂ) (x : ℝ) : ℝ :=
   π⁻¹ * z.im / ((x - z.re) ^ 2 + z.im ^ 2)
 
 theorem poissonKernelHalfPlane_pos {z : ℂ} (hz : 0 < z.im) (x : ℝ) :
-    0 < poissonKernelHalfPlane z x := by
-  unfold poissonKernelHalfPlane
-  positivity
-
-theorem poissonKernelHalfPlane_nonneg {z : ℂ} (hz : 0 ≤ z.im) (x : ℝ) :
-    0 ≤ poissonKernelHalfPlane z x := by
-  unfold poissonKernelHalfPlane
-  positivity
+    0 < poissonKernelHalfPlane z x :=
+  div_pos (by positivity) (by positivity)
 
 /-- The Poisson kernel is the imaginary part of the holomorphic function `π⁻¹ (x - z)⁻¹`. -/
 theorem poissonKernelHalfPlane_eq_im (z : ℂ) (x : ℝ) :
     poissonKernelHalfPlane z x = (π⁻¹ * ((x : ℂ) - z)⁻¹).im := by
   simp [poissonKernelHalfPlane, normSq_apply, mul_div_assoc, sq]
 
-/-- The uniform bound `P(z, x) ≤ π⁻¹ / Im z`. -/
-theorem poissonKernelHalfPlane_le {z : ℂ} (hz : 0 < z.im) (x : ℝ) :
-    poissonKernelHalfPlane z x ≤ π⁻¹ * z.im⁻¹ := by
-  unfold poissonKernelHalfPlane
-  calc π⁻¹ * z.im / ((x - z.re) ^ 2 + z.im ^ 2) ≤ π⁻¹ * z.im / z.im ^ 2 := by
-        gcongr
-        exact le_add_of_nonneg_left (sq_nonneg _)
-    _ = π⁻¹ * z.im⁻¹ := by field_simp
-
 theorem measurable_poissonKernelHalfPlane (z : ℂ) : Measurable (poissonKernelHalfPlane z) := by
-  unfold poissonKernelHalfPlane
-  fun_prop
+  fun_prop [poissonKernelHalfPlane]
 
 theorem continuous_poissonKernelHalfPlane {z : ℂ} (hz : z.im ≠ 0) :
-    Continuous (poissonKernelHalfPlane z) := by
-  unfold poissonKernelHalfPlane
-  exact continuous_const.div (by fun_prop) fun x ↦ by positivity
+    Continuous (poissonKernelHalfPlane z) :=
+  continuous_const.div (by fun_prop) fun x ↦ by positivity
 
 /-- For `x ≠ z` the Poisson kernel is continuous in `z`. -/
 theorem continuousAt_poissonKernelHalfPlane {z : ℂ} {x : ℝ} (h : (x : ℂ) ≠ z) :
     ContinuousAt (fun w ↦ poissonKernelHalfPlane w x) z := by
-  have hne : (x - z.re) ^ 2 + z.im ^ 2 ≠ 0 := by
-    intro h0
-    apply h
-    have hre : x - z.re = 0 := by nlinarith [sq_nonneg (x - z.re), sq_nonneg z.im]
-    have him : z.im = 0 := by nlinarith [sq_nonneg (x - z.re), sq_nonneg z.im]
-    exact Complex.ext (by simpa using sub_eq_zero.1 hre) (by simpa using him.symm)
-  unfold poissonKernelHalfPlane
-  exact (continuousAt_const.mul continuous_im.continuousAt).div (by fun_prop) hne
+  refine (continuousAt_const.mul continuous_im.continuousAt).div (by fun_prop) ?_
+  simpa [normSq_apply, sq] using (normSq_pos.2 (sub_ne_zero.2 h)).ne'
 
 /-- The Poisson kernel in the form `π⁻¹ (Im z)⁻¹ (1 + ((Im z)⁻¹ (x - Re z))²)⁻¹` adapted to the
 substitution `x = Re z + Im z · t`. -/
@@ -313,11 +285,10 @@ theorem poissonKernelHalfPlane_eq_inv_one_add_sq {z : ℂ} (hz : z.im ≠ 0) (x 
   ring
 
 theorem integrable_poissonKernelHalfPlane {z : ℂ} (hz : 0 < z.im) :
-    Integrable (poissonKernelHalfPlane z) := by
-  have h := ((integrable_inv_one_add_mul_sq (inv_ne_zero hz.ne')).comp_sub_right z.re).const_mul
-    (π⁻¹ * z.im⁻¹)
-  exact h.congr (Eventually.of_forall fun x ↦
-    (poissonKernelHalfPlane_eq_inv_one_add_sq hz.ne' x).symm)
+    Integrable (poissonKernelHalfPlane z) :=
+  (((integrable_inv_one_add_mul_sq (inv_ne_zero hz.ne')).comp_sub_right z.re).const_mul
+    (π⁻¹ * z.im⁻¹)).congr (Eventually.of_forall fun x ↦
+      (poissonKernelHalfPlane_eq_inv_one_add_sq hz.ne' x).symm)
 
 /-- The Poisson kernel has total mass one: `∫ P(z, x) dx = 1` for `z ∈ ℍ`. -/
 theorem integral_poissonKernelHalfPlane {z : ℂ} (hz : 0 < z.im) :
@@ -331,19 +302,9 @@ theorem integral_poissonKernelHalfPlane {z : ℂ} (hz : 0 < z.im) :
 holomorphic function `π⁻¹ (x - z)⁻¹`. -/
 theorem harmonicAt_poissonKernelHalfPlane {z : ℂ} {x : ℝ} (h : (x : ℂ) ≠ z) :
     HarmonicAt (fun w ↦ poissonKernelHalfPlane w x) z := by
-  have ha : AnalyticAt ℂ (fun w : ℂ ↦ π⁻¹ * ((x : ℂ) - w)⁻¹) z :=
-    analyticAt_const.mul ((analyticAt_const.sub analyticAt_id).inv (sub_ne_zero.2 h))
-  have e : (fun w ↦ poissonKernelHalfPlane w x) = fun w ↦ (π⁻¹ * ((x : ℂ) - w)⁻¹).im :=
-    funext fun w ↦ poissonKernelHalfPlane_eq_im w x
-  rw [e]
-  exact ha.harmonicAt_im
-
-theorem harmonicOnNhd_poissonKernelHalfPlane (x : ℝ) :
-    HarmonicOnNhd (fun w ↦ poissonKernelHalfPlane w x) {z | 0 < z.im} := fun z hz ↦
-  harmonicAt_poissonKernelHalfPlane fun h ↦ by
-    have : (0 : ℝ) < z.im := hz
-    rw [← h] at this
-    simp at this
+  simp only [poissonKernelHalfPlane_eq_im]
+  exact (analyticAt_const.mul
+    ((analyticAt_const.sub analyticAt_id).inv (sub_ne_zero.2 h))).harmonicAt_im
 
 /-!
 ### Comparison with the Cauchy density `(1 + x²)⁻¹`
@@ -359,25 +320,19 @@ theorem poissonKernelHalfPlane_le_div_one_add_sq {z : ℂ} {A η : ℝ} (hη : 0
     (hA : |z.re| ≤ A) (hz : η ≤ z.im) (x : ℝ) :
     poissonKernelHalfPlane z x ≤ π⁻¹ * z.im * (2 + (1 + 2 * A ^ 2) / η ^ 2) / (1 + x ^ 2) := by
   have hzim : 0 < z.im := hη.trans_le hz
-  unfold poissonKernelHalfPlane
-  rw [div_le_div_iff₀ (by positivity) (by positivity)]
-  calc π⁻¹ * z.im * (1 + x ^ 2)
-      ≤ π⁻¹ * z.im * ((2 + (1 + 2 * A ^ 2) / η ^ 2) * ((x - z.re) ^ 2 + z.im ^ 2)) := by
-        gcongr
-        exact one_add_sq_le_mul_sub_sq_add_sq hη hA hz
-    _ = _ := by ring
+  rw [poissonKernelHalfPlane, div_le_div_iff₀ (by positivity) (by positivity)]
+  exact (mul_le_mul_of_nonneg_left (one_add_sq_le_mul_sub_sq_add_sq hη hA hz)
+    (by positivity)).trans_eq (by ring)
 
 theorem integrable_const_div_one_add_sq (c : ℝ) : Integrable fun x : ℝ ↦ c / (1 + x ^ 2) := by
   simpa [div_eq_mul_inv] using integrable_inv_one_add_sq.const_mul c
 
 /-- A boundary datum `b` with `b(x) / (1 + x²)` integrable is a.e.-strongly measurable. -/
 theorem aestronglyMeasurable_of_integrable_div_one_add_sq {b : ℝ → ℝ}
-    (hb : Integrable fun x ↦ b x / (1 + x ^ 2)) : AEStronglyMeasurable b volume := by
-  have := hb.aestronglyMeasurable.mul
-    (by fun_prop : Continuous fun x : ℝ ↦ 1 + x ^ 2).aestronglyMeasurable
-  refine this.congr (Eventually.of_forall fun x ↦ ?_)
-  change b x / (1 + x ^ 2) * (1 + x ^ 2) = b x
-  field_simp
+    (hb : Integrable fun x ↦ b x / (1 + x ^ 2)) : AEStronglyMeasurable b volume :=
+  (hb.aestronglyMeasurable.mul
+    (by fun_prop : Continuous fun x : ℝ ↦ 1 + x ^ 2).aestronglyMeasurable).congr
+    (Eventually.of_forall fun x ↦ div_mul_cancel₀ _ (by positivity))
 
 /-!
 ### The Poisson integral
@@ -392,15 +347,13 @@ integrable. -/
 theorem integrable_poissonKernelHalfPlane_mul {b : ℝ → ℝ}
     (hb : Integrable fun x ↦ b x / (1 + x ^ 2)) {z : ℂ} (hz : 0 < z.im) :
     Integrable fun x ↦ poissonKernelHalfPlane z x * b x := by
-  set C := π⁻¹ * z.im * (2 + (1 + 2 * |z.re| ^ 2) / z.im ^ 2) with hC
-  refine (hb.norm.const_mul C).mono'
+  refine (hb.norm.const_mul (π⁻¹ * z.im * (2 + (1 + 2 * |z.re| ^ 2) / z.im ^ 2))).mono'
     ((continuous_poissonKernelHalfPlane hz.ne').aestronglyMeasurable.mul
       (aestronglyMeasurable_of_integrable_div_one_add_sq hb)) (Eventually.of_forall fun x ↦ ?_)
   simp only [norm_mul, Real.norm_eq_abs, abs_div, abs_of_pos (poissonKernelHalfPlane_pos hz x),
     abs_of_pos (by positivity : (0 : ℝ) < 1 + x ^ 2)]
-  rw [← mul_div_assoc, mul_div_right_comm]
-  gcongr
-  exact poissonKernelHalfPlane_le_div_one_add_sq hz le_rfl le_rfl x
+  exact (mul_le_mul_of_nonneg_right (poissonKernelHalfPlane_le_div_one_add_sq hz le_rfl le_rfl x)
+    (abs_nonneg _)).trans_eq (by ring)
 
 theorem poissonIntegralHalfPlane_const {z : ℂ} (hz : 0 < z.im) (c : ℝ) :
     poissonIntegralHalfPlane (fun _ ↦ c) z = c := by
@@ -410,25 +363,8 @@ theorem poissonIntegralHalfPlane_add {b₁ b₂ : ℝ → ℝ} (hb₁ : Integrab
     (hb₂ : Integrable fun x ↦ b₂ x / (1 + x ^ 2)) {z : ℂ} (hz : 0 < z.im) :
     poissonIntegralHalfPlane (b₁ + b₂) z =
       poissonIntegralHalfPlane b₁ z + poissonIntegralHalfPlane b₂ z := by
-  simp only [poissonIntegralHalfPlane, Pi.add_apply, mul_add]
-  exact integral_add (integrable_poissonKernelHalfPlane_mul hb₁ hz)
-    (integrable_poissonKernelHalfPlane_mul hb₂ hz)
-
-theorem poissonIntegralHalfPlane_neg (b : ℝ → ℝ) (z : ℂ) :
-    poissonIntegralHalfPlane (-b) z = -poissonIntegralHalfPlane b z := by
-  simp [poissonIntegralHalfPlane, integral_neg]
-
-theorem poissonIntegralHalfPlane_sub {b₁ b₂ : ℝ → ℝ} (hb₁ : Integrable fun x ↦ b₁ x / (1 + x ^ 2))
-    (hb₂ : Integrable fun x ↦ b₂ x / (1 + x ^ 2)) {z : ℂ} (hz : 0 < z.im) :
-    poissonIntegralHalfPlane (b₁ - b₂) z =
-      poissonIntegralHalfPlane b₁ z - poissonIntegralHalfPlane b₂ z := by
-  simp only [poissonIntegralHalfPlane, Pi.sub_apply, mul_sub]
-  exact integral_sub (integrable_poissonKernelHalfPlane_mul hb₁ hz)
-    (integrable_poissonKernelHalfPlane_mul hb₂ hz)
-
-theorem poissonIntegralHalfPlane_const_mul (c : ℝ) (b : ℝ → ℝ) (z : ℂ) :
-    poissonIntegralHalfPlane (fun x ↦ c * b x) z = c * poissonIntegralHalfPlane b z := by
-  simp [poissonIntegralHalfPlane, ← integral_const_mul, mul_left_comm]
+  simpa [poissonIntegralHalfPlane, mul_add] using integral_add
+    (integrable_poissonKernelHalfPlane_mul hb₁ hz) (integrable_poissonKernelHalfPlane_mul hb₂ hz)
 
 /-- The Poisson integral is monotone in the boundary datum. -/
 theorem poissonIntegralHalfPlane_mono {b₁ b₂ : ℝ → ℝ} (hb₁ : Integrable fun x ↦ b₁ x / (1 + x ^ 2))
@@ -440,22 +376,15 @@ theorem poissonIntegralHalfPlane_mono {b₁ b₂ : ℝ → ℝ} (hb₁ : Integra
 
 /-- If `b ≤ M` then `P[b] ≤ M` on `ℍ`. -/
 theorem poissonIntegralHalfPlane_le_of_le {b : ℝ → ℝ} (hb : Integrable fun x ↦ b x / (1 + x ^ 2))
-    {M : ℝ} (h : ∀ x, b x ≤ M) {z : ℂ} (hz : 0 < z.im) : poissonIntegralHalfPlane b z ≤ M := by
-  simpa [poissonIntegralHalfPlane_const hz] using
-    poissonIntegralHalfPlane_mono hb (integrable_const_div_one_add_sq M) h hz
+    {M : ℝ} (h : ∀ x, b x ≤ M) {z : ℂ} (hz : 0 < z.im) : poissonIntegralHalfPlane b z ≤ M :=
+  (poissonIntegralHalfPlane_mono hb (integrable_const_div_one_add_sq M) h hz).trans_eq
+    (poissonIntegralHalfPlane_const hz M)
 
 /-- If `M ≤ b` then `M ≤ P[b]` on `ℍ`. -/
 theorem le_poissonIntegralHalfPlane_of_le {b : ℝ → ℝ} (hb : Integrable fun x ↦ b x / (1 + x ^ 2))
-    {M : ℝ} (h : ∀ x, M ≤ b x) {z : ℂ} (hz : 0 < z.im) : M ≤ poissonIntegralHalfPlane b z := by
-  simpa [poissonIntegralHalfPlane_const hz] using
-    poissonIntegralHalfPlane_mono (integrable_const_div_one_add_sq M) hb h hz
-
-/-- If `|b| ≤ M` then `|P[b]| ≤ M` on `ℍ`. -/
-theorem abs_poissonIntegralHalfPlane_le {b : ℝ → ℝ} (hb : Integrable fun x ↦ b x / (1 + x ^ 2))
-    {M : ℝ} (h : ∀ x, |b x| ≤ M) {z : ℂ} (hz : 0 < z.im) :
-    |poissonIntegralHalfPlane b z| ≤ M :=
-  abs_le.2 ⟨le_poissonIntegralHalfPlane_of_le hb (fun x ↦ (abs_le.1 (h x)).1) hz,
-    poissonIntegralHalfPlane_le_of_le hb (fun x ↦ (abs_le.1 (h x)).2) hz⟩
+    {M : ℝ} (h : ∀ x, M ≤ b x) {z : ℂ} (hz : 0 < z.im) : M ≤ poissonIntegralHalfPlane b z :=
+  (poissonIntegralHalfPlane_const hz M).symm.trans_le
+    (poissonIntegralHalfPlane_mono (integrable_const_div_one_add_sq M) hb h hz)
 
 /-!
 ### The holomorphic Nevanlinna integral and harmonicity of the Poisson integral
@@ -471,6 +400,7 @@ half-plane. -/
 noncomputable def nevanlinnaKernelHalfPlane (z : ℂ) (x : ℝ) : ℂ :=
   ((x : ℂ) - z)⁻¹ - ((x / (1 + x ^ 2) : ℝ) : ℂ)
 
+/-- The imaginary part of the Nevanlinna kernel is `π P(z, x)`. -/
 theorem im_nevanlinnaKernelHalfPlane (z : ℂ) (x : ℝ) :
     (nevanlinnaKernelHalfPlane z x).im = π * poissonKernelHalfPlane z x := by
   rw [poissonKernelHalfPlane_eq_im, nevanlinnaKernelHalfPlane, sub_im, ofReal_im, sub_zero,
@@ -478,55 +408,45 @@ theorem im_nevanlinnaKernelHalfPlane (z : ℂ) (x : ℝ) :
 
 theorem measurable_nevanlinnaKernelHalfPlane (z : ℂ) :
     Measurable (nevanlinnaKernelHalfPlane z) := by
-  unfold nevanlinnaKernelHalfPlane
-  fun_prop
+  fun_prop [nevanlinnaKernelHalfPlane]
 
 /-- The closed form `(x - z)⁻¹ - x / (1 + x²) = (z + (1 + z²) / (x - z)) / (1 + x²)`. -/
 theorem nevanlinnaKernelHalfPlane_eq {z : ℂ} {x : ℝ} (h : (x : ℂ) ≠ z) :
     nevanlinnaKernelHalfPlane z x = (z + (1 + z ^ 2) / ((x : ℂ) - z)) / (1 + x ^ 2) := by
-  have h' : (x : ℂ) - z ≠ 0 := sub_ne_zero.2 h
-  have h2 : (1 + (x : ℂ) ^ 2) ≠ 0 := by
-    exact_mod_cast (by positivity : (1 + x ^ 2 : ℝ) ≠ 0)
+  have h2 : (1 + (x : ℂ) ^ 2) ≠ 0 := by exact_mod_cast (by positivity : (1 + x ^ 2 : ℝ) ≠ 0)
   unfold nevanlinnaKernelHalfPlane
   push_cast
-  field_simp
+  field_simp [sub_ne_zero.2 h]
   ring
 
 /-- The bound `‖(x - z)⁻¹ - x / (1 + x²)‖ ≤ (‖z‖ + ‖1 + z²‖ / Im z) / (1 + x²)` for `z ∈ ℍ`. -/
 theorem norm_nevanlinnaKernelHalfPlane_le {z : ℂ} (hz : 0 < z.im) (x : ℝ) :
     ‖nevanlinnaKernelHalfPlane z x‖ ≤ (‖z‖ + ‖1 + z ^ 2‖ / z.im) / (1 + x ^ 2) := by
-  have hxz : (x : ℂ) ≠ z := fun h ↦ by rw [← h] at hz; simp at hz
-  have him : z.im ≤ ‖(x : ℂ) - z‖ := by
-    simpa [abs_of_pos hz] using abs_im_le_norm ((x : ℂ) - z)
+  have hxz : (x : ℂ) ≠ z := fun h ↦ by simp [← h] at hz
+  have him : z.im ≤ ‖(x : ℂ) - z‖ := by simpa [abs_of_pos hz] using abs_im_le_norm ((x : ℂ) - z)
   have hn : ‖(1 + (x : ℂ) ^ 2)‖ = 1 + x ^ 2 := by
-    rw [show (1 + (x : ℂ) ^ 2) = ((1 + x ^ 2 : ℝ) : ℂ) by push_cast; rfl, norm_real,
-      Real.norm_eq_abs, abs_of_pos (by positivity)]
+    exact_mod_cast Real.norm_of_nonneg (by positivity : (0 : ℝ) ≤ 1 + x ^ 2)
   rw [nevanlinnaKernelHalfPlane_eq hxz, norm_div, hn]
   gcongr
-  calc ‖z + (1 + z ^ 2) / ((x : ℂ) - z)‖ ≤ ‖z‖ + ‖(1 + z ^ 2) / ((x : ℂ) - z)‖ := norm_add_le _ _
-    _ = ‖z‖ + ‖1 + z ^ 2‖ / ‖(x : ℂ) - z‖ := by rw [norm_div]
-    _ ≤ ‖z‖ + ‖1 + z ^ 2‖ / z.im := by gcongr
+  exact (norm_add_le _ _).trans (by rw [norm_div]; gcongr)
 
 /-- The `z`-derivative of the Nevanlinna kernel is `(x - z)⁻²`. -/
 theorem hasDerivAt_nevanlinnaKernelHalfPlane {z : ℂ} {x : ℝ} (h : (x : ℂ) ≠ z) :
-    HasDerivAt (fun w ↦ nevanlinnaKernelHalfPlane w x) (((x : ℂ) - z) ^ 2)⁻¹ z := by
-  have h1 : HasDerivAt (fun w : ℂ ↦ ((x : ℂ) - w)⁻¹) (-(-1) / ((x : ℂ) - z) ^ 2) z :=
-    ((hasDerivAt_id z).const_sub (x : ℂ)).inv (sub_ne_zero.2 h)
-  have h2 := h1.sub_const ((x / (1 + x ^ 2) : ℝ) : ℂ)
-  rw [neg_neg, one_div] at h2
-  exact h2
+    HasDerivAt (fun w ↦ nevanlinnaKernelHalfPlane w x) (((x : ℂ) - z) ^ 2)⁻¹ z :=
+  ((((hasDerivAt_id z).const_sub (x : ℂ)).inv (sub_ne_zero.2 h)).sub_const _).congr_deriv
+    (by simp)
 
 /-- `‖(x - w)⁻²‖ = ((x - Re w)² + (Im w)²)⁻¹` for real `x`. -/
 theorem norm_inv_sq_ofReal_sub (w : ℂ) (x : ℝ) :
     ‖(((x : ℂ) - w) ^ 2)⁻¹‖ = ((x - w.re) ^ 2 + w.im ^ 2)⁻¹ := by
-  rw [norm_inv, norm_pow, Complex.sq_norm, normSq_apply]
-  simp [sq]
+  simp [Complex.sq_norm, normSq_apply, ← sq]
 
 /-- The holomorphic Nevanlinna integral `π⁻¹ ∫ ((x - z)⁻¹ - x / (1 + x²)) b(x) dx`; its
 imaginary part on `ℍ` is the Poisson integral of `b`. -/
 noncomputable def nevanlinnaIntegralHalfPlane (b : ℝ → ℝ) (z : ℂ) : ℂ :=
   π⁻¹ * ∫ x, nevanlinnaKernelHalfPlane z x * b x
 
+/-- For `z ∈ ℍ` and `b(x) / (1 + x²)` integrable the Nevanlinna integrand is integrable. -/
 theorem integrable_nevanlinnaKernelHalfPlane_mul {b : ℝ → ℝ}
     (hb : Integrable fun x ↦ b x / (1 + x ^ 2)) {z : ℂ} (hz : 0 < z.im) :
     Integrable fun x ↦ nevanlinnaKernelHalfPlane z x * (b x : ℂ) := by
@@ -535,21 +455,18 @@ theorem integrable_nevanlinnaKernelHalfPlane_mul {b : ℝ → ℝ}
       (continuous_ofReal.comp_aestronglyMeasurable
         (aestronglyMeasurable_of_integrable_div_one_add_sq hb))) (Eventually.of_forall fun x ↦ ?_)
   rw [norm_mul, norm_real, Real.norm_eq_abs, Real.norm_eq_abs, abs_div,
-    abs_of_pos (by positivity : (0 : ℝ) < 1 + x ^ 2), ← mul_div_assoc, mul_div_right_comm]
-  gcongr
-  exact norm_nevanlinnaKernelHalfPlane_le hz x
+    abs_of_pos (by positivity : (0 : ℝ) < 1 + x ^ 2)]
+  exact (mul_le_mul_of_nonneg_right (norm_nevanlinnaKernelHalfPlane_le hz x)
+    (abs_nonneg _)).trans_eq (by ring)
 
 /-- On `ℍ` the imaginary part of the Nevanlinna integral is the Poisson integral. -/
 theorem im_nevanlinnaIntegralHalfPlane {b : ℝ → ℝ} (hb : Integrable fun x ↦ b x / (1 + x ^ 2))
     {z : ℂ} (hz : 0 < z.im) :
     (nevanlinnaIntegralHalfPlane b z).im = poissonIntegralHalfPlane b z := by
-  have h := integral_im (integrable_nevanlinnaKernelHalfPlane_mul hb hz)
-  change ∫ x, (nevanlinnaKernelHalfPlane z x * (b x : ℂ)).im =
-    (∫ x, nevanlinnaKernelHalfPlane z x * (b x : ℂ)).im at h
   unfold nevanlinnaIntegralHalfPlane poissonIntegralHalfPlane
-  rw [im_ofReal_mul, ← h]
-  simp_rw [mul_im, ofReal_re, ofReal_im, mul_zero, zero_add, im_nevanlinnaKernelHalfPlane,
-    mul_assoc, integral_const_mul, inv_mul_cancel_left₀ Real.pi_ne_zero]
+  rw [im_ofReal_mul, ← RCLike.im_to_complex,
+    ← integral_im (integrable_nevanlinnaKernelHalfPlane_mul hb hz)]
+  simp [im_nevanlinnaKernelHalfPlane, mul_assoc, integral_const_mul, Real.pi_ne_zero]
 
 /-- The Nevanlinna integral is holomorphic on `ℍ` (differentiation under the integral sign). -/
 theorem differentiableAt_nevanlinnaIntegralHalfPlane {b : ℝ → ℝ}
@@ -558,49 +475,36 @@ theorem differentiableAt_nevanlinnaIntegralHalfPlane {b : ℝ → ℝ}
   set r := z.im / 2 with hr
   have hr0 : 0 < r := by positivity
   set A := |z.re| + r with hA
-  set K := 2 + (1 + 2 * A ^ 2) / r ^ 2 with hK
+  set K := 2 + (1 + 2 * A ^ 2) / r ^ 2
   have hball : ∀ w ∈ ball z r, |w.re| ≤ A ∧ r ≤ w.im := fun w hw ↦ by
     have h1 : |w.re - z.re| ≤ ‖w - z‖ := by simpa using abs_re_le_norm (w - z)
     have h2 : |w.im - z.im| ≤ ‖w - z‖ := by simpa using abs_im_le_norm (w - z)
     have hw' : ‖w - z‖ < r := mem_ball_iff_norm.1 hw
-    constructor
-    · calc |w.re| ≤ |z.re| + |w.re - z.re| := by
-            simpa using abs_add_le z.re (w.re - z.re)
-        _ ≤ A := by rw [hA]; linarith
-    · have := (abs_le.1 (h2.trans hw'.le)).1
-      rw [hr] at this ⊢
-      linarith
+    exact ⟨by linarith [abs_sub_abs_le_abs_sub w.re z.re], by linarith [(abs_le.1 h2).1]⟩
   have hmeasb : AEStronglyMeasurable (fun x ↦ (b x : ℂ)) volume :=
     continuous_ofReal.comp_aestronglyMeasurable
       (aestronglyMeasurable_of_integrable_div_one_add_sq hb)
   have hne : ∀ w ∈ ball z r, ∀ x : ℝ, (x : ℂ) ≠ w := fun w hw x h ↦ by
-    have := (hball w hw).2
-    rw [← h] at this
-    simp at this
-    linarith
-  unfold nevanlinnaIntegralHalfPlane
+    simpa [← h] using hr0.trans_le (hball w hw).2
   refine DifferentiableAt.const_mul ?_ _
   refine (hasDerivAt_integral_of_dominated_loc_of_deriv_le (μ := volume) (𝕜 := ℂ)
-    (F := fun w x ↦ nevanlinnaKernelHalfPlane w x * (b x : ℂ))
     (F' := fun w x ↦ (((x : ℂ) - w) ^ 2)⁻¹ * (b x : ℂ))
-    (bound := fun x ↦ K * (|b x| / (1 + x ^ 2)))
     (ball_mem_nhds z hr0) (Eventually.of_forall fun w ↦
       (measurable_nevanlinnaKernelHalfPlane w).aestronglyMeasurable.mul hmeasb)
     (integrable_nevanlinnaKernelHalfPlane_mul hb hz)
     ((by fun_prop : Measurable fun x : ℝ ↦ (((x : ℂ) - z) ^ 2)⁻¹).aestronglyMeasurable.mul hmeasb)
-    (Eventually.of_forall fun x w hw ↦ ?_) ?_
+    (Eventually.of_forall fun x w hw ↦ ?_) (hb.norm.const_mul K)
     (Eventually.of_forall fun x w hw ↦
       (hasDerivAt_nevanlinnaKernelHalfPlane (hne w hw x)).mul_const _)).2.differentiableAt
-  · have hwim : 0 < w.im := hr0.trans_le (hball w hw).2
-    rw [norm_mul, norm_real, Real.norm_eq_abs, norm_inv_sq_ofReal_sub, ← mul_div_assoc,
-      mul_div_right_comm]
-    gcongr
-    rw [inv_eq_one_div, div_le_div_iff₀ (by positivity) (by positivity), one_mul]
-    exact one_add_sq_le_mul_sub_sq_add_sq hr0 (hball w hw).1 (hball w hw).2
-  · have := hb.norm.const_mul K
-    refine this.congr (Eventually.of_forall fun x ↦ ?_)
-    simp only [Real.norm_eq_abs, abs_div, abs_of_pos (by positivity : (0 : ℝ) < 1 + x ^ 2)]
+  have hwim : 0 < w.im := hr0.trans_le (hball w hw).2
+  rw [norm_mul, norm_real, Real.norm_eq_abs, Real.norm_eq_abs, abs_div,
+    abs_of_pos (by positivity : (0 : ℝ) < 1 + x ^ 2), norm_inv_sq_ofReal_sub, ← mul_div_assoc,
+    mul_div_right_comm]
+  gcongr
+  rw [inv_eq_one_div, div_le_div_iff₀ (by positivity) (by positivity), one_mul]
+  exact one_add_sq_le_mul_sub_sq_add_sq hr0 (hball w hw).1 (hball w hw).2
 
+/-- The Nevanlinna integral is holomorphic on the upper half-plane. -/
 theorem differentiableOn_nevanlinnaIntegralHalfPlane {b : ℝ → ℝ}
     (hb : Integrable fun x ↦ b x / (1 + x ^ 2)) :
     DifferentiableOn ℂ (nevanlinnaIntegralHalfPlane b) {z | 0 < z.im} := fun _ hz ↦
@@ -613,16 +517,9 @@ theorem harmonicOnNhd_poissonIntegralHalfPlane {b : ℝ → ℝ}
     HarmonicOnNhd (poissonIntegralHalfPlane b) {z | 0 < z.im} := by
   intro z hz
   have hnhds : {z : ℂ | 0 < z.im} ∈ 𝓝 z := UpperHalfPlane.isOpen_upperHalfPlaneSet.mem_nhds hz
-  have ha : AnalyticAt ℂ (nevanlinnaIntegralHalfPlane b) z :=
-    (differentiableOn_nevanlinnaIntegralHalfPlane hb).analyticAt hnhds
-  refine (harmonicAt_congr_nhds ?_).1 ha.harmonicAt_im
-  filter_upwards [hnhds] with w hw
-  exact im_nevanlinnaIntegralHalfPlane hb hw
-
-theorem continuousOn_poissonIntegralHalfPlane {b : ℝ → ℝ}
-    (hb : Integrable fun x ↦ b x / (1 + x ^ 2)) :
-    ContinuousOn (poissonIntegralHalfPlane b) {z | 0 < z.im} :=
-  (harmonicOnNhd_poissonIntegralHalfPlane hb).continuousOn
+  refine (harmonicAt_congr_nhds ?_).1
+    ((differentiableOn_nevanlinnaIntegralHalfPlane hb).analyticAt hnhds).harmonicAt_im
+  filter_upwards [hnhds] with w hw using im_nevanlinnaIntegralHalfPlane hb hw
 
 /-!
 ### Boundary behaviour
@@ -640,104 +537,77 @@ theorem poissonKernelHalfPlane_le_of_le_abs_sub {z : ℂ} (hz : 0 < z.im) {x₀ 
     (hδ : 0 < δ) (hzre : |z.re - x₀| ≤ δ / 2) (hx : δ ≤ |x - x₀|) :
     poissonKernelHalfPlane z x ≤
       4 * π⁻¹ * z.im * (2 + (1 + 2 * x₀ ^ 2) / δ ^ 2) / (1 + x ^ 2) := by
-  set K := 2 + (1 + 2 * x₀ ^ 2) / δ ^ 2 with hK
-  have hK0 : 0 ≤ K := by positivity
+  have hδ2 : δ ^ 2 ≤ (x - x₀) ^ 2 := by simpa [sq_abs] using pow_le_pow_left₀ hδ.le hx 2
   have h1 : (x - x₀) ^ 2 ≤ 4 * (x - z.re) ^ 2 := by
     have h2 : |x - x₀| ≤ 2 * |x - z.re| := by linarith [abs_sub_le x z.re x₀]
     nlinarith [sq_abs (x - x₀), sq_abs (x - z.re), abs_nonneg (x - x₀), abs_nonneg (x - z.re)]
-  have h3 : 1 + x ^ 2 ≤ K * (x - x₀) ^ 2 := by
-    have hδ2 : δ ^ 2 ≤ (x - x₀) ^ 2 := by simpa [sq_abs] using pow_le_pow_left₀ hδ.le hx 2
-    have e1 : 1 + x ^ 2 ≤ 2 * (x - x₀) ^ 2 + (1 + 2 * x₀ ^ 2) := by
-      nlinarith [sq_nonneg (x - 2 * x₀)]
-    have e2 : 1 + 2 * x₀ ^ 2 ≤ (1 + 2 * x₀ ^ 2) / δ ^ 2 * (x - x₀) ^ 2 := by
-      rw [div_mul_eq_mul_div, le_div_iff₀ (by positivity)]
-      nlinarith
-    rw [hK]
-    nlinarith
-  unfold poissonKernelHalfPlane
-  rw [div_le_div_iff₀ (by positivity) (by positivity)]
-  calc π⁻¹ * z.im * (1 + x ^ 2) ≤ π⁻¹ * z.im * (K * (4 * (x - z.re) ^ 2)) := by
-        gcongr
-        exact h3.trans (mul_le_mul_of_nonneg_left h1 hK0)
-    _ ≤ π⁻¹ * z.im * (K * (4 * ((x - z.re) ^ 2 + z.im ^ 2))) := by
-        gcongr
-        linarith [sq_nonneg z.im]
-    _ = 4 * π⁻¹ * z.im * K * ((x - z.re) ^ 2 + z.im ^ 2) := by ring
+  have key : 1 + x ^ 2 ≤ 4 * (2 + (1 + 2 * x₀ ^ 2) / δ ^ 2) * ((x - z.re) ^ 2 + z.im ^ 2) := by
+    nlinarith [sq_nonneg (x - 2 * x₀), sq_nonneg z.im,
+      div_mul_cancel₀ (1 + 2 * x₀ ^ 2) (by positivity : δ ^ 2 ≠ 0),
+      div_nonneg (by positivity : (0 : ℝ) ≤ 1 + 2 * x₀ ^ 2) (sq_nonneg δ)]
+  rw [poissonKernelHalfPlane, div_le_div_iff₀ (by positivity) (by positivity)]
+  exact (mul_le_mul_of_nonneg_left key (by positivity)).trans_eq (by ring)
 
 /-- The Poisson kernel `P(z, x)` tends to `0` as `z → x₀` for `x ≠ x₀`. -/
 theorem tendsto_poissonKernelHalfPlane_nhds_ofReal {x₀ x : ℝ} (h : x ≠ x₀) :
     Tendsto (fun z ↦ poissonKernelHalfPlane z x) (𝓝 (x₀ : ℂ)) (𝓝 0) := by
-  have h' : (x : ℂ) ≠ (x₀ : ℂ) := by exact_mod_cast h
-  have := (continuousAt_poissonKernelHalfPlane h').tendsto
-  simpa [poissonKernelHalfPlane] using this
+  simpa [poissonKernelHalfPlane] using
+    (continuousAt_poissonKernelHalfPlane (ofReal_injective.ne h)).tendsto
 
 /-- **Boundary behaviour of the Poisson integral**: at a continuity point `x₀` of `b`,
 `P[b](z) → b(x₀)` as `z → x₀` within the upper half-plane. -/
 theorem tendsto_poissonIntegralHalfPlane_of_continuousAt {b : ℝ → ℝ}
     (hb : Integrable fun x ↦ b x / (1 + x ^ 2)) {x₀ : ℝ} (hcont : ContinuousAt b x₀) :
     Tendsto (poissonIntegralHalfPlane b) (𝓝[{z | 0 < z.im}] (x₀ : ℂ)) (𝓝 (b x₀)) := by
-  set l := 𝓝[{z : ℂ | 0 < z.im}] (x₀ : ℂ) with hl
-  have hbmeas := aestronglyMeasurable_of_integrable_div_one_add_sq hb
-  have habs : Integrable fun x ↦ |b x - b x₀| / (1 + x ^ 2) := by
-    have := (hb.sub (integrable_const_div_one_add_sq (b x₀))).norm
-    refine this.congr (Eventually.of_forall fun x ↦ ?_)
-    simp only [Pi.sub_apply, Real.norm_eq_abs, ← sub_div, abs_div,
-      abs_of_pos (by positivity : (0 : ℝ) < 1 + x ^ 2)]
+  set l := 𝓝[{z : ℂ | 0 < z.im}] (x₀ : ℂ)
+  have habs : Integrable fun x ↦ |b x - b x₀| / (1 + x ^ 2) :=
+    (hb.sub (integrable_const_div_one_add_sq (b x₀))).abs.congr (Eventually.of_forall fun x ↦ by
+      simp [abs_div, abs_of_pos (by positivity : (0 : ℝ) < 1 + x ^ 2), ← sub_div])
   have hmem : ∀ᶠ z in l, 0 < z.im := self_mem_nhdsWithin
   -- the deviation `|P[b](z) - b(x₀)|` is at most `∫ P(z, x) |b(x) - b(x₀)| dx`
   have hle : ∀ z : ℂ, 0 < z.im → |poissonIntegralHalfPlane b z - b x₀| ≤
       ∫ x, poissonKernelHalfPlane z x * |b x - b x₀| := fun z hz ↦ by
-    have hint := integrable_poissonKernelHalfPlane_mul hb hz
-    have hint' := integrable_poissonKernelHalfPlane_mul
-      (integrable_const_div_one_add_sq (b x₀)) hz
     have e : ∫ x, poissonKernelHalfPlane z x * (b x - b x₀) =
         poissonIntegralHalfPlane b z - b x₀ := by
-      simp_rw [mul_sub]
-      rw [integral_sub hint hint', integral_mul_const, integral_poissonKernelHalfPlane hz, one_mul,
-        poissonIntegralHalfPlane]
+      simp [mul_sub, integral_sub (integrable_poissonKernelHalfPlane_mul hb hz)
+        ((integrable_poissonKernelHalfPlane hz).mul_const _), integral_mul_const,
+        integral_poissonKernelHalfPlane hz, poissonIntegralHalfPlane]
     rw [← e]
-    refine abs_integral_le_integral_abs.trans (le_of_eq (integral_congr_ae
-      (Eventually.of_forall fun x ↦ ?_)))
-    simp only [abs_mul, abs_of_pos (poissonKernelHalfPlane_pos hz x)]
+    exact abs_integral_le_integral_abs.trans (integral_congr_ae (Eventually.of_forall fun x ↦ by
+      simp [abs_of_pos (poissonKernelHalfPlane_pos hz x)])).le
   -- the deviation tends to `0`
   have hE : Tendsto (fun z ↦ ∫ x, poissonKernelHalfPlane z x * |b x - b x₀|) l (𝓝 0) := by
     rw [tendsto_order]
-    refine ⟨fun a ha ↦ ?_, fun ε hε ↦ ?_⟩
-    · filter_upwards [hmem] with z hz
-      exact ha.trans_le (integral_nonneg fun x ↦
-        mul_nonneg (poissonKernelHalfPlane_pos hz x).le (abs_nonneg _))
+    refine ⟨fun a ha ↦ hmem.mono fun z hz ↦ ha.trans_le (integral_nonneg fun x ↦
+      mul_nonneg (poissonKernelHalfPlane_pos hz x).le (abs_nonneg _)), fun ε hε ↦ ?_⟩
     obtain ⟨δ, hδ, hδb⟩ := Metric.continuousAt_iff.1 hcont (ε / 2) (by positivity)
-    set K := 4 * π⁻¹ * (2 + (1 + 2 * x₀ ^ 2) / δ ^ 2) with hK
+    set K := 4 * π⁻¹ * (2 + (1 + 2 * x₀ ^ 2) / δ ^ 2)
     have hnear : ∀ᶠ z in l, |z.re - x₀| ≤ δ / 2 ∧ z.im ≤ 1 := by
-      have : ball (x₀ : ℂ) (min (δ / 2) 1) ∈ l :=
-        mem_nhdsWithin_of_mem_nhds (ball_mem_nhds _ (by positivity))
-      filter_upwards [this] with z hz
-      have hz' : ‖z - x₀‖ < min (δ / 2) 1 := mem_ball_iff_norm.1 hz
+      filter_upwards [mem_nhdsWithin_of_mem_nhds
+        (ball_mem_nhds (x₀ : ℂ) (lt_min (half_pos hδ) one_pos))] with z hz
       have h1 : |z.re - x₀| ≤ ‖z - x₀‖ := by simpa using abs_re_le_norm (z - x₀)
       have h2 : |z.im| ≤ ‖z - x₀‖ := by simpa using abs_im_le_norm (z - x₀)
-      exact ⟨h1.trans (hz'.le.trans (min_le_left _ _)),
-        (le_abs_self _).trans (h2.trans (hz'.le.trans (min_le_right _ _)))⟩
+      obtain ⟨hz1, hz2⟩ := lt_min_iff.1 (mem_ball_iff_norm.1 hz)
+      exact ⟨h1.trans hz1.le, (le_abs_self _).trans (h2.trans hz2.le)⟩
     -- the far part tends to `0` by dominated convergence
     have hfar : Tendsto (fun z ↦ ∫ x in (ball x₀ δ)ᶜ, poissonKernelHalfPlane z x * |b x - b x₀|) l
         (𝓝 0) := by
-      have := tendsto_integral_filter_of_dominated_convergence (μ := volume.restrict (ball x₀ δ)ᶜ)
-        (l := l) (F := fun z x ↦ poissonKernelHalfPlane z x * |b x - b x₀|) (f := fun _ ↦ 0)
+      refine (tendsto_integral_filter_of_dominated_convergence
+        (F := fun z x ↦ poissonKernelHalfPlane z x * |b x - b x₀|) (f := fun _ ↦ 0)
         (fun x ↦ K * (|b x - b x₀| / (1 + x ^ 2))) (Eventually.of_forall fun z ↦
           ((measurable_poissonKernelHalfPlane z).aestronglyMeasurable.mul
-            (hbmeas.sub aestronglyMeasurable_const).norm).restrict) ?_
-        (habs.const_mul K).integrableOn ?_
-      · simpa using this
+            ((aestronglyMeasurable_of_integrable_div_one_add_sq hb).sub
+              aestronglyMeasurable_const).norm).restrict)
+        ?_ (habs.const_mul K).integrableOn ?_).mono_right (by simp)
       · filter_upwards [hmem, hnear] with z hz hz'
         filter_upwards [ae_restrict_mem measurableSet_ball.compl] with x hx
         have hx' : δ ≤ |x - x₀| := by simpa [Real.dist_eq] using hx
-        rw [Real.norm_eq_abs, abs_mul, abs_of_pos (poissonKernelHalfPlane_pos hz x), abs_abs,
-          ← mul_div_assoc, mul_div_right_comm]
-        gcongr
-        refine (poissonKernelHalfPlane_le_of_le_abs_sub hz hδ hz'.1 hx').trans ?_
-        refine div_le_div_of_nonneg_right ?_ (by positivity)
-        calc 4 * π⁻¹ * z.im * (2 + (1 + 2 * x₀ ^ 2) / δ ^ 2)
-            ≤ 4 * π⁻¹ * 1 * (2 + (1 + 2 * x₀ ^ 2) / δ ^ 2) := by gcongr; exact hz'.2
-          _ = K := by rw [hK]; ring
+        have hP : poissonKernelHalfPlane z x ≤ K / (1 + x ^ 2) :=
+          (poissonKernelHalfPlane_le_of_le_abs_sub hz hδ hz'.1 hx').trans
+            (div_le_div_of_nonneg_right (mul_le_mul_of_nonneg_right
+              (mul_le_of_le_one_right (by positivity) hz'.2) (by positivity)) (by positivity))
+        rw [Real.norm_eq_abs, abs_mul, abs_of_pos (poissonKernelHalfPlane_pos hz x), abs_abs]
+        exact (mul_le_mul_of_nonneg_right hP (abs_nonneg _)).trans_eq (by ring)
       · filter_upwards [ae_restrict_mem measurableSet_ball.compl] with x hx
         have hx' : x ≠ x₀ := fun h ↦ hx (by simp [h, hδ])
         simpa using ((tendsto_poissonKernelHalfPlane_nhds_ofReal hx').mono_left
@@ -745,66 +615,51 @@ theorem tendsto_poissonIntegralHalfPlane_of_continuousAt {b : ℝ → ℝ}
     filter_upwards [hmem, (tendsto_order.1 hfar).2 (ε / 2) (by positivity)] with z hz hfarz
     have hint : Integrable fun x ↦ poissonKernelHalfPlane z x * |b x - b x₀| :=
       integrable_poissonKernelHalfPlane_mul habs hz
-    have hsplit := (integral_add_compl (measurableSet_ball (x := x₀) (ε := δ)) hint).symm
     have hnear : ∫ x in ball x₀ δ, poissonKernelHalfPlane z x * |b x - b x₀| ≤ ε / 2 := by
       calc ∫ x in ball x₀ δ, poissonKernelHalfPlane z x * |b x - b x₀|
-          ≤ ∫ x in ball x₀ δ, poissonKernelHalfPlane z x * (ε / 2) := by
-            refine setIntegral_mono_on hint.integrableOn
+          ≤ ∫ x in ball x₀ δ, poissonKernelHalfPlane z x * (ε / 2) :=
+            setIntegral_mono_on hint.integrableOn
               ((integrable_poissonKernelHalfPlane hz).mul_const _).integrableOn measurableSet_ball
-              fun x hx ↦ mul_le_mul_of_nonneg_left ?_ (poissonKernelHalfPlane_pos hz x).le
-            simpa [Real.dist_eq] using (hδb (mem_ball.1 hx)).le
+              fun x hx ↦ mul_le_mul_of_nonneg_left
+                (by simpa [Real.dist_eq] using (hδb (mem_ball.1 hx)).le)
+                (poissonKernelHalfPlane_pos hz x).le
         _ ≤ ∫ x, poissonKernelHalfPlane z x * (ε / 2) :=
             setIntegral_le_integral ((integrable_poissonKernelHalfPlane hz).mul_const _)
-              (Eventually.of_forall fun x ↦ by
-                have := poissonKernelHalfPlane_pos hz x
-                positivity)
+              (Eventually.of_forall fun x ↦
+                (mul_pos (poissonKernelHalfPlane_pos hz x) (by positivity)).le)
         _ = ε / 2 := by rw [integral_mul_const, integral_poissonKernelHalfPlane hz, one_mul]
-    rw [hsplit]
+    rw [← integral_add_compl (measurableSet_ball (x := x₀) (ε := δ)) hint]
     linarith
   rw [tendsto_iff_norm_sub_tendsto_zero]
-  refine squeeze_zero' (Eventually.of_forall fun z ↦ norm_nonneg _) ?_ hE
-  filter_upwards [hmem] with z hz
-  rw [Real.norm_eq_abs]
-  exact hle z hz
+  exact squeeze_zero' (Eventually.of_forall fun z ↦ norm_nonneg _)
+    (hmem.mono fun z hz ↦ (Real.norm_eq_abs _).trans_le (hle z hz)) hE
 
 /-!
 ### Truncation from below
 
 For boundary data bounded above but not below one truncates to `max b (-n)`; the Poisson
-integrals of the truncations decrease to `P[b]` (dominated convergence with the majorant
+integrals of the truncations converge to `P[b]` (dominated convergence with the majorant
 `P(z, x) |b(x)|`, since `|max (b x) (-n)| ≤ |b x|`).
 -/
 
+/-- The truncations `max b (-c)` of an admissible boundary datum are admissible. -/
 theorem integrable_max_neg_div_one_add_sq {b : ℝ → ℝ} (hb : Integrable fun x ↦ b x / (1 + x ^ 2))
-    (c : ℝ) : Integrable fun x ↦ max (b x) (-c) / (1 + x ^ 2) := by
-  refine (hb.sup (integrable_const_div_one_add_sq (-c))).congr (Eventually.of_forall fun x ↦ ?_)
-  simp only [Pi.sup_apply]
-  rw [max_div_div_right (by positivity)]
-
-/-- The Poisson integrals of the truncations `max b (-n)` decrease in `n`. -/
-theorem antitone_poissonIntegralHalfPlane_max {b : ℝ → ℝ}
-    (hb : Integrable fun x ↦ b x / (1 + x ^ 2)) {z : ℂ} (hz : 0 < z.im) :
-    Antitone fun n : ℕ ↦ poissonIntegralHalfPlane (fun x ↦ max (b x) (-(n : ℝ))) z :=
-  fun m n hmn ↦ poissonIntegralHalfPlane_mono
-    (integrable_max_neg_div_one_add_sq hb n) (integrable_max_neg_div_one_add_sq hb m)
-    (fun _ ↦ max_le_max le_rfl (neg_le_neg (Nat.cast_le.2 hmn))) hz
+    (c : ℝ) : Integrable fun x ↦ max (b x) (-c) / (1 + x ^ 2) :=
+  (hb.sup (integrable_const_div_one_add_sq (-c))).congr
+    (Eventually.of_forall fun x ↦ max_div_div_right (by positivity) _ _)
 
 /-- **Monotone limit of the truncations**: `P[max b (-n)](z) → P[b](z)` as `n → ∞` for `z ∈ ℍ`. -/
 theorem tendsto_poissonIntegralHalfPlane_max {b : ℝ → ℝ}
     (hb : Integrable fun x ↦ b x / (1 + x ^ 2)) {z : ℂ} (hz : 0 < z.im) :
     Tendsto (fun n : ℕ ↦ poissonIntegralHalfPlane (fun x ↦ max (b x) (-(n : ℝ))) z) atTop
       (𝓝 (poissonIntegralHalfPlane b z)) := by
-  unfold poissonIntegralHalfPlane
-  refine tendsto_integral_of_dominated_convergence (fun x ↦ poissonKernelHalfPlane z x * |b x|)
+  refine tendsto_integral_of_dominated_convergence (fun x ↦ ‖poissonKernelHalfPlane z x * b x‖)
     (fun n ↦ (integrable_poissonKernelHalfPlane_mul
-      (integrable_max_neg_div_one_add_sq hb n) hz).aestronglyMeasurable) ?_
+      (integrable_max_neg_div_one_add_sq hb n) hz).aestronglyMeasurable)
+    (integrable_poissonKernelHalfPlane_mul hb hz).norm
     (fun n ↦ Eventually.of_forall fun x ↦ ?_) (Eventually.of_forall fun x ↦ ?_)
-  · refine (integrable_poissonKernelHalfPlane_mul hb hz).norm.congr
-      (Eventually.of_forall fun x ↦ ?_)
-    simp [Real.norm_eq_abs, abs_of_pos (poissonKernelHalfPlane_pos hz x)]
-  · rw [Real.norm_eq_abs, abs_mul, abs_of_pos (poissonKernelHalfPlane_pos hz x)]
-    exact mul_le_mul_of_nonneg_left (abs_max_neg_le_abs n.cast_nonneg)
-      (poissonKernelHalfPlane_pos hz x).le
+  · simp only [norm_mul, Real.norm_eq_abs]
+    exact mul_le_mul_of_nonneg_left (abs_max_neg_le_abs n.cast_nonneg) (abs_nonneg _)
   · refine tendsto_const_nhds.congr' ?_
     filter_upwards [(tendsto_natCast_atTop_atTop (R := ℝ)).eventually_ge_atTop (-b x)] with n hn
     rw [max_eq_left (by linarith)]
@@ -855,16 +710,14 @@ noncomputable def truncateToReal (a : ℝ) (x : EReal) : ℝ := (max x a).toReal
 variable {a b t : ℝ} {x y : EReal}
 
 private theorem max_coe_ne_top (hx : x ≠ ⊤) : max x (a : EReal) ≠ ⊤ :=
-  (max_lt (lt_top_iff_ne_top.2 hx) (coe_lt_top a)).ne
+  max_ne_top hx (coe_ne_top a)
 
 private theorem max_coe_ne_bot (x : EReal) : max x (a : EReal) ≠ ⊥ :=
-  ((bot_lt_coe a).trans_le (le_max_right x a)).ne'
+  ne_bot_of_le_ne_bot (coe_ne_bot a) (le_max_right x a)
 
-@[simp] theorem truncateToReal_bot (a : ℝ) : truncateToReal a ⊥ = a := by
-  simp [truncateToReal]
+@[simp] theorem truncateToReal_bot (a : ℝ) : truncateToReal a ⊥ = a := by simp [truncateToReal]
 
-@[simp] theorem truncateToReal_top (a : ℝ) : truncateToReal a ⊤ = 0 := by
-  simp [truncateToReal]
+@[simp] theorem truncateToReal_top (a : ℝ) : truncateToReal a ⊤ = 0 := by simp [truncateToReal]
 
 @[simp] theorem truncateToReal_coe (a b : ℝ) : truncateToReal a b = max b a := by
   rw [truncateToReal, ← coe_strictMono.monotone.map_max, toReal_coe]
@@ -877,44 +730,33 @@ theorem coe_truncateToReal (hx : x ≠ ⊤) : (truncateToReal a x : EReal) = max
   coe_toReal (max_coe_ne_top hx) (max_coe_ne_bot x)
 
 theorem le_truncateToReal (hx : x ≠ ⊤) : a ≤ truncateToReal a x :=
-  EReal.coe_le_coe_iff.1 (by rw [coe_truncateToReal hx]; exact le_max_right _ _)
+  EReal.coe_le_coe_iff.1 ((le_max_right x a).trans_eq (coe_truncateToReal hx).symm)
 
-theorem le_coe_truncateToReal (hx : x ≠ ⊤) : x ≤ truncateToReal a x := by
-  rw [coe_truncateToReal hx]; exact le_max_left _ _
+theorem le_coe_truncateToReal (hx : x ≠ ⊤) : x ≤ truncateToReal a x :=
+  (le_max_left x a).trans_eq (coe_truncateToReal hx).symm
 
 /-- `truncateToReal a` is monotone on `{x | x ≠ ⊤}`. -/
 theorem truncateToReal_le_truncateToReal (h : x ≤ y) (hy : y ≠ ⊤) :
     truncateToReal a x ≤ truncateToReal a y :=
-  EReal.coe_le_coe_iff.1 (by
-    rw [coe_truncateToReal (ne_top_of_le_ne_top hy h), coe_truncateToReal hy]
-    exact max_le_max h le_rfl)
+  toReal_le_toReal (max_le_max_right _ h) (max_coe_ne_bot x) (max_coe_ne_top hy)
 
 /-- `truncateToReal a x` is monotone in the level `a` (for `x ≠ ⊤`). -/
 theorem truncateToReal_le_truncateToReal_of_le (hab : a ≤ b) (hx : x ≠ ⊤) :
     truncateToReal a x ≤ truncateToReal b x :=
-  EReal.coe_le_coe_iff.1 (by
-    rw [coe_truncateToReal hx, coe_truncateToReal hx]
-    exact max_le_max le_rfl (EReal.coe_le_coe_iff.2 hab))
+  toReal_le_toReal (max_le_max_left x (EReal.coe_le_coe hab)) (max_coe_ne_bot x) (max_coe_ne_top hx)
 
 theorem truncateToReal_le_of_le (hx : x ≤ b) (hab : a ≤ b) : truncateToReal a x ≤ b :=
-  EReal.coe_le_coe_iff.1 (by
-    rw [coe_truncateToReal (ne_top_of_le_ne_top (coe_ne_top b) hx)]
-    exact max_le hx (EReal.coe_le_coe_iff.2 hab))
+  EReal.coe_le_coe_iff.1 ((coe_truncateToReal (ne_top_of_le_ne_top (coe_ne_top b) hx)).trans_le
+    (max_le hx (EReal.coe_le_coe hab)))
 
 theorem truncateToReal_lt_of_lt (hx : x < b) (hab : a < b) : truncateToReal a x < b :=
-  EReal.coe_lt_coe_iff.1 (by
-    rw [coe_truncateToReal hx.ne_top]
-    exact max_lt hx (EReal.coe_lt_coe_iff.2 hab))
+  EReal.coe_lt_coe_iff.1
+    ((coe_truncateToReal hx.ne_top).trans_lt (max_lt hx (EReal.coe_lt_coe hab)))
 
 /-- Truncating `x + t` at level `a` is truncating `x` at level `a - t` and adding `t`. -/
 theorem truncateToReal_add_coe (a t : ℝ) (hx : x ≠ ⊤) :
     truncateToReal a (x + t) = truncateToReal (a - t) x + t := by
-  induction x with
-  | bot => simp
-  | coe ξ =>
-    simp only [← coe_add, truncateToReal_coe]
-    rw [← max_add_add_right, _root_.sub_add_cancel]
-  | top => exact absurd rfl hx
+  induction x <;> simp_all [← coe_add, ← max_add_add_right]
 
 theorem measurable_truncateToReal (a : ℝ) : Measurable (truncateToReal a) :=
   measurable_ereal_toReal.comp (measurable_id.max measurable_const)
@@ -956,24 +798,14 @@ theorem UpperSemicontinuousOn.circleIntegrable_truncateToReal {u : ℂ → EReal
   have hg : UpperSemicontinuous fun θ ↦ u (circleMap z r θ) :=
     upperSemicontinuousOn_univ_iff.1
       (hu.comp (continuous_circleMap z r).continuousOn fun θ _ ↦ hmem θ)
-  have hmeas : Measurable fun θ ↦ EReal.truncateToReal a (u (circleMap z r θ)) :=
-    (EReal.measurable_truncateToReal a).comp hg.measurable
   obtain ⟨w₀, hw₀, hmax⟩ := (hu.mono hr).exists_isMaxOn
     (NormedSpace.sphere_nonempty.2 (abs_nonneg r)) (isCompact_sphere z |r|)
-  refine IntervalIntegrable.mono_fun' (g := fun _ ↦ max |a| |EReal.truncateToReal a (u w₀)|)
-    intervalIntegrable_const hmeas.aestronglyMeasurable.restrict (ae_of_all _ fun θ ↦ ?_)
-  simp only [Real.norm_eq_abs]
-  refine abs_le.2 ⟨?_, ?_⟩
-  · have h₁ := EReal.le_truncateToReal (a := a) (hu' _ (hmem θ))
-    have h₂ := neg_abs_le a
-    have h₃ := le_max_left |a| |EReal.truncateToReal a (u w₀)|
-    linarith
-  · calc EReal.truncateToReal a (u (circleMap z r θ))
-        ≤ EReal.truncateToReal a (u w₀) :=
-          EReal.truncateToReal_le_truncateToReal (hmax (circleMap_mem_sphere' z r θ))
-            (hu' _ (hr hw₀))
-      _ ≤ |EReal.truncateToReal a (u w₀)| := le_abs_self _
-      _ ≤ max |a| |EReal.truncateToReal a (u w₀)| := le_max_right _ _
+  exact IntervalIntegrable.mono_fun' (g := fun _ ↦ max |a| |EReal.truncateToReal a (u w₀)|)
+    intervalIntegrable_const
+    ((EReal.measurable_truncateToReal a).comp hg.measurable).aestronglyMeasurable.restrict
+    (ae_of_all _ fun θ ↦ abs_le_max_abs_abs (EReal.le_truncateToReal (hu' _ (hmem θ)))
+      (EReal.truncateToReal_le_truncateToReal (hmax (circleMap_mem_sphere' z r θ))
+        (hu' _ (hr hw₀))))
 
 namespace SubharmonicOn
 
@@ -997,10 +829,9 @@ radii `r`, together with the inclusion `closedBall z r ⊆ U`. -/
 theorem eventually_closedBall_subset_and_le_circleAverage (hU : IsOpen U)
     (hu : SubharmonicOn u U) {z : ℂ} (hz : z ∈ U) :
     ∀ᶠ r in 𝓝[>] (0 : ℝ), closedBall z r ⊆ U ∧ ∀ a : ℝ,
-      u z ≤ ((circleAverage (fun w ↦ EReal.truncateToReal a (u w)) z r : ℝ) : EReal) := by
-  obtain ⟨ε, hε, hεU⟩ := Metric.isOpen_iff.1 hU z hz
-  filter_upwards [Ioo_mem_nhdsGT hε, hu.le_circleAverage z hz] with r hr h
-  exact ⟨(closedBall_subset_ball hr.2).trans hεU, h⟩
+      u z ≤ ((circleAverage (fun w ↦ EReal.truncateToReal a (u w)) z r : ℝ) : EReal) :=
+  ((eventually_closedBall_subset (hU.mem_nhds hz)).filter_mono nhdsWithin_le_nhds).and
+    (hu.le_circleAverage z hz)
 
 /-!
 ### Harmonic functions
@@ -1014,14 +845,11 @@ theorem _root_.InnerProductSpace.HarmonicOnNhd.subharmonicOn {h : ℂ → ℝ}
     (continuous_coe_real_ereal.comp_continuousOn hh.continuousOn).upperSemicontinuousOn
   ne_top z _ := EReal.coe_ne_top _
   le_circleAverage z hz := by
-    obtain ⟨ε, hε, hεh⟩ := Metric.eventually_nhds_iff_ball.1 (hh z hz).eventually
-    filter_upwards [Ioo_mem_nhdsGT hε] with r hr a
-    have hball : HarmonicOnNhd h (closedBall z |r|) := fun y hy ↦
-      hεh y (closedBall_subset_ball (by rw [abs_of_pos hr.1]; exact hr.2) hy)
-    have hcont : ContinuousOn h (sphere z |r|) :=
-      hball.continuousOn.mono sphere_subset_closedBall
-    simp only [EReal.truncateToReal_coe]
-    rw [EReal.coe_le_coe_iff, ← hball.circleAverage_eq]
+    filter_upwards [(eventually_closedBall_subset (hh z hz).eventually).filter_mono
+      nhdsWithin_le_nhds, self_mem_nhdsWithin] with r hr hr0 a
+    have hball : HarmonicOnNhd h (closedBall z |r|) := by rwa [abs_of_pos hr0]
+    have hcont : ContinuousOn h (sphere z |r|) := hball.continuousOn.mono sphere_subset_closedBall
+    simp only [EReal.truncateToReal_coe, EReal.coe_le_coe_iff, ← hball.circleAverage_eq]
     exact circleAverage_mono hcont.circleIntegrable'
       (hcont.sup continuousOn_const).circleIntegrable' fun w _ ↦ le_max_left _ _
 
@@ -1031,48 +859,35 @@ theorem _root_.subharmonicOn_const (c : ℝ) : SubharmonicOn (fun _ ↦ (c : ERe
 
 /-- The sum of a subharmonic function on an open set `U` and a real harmonic function on `U` is
 subharmonic on `U`. Upper semicontinuity of the sum uses the continuity of the addition of
-`EReal` away from `(⊤, ⊥)`; for the sub-mean-value inequality, if `|h| ≤ H` on a small disc, then
-`truncateToReal (a - H) u + h ≤ truncateToReal a (u + h)` pointwise, so the mean value property of
-`h` gives `u z + h z ≤ ⨍ truncateToReal (a - H) u + ⨍ h ≤ ⨍ truncateToReal a (u + h)`. -/
+`EReal` away from `(⊤, ⊥)`; for the sub-mean-value inequality, if `|h| ≤ H` on a small circle,
+then `truncateToReal (a - H) u + h ≤ truncateToReal a (u + h)` on it, so the mean value property
+of `h` gives `u z + h z ≤ ⨍ truncateToReal (a - H) u + ⨍ h ≤ ⨍ truncateToReal a (u + h)`. -/
 theorem add_harmonic (hU : IsOpen U) (hu : SubharmonicOn u U) {h : ℂ → ℝ}
     (hh : HarmonicOnNhd h U) : SubharmonicOn (fun z ↦ u z + (h z : EReal)) U := by
-  have hhusc : UpperSemicontinuousOn (fun z ↦ (h z : EReal)) U :=
-    (continuous_coe_real_ereal.comp_continuousOn hh.continuousOn).upperSemicontinuousOn
   have husc : UpperSemicontinuousOn (fun z ↦ u z + (h z : EReal)) U :=
-    hu.upperSemicontinuousOn.add' hhusc fun z hz ↦
-      EReal.continuousAt_add (Or.inl (hu.ne_top z hz)) (Or.inr (EReal.coe_ne_top _))
+    hu.upperSemicontinuousOn.add'
+      (continuous_coe_real_ereal.comp_continuousOn hh.continuousOn).upperSemicontinuousOn
+      fun z hz ↦ EReal.continuousAt_add (Or.inl (hu.ne_top z hz)) (Or.inr (EReal.coe_ne_top _))
   have hne : ∀ z ∈ U, u z + (h z : EReal) ≠ ⊤ := fun z hz ↦
     EReal.add_ne_top (hu.ne_top z hz) (EReal.coe_ne_top _)
   refine ⟨husc, hne, fun z hz ↦ ?_⟩
-  obtain ⟨ε, hε, hεU⟩ := Metric.isOpen_iff.1 hU z hz
-  have hcb : closedBall z (ε / 2) ⊆ U := (closedBall_subset_ball (half_lt_self hε)).trans hεU
-  obtain ⟨H, hH⟩ := (isCompact_closedBall z (ε / 2)).exists_bound_of_continuousOn
-    (hh.continuousOn.mono hcb)
-  filter_upwards [Ioo_mem_nhdsGT (half_pos hε), hu.le_circleAverage z hz] with r hr hsub a
-  have hcb' : closedBall z |r| ⊆ closedBall z (ε / 2) := by
-    rw [abs_of_pos hr.1]; exact closedBall_subset_closedBall hr.2.le
-  have hsph : sphere z |r| ⊆ U := sphere_subset_closedBall.trans (hcb'.trans hcb)
+  filter_upwards [hu.eventually_closedBall_subset_and_le_circleAverage hU hz,
+    self_mem_nhdsWithin] with r ⟨hcb, hsub⟩ hr a
+  have hcb' : closedBall z |r| ⊆ U := by rwa [abs_of_pos hr]
+  have hsph : sphere z |r| ⊆ U := sphere_subset_closedBall.trans hcb'
+  obtain ⟨H, hH⟩ :=
+    (isCompact_sphere z |r|).exists_bound_of_continuousOn (hh.continuousOn.mono hsph)
   have hT₁ := hu.circleIntegrable_truncateToReal hsph (a - H)
-  have hT₂ := husc.circleIntegrable_truncateToReal hne hsph a
-  have hhI : CircleIntegrable h z r :=
-    ((hh.continuousOn.mono hcb).mono (sphere_subset_closedBall.trans hcb')).circleIntegrable'
-  have hpt : ∀ w ∈ sphere z |r|,
+  have hhI : CircleIntegrable h z r := (hh.continuousOn.mono hsph).circleIntegrable'
+  have hpt (w : ℂ) (hw : w ∈ sphere z |r|) :
       EReal.truncateToReal (a - H) (u w) + h w ≤ EReal.truncateToReal a (u w + h w) := by
-    intro w hw
-    have hw' : ‖h w‖ ≤ H := hH w (hcb' (sphere_subset_closedBall hw))
-    rw [Real.norm_eq_abs] at hw'
     rw [EReal.truncateToReal_add_coe _ _ (hu.ne_top w (hsph hw))]
     exact add_le_add (EReal.truncateToReal_le_truncateToReal_of_le
-      (by linarith [le_abs_self (h w)]) (hu.ne_top w (hsph hw))) le_rfl
-  have hmv : circleAverage h z r = h z := (hh.mono (hcb'.trans hcb)).circleAverage_eq
-  calc u z + (h z : EReal)
-      ≤ ((circleAverage (fun w ↦ EReal.truncateToReal (a - H) (u w)) z r : ℝ) : EReal)
-          + (h z : EReal) := add_le_add (hsub (a - H)) le_rfl
-    _ = ((circleAverage (fun w ↦ EReal.truncateToReal (a - H) (u w)) z r
-          + circleAverage h z r : ℝ) : EReal) := by rw [EReal.coe_add, hmv]
-    _ = ((circleAverage (fun w ↦ EReal.truncateToReal (a - H) (u w) + h w) z r : ℝ) : EReal) := by
-        rw [circleAverage_fun_add hT₁ hhI]
-    _ ≤ _ := EReal.coe_le_coe_iff.2 (circleAverage_mono (hT₁.add hhI) hT₂ hpt)
+      (sub_le_sub_left ((le_abs_self _).trans (hH w hw)) a) (hu.ne_top w (hsph hw))) le_rfl
+  refine (add_le_add (hsub (a - H)) le_rfl).trans ?_
+  rw [← (hh.mono hcb').circleAverage_eq, ← EReal.coe_add, ← circleAverage_fun_add hT₁ hhI]
+  exact EReal.coe_le_coe_iff.2
+    (circleAverage_mono (hT₁.add hhI) (husc.circleIntegrable_truncateToReal hne hsph a) hpt)
 
 /-- The difference of a subharmonic function on an open set `U` and a real harmonic function on
 `U` is subharmonic on `U`. -/
@@ -1114,58 +929,46 @@ theorem _root_.AnalyticOnNhd.subharmonicOn_log_enorm {f : ℂ → ℂ} (hU : IsO
   have hne : ∀ z ∈ U, ENNReal.log ‖f z‖ₑ ≠ ⊤ := fun z _ ↦
     ENNReal.log_eq_top_iff.not.2 enorm_ne_top
   refine ⟨husc, hne, fun z hz ↦ ?_⟩
-  obtain ⟨ε, hε, hεU⟩ := Metric.isOpen_iff.1 hU z hz
-  filter_upwards [Ioo_mem_nhdsGT hε] with r hr a
+  filter_upwards [(eventually_closedBall_subset (hU.mem_nhds hz)).filter_mono nhdsWithin_le_nhds,
+    self_mem_nhdsWithin] with r hcb (hr : 0 < r) a
   by_cases hfz : f z = 0
   · simp [hfz]
-  have hrabs : |r| = r := abs_of_pos hr.1
-  have hcb : closedBall z |r| ⊆ U := by rw [hrabs]; exact (closedBall_subset_ball hr.2).trans hεU
+  rw [← abs_of_pos hr] at hcb
   have hfr : AnalyticOnNhd ℂ f (closedBall z |r|) := hf.mono hcb
   have hsph : sphere z |r| ⊆ U := sphere_subset_closedBall.trans hcb
   -- Jensen's formula: `log ‖f z‖ ≤ ⨍ log ‖f ·‖`, as the divisor term is nonnegative
   have hjensen : Real.log ‖f z‖ ≤ circleAverage (fun w ↦ Real.log ‖f w‖) z r := by
-    rw [hfr.circleAverage_log_norm hr.1.ne' hfz]
+    rw [hfr.circleAverage_log_norm hr.ne' hfz]
     refine le_add_of_nonneg_left (finsum_nonneg fun w ↦ ?_)
     by_cases hw : w ∈ closedBall z |r|
-    · have h0 : (0 : ℤ) ≤ MeromorphicOn.divisor f (closedBall z |r|) w := by
-        simpa using MeromorphicOn.AnalyticOnNhd.divisor_nonneg hfr w
-      refine mul_nonneg (mod_cast h0) ?_
-      by_cases hwz : w = z
-      · simp [hwz]
-      · apply Real.log_nonneg
-        rw [← div_eq_mul_inv, one_le_div (norm_pos_iff.2 (sub_ne_zero.2 (Ne.symm hwz)))]
-        rwa [mem_closedBall, dist_eq_norm', hrabs] at hw
+    · refine mul_nonneg (mod_cast MeromorphicOn.AnalyticOnNhd.divisor_nonneg hfr w) ?_
+      rcases eq_or_ne w z with rfl | hwz
+      · simp
+      · rw [mem_closedBall, dist_eq_norm', abs_of_pos hr] at hw
+        exact Real.log_nonneg ((one_le_div (norm_pos_iff.2 (sub_ne_zero.2 hwz.symm))).2 hw)
     · simp [Function.locallyFinsuppWithin.apply_eq_zero_of_notMem _ hw]
   -- the truncation of `ENNReal.log ‖f ·‖ₑ` agrees with `max (log ‖f ·‖) a` off the zeros of `f`
-  have hL : CircleIntegrable (fun w ↦ Real.log ‖f w‖) z r :=
-    (hfr.mono sphere_subset_closedBall).meromorphicOn.circleIntegrable_log_norm
-  have hT := husc.circleIntegrable_truncateToReal hne hsph a
   have hcod : (fun w ↦ EReal.truncateToReal a (ENNReal.log ‖f w‖ₑ))
       =ᶠ[codiscreteWithin (sphere z |r|)] fun w ↦ max (Real.log ‖f w‖) a := by
-    have h₀ := hfr.preimage_zero_mem_codiscreteWithin hfz (mem_closedBall_self (abs_nonneg r))
-      ⟨nonempty_closedBall.2 (abs_nonneg r), (convex_closedBall z |r|).isPreconnected⟩
-    filter_upwards [codiscreteWithin_mono sphere_subset_closedBall h₀] with w hw
-    simp only [mem_preimage, mem_compl_iff, mem_singleton_iff] at hw
+    filter_upwards [codiscreteWithin_mono sphere_subset_closedBall
+      (hfr.preimage_zero_mem_codiscreteWithin hfz (mem_closedBall_self (abs_nonneg r))
+        ⟨nonempty_closedBall.2 (abs_nonneg r), (convex_closedBall z |r|).isPreconnected⟩)] with w hw
     rw [← ofReal_norm, ENNReal.log_ofReal_of_pos (norm_pos_iff.2 hw), EReal.truncateToReal_coe]
-  calc ENNReal.log ‖f z‖ₑ = ((Real.log ‖f z‖ : ℝ) : EReal) := by
-        rw [← ofReal_norm, ENNReal.log_ofReal_of_pos (norm_pos_iff.2 hfz)]
-    _ ≤ ((circleAverage (fun w ↦ max (Real.log ‖f w‖) a) z r : ℝ) : EReal) :=
-        EReal.coe_le_coe_iff.2 (hjensen.trans (circleAverage_mono hL
-          (hT.congr_codiscreteWithin hcod) fun w _ ↦ le_max_left _ _))
-    _ = _ := by rw [circleAverage_congr_codiscreteWithin hcod hr.1.ne']
+  rw [← ofReal_norm, ENNReal.log_ofReal_of_pos (norm_pos_iff.2 hfz),
+    circleAverage_congr_codiscreteWithin hcod hr.ne', EReal.coe_le_coe_iff]
+  exact hjensen.trans (circleAverage_mono
+    (hfr.mono sphere_subset_closedBall).meromorphicOn.circleIntegrable_log_norm
+    ((husc.circleIntegrable_truncateToReal hne hsph a).congr_codiscreteWithin hcod)
+    fun w _ ↦ le_max_left _ _)
 
 /-- **`log ‖f‖` is subharmonic**: for `f : ℂ → ℂ` analytic on the open set `U`, the function
 `log ‖f ·‖` extended by `⊥ = -∞` at the zeros of `f` is subharmonic on `U`. -/
 theorem _root_.AnalyticOnNhd.subharmonicOn_log_norm {f : ℂ → ℂ} (hU : IsOpen U)
     (hf : AnalyticOnNhd ℂ f U) :
     SubharmonicOn (fun z ↦ if f z = 0 then ⊥ else ((Real.log ‖f z‖ : ℝ) : EReal)) U := by
-  have : (fun z ↦ if f z = 0 then ⊥ else ((Real.log ‖f z‖ : ℝ) : EReal)) =
-      fun z ↦ ENNReal.log ‖f z‖ₑ := by
-    funext z
-    rw [← ofReal_norm, ENNReal.log_ofReal]
-    by_cases hfz : f z = 0 <;> simp [hfz]
-  rw [this]
-  exact hf.subharmonicOn_log_enorm hU
+  convert hf.subharmonicOn_log_enorm hU using 2 with z
+  rw [← ofReal_norm, ENNReal.log_ofReal]
+  simp
 
 end SubharmonicOn
 
@@ -1178,25 +981,18 @@ semicontinuous regularization of `u` relative to `s`) is upper semicontinuous. -
 theorem upperSemicontinuous_limsup_nhdsWithin {α β : Type*} [TopologicalSpace α]
     [CompleteLinearOrder β] [DenselyOrdered β] (u : α → β) (s : Set α) :
     UpperSemicontinuous fun x ↦ limsup u (𝓝[s] x) := by
-  refine fun x y hy ↦ ?_
+  intro x y hy
   obtain ⟨y', hy'₁, hy'₂⟩ := exists_between hy
-  obtain ⟨V, hVo, hxV, hV⟩ := mem_nhdsWithin.1 (eventually_lt_of_limsup_lt hy'₁)
-  filter_upwards [hVo.mem_nhds hxV] with w hw
-  have hw' : ∀ᶠ w' in 𝓝[s] w, u w' ≤ y' := by
-    filter_upwards [eventually_nhdsWithin_of_eventually_nhds (hVo.mem_nhds hw),
-      self_mem_nhdsWithin] with w' hw' hw's
-    exact (hV ⟨hw', hw's⟩).le
-  exact lt_of_le_of_lt (limsup_le_of_le (by isBoundedDefault) hw') hy'₂
+  filter_upwards [eventually_nhds_nhdsWithin.2 (eventually_lt_of_limsup_lt hy'₁)] with w hw
+  exact (limsup_le_of_le (by isBoundedDefault) (hw.mono fun _ ↦ le_of_lt)).trans_lt hy'₂
 
 /-- At a point `x ∈ s`, the upper semicontinuous regularization `limsup u (𝓝[s] x)` of a function
 `u` that is upper semicontinuous on `s` is `u x`. -/
 theorem UpperSemicontinuousOn.limsup_nhdsWithin_eq {α β : Type*} [TopologicalSpace α]
     [CompleteLinearOrder β] {u : α → β} {s : Set α} (hu : UpperSemicontinuousOn u s) {x : α}
-    (hx : x ∈ s) : limsup u (𝓝[s] x) = u x := by
-  refine le_antisymm (UpperSemicontinuousWithinAt.limsup_le (hu x hx))
-    (le_limsup_of_frequently_le ?_)
-  exact (frequently_pure.2 (le_refl (u x)) : ∃ᶠ w in pure x, u x ≤ u w).filter_mono
-    (pure_le_nhdsWithin hx)
+    (hx : x ∈ s) : limsup u (𝓝[s] x) = u x :=
+  le_antisymm (hu.limsup_le x hx) <| le_limsup_of_frequently_le <|
+    Frequently.filter_mono (frequently_pure.2 le_rfl) (pure_le_nhdsWithin hx)
 
 namespace SubharmonicOn
 
@@ -1206,9 +1002,10 @@ variable {u : ℂ → EReal} {U : Set ℂ}
 attains the value `M` at `z ∈ U`, then it is equal to `M` in a neighbourhood of `z`.
 
 Proof: otherwise there is `w` arbitrarily close to `z` with `u w < M`; by upper semicontinuity
-`u < M` on a ball around `w`. The circle around `z` through `w` lies in `U`, and the truncation
-`T = truncateToReal (M - 1) ∘ u` satisfies `T ≤ M` on it and `T < M` on the nonempty open arc
-inside that ball, so `⨍ T < M = u z`, contradicting the sub-mean-value inequality. -/
+`u < M` on a neighbourhood of `w`. The circle around `z` through `w` lies in `U`, and the
+truncation `T = truncateToReal (M - 1) ∘ u` satisfies `T ≤ M` on it and `T < M` on the nonempty
+open arc inside that neighbourhood, so `⨍ T < M = u z`, contradicting the sub-mean-value
+inequality. -/
 theorem eventually_eq_of_isMaxOn (hU : IsOpen U) (hu : SubharmonicOn u U) {z : ℂ} (hz : z ∈ U)
     {M : ℝ} (hM : ∀ w ∈ U, u w ≤ M) (hzM : u z = M) : ∀ᶠ w in 𝓝 z, u w = M := by
   obtain ⟨r₀, hr₀, hr₀'⟩ := (nhdsGT_basis (0 : ℝ)).eventually_iff.1
@@ -1219,53 +1016,34 @@ theorem eventually_eq_of_isMaxOn (hU : IsOpen U) (hu : SubharmonicOn u U) {z : �
   -- the circle of radius `r = dist w z` around `z` passes through `w` and lies in `U`
   obtain ⟨hcb, hsub⟩ := hr₀' ⟨dist_pos.2 hwz, hw⟩
   have hrabs : |dist w z| = dist w z := abs_of_nonneg dist_nonneg
-  have hsph : sphere z |dist w z| ⊆ U := by
-    rw [hrabs]; exact sphere_subset_closedBall.trans hcb
+  have hsph : sphere z |dist w z| ⊆ U := by rw [hrabs]; exact sphere_subset_closedBall.trans hcb
   have hwU : w ∈ U := hcb (mem_closedBall.2 le_rfl)
-  by_contra hne
-  have hlt : u w < M := lt_of_le_of_ne (hM w hwU) hne
-  -- by upper semicontinuity, `u < M` on a ball around `w`
-  have hev := hu.upperSemicontinuousOn w hwU (M : EReal) hlt
-  rw [nhdsWithin_eq_nhds.2 (hU.mem_nhds hwU), Metric.eventually_nhds_iff_ball] at hev
-  obtain ⟨δ, hδ, hδlt⟩ := hev
-  -- the truncation `T` at level `M - 1`: `T ≤ M` on the circle, `T < M` on the arc in the ball
-  set T : ℂ → ℝ := fun w' ↦ EReal.truncateToReal (M - 1) (u w') with hT
-  have hTint : CircleIntegrable T z (dist w z) :=
-    hu.circleIntegrable_truncateToReal hsph (M - 1)
-  have hTle (θ : ℝ) : T (circleMap z (dist w z) θ) ≤ M :=
-    EReal.truncateToReal_le_of_le (hM _ (hsph (circleMap_mem_sphere' z _ θ))) (by linarith)
-  have hTlt (θ : ℝ) (hθ : circleMap z (dist w z) θ ∈ ball w δ) :
-      T (circleMap z (dist w z) θ) < M :=
-    EReal.truncateToReal_lt_of_lt (hδlt _ hθ) (by linarith)
-  -- the sub-mean-value inequality at level `M - 1` gives `2π M ≤ ∫ T`
-  have hMle : 2 * π * M ≤ ∫ θ in (0 : ℝ)..2 * π, T (circleMap z (dist w z) θ) := by
-    have h₁ := hsub (M - 1)
-    rw [hzM, EReal.coe_le_coe_iff, circleAverage_def, smul_eq_mul,
-      le_inv_mul_iff₀ two_pi_pos] at h₁
-    exact h₁
-  -- but `∫ (M - T) > 0`, integrating over a period around the angle of `w`
   obtain ⟨θ₀, hθ₀⟩ : w ∈ range (circleMap z (dist w z)) := by
     rw [range_circleMap, hrabs]; exact mem_sphere.2 rfl
+  by_contra hne
+  -- by upper semicontinuity, `u < M` in a neighbourhood of `w`
+  have hev : ∀ᶠ w' in 𝓝 w, u w' < M :=
+    (hu.upperSemicontinuousOn w hwU (M : EReal) (lt_of_le_of_ne (hM w hwU) hne)).filter_mono
+      (nhdsWithin_eq_nhds.2 (hU.mem_nhds hwU)).ge
+  -- the sub-mean-value inequality at level `M - 1` for the truncation `T` gives `2π M ≤ ∫ T` over
+  -- the period `[θ₀ - π, θ₀ + π]` around the angle `θ₀` of `w`
+  set T : ℂ → ℝ := fun w' ↦ EReal.truncateToReal (M - 1) (u w')
   have hper : Function.Periodic (fun θ ↦ T (circleMap z (dist w z) θ)) (2 * π) :=
     (periodic_circleMap z (dist w z)).comp T
-  have hint : IntervalIntegrable (fun θ ↦ T (circleMap z (dist w z) θ)) volume (θ₀ - π)
-      (θ₀ - π + 2 * π) :=
-    (hper.intervalIntegrable_iff (t₂ := 0)).2 (by rw [zero_add]; exact hTint)
-  have hpos : 0 < ∫ θ in (θ₀ - π)..(θ₀ - π + 2 * π), (M - T (circleMap z (dist w z) θ)) := by
-    rw [intervalIntegral.integral_pos_iff_support_of_nonneg_ae'
-      (ae_of_all _ fun θ ↦ sub_nonneg.2 (hTle θ)) (intervalIntegrable_const.sub hint)]
-    refine ⟨by linarith [Real.pi_pos], ?_⟩
-    have hopen : IsOpen (circleMap z (dist w z) ⁻¹' ball w δ ∩ Ioo (θ₀ - π) (θ₀ - π + 2 * π)) :=
-      ((continuous_circleMap z _).isOpen_preimage _ isOpen_ball).inter isOpen_Ioo
-    have hne : (circleMap z (dist w z) ⁻¹' ball w δ ∩ Ioo (θ₀ - π) (θ₀ - π + 2 * π)).Nonempty :=
-      ⟨θ₀, by simp [hθ₀, hδ], by constructor <;> linarith [Real.pi_pos]⟩
-    refine lt_of_lt_of_le (hopen.measure_pos volume hne)
-      (measure_mono fun θ ⟨hθ₁, hθ₂⟩ ↦ ⟨?_, Ioo_subset_Ioc_self hθ₂⟩)
-    exact sub_ne_zero.2 (hTlt θ hθ₁).ne'
-  rw [intervalIntegral.integral_sub intervalIntegrable_const hint, intervalIntegral.integral_const,
-    hper.intervalIntegral_add_eq (θ₀ - π) 0, zero_add, smul_eq_mul,
-    show θ₀ - π + 2 * π - (θ₀ - π) = 2 * π by ring] at hpos
-  linarith
+  have h₁ := hsub (M - 1)
+  rw [hzM, EReal.coe_le_coe_iff, circleAverage_def, smul_eq_mul, le_inv_mul_iff₀ two_pi_pos,
+    ← zero_add (2 * π), hper.intervalIntegral_add_eq 0 (θ₀ - π), zero_add] at h₁
+  -- but `∫ T < 2π M`, as `T ≤ M` on the circle and `T < M` on a neighbourhood of `θ₀`
+  refine h₁.not_gt ((intervalIntegral.integral_lt_integral_of_ae_le_of_measure_setOfPred_lt_ne_zero
+    (by linarith [pi_pos]) (hper.intervalIntegrable₀ two_pi_pos.ne'
+      (hu.circleIntegrable_truncateToReal hsph (M - 1)) _ _) intervalIntegrable_const
+    (ae_of_all _ fun θ ↦ EReal.truncateToReal_le_of_le
+      (hM _ (hsph (circleMap_mem_sphere' z _ θ))) (by linarith)) ?_).trans_eq (by simp))
+  rw [Measure.restrict_apply' measurableSet_Ioc]
+  refine (Measure.measure_pos_of_mem_nhds volume (x := θ₀) (Filter.inter_mem ?_
+    (Ioc_mem_nhds (by linarith [pi_pos]) (by linarith [pi_pos])))).ne'
+  exact (((continuous_circleMap z _).tendsto θ₀).eventually (hθ₀ ▸ hev)).mono fun θ hθ ↦
+    EReal.truncateToReal_lt_of_lt hθ (by linarith)
 
 /-- **Strong maximum principle**: a subharmonic function on an open preconnected set `Ω` that
 attains its supremum over `Ω` at a point `z₀ ∈ Ω` is constant on `Ω`. -/
@@ -1274,24 +1052,19 @@ theorem eqOn_const_of_isMaxOn {Ω : Set ℂ} (hΩ : IsOpen Ω) (hc : IsPreconnec
     EqOn u (fun _ ↦ u z₀) Ω := by
   -- if the maximum is `⊥`, then `u = ⊥` on `Ω`
   rcases eq_or_ne (u z₀) ⊥ with hbot | hbot
-  · intro z hz
-    exact le_bot_iff.1 ((hmax hz).trans_eq hbot) |>.trans hbot.symm
+  · exact fun z hz ↦ (le_bot_iff.1 ((hmax hz).trans_eq hbot)).trans hbot.symm
   -- otherwise the maximum is a real number `M`
   obtain ⟨M, hM⟩ : ∃ M : ℝ, u z₀ = M :=
     ⟨(u z₀).toReal, (EReal.coe_toReal (hu.ne_top z₀ hz₀) hbot).symm⟩
   have hle : ∀ w ∈ Ω, u w ≤ M := fun w hw ↦ hM ▸ hmax hw
   -- the set where `u = M` is open, closed in `Ω` (upper semicontinuity), and nonempty
-  have hopen : IsOpen {z | z ∈ Ω ∧ u z = M} := by
-    refine isOpen_iff_mem_nhds.2 fun z ⟨hzΩ, hzM⟩ ↦ ?_
-    filter_upwards [hΩ.mem_nhds hzΩ, hu.eventually_eq_of_isMaxOn hΩ hzΩ hle hzM] with w hw hw'
-    exact ⟨hw, hw'⟩
-  have hsub : Ω ⊆ {z | z ∈ Ω ∧ u z = M} := by
-    refine hc.subset_of_closure_inter_subset hopen ⟨z₀, hz₀, hz₀, hM⟩ fun z ⟨hzcl, hzΩ⟩ ↦
-      ⟨hzΩ, le_antisymm (hle z hzΩ) ?_⟩
-    refine UpperSemicontinuousWithinAt.frequently (hu.upperSemicontinuousOn z hzΩ) (M : EReal) ?_
-    exact frequently_nhdsWithin_iff.2
-      ((mem_closure_iff_frequently.1 hzcl).mono fun x ⟨hxΩ, hxM⟩ ↦ ⟨hxM.ge, hxΩ⟩)
-  exact fun z hz ↦ (hsub hz).2.trans hM.symm
+  have hopen : IsOpen {z | z ∈ Ω ∧ u z = M} := isOpen_iff_mem_nhds.2 fun z ⟨hzΩ, hzM⟩ ↦
+    Filter.inter_mem (hΩ.mem_nhds hzΩ) (hu.eventually_eq_of_isMaxOn hΩ hzΩ hle hzM)
+  refine fun z hz ↦ ((hc.subset_of_closure_inter_subset hopen ⟨z₀, hz₀, hz₀, hM⟩
+    fun x ⟨hxcl, hxΩ⟩ ↦ ⟨hxΩ, le_antisymm (hle x hxΩ) ?_⟩) hz).2.trans hM.symm
+  exact UpperSemicontinuousWithinAt.frequently (hu.upperSemicontinuousOn x hxΩ) (M : EReal)
+    (frequently_nhdsWithin_iff.2
+      ((mem_closure_iff_frequently.1 hxcl).mono fun y ⟨hyΩ, hyM⟩ ↦ ⟨hyM.ge, hyΩ⟩))
 
 /-- **Weak maximum principle** for subharmonic functions: if `u` is subharmonic on a bounded open
 preconnected set `Ω ⊆ ℂ` and `limsup u (𝓝[Ω] ζ) ≤ 0` at every boundary point `ζ` of `Ω`, then
@@ -1305,32 +1078,28 @@ at a point of the (nonempty) frontier of `Ω`. -/
 theorem le_zero_of_limsup_frontier {Ω : Set ℂ} (hΩ : IsOpen Ω) (hb : Bornology.IsBounded Ω)
     (hc : IsPreconnected Ω) (hu : SubharmonicOn u Ω)
     (hfr : ∀ ζ ∈ frontier Ω, limsup u (𝓝[Ω] ζ) ≤ 0) : ∀ z ∈ Ω, u z ≤ 0 := by
-  by_contra! hpos
-  obtain ⟨z₁, hz₁, hz₁pos⟩ := hpos
+  intro z₁ hz₁
+  by_contra! hz₁pos
   set g : ℂ → EReal := fun ζ ↦ limsup u (𝓝[Ω] ζ)
   have hgu : ∀ z ∈ Ω, g z = u z := fun z hz ↦ hu.upperSemicontinuousOn.limsup_nhdsWithin_eq hz
   -- the maximum of `g` on `closure Ω` is positive, hence attained in `Ω`
   obtain ⟨ζ₀, hζ₀, hmax⟩ :=
     ((upperSemicontinuous_limsup_nhdsWithin u Ω).upperSemicontinuousOn _).exists_isMaxOn
       ⟨z₁, subset_closure hz₁⟩ hb.isCompact_closure
-  have hζ₀pos : 0 < g ζ₀ :=
-    hz₁pos.trans_le ((hgu z₁ hz₁).symm.le.trans (hmax (subset_closure hz₁)))
-  have hζ₀Ω : ζ₀ ∈ Ω := by
-    by_contra h
-    exact absurd hζ₀pos (not_lt.2 (hfr ζ₀ ⟨hζ₀, by rwa [hΩ.interior_eq]⟩))
+  have hζ₀pos : 0 < g ζ₀ := hz₁pos.trans_le ((hgu z₁ hz₁).ge.trans (hmax (subset_closure hz₁)))
+  have hζ₀Ω : ζ₀ ∈ Ω :=
+    not_not.1 fun h ↦ (hfr ζ₀ ⟨hζ₀, hΩ.interior_eq.symm ▸ h⟩).not_gt hζ₀pos
   -- `u` attains its maximum over `Ω` at `ζ₀`, hence is constant on `Ω`
   have hmaxΩ : IsMaxOn u Ω ζ₀ := isMaxOn_iff.2 fun z hz ↦
-    (hgu z hz).symm.le.trans ((hmax (subset_closure hz)).trans (hgu ζ₀ hζ₀Ω).le)
-  have hconst := hu.eqOn_const_of_isMaxOn hΩ hc hζ₀Ω hmaxΩ
+    (hgu z hz).ge.trans ((hmax (subset_closure hz)).trans (hgu ζ₀ hζ₀Ω).le)
   -- contradiction with the boundary condition at a point of the frontier
   obtain ⟨ζ, hζ⟩ := nonempty_frontier_iff.2
     ⟨⟨z₁, hz₁⟩, fun h ↦ NormedSpace.unbounded_univ ℂ ℂ (h ▸ hb)⟩
   have hne : (𝓝[Ω] ζ).NeBot := mem_closure_iff_nhdsWithin_neBot.1 (frontier_subset_closure hζ)
   have hlim : limsup u (𝓝[Ω] ζ) = u ζ₀ := by
-    rw [limsup_congr (eventually_nhdsWithin_of_forall fun z hz ↦ hconst hz), limsup_const]
-  have h₁ : u ζ₀ ≤ 0 := hlim ▸ hfr ζ hζ
-  have h₂ : 0 < u ζ₀ := (hgu ζ₀ hζ₀Ω) ▸ hζ₀pos
-  exact absurd h₂ (not_lt.2 h₁)
+    rw [limsup_congr (eventually_nhdsWithin_of_forall fun z hz ↦
+      hu.eqOn_const_of_isMaxOn hΩ hc hζ₀Ω hmaxΩ hz), limsup_const]
+  exact (hlim ▸ hfr ζ hζ).not_gt (hgu ζ₀ hζ₀Ω ▸ hζ₀pos)
 
 end SubharmonicOn
 
@@ -1380,13 +1149,9 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDim
 
 /-- Finite sums of harmonic functions are harmonic. -/
 theorem HarmonicAt.sum {ι : Type*} {s : Finset ι} {f : ι → E → F} {x : E}
-    (h : ∀ i ∈ s, HarmonicAt (f i) x) : HarmonicAt (fun y ↦ ∑ i ∈ s, f i y) x := by
-  classical
-  induction s using Finset.induction_on with
-  | empty => simp
-  | insert a s ha ih =>
-    simp_rw [Finset.sum_insert ha]
-    exact (h a (Finset.mem_insert_self a s)).add (ih fun i hi ↦ h i (Finset.mem_insert_of_mem hi))
+    (h : ∀ i ∈ s, HarmonicAt (f i) x) : HarmonicAt (fun y ↦ ∑ i ∈ s, f i y) x :=
+  Finset.sum_fn s f ▸ Finset.sum_induction f (HarmonicAt · x) (fun _ _ ↦ HarmonicAt.add)
+    (harmonicAt_const 0) h
 
 /-- Finite sums of harmonic functions are harmonic. -/
 theorem HarmonicOnNhd.sum {ι : Type*} {s : Finset ι} {f : ι → E → F} {U : Set E}
@@ -1405,13 +1170,11 @@ conditions enter the Poisson principle for `log ‖f‖`. -/
 theorem Filter.Tendsto.limsup_log_norm_le {α : Type*} {l : Filter α} {f : α → ℂ} {f₀ : ℂ} {c : ℝ}
     (hf : Tendsto f l (𝓝 f₀)) (hf₀ : ‖f₀‖ ≤ Real.exp c) :
     limsup (fun z ↦ if f z = 0 then ⊥ else ((Real.log ‖f z‖ : ℝ) : EReal)) l ≤ (c : EReal) := by
-  refine EReal.le_of_forall_lt_iff_le.1 fun d hd ↦ ?_
-  refine limsup_le_of_le (by isBoundedDefault) ?_
+  refine EReal.le_of_forall_lt_iff_le.1 fun d hd ↦ limsup_le_of_le (by isBoundedDefault) ?_
   filter_upwards [hf.norm.eventually
     (gt_mem_nhds (hf₀.trans_lt (Real.exp_lt_exp.2 (EReal.coe_lt_coe_iff.1 hd))))] with z hz
   split_ifs with hfz
-  · exact bot_le
-  · exact EReal.coe_le_coe_iff.2 ((Real.log_le_iff_le_exp (norm_pos_iff.2 hfz)).2 hz.le)
+  exacts [bot_le, EReal.coe_le_coe_iff.2 ((Real.log_le_iff_le_exp (norm_pos_iff.2 hfz)).2 hz.le)]
 
 namespace Complex
 
@@ -1433,88 +1196,66 @@ closed upper half-plane and tends to `-∞` as `‖z‖ → ∞`. -/
 noncomputable def negLogNormAddI (z : ℂ) : ℝ := -Real.log ‖z + I‖
 
 /-- `z - x₀ ≠ 0` for `z` in the upper half-plane and real `x₀`. -/
-theorem sub_ofReal_ne_zero_of_im_pos {x₀ : ℝ} {z : ℂ} (hz : 0 < z.im) : z - x₀ ≠ 0 := fun h ↦ by
-  have := congrArg Complex.im h
-  simp at this
-  linarith
+theorem sub_ofReal_ne_zero_of_im_pos {x₀ : ℝ} {z : ℂ} (hz : 0 < z.im) : z - x₀ ≠ 0 :=
+  ne_of_apply_ne Complex.im (by simpa using hz.ne')
 
 /-- `z - x₀ + 2i ≠ 0` for `z` in the closed upper half-plane and real `x₀`. -/
 theorem sub_ofReal_add_two_mul_I_ne_zero {x₀ : ℝ} {z : ℂ} (hz : 0 ≤ z.im) :
-    z - x₀ + 2 * I ≠ 0 := fun h ↦ by
-  have := congrArg Complex.im h
-  simp at this
-  linarith
+    z - x₀ + 2 * I ≠ 0 :=
+  ne_of_apply_ne Complex.im (by simpa using (by positivity : z.im + 2 ≠ 0))
 
+/-- `logNormRatio x₀` is harmonic on the upper half-plane. -/
 theorem harmonicOnNhd_logNormRatio (x₀ : ℝ) :
-    HarmonicOnNhd (logNormRatio x₀) {z | 0 < z.im} := by
-  intro z hz
-  have hz' : (0 : ℝ) < z.im := hz
-  have h₁ : z - x₀ ≠ 0 := sub_ofReal_ne_zero_of_im_pos hz'
-  have h₂ : z - x₀ + 2 * I ≠ 0 := sub_ofReal_add_two_mul_I_ne_zero hz'.le
-  have hf : AnalyticAt ℂ (fun w : ℂ ↦ (w - x₀) / (w - x₀ + 2 * I)) z := by
-    fun_prop (disch := exact h₂)
-  exact hf.harmonicAt_log_norm (div_ne_zero h₁ h₂)
+    HarmonicOnNhd (logNormRatio x₀) {z | 0 < z.im} := fun z hz ↦
+  have h₂ : z - x₀ + 2 * I ≠ 0 := sub_ofReal_add_two_mul_I_ne_zero (le_of_lt hz)
+  AnalyticAt.harmonicAt_log_norm (by fun_prop (disch := exact h₂))
+    (div_ne_zero (sub_ofReal_ne_zero_of_im_pos hz) h₂)
 
 /-- `‖w‖ ≤ ‖w + 2i‖` for `Im w ≥ 0`, as `‖w + 2i‖² = ‖w‖² + 4 Im w + 4`. -/
 theorem norm_le_norm_add_two_mul_I {w : ℂ} (hw : 0 ≤ w.im) : ‖w‖ ≤ ‖w + 2 * I‖ := by
-  rw [norm_def, norm_def]
   refine Real.sqrt_le_sqrt ?_
   simp only [normSq_apply, add_re, add_im, mul_re, mul_im, I_re, I_im, re_ofNat, im_ofNat]
-  nlinarith
+  linarith
 
-theorem logNormRatio_nonpos {x₀ : ℝ} {z : ℂ} (hz : 0 ≤ z.im) : logNormRatio x₀ z ≤ 0 := by
-  refine Real.log_nonpos (norm_nonneg _) ?_
-  rw [norm_div]
-  exact div_le_one_of_le₀ (norm_le_norm_add_two_mul_I (by simpa using hz)) (norm_nonneg _)
+/-- `logNormRatio x₀` is nonpositive on the closed upper half-plane. -/
+theorem logNormRatio_nonpos {x₀ : ℝ} {z : ℂ} (hz : 0 ≤ z.im) : logNormRatio x₀ z ≤ 0 :=
+  Real.log_nonpos (norm_nonneg _) <| (norm_div _ _).trans_le <|
+    div_le_one_of_le₀ (norm_le_norm_add_two_mul_I (by simpa using hz)) (norm_nonneg _)
 
 /-- `logNormRatio x₀ z → -∞` as `z → x₀` within the upper half-plane. -/
 theorem tendsto_logNormRatio_atBot (x₀ : ℝ) :
     Tendsto (logNormRatio x₀) (𝓝[{z | 0 < z.im}] (x₀ : ℂ)) atBot := by
   refine Real.tendsto_log_nhdsGT_zero.comp (tendsto_nhdsWithin_iff.2 ⟨?_, ?_⟩)
   · have hc : ContinuousAt (fun w : ℂ ↦ ‖(w - x₀) / (w - x₀ + 2 * I)‖) x₀ := by
-      have h₂ : (x₀ : ℂ) - x₀ + 2 * I ≠ 0 := sub_ofReal_add_two_mul_I_ne_zero (by simp)
-      fun_prop (disch := exact h₂)
+      fun_prop (disch := exact sub_ofReal_add_two_mul_I_ne_zero (by simp))
     simpa using hc.tendsto.mono_left nhdsWithin_le_nhds
-  · filter_upwards [self_mem_nhdsWithin] with z hz
-    exact norm_pos_iff.2 (div_ne_zero (sub_ofReal_ne_zero_of_im_pos hz)
-      (sub_ofReal_add_two_mul_I_ne_zero (le_of_lt hz)))
+  · exact eventually_nhdsWithin_of_forall fun z hz ↦ norm_pos_iff.2 (div_ne_zero
+      (sub_ofReal_ne_zero_of_im_pos hz) (sub_ofReal_add_two_mul_I_ne_zero (le_of_lt hz)))
 
-theorem harmonicOnNhd_negLogNormAddI : HarmonicOnNhd negLogNormAddI {z | 0 < z.im} := by
-  intro z hz
-  have hz' : (0 : ℝ) < z.im := hz
-  have h : z + I ≠ 0 := fun h ↦ by
-    have := congrArg Complex.im h
-    simp at this
-    linarith
-  exact ((analyticAt_id.add analyticAt_const).harmonicAt_log_norm h).neg
+/-- `negLogNormAddI` is harmonic on the upper half-plane. -/
+theorem harmonicOnNhd_negLogNormAddI : HarmonicOnNhd negLogNormAddI {z | 0 < z.im} :=
+  fun z (hz : 0 < z.im) ↦ ((analyticAt_id.add analyticAt_const).harmonicAt_log_norm
+    (ne_of_apply_ne Complex.im (by simpa using (by positivity : z.im + 1 ≠ 0)))).neg
 
-theorem negLogNormAddI_nonpos {z : ℂ} (hz : 0 ≤ z.im) : negLogNormAddI z ≤ 0 := by
-  refine neg_nonpos.2 (Real.log_nonneg ?_)
-  have := im_le_norm (z + I)
-  rw [add_im, I_im] at this
-  linarith
+/-- `negLogNormAddI` is nonpositive on the closed upper half-plane. -/
+theorem negLogNormAddI_nonpos {z : ℂ} (hz : 0 ≤ z.im) : negLogNormAddI z ≤ 0 :=
+  neg_nonpos.2 (Real.log_nonneg (le_trans (by simpa using hz) (im_le_norm (z + I))))
 
 /-- `-log ‖z + i‖ ≤ -log (R - 1)` for `‖z‖ ≥ R > 1`. -/
 theorem negLogNormAddI_le {z : ℂ} {R : ℝ} (hR : 1 < R) (hz : R ≤ ‖z‖) :
-    negLogNormAddI z ≤ -Real.log (R - 1) := by
-  refine neg_le_neg (Real.log_le_log (by linarith) ?_)
-  have := norm_sub_le (z + I) I
-  rw [add_sub_cancel_right, norm_I] at this
-  linarith
+    negLogNormAddI z ≤ -Real.log (R - 1) :=
+  neg_le_neg (Real.log_le_log (by linarith) (by linarith [norm_le_add_norm_add z I, norm_I]))
 
 /-- A boundary point `ζ` of the half-disc `{‖z‖ < R} ∩ ℍ` lies in the closed upper half-plane,
 and it is either real or of modulus at least `R`. -/
 theorem frontier_ball_inter_halfPlane_subset (R : ℝ) :
     frontier (ball (0 : ℂ) R ∩ {z | 0 < z.im}) ⊆ {ζ | 0 ≤ ζ.im ∧ (ζ.im = 0 ∨ R ≤ ‖ζ‖)} := by
-  intro ζ hζ
-  rw [(isOpen_ball.inter UpperHalfPlane.isOpen_upperHalfPlaneSet).frontier_eq] at hζ
-  obtain ⟨hcl, hnot⟩ := hζ
-  have hcl' : ζ ∈ closedBall (0 : ℂ) R ∩ {z | 0 ≤ z.im} :=
-    closure_minimal (inter_subset_inter ball_subset_closedBall fun z hz ↦ le_of_lt hz)
-      (isClosed_closedBall.inter (isClosed_le continuous_const continuous_im)) hcl
-  refine ⟨hcl'.2, ?_⟩
-  by_contra! h
-  exact hnot ⟨mem_ball_zero_iff.2 h.2, lt_of_le_of_ne hcl'.2 (Ne.symm h.1)⟩
+  rw [(isOpen_ball.inter UpperHalfPlane.isOpen_upperHalfPlaneSet).frontier_eq]
+  rintro ζ ⟨hcl, hnot⟩
+  have him : 0 ≤ ζ.im :=
+    closure_lt_subset_le continuous_const continuous_im (closure_mono inter_subset_right hcl)
+  exact ⟨him, or_iff_not_imp_left.2 fun h ↦ le_of_not_gt fun hR ↦
+    hnot ⟨mem_ball_zero_iff.2 hR, him.lt_of_ne' h⟩⟩
 
 end Complex
 
@@ -1545,95 +1286,69 @@ theorem le_zero_of_halfPlane {E : Finset ℝ} {M : ℝ}
     (hbdry : ∀ x : ℝ, x ∉ E → limsup u (𝓝[{z | 0 < z.im}] (x : ℂ)) ≤ 0) :
     ∀ z : ℂ, 0 < z.im → u z ≤ 0 := by
   intro z hz
-  set h : ℂ → ℝ := fun w ↦ ∑ x₀ ∈ E, logNormRatio x₀ w + negLogNormAddI w with hh
+  set h : ℂ → ℝ := fun w ↦ ∑ x₀ ∈ E, logNormRatio x₀ w + negLogNormAddI w
   have hharm : HarmonicOnNhd h {w | 0 < w.im} :=
     (HarmonicOnNhd.sum fun x₀ _ ↦ harmonicOnNhd_logNormRatio x₀).add harmonicOnNhd_negLogNormAddI
-  have hle : ∀ w : ℂ, 0 ≤ w.im → h w ≤ negLogNormAddI w := fun w hw ↦ by
-    have := Finset.sum_nonpos fun x₀ (_ : x₀ ∈ E) ↦ logNormRatio_nonpos (x₀ := x₀) hw
-    simp only [hh]
-    linarith
-  have hneg : ∀ w : ℂ, 0 ≤ w.im → h w ≤ 0 := fun w hw ↦
-    (hle w hw).trans (negLogNormAddI_nonpos hw)
+  have hle : ∀ w : ℂ, 0 ≤ w.im → h w ≤ negLogNormAddI w := fun w hw ↦
+    add_le_of_nonpos_left (Finset.sum_nonpos fun x₀ _ ↦ logNormRatio_nonpos hw)
   -- for every `ε > 0`, `u z ≤ -ε h z`
   have key : ∀ ε : ℝ, 0 < ε → u z ≤ ((-(ε * h z) : ℝ) : EReal) := by
     intro ε hε
-    obtain ⟨R, hR₂, hRz, hRlog⟩ : ∃ R : ℝ, 2 < R ∧ ‖z‖ < R ∧ M / ε ≤ Real.log (R - 1 - 1) := by
-      refine ⟨Real.exp (M / ε) + 2 + ‖z‖, ?_, ?_, ?_⟩
-      · linarith [Real.exp_pos (M / ε), norm_nonneg z]
-      · linarith [Real.exp_pos (M / ε)]
-      · calc M / ε = Real.log (Real.exp (M / ε)) := (Real.log_exp _).symm
-          _ ≤ _ := Real.log_le_log (Real.exp_pos _) (by linarith [norm_nonneg z])
+    obtain ⟨R, hR₂, hRz, hRlog⟩ : ∃ R : ℝ, 2 < R ∧ ‖z‖ < R ∧ M / ε ≤ Real.log (R - 1 - 1) :=
+      ⟨Real.exp (M / ε) + 2 + ‖z‖, by linarith [Real.exp_pos (M / ε), norm_nonneg z],
+        by linarith [Real.exp_pos (M / ε)], (Real.log_exp (M / ε)).symm.trans_le
+          (Real.log_le_log (Real.exp_pos _) (by linarith [norm_nonneg z]))⟩
     -- the values `u w + ε h w` are nonpositive wherever `h w ≤ -M / ε`
     have hbound : ∀ w : ℂ, 0 < w.im → h w ≤ -(M / ε) → u w + ((ε * h w : ℝ) : EReal) ≤ 0 := by
       intro w hw hhw
-      have h₁ : ε * h w ≤ -M := by
-        have := mul_le_mul_of_nonneg_left hhw hε.le
-        have : ε * (M / ε) = M := by field_simp
-        linarith
-      calc u w + ((ε * h w : ℝ) : EReal) ≤ (M : EReal) + ((ε * h w : ℝ) : EReal) :=
-            add_le_add_left (hM w hw) _
-        _ = ((M + ε * h w : ℝ) : EReal) := (EReal.coe_add _ _).symm
-        _ ≤ 0 := by rw [← EReal.coe_zero, EReal.coe_le_coe_iff]; linarith
+      have h₁ : ε * h w ≤ -M := (mul_le_mul_of_nonneg_left hhw hε.le).trans_eq (by field_simp)
+      exact (add_le_add_left (hM w hw) _).trans (by norm_cast; linarith)
     -- the weak maximum principle on the half-disc `Ω`
-    set Ω : Set ℂ := ball 0 R ∩ {w | 0 < w.im} with hΩ
+    set Ω : Set ℂ := ball 0 R ∩ {w | 0 < w.im}
     have hΩsub : Ω ⊆ {w | 0 < w.im} := inter_subset_right
     have hw : SubharmonicOn (fun w ↦ u w + ((ε * h w : ℝ) : EReal)) Ω :=
       (hu.add_harmonic UpperHalfPlane.isOpen_upperHalfPlaneSet
         (hharm.const_smul (c := ε))).mono hΩsub
     have hfr : ∀ ζ ∈ frontier Ω, limsup (fun w ↦ u w + ((ε * h w : ℝ) : EReal)) (𝓝[Ω] ζ) ≤ 0 := by
       intro ζ hζ
-      obtain ⟨hζim, hζ'⟩ := frontier_ball_inter_halfPlane_subset R hζ
-      rcases hζ' with him | hnorm
-      · -- a real boundary point `x = ζ.re`
-        have hζx : ((ζ.re : ℝ) : ℂ) = ζ := Complex.ext (by simp) (by simp [him])
-        rw [← hζx]
-        by_cases hE : ζ.re ∈ E
+      obtain ⟨-, him | hnorm⟩ := frontier_ball_inter_halfPlane_subset R hζ
+      · -- a real boundary point `x`
+        obtain ⟨x, rfl⟩ : ∃ x : ℝ, (x : ℂ) = ζ := ⟨ζ.re, Complex.ext rfl him.symm⟩
+        by_cases hE : x ∈ E
         · -- `x ∈ E`: `u ≤ M` and `ε h → -∞`
           refine limsup_le_of_le (by isBoundedDefault) ?_
-          have h₁ : ∀ᶠ w in 𝓝[{w | 0 < w.im}] (ζ.re : ℂ), logNormRatio ζ.re w ≤ -(M / ε) :=
-            (tendsto_logNormRatio_atBot ζ.re).eventually (eventually_le_atBot _)
-          filter_upwards [nhdsWithin_mono _ hΩsub h₁, self_mem_nhdsWithin] with w hw₁ hwΩ
+          filter_upwards [nhdsWithin_mono _ hΩsub
+            ((tendsto_logNormRatio_atBot x).eventually (eventually_le_atBot (-(M / ε)))),
+            self_mem_nhdsWithin] with w hw₁ hwΩ
           have hwim : 0 < w.im := hΩsub hwΩ
-          refine hbound w hwim (le_trans ?_ hw₁)
-          have h₂ := Finset.sum_nonpos fun x₀ (_ : x₀ ∈ E.erase ζ.re) ↦
-            logNormRatio_nonpos (x₀ := x₀) hwim.le
-          have h₃ := negLogNormAddI_nonpos hwim.le
-          simp only [hh]
-          rw [← Finset.add_sum_erase E _ hE]
-          linarith
+          have hsum : ∑ x₀ ∈ E, logNormRatio x₀ w ≤ logNormRatio x w :=
+            (Finset.sum_le_sum_of_subset_of_nonpos (Finset.singleton_subset_iff.2 hE)
+              fun i _ _ ↦ logNormRatio_nonpos (x₀ := i) hwim.le).trans_eq (Finset.sum_singleton _ _)
+          exact hbound w hwim ((add_le_of_nonpos_right (negLogNormAddI_nonpos hwim.le)).trans
+            (hsum.trans hw₁))
         · -- `x ∉ E`: the boundary condition, as `ε h ≤ 0`
-          calc limsup (fun w ↦ u w + ((ε * h w : ℝ) : EReal)) (𝓝[Ω] (ζ.re : ℂ))
-              ≤ limsup u (𝓝[Ω] (ζ.re : ℂ)) := by
-                refine limsup_le_limsup (eventually_nhdsWithin_of_forall fun w hw ↦ ?_)
-                exact add_le_of_nonpos_right (EReal.coe_nonpos.2
-                  (mul_nonpos_of_nonneg_of_nonpos hε.le (hneg w (hΩsub hw).le)))
-            _ ≤ limsup u (𝓝[{w | 0 < w.im}] (ζ.re : ℂ)) :=
-                limsup_le_limsup_of_le (nhdsWithin_mono _ hΩsub)
-            _ ≤ 0 := hbdry ζ.re hE
+          refine (limsup_le_limsup (eventually_nhdsWithin_of_forall fun w hw ↦ ?_)).trans
+            ((limsup_le_limsup_of_le (nhdsWithin_mono _ hΩsub)).trans (hbdry x hE))
+          exact add_le_of_nonpos_right (EReal.coe_nonpos.2 (mul_nonpos_of_nonneg_of_nonpos hε.le
+            ((hle w (hΩsub hw).le).trans (negLogNormAddI_nonpos (hΩsub hw).le))))
       · -- a boundary point of modulus `R`: `u + ε h ≤ 0` nearby
         refine limsup_le_of_le (by isBoundedDefault) ?_
-        have h₁ : ∀ᶠ w in 𝓝 ζ, R - 1 < ‖w‖ :=
-          (continuous_norm.tendsto ζ).eventually (lt_mem_nhds (by linarith))
-        filter_upwards [eventually_nhdsWithin_of_eventually_nhds h₁, self_mem_nhdsWithin]
-          with w hw₁ hwΩ
+        filter_upwards [eventually_nhdsWithin_of_eventually_nhds
+          ((continuous_norm.tendsto ζ).eventually (lt_mem_nhds (by linarith : R - 1 < ‖ζ‖))),
+          self_mem_nhdsWithin] with w hw₁ hwΩ
         have hwim : 0 < w.im := hΩsub hwΩ
-        refine hbound w hwim ?_
-        have h₂ := negLogNormAddI_le (R := R - 1) (by linarith) hw₁.le
-        linarith [hle w hwim.le]
-    have hΩz : z ∈ Ω := ⟨mem_ball_zero_iff.2 hRz, hz⟩
+        exact hbound w hwim <| by
+          linarith [hle w hwim.le, negLogNormAddI_le (R := R - 1) (by linarith) hw₁.le]
     have hz₀ := hw.le_zero_of_limsup_frontier
       (isOpen_ball.inter UpperHalfPlane.isOpen_upperHalfPlaneSet)
       (isBounded_ball.subset inter_subset_left)
-      ((convex_ball 0 R).inter (convex_halfSpace_im_gt 0)).isPreconnected hfr z hΩz
-    have := (EReal.le_sub_iff_add_le (.inl (EReal.coe_ne_bot _)) (.inl (EReal.coe_ne_top _))).2 hz₀
-    rwa [zero_sub, ← EReal.coe_neg] at this
+      ((convex_ball 0 R).inter (convex_halfSpace_im_gt 0)).isPreconnected hfr z
+      ⟨mem_ball_zero_iff.2 hRz, hz⟩
+    exact EReal.sub_nonpos.1 (by rwa [sub_eq_add_neg, ← EReal.coe_neg, neg_neg])
   -- let `ε → 0`
-  have hlim : Tendsto (fun ε : ℝ ↦ ((-(ε * h z) : ℝ) : EReal)) (𝓝[>] 0) (𝓝 0) := by
-    rw [← EReal.coe_zero]
-    refine EReal.tendsto_coe.2 ?_
-    have : Tendsto (fun ε : ℝ ↦ -(ε * h z)) (𝓝 0) (𝓝 (-(0 * h z))) :=
-      ((continuous_id.mul continuous_const).neg).tendsto 0
-    simpa using this.mono_left nhdsWithin_le_nhds
+  have hlim : Tendsto (fun ε : ℝ ↦ ((-(ε * h z) : ℝ) : EReal)) (𝓝[>] 0) (𝓝 0) :=
+    ((continuous_coe_real_ereal.comp (by fun_prop)).tendsto' 0 0 (by simp)).mono_left
+      nhdsWithin_le_nhds
   exact ge_of_tendsto hlim (eventually_nhdsWithin_of_forall key)
 
 /-- **Poisson principle for the upper half-plane** (Ahlfors): let `u` be subharmonic on `ℍ` and
@@ -1657,35 +1372,26 @@ theorem le_poissonIntegralHalfPlane {b : ℝ → ℝ} {E : Finset ℝ} {M : ℝ}
     intro n
     have hbn : Integrable fun x ↦ max (b x) (-(n : ℝ)) / (1 + x ^ 2) :=
       integrable_max_neg_div_one_add_sq hb n
-    set P : ℂ → ℝ := poissonIntegralHalfPlane fun x ↦ max (b x) (-(n : ℝ)) with hP
-    have hPge : ∀ w : ℂ, 0 < w.im → -(n : ℝ) ≤ P w := fun w hw ↦
-      le_poissonIntegralHalfPlane_of_le hbn (fun x ↦ le_max_right _ _) hw
-    have hv : SubharmonicOn (fun w ↦ u w - (P w : EReal)) {z | 0 < z.im} :=
-      hu.sub_harmonic UpperHalfPlane.isOpen_upperHalfPlaneSet
-        (harmonicOnNhd_poissonIntegralHalfPlane hbn)
-    have hvM : ∀ w : ℂ, 0 < w.im → u w - (P w : EReal) ≤ ((M + n : ℝ) : EReal) := fun w hw ↦ by
-      calc u w - (P w : EReal) ≤ (M : EReal) - ((-(n : ℝ) : ℝ) : EReal) :=
-            EReal.sub_le_sub (hM w hw) (EReal.coe_le_coe_iff.2 (hPge w hw))
-        _ = ((M + n : ℝ) : EReal) := by rw [← EReal.coe_sub, sub_neg_eq_add]
+    set P : ℂ → ℝ := poissonIntegralHalfPlane fun x ↦ max (b x) (-(n : ℝ))
+    have hvM : ∀ w : ℂ, 0 < w.im → u w - (P w : EReal) ≤ ((M + n : ℝ) : EReal) := fun w hw ↦
+      (EReal.sub_le_sub (hM w hw) (EReal.coe_le_coe_iff.2
+        (le_poissonIntegralHalfPlane_of_le hbn (fun x ↦ le_max_right _ _) hw))).trans_eq
+        (by rw [← EReal.coe_sub, sub_neg_eq_add])
     have hvb : ∀ x : ℝ, x ∉ E →
         limsup (fun w ↦ u w - (P w : EReal)) (𝓝[{z | 0 < z.im}] (x : ℂ)) ≤ 0 := by
       intro x hx
       have hPt : Tendsto P (𝓝[{z | 0 < z.im}] (x : ℂ)) (𝓝 (max (b x) (-(n : ℝ)))) :=
         tendsto_poissonIntegralHalfPlane_of_continuousAt hbn ((hbc x hx).max continuousAt_const)
-      refine EReal.le_of_forall_lt_iff_le.1 fun δ hδ ↦ ?_
+      refine EReal.le_of_forall_lt_iff_le.1 fun δ hδ ↦ limsup_le_of_le (by isBoundedDefault) ?_
       have hδ' : 0 < δ := EReal.coe_pos.1 hδ
-      refine limsup_le_of_le (by isBoundedDefault) ?_
-      have h₁ : ∀ᶠ w in 𝓝[{z | 0 < z.im}] (x : ℂ), u w < ((b x + δ / 2 : ℝ) : EReal) :=
-        eventually_lt_of_limsup_lt
-          ((hbdry x hx).trans_lt (EReal.coe_lt_coe_iff.2 (by linarith)))
-      have h₂ : ∀ᶠ w in 𝓝[{z | 0 < z.im}] (x : ℂ), b x - δ / 2 < P w :=
-        hPt.eventually (lt_mem_nhds (by linarith [le_max_left (b x) (-(n : ℝ))]))
-      filter_upwards [h₁, h₂] with w hw₁ hw₂
-      calc u w - (P w : EReal) ≤ ((b x + δ / 2 : ℝ) : EReal) - (P w : EReal) :=
-            EReal.sub_le_sub hw₁.le le_rfl
-        _ = ((b x + δ / 2 - P w : ℝ) : EReal) := (EReal.coe_sub _ _).symm
-        _ ≤ (δ : EReal) := EReal.coe_le_coe_iff.2 (by linarith)
-    exact EReal.sub_nonpos.1 (hv.le_zero_of_halfPlane hvM hvb z hz)
+      filter_upwards [eventually_lt_of_limsup_lt
+        ((hbdry x hx).trans_lt (EReal.coe_lt_coe_iff.2 (by linarith : b x < b x + δ / 2))),
+        hPt.eventually (lt_mem_nhds (by linarith [le_max_left (b x) (-n : ℝ)] : b x - δ / 2 < _))]
+        with w hw₁ hw₂
+      exact (EReal.sub_le_sub hw₁.le le_rfl).trans ((EReal.coe_sub _ _).symm.trans_le
+        (EReal.coe_le_coe_iff.2 (by linarith)))
+    exact EReal.sub_nonpos.1 ((hu.sub_harmonic UpperHalfPlane.isOpen_upperHalfPlaneSet
+      (harmonicOnNhd_poissonIntegralHalfPlane hbn)).le_zero_of_halfPlane hvM hvb z hz)
   -- let `n → ∞`
   exact ge_of_tendsto' (EReal.tendsto_coe.2 (tendsto_poissonIntegralHalfPlane_max hb hz)) key
 
@@ -1707,16 +1413,13 @@ theorem _root_.AnalyticOnNhd.log_norm_le_poissonIntegralHalfPlane {f : ℂ → �
       (if f w = 0 then ⊥ else ((Real.log ‖f w‖ : ℝ) : EReal)) ≤ (Real.log (max K 1) : EReal) := by
     intro w hw
     split_ifs with hfw
-    · exact bot_le
-    · exact EReal.coe_le_coe_iff.2
-        (Real.log_le_log (norm_pos_iff.2 hfw) ((hK w hw).trans (le_max_left _ _)))
+    exacts [bot_le, EReal.coe_le_coe_iff.2
+      (Real.log_le_log (norm_pos_iff.2 hfw) ((hK w hw).trans (le_max_left _ _)))]
   have h := (hf.subharmonicOn_log_norm UpperHalfPlane.isOpen_upperHalfPlaneSet)
     |>.le_poissonIntegralHalfPlane hM hb hbc hbdry z hz
   by_cases hfz : f z = 0
-  · rw [hfz, norm_zero]
-    exact (Real.exp_pos _).le
-  · rw [ite_eq_right hfz, EReal.coe_le_coe_iff] at h
-    exact (Real.log_le_iff_le_exp (norm_pos_iff.2 hfz)).1 h
+  · exact hfz ▸ norm_zero.trans_le (Real.exp_pos _).le
+  · exact (Real.log_le_iff_le_exp (norm_pos_iff.2 hfz)).1 (by simpa [hfz] using h)
 
 end SubharmonicOn
 
@@ -9288,28 +8991,13 @@ theorem stripToHalfPlane_exponent (ℓ : ℝ) (t : ℂ) :
 
 theorem stripToHalfPlane_exponent_im (ℓ : ℝ) (t : ℂ) :
     ((π : ℂ) * (t + I * ℓ) / (2 * ℓ)).im = π * (t.im + ℓ) / (2 * ℓ) := by
-  rw [stripToHalfPlane_exponent, Complex.im_ofReal_mul]
-  simp only [Complex.add_im, Complex.mul_im, Complex.I_re, Complex.I_im, Complex.ofReal_re,
-    Complex.ofReal_im, zero_mul, one_mul, zero_add]
-  ring
-
-theorem stripToHalfPlane_re (ℓ : ℝ) (t : ℂ) :
-    (stripToHalfPlane ℓ t).re = exp (π * t.re / (2 * ℓ)) * cos (π * (t.im + ℓ) / (2 * ℓ)) := by
-  rw [stripToHalfPlane_eq_E_ℓ, E_ℓ_re]
+  rw [stripToHalfPlane_exponent, Complex.im_ofReal_mul, div_mul_eq_mul_div]
   simp
 
 theorem stripToHalfPlane_im (ℓ : ℝ) (t : ℂ) :
     (stripToHalfPlane ℓ t).im = exp (π * t.re / (2 * ℓ)) * sin (π * (t.im + ℓ) / (2 * ℓ)) := by
   rw [stripToHalfPlane_eq_E_ℓ, E_ℓ_im]
   simp
-
-theorem norm_stripToHalfPlane (ℓ : ℝ) (t : ℂ) :
-    ‖stripToHalfPlane ℓ t‖ = exp (π * t.re / (2 * ℓ)) := by
-  rw [stripToHalfPlane_eq_E_ℓ, norm_E_ℓ]
-  simp
-
-theorem stripToHalfPlane_ne_zero (ℓ : ℝ) (t : ℂ) : stripToHalfPlane ℓ t ≠ 0 :=
-  Complex.exp_ne_zero _
 
 /-- The open strip `|Im t| < ℓ` is mapped into the upper half-plane. -/
 theorem stripToHalfPlane_im_pos {ℓ : ℝ} (hℓ : 0 < ℓ) {t : ℂ}
@@ -9318,108 +9006,45 @@ theorem stripToHalfPlane_im_pos {ℓ : ℝ} (hℓ : 0 < ℓ) {t : ℂ}
   rw [stripToHalfPlane_im]
   exact mul_pos (exp_pos _) (sin_pos_of_pos_of_lt_pi hangle hangle')
 
-theorem stripToHalfPlane_halfPlaneToStrip {ℓ : ℝ} (hℓ : 0 < ℓ) {w : ℂ} (hw : w ≠ 0) :
-    stripToHalfPlane ℓ (halfPlaneToStrip ℓ w) = w := by
-  have hℓc : (ℓ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hℓ.ne'
-  have hπ : (π : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr pi_ne_zero
-  unfold stripToHalfPlane halfPlaneToStrip
-  rw [show (π : ℂ) * (2 * ℓ / π * Complex.log w - I * ℓ + I * ℓ) / (2 * ℓ) = Complex.log w by
-    field_simp; ring]
-  exact Complex.exp_log hw
-
 theorem halfPlaneToStrip_stripToHalfPlane {ℓ : ℝ} (hℓ : 0 < ℓ) {t : ℂ}
     (ht : t ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) : halfPlaneToStrip ℓ (stripToHalfPlane ℓ t) = t := by
   obtain ⟨hangle, hangle'⟩ := stripSchwarzAngle_mem_Ioo hℓ ht
-  have hℓc : (ℓ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hℓ.ne'
-  have hπ : (π : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr pi_ne_zero
   unfold halfPlaneToStrip stripToHalfPlane
   rw [Complex.log_exp (by rw [stripToHalfPlane_exponent_im]; linarith [pi_pos])
     (by rw [stripToHalfPlane_exponent_im]; exact hangle'.le)]
-  field_simp
+  field_simp [hℓ.ne']
   ring
 
 theorem halfPlaneToStrip_im (ℓ : ℝ) (w : ℂ) :
     (halfPlaneToStrip ℓ w).im = 2 * ℓ / π * Complex.arg w - ℓ := by
-  unfold halfPlaneToStrip
-  rw [show (2 * ℓ / π : ℂ) = ((2 * ℓ / π : ℝ) : ℂ) by push_cast; ring, Complex.sub_im,
-    Complex.im_ofReal_mul, Complex.log_im]
-  simp
+  simp [halfPlaneToStrip, Complex.log_im]
 
 /-- The upper half-plane is mapped into the open strip `|Im t| < ℓ`. -/
 theorem halfPlaneToStrip_mem_strip {ℓ : ℝ} (hℓ : 0 < ℓ) {w : ℂ} (hw : 0 < w.im) :
     halfPlaneToStrip ℓ w ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ := by
   have harg₀ : 0 < Complex.arg w :=
-    lt_of_le_of_ne (Complex.arg_nonneg_iff.2 hw.le) fun h ↦
-      hw.ne' (Complex.arg_eq_zero_iff.1 h.symm).2
-  have hargπ : Complex.arg w < π := Complex.arg_lt_pi_iff.2 (Or.inr hw.ne')
+    (Complex.arg_nonneg_iff.2 hw.le).lt_of_ne fun h ↦ hw.ne' (Complex.arg_eq_zero_iff.1 h.symm).2
   have hpos : 0 < 2 * ℓ / π := by positivity
-  have h₁ := mul_pos hpos harg₀
-  have h₂ := mul_lt_mul_of_pos_left hargπ hpos
-  rw [div_mul_cancel₀ _ pi_ne_zero] at h₂
   simp only [mem_preimage, mem_Ioo, halfPlaneToStrip_im]
-  constructor <;> linarith
-
-theorem stripToHalfPlane_hasDerivAt (ℓ : ℝ) (t : ℂ) :
-    HasDerivAt (stripToHalfPlane ℓ) ((π : ℂ) / (2 * ℓ) * stripToHalfPlane ℓ t) t := by
-  have haffine := (((hasDerivAt_id' t).add_const (I * (ℓ : ℂ))).const_mul (π : ℂ)).div_const
-    (2 * (ℓ : ℂ))
-  unfold stripToHalfPlane
-  convert haffine.cexp using 1
-  ring
-
-theorem stripToHalfPlane_differentiable (ℓ : ℝ) : Differentiable ℂ (stripToHalfPlane ℓ) :=
-  fun t ↦ (stripToHalfPlane_hasDerivAt ℓ t).differentiableAt
-
-theorem stripToHalfPlane_continuous (ℓ : ℝ) : Continuous (stripToHalfPlane ℓ) :=
-  (stripToHalfPlane_differentiable ℓ).continuous
+  constructor <;> linarith [mul_pos hpos harg₀, div_mul_cancel₀ (2 * ℓ) pi_ne_zero,
+    mul_lt_mul_of_pos_left (Complex.arg_lt_pi_iff.2 (Or.inr hw.ne')) hpos]
 
 theorem halfPlaneToStrip_analyticAt (ℓ : ℝ) {w : ℂ} (hw : 0 < w.im) :
-    AnalyticAt ℂ (halfPlaneToStrip ℓ) w := by
-  have hlog : AnalyticAt ℂ Complex.log w :=
-    analyticAt_clog (Complex.mem_slitPlane_iff.2 (Or.inr hw.ne'))
-  unfold halfPlaneToStrip
-  exact (analyticAt_const.mul hlog).sub analyticAt_const
-
-theorem halfPlaneToStrip_analyticOnNhd (ℓ : ℝ) :
-    AnalyticOnNhd ℂ (halfPlaneToStrip ℓ) {w : ℂ | 0 < w.im} :=
-  fun _ hw ↦ halfPlaneToStrip_analyticAt ℓ hw
-
-theorem halfPlaneToStrip_differentiableOn (ℓ : ℝ) :
-    DifferentiableOn ℂ (halfPlaneToStrip ℓ) {w : ℂ | 0 < w.im} :=
-  (halfPlaneToStrip_analyticOnNhd ℓ).differentiableOn
+    AnalyticAt ℂ (halfPlaneToStrip ℓ) w :=
+  (analyticAt_const.mul (analyticAt_clog (Complex.mem_slitPlane_iff.2 (Or.inr hw.ne')))).sub
+    analyticAt_const
 
 /-! ### The boundary correspondence -/
-
-/-- The lower edge `Im t = -ℓ` is sent to the positive real axis: `y - iℓ ↦ e^{πy/(2ℓ)}`. -/
-theorem stripToHalfPlane_ofReal_sub_I_mul (ℓ y : ℝ) :
-    stripToHalfPlane ℓ ((y : ℂ) - I * ℓ) = (exp (π * y / (2 * ℓ)) : ℂ) := by
-  unfold stripToHalfPlane
-  rw [Complex.ofReal_exp]
-  congr 1
-  push_cast
-  ring
-
-/-- The upper edge `Im t = ℓ` is sent to the negative real axis: `y + iℓ ↦ -e^{πy/(2ℓ)}`. -/
-theorem stripToHalfPlane_ofReal_add_I_mul {ℓ : ℝ} (hℓ : 0 < ℓ) (y : ℝ) :
-    stripToHalfPlane ℓ ((y : ℂ) + I * ℓ) = -(exp (π * y / (2 * ℓ)) : ℂ) := by
-  have hℓc : (ℓ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hℓ.ne'
-  unfold stripToHalfPlane
-  rw [show (π : ℂ) * ((y : ℂ) + I * ℓ + I * ℓ) / (2 * ℓ) = ((π * y / (2 * ℓ) : ℝ) : ℂ) + π * I by
-    push_cast; field_simp; ring, Complex.exp_add, Complex.exp_pi_mul_I, Complex.ofReal_exp]
-  ring
 
 /-- The point `t₀ = s + iσℓ` of the strip is sent to `e^{πs/(2ℓ)} e^{iθ}` with `θ = θ σ`
 the angle `π(1 + σ)/2` of (15). -/
 theorem stripToHalfPlane_ofReal_add_I_mul_mul {ℓ : ℝ} (hℓ : 0 < ℓ) (s σ : ℝ) :
     stripToHalfPlane ℓ ((s : ℂ) + I * (σ * ℓ : ℂ)) =
       (exp (π * s / (2 * ℓ)) : ℂ) * Complex.exp (I * (θ σ : ℂ)) := by
-  have hℓc : (ℓ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hℓ.ne'
-  unfold stripToHalfPlane
-  rw [Complex.ofReal_exp, ← Complex.exp_add]
+  rw [stripToHalfPlane, Complex.ofReal_exp, ← Complex.exp_add, θ]
   congr 1
-  unfold θ
   push_cast
-  field_simp
+  field_simp [hℓ.ne']
   ring
 
 theorem stripToHalfPlane_ofReal_add_I_mul_mul_re {ℓ : ℝ} (hℓ : 0 < ℓ) (s σ : ℝ) :
@@ -9435,26 +9060,19 @@ theorem stripToHalfPlane_ofReal_add_I_mul_mul_im {ℓ : ℝ} (hℓ : 0 < ℓ) (s
 /-- The horizontal line `Im t = σℓ`, `-1 < σ < 1`, lies in the open strip. -/
 theorem ofReal_add_I_mul_mul_mem_strip {ℓ σ : ℝ} (hℓ : 0 < ℓ) (hbelow : -1 < σ)
     (habove : σ < 1) (s : ℝ) : (s : ℂ) + I * (σ * ℓ : ℂ) ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ := by
-  simp only [mem_preimage, mem_Ioo, Complex.add_im, Complex.ofReal_im, Complex.mul_im,
-    Complex.I_re, Complex.I_im, ← Complex.ofReal_mul, Complex.ofReal_re, zero_mul, one_mul,
-    zero_add]
-  constructor <;> nlinarith
+  have h : -ℓ < σ * ℓ ∧ σ * ℓ < ℓ := ⟨by nlinarith, by nlinarith⟩
+  simpa using h
 
 /-- Continuity of the inverse map up to the positive real axis: as `w → x > 0` in the
 half-plane, `halfPlaneToStrip ℓ w → (2ℓ/π) log x - iℓ`, a point of the lower edge. -/
 theorem tendsto_halfPlaneToStrip_ofReal_of_pos (ℓ : ℝ) {x : ℝ} (hx : 0 < x) :
     Tendsto (halfPlaneToStrip ℓ) (𝓝[{w : ℂ | 0 < w.im}] (x : ℂ))
       (𝓝 (((2 * ℓ / π * Real.log x : ℝ) : ℂ) - I * ℓ)) := by
-  have hcont : ContinuousAt (halfPlaneToStrip ℓ) x := by
-    have hlog : ContinuousAt Complex.log x :=
-      continuousAt_clog (Complex.mem_slitPlane_iff.2 (Or.inl (by simpa using hx)))
-    unfold halfPlaneToStrip
-    exact (continuousAt_const.mul hlog).sub continuousAt_const
+  have hcont : ContinuousAt (halfPlaneToStrip ℓ) x :=
+    (continuousAt_const.mul (continuousAt_clog (Complex.mem_slitPlane_iff.2 (Or.inl
+      (by simpa using hx))))).sub continuousAt_const
   have hval : halfPlaneToStrip ℓ x = ((2 * ℓ / π * Real.log x : ℝ) : ℂ) - I * ℓ := by
-    unfold halfPlaneToStrip
-    rw [← Complex.ofReal_log hx.le]
-    push_cast
-    ring
+    simp [halfPlaneToStrip, Complex.ofReal_log hx.le]
   rw [← hval]
   exact hcont.tendsto.mono_left nhdsWithin_le_nhds
 
@@ -9469,7 +9087,6 @@ theorem tendsto_halfPlaneToStrip_ofReal_of_neg (ℓ : ℝ) {x : ℝ} (hx : x < 0
       (𝓝 (Real.log ‖(x : ℂ)‖ + π * I)) :=
     (Complex.tendsto_log_nhdsWithin_im_nonneg_of_re_neg_of_im_zero (by simpa using hx)
       (by simp)).mono_left (nhdsWithin_mono _ fun w (hw : 0 < w.im) ↦ show 0 ≤ w.im from hw.le)
-  have hπ : (π : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr pi_ne_zero
   have hval : (2 * ℓ / π : ℂ) * (Real.log ‖(x : ℂ)‖ + π * I) - I * ℓ =
       ((2 * ℓ / π * Real.log (-x) : ℝ) : ℂ) + I * ℓ := by
     rw [Complex.norm_real, Real.norm_eq_abs, abs_of_neg hx]
@@ -9493,41 +9110,27 @@ theorem halfPlaneDatum_of_pos {ℓ : ℝ} {b : ℝ → ℝ} {x : ℝ} (hx : 0 < 
 theorem halfPlaneDatum_of_nonpos {ℓ : ℝ} {b : ℝ → ℝ} {x : ℝ} (hx : x ≤ 0) :
     halfPlaneDatum ℓ b x = 0 := ite_eq_right (not_lt.2 hx)
 
-/-- The half-plane datum of `b` is `b` itself in the lower-edge coordinate: it is
-`b y` at the image `e^{πy/(2ℓ)}` of the lower-edge point `y - iℓ`. -/
-theorem halfPlaneDatum_exp {ℓ : ℝ} (hℓ : 0 < ℓ) (b : ℝ → ℝ) (y : ℝ) :
-    halfPlaneDatum ℓ b (exp (π / (2 * ℓ) * y)) = b y := by
-  rw [halfPlaneDatum_of_pos (exp_pos _), log_exp]
-  congr 1
-  field_simp
-
 theorem halfPlaneDatum_continuousAt {ℓ : ℝ} {b : ℝ → ℝ} (hb : Continuous b) {x : ℝ}
     (hx : x ≠ 0) : ContinuousAt (halfPlaneDatum ℓ b) x := by
   rcases hx.lt_or_gt with hx | hx
-  · have hev : (fun _ ↦ (0 : ℝ)) =ᶠ[𝓝 x] halfPlaneDatum ℓ b := by
-      filter_upwards [Iio_mem_nhds hx] with y hy
-      exact (halfPlaneDatum_of_nonpos (le_of_lt hy)).symm
-    exact continuousAt_const.congr hev
-  · have hev : (fun y ↦ b (2 * ℓ / π * Real.log y)) =ᶠ[𝓝 x] halfPlaneDatum ℓ b := by
-      filter_upwards [Ioi_mem_nhds hx] with y hy
-      exact (halfPlaneDatum_of_pos hy).symm
-    exact (hb.continuousAt.comp (continuousAt_const.mul (Real.continuousAt_log hx.ne'))).congr
-      hev
+  · refine (continuousAt_const (y := 0)).congr ?_
+    filter_upwards [Iio_mem_nhds hx] with y hy
+    exact (halfPlaneDatum_of_nonpos hy.le).symm
+  · refine (hb.continuousAt.comp ((continuousAt_const (y := 2 * ℓ / π)).mul
+      (Real.continuousAt_log hx.ne'))).congr ?_
+    filter_upwards [Ioi_mem_nhds hx] with y hy
+    exact (halfPlaneDatum_of_pos hy).symm
 
 /-- The weight `e^{u}/(1 + e^{2u})` produced by the substitution `x = e^{u}` in `dx/(1 + x²)`
 is at most `e^{-|u|}`. -/
 theorem exp_div_one_add_exp_sq_le_exp_neg_abs (u : ℝ) :
     exp u / (1 + exp u ^ 2) ≤ exp (-1 * |u|) := by
+  rw [div_le_iff₀ (by positivity), neg_one_mul]
   rcases le_total 0 u with hu | hu
-  · rw [abs_of_nonneg hu, neg_one_mul, exp_neg]
-    calc exp u / (1 + exp u ^ 2) ≤ exp u / exp u ^ 2 :=
-          div_le_div_of_nonneg_left (exp_pos u).le (by positivity)
-            (le_add_of_nonneg_left zero_le_one)
-      _ = (exp u)⁻¹ := by field_simp
-  · rw [abs_of_nonpos hu, neg_one_mul, neg_neg]
-    calc exp u / (1 + exp u ^ 2) ≤ exp u / 1 :=
-          div_le_div_of_nonneg_left (exp_pos u).le one_pos (le_add_of_nonneg_right (by positivity))
-      _ = exp u := div_one _
+  · rw [abs_of_nonneg hu, exp_neg, inv_mul_eq_div, le_div_iff₀ (exp_pos u)]
+    nlinarith
+  · rw [abs_of_nonpos hu, neg_neg]
+    nlinarith [exp_pos u, sq_nonneg (exp u)]
 
 /-- The half-plane datum of a continuous, linearly bounded `b` is a Poisson-integrable datum:
 `halfPlaneDatum ℓ b x / (1 + x²)` is integrable on `ℝ`. Under `x = e^{u}` the integrand on
@@ -9535,34 +9138,25 @@ theorem exp_div_one_add_exp_sq_le_exp_neg_abs (u : ℝ) :
 theorem integrable_halfPlaneDatum_div_one_add_sq {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ}
     (hb : Continuous b) {A : ℝ} (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) :
     Integrable fun x : ℝ ↦ halfPlaneDatum ℓ b x / (1 + x ^ 2) := by
-  have hA : 0 ≤ A := (abs_nonneg (b 0)).trans (by simpa using hbound 0)
+  have hmajor : Integrable fun u : ℝ ↦
+      A * exp (-1 * |u|) + A * (2 * ℓ / π) * (|u| ^ 1 * exp (-1 * |u|)) :=
+    ((integrable_exp_neg_mul_abs one_pos).const_mul A).add
+      ((integrable_abs_pow_mul_exp_neg_mul_abs 1 one_pos).const_mul _)
+  have hform : Integrable fun u : ℝ ↦ exp u / (1 + exp u ^ 2) * b (2 * ℓ / π * u) := by
+    refine hmajor.mono' (Continuous.aestronglyMeasurable ?_) (.of_forall fun u ↦ ?_)
+    · fun_prop (disch := intros; positivity)
+    · have hbu := hbound (2 * ℓ / π * u)
+      rw [abs_mul, abs_of_pos (by positivity : (0 : ℝ) < 2 * ℓ / π)] at hbu
+      rw [norm_mul, Real.norm_eq_abs, Real.norm_eq_abs, abs_of_pos (by positivity)]
+      exact (mul_le_mul (exp_div_one_add_exp_sq_le_exp_neg_abs u) hbu (abs_nonneg _)
+        (exp_pos _).le).trans_eq (by ring)
   have hIoi : IntegrableOn (fun x : ℝ ↦ halfPlaneDatum ℓ b x / (1 + x ^ 2)) (Ioi 0) := by
-    refine (integrable_comp_exp fun x : ℝ ↦ halfPlaneDatum ℓ b x / (1 + x ^ 2)).1 ?_
-    have hmajor : Integrable fun u : ℝ ↦
-        A * exp (-1 * |u|) + A * (2 * ℓ / π) * (|u| ^ 1 * exp (-1 * |u|)) :=
-      ((integrable_exp_neg_mul_abs one_pos).const_mul A).add
-        ((integrable_abs_pow_mul_exp_neg_mul_abs 1 one_pos).const_mul _)
-    have hform : Integrable fun u : ℝ ↦ exp u / (1 + exp u ^ 2) * b (2 * ℓ / π * u) := by
-      have hcont : Continuous fun u : ℝ ↦ exp u / (1 + exp u ^ 2) * b (2 * ℓ / π * u) :=
-        (continuous_exp.div (by fun_prop) fun u ↦ by positivity).mul (hb.comp (by fun_prop))
-      refine hmajor.mono' hcont.aestronglyMeasurable (.of_forall fun u ↦ ?_)
-      have hbu : |b (2 * ℓ / π * u)| ≤ A * (1 + 2 * ℓ / π * |u|) := by
-        have := hbound (2 * ℓ / π * u)
-        rwa [abs_mul, abs_of_pos (by positivity : (0 : ℝ) < 2 * ℓ / π)] at this
-      calc ‖exp u / (1 + exp u ^ 2) * b (2 * ℓ / π * u)‖
-          = exp u / (1 + exp u ^ 2) * |b (2 * ℓ / π * u)| := by
-            rw [norm_mul, Real.norm_eq_abs, Real.norm_eq_abs, abs_of_pos (by positivity)]
-        _ ≤ exp (-1 * |u|) * (A * (1 + 2 * ℓ / π * |u|)) :=
-            mul_le_mul (exp_div_one_add_exp_sq_le_exp_neg_abs u) hbu (abs_nonneg _) (exp_pos _).le
-        _ = A * exp (-1 * |u|) + A * (2 * ℓ / π) * (|u| ^ 1 * exp (-1 * |u|)) := by ring
-    refine hform.congr (.of_forall fun u ↦ ?_)
+    refine (integrable_comp_exp _).1 (hform.congr (.of_forall fun u ↦ ?_))
     simp only [halfPlaneDatum_of_pos (exp_pos u), log_exp, smul_eq_mul]
     ring
-  have hIic : IntegrableOn (fun x : ℝ ↦ halfPlaneDatum ℓ b x / (1 + x ^ 2)) (Iic 0) :=
-    integrableOn_zero.congr_fun (fun x hx ↦ by
-      rw [halfPlaneDatum_of_nonpos (mem_Iic.1 hx), zero_div]) measurableSet_Iic
   rw [← integrableOn_univ, ← Iic_union_Ioi (a := (0 : ℝ))]
-  exact hIic.union hIoi
+  exact (integrableOn_zero.congr_fun (fun x hx ↦ by
+    rw [halfPlaneDatum_of_nonpos (mem_Iic.1 hx), zero_div]) measurableSet_Iic).union hIoi
 
 /-! ### The harmonic measure of the lower edge -/
 
@@ -9573,17 +9167,11 @@ theorem poissonKernelHalfPlane_transfer_identity {ℓ θ ρ x : ℝ} (hℓ : 0 <
     (hρ : 0 < ρ) (hx : 0 < x) :
     π⁻¹ * (ρ * sin θ) / ((x - ρ * cos θ) ^ 2 + (ρ * sin θ) ^ 2) * (π / (2 * ℓ) * x) =
       sin θ / (4 * ((ρ / x + x / ρ) / 2 - cos θ)) / ℓ := by
-  have hcos : cos θ < 1 := by nlinarith [sin_sq_add_cos_sq θ]
   have hexpand : (x - ρ * cos θ) ^ 2 + (ρ * sin θ) ^ 2 = x ^ 2 - 2 * x * ρ * cos θ + ρ ^ 2 := by
     linear_combination ρ ^ 2 * sin_sq_add_cos_sq θ
-  have hden₁ : 0 < x ^ 2 - 2 * x * ρ * cos θ + ρ ^ 2 := by
-    rw [← hexpand]; positivity
-  have hden₂ : 0 < (ρ / x + x / ρ) / 2 - cos θ := by
-    have h : 2 ≤ ρ / x + x / ρ := by
-      rw [div_add_div _ _ hx.ne' hρ.ne', le_div_iff₀ (by positivity)]
-      nlinarith [sq_nonneg (ρ - x)]
-    linarith
-  rw [hexpand]
+  have hden : 0 < x ^ 2 - 2 * x * ρ * cos θ + ρ ^ 2 := by rw [← hexpand]; positivity
+  rw [hexpand, show (ρ / x + x / ρ) / 2 - cos θ =
+    (x ^ 2 - 2 * x * ρ * cos θ + ρ ^ 2) / (2 * ρ * x) by field_simp; ring]
   field_simp
   ring
 
@@ -9595,16 +9183,15 @@ theorem poissonKernelHalfPlane_stripToHalfPlane_mul {ℓ σ : ℝ} (hℓ : 0 < �
         (exp (π / (2 * ℓ) * y)) * (π / (2 * ℓ) * exp (π / (2 * ℓ) * y)) =
       P_σ σ ((s - y) / ℓ) / ℓ := by
   obtain ⟨hangle, hangle'⟩ := stripAngle_mem_Ioo hbelow habove
-  have hsin : 0 < sin (θ σ) := sin_pos_of_pos_of_lt_pi hangle hangle'
   have hcosh : cosh (π * ((s - y) / ℓ) / 2) =
       (exp (π * s / (2 * ℓ)) / exp (π / (2 * ℓ) * y) +
         exp (π / (2 * ℓ) * y) / exp (π * s / (2 * ℓ))) / 2 := by
     rw [cosh_eq, ← exp_sub, ← exp_sub]
     congr 3 <;> ring
-  unfold Complex.poissonKernelHalfPlane P_σ
-  rw [stripToHalfPlane_ofReal_add_I_mul_mul_re hℓ, stripToHalfPlane_ofReal_add_I_mul_mul_im hℓ,
-    hcosh]
-  exact poissonKernelHalfPlane_transfer_identity hℓ hsin (exp_pos _) (exp_pos _)
+  rw [Complex.poissonKernelHalfPlane, P_σ, stripToHalfPlane_ofReal_add_I_mul_mul_re hℓ,
+    stripToHalfPlane_ofReal_add_I_mul_mul_im hℓ, hcosh]
+  exact poissonKernelHalfPlane_transfer_identity hℓ (sin_pos_of_pos_of_lt_pi hangle hangle')
+    (exp_pos _) (exp_pos _)
 
 /-- The half-plane Poisson formula at `t₀ = s + iσℓ`, pulled back to the lower edge by
 `x = e^{πy/(2ℓ)}`: the lower-edge harmonic measure of the strip is `ℓ⁻¹ P_σ((s - y)/ℓ) dy`
@@ -9618,7 +9205,6 @@ theorem poissonIntegralHalfPlane_halfPlaneDatum_eq_integral_P_σ {ℓ σ : ℝ} 
   have hkernel := poissonKernelHalfPlane_stripToHalfPlane_mul hℓ hbelow habove s
   generalize stripToHalfPlane ℓ ((s : ℂ) + I * (σ * ℓ : ℂ)) = z at hkernel ⊢
   set F : ℝ → ℝ := fun u ↦ exp u * Complex.poissonKernelHalfPlane z (exp u) * b (2 * ℓ / π * u)
-    with hF
   calc Complex.poissonIntegralHalfPlane (halfPlaneDatum ℓ b) z
       = ∫ x in Ioi (0 : ℝ), Complex.poissonKernelHalfPlane z x * halfPlaneDatum ℓ b x :=
         (setIntegral_eq_integral_of_forall_compl_eq_zero fun x hx ↦ by
@@ -9626,17 +9212,16 @@ theorem poissonIntegralHalfPlane_halfPlaneDatum_eq_integral_P_σ {ℓ σ : ℝ} 
     _ = ∫ u : ℝ, F u := by
         rw [← integral_comp_exp]
         refine integral_congr_ae (.of_forall fun u ↦ ?_)
-        simp only [hF, halfPlaneDatum_of_pos (exp_pos u), log_exp, smul_eq_mul]
+        simp only [F, halfPlaneDatum_of_pos (exp_pos u), log_exp, smul_eq_mul]
         ring
     _ = π / (2 * ℓ) * ∫ y : ℝ, F (π / (2 * ℓ) * y) := by
-        rw [Measure.integral_comp_mul_left F, abs_inv, abs_of_pos hc, smul_eq_mul, ← mul_assoc,
-          mul_inv_cancel₀ hc.ne', one_mul]
+        rw [Measure.integral_comp_mul_left F, abs_of_pos (inv_pos.2 hc), smul_eq_mul,
+          mul_inv_cancel_left₀ hc.ne']
     _ = ∫ y : ℝ, P_σ σ ((s - y) / ℓ) / ℓ * b y := by
         rw [← integral_const_mul]
         refine integral_congr_ae (.of_forall fun y ↦ ?_)
         have hy : 2 * ℓ / π * (π / (2 * ℓ) * y) = y := by field_simp
-        simp only [hF, hy]
-        rw [← hkernel y]
+        simp only [F, hy, ← hkernel y]
         ring
 
 /-- **The harmonic measure identity of the report** (proof of Lemma 3.2): the half-plane Poisson
@@ -9646,22 +9231,9 @@ theorem poissonIntegralHalfPlane_halfPlaneDatum {ℓ σ : ℝ} (hℓ : 0 < ℓ) 
     (habove : σ < 1) (s : ℝ) (b : ℝ → ℝ) :
     Complex.poissonIntegralHalfPlane (halfPlaneDatum ℓ b)
         (stripToHalfPlane ℓ ((s : ℂ) + I * (σ * ℓ : ℂ))) =
-      ∫ T : ℝ, P_σ σ T * b (s - ℓ * T) := by
-  rw [poissonIntegralHalfPlane_halfPlaneDatum_eq_integral_P_σ hℓ hbelow habove s b]
-  exact stripPoisson_integral_changeVariables hℓ σ s b
-
-/-- The harmonic measure identity at an arbitrary point `t` of the open strip, with
-`σ = Im t / ℓ`. -/
-theorem poissonIntegralHalfPlane_halfPlaneDatum_of_mem_strip {ℓ : ℝ} (hℓ : 0 < ℓ) {t : ℂ}
-    (ht : t ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) (b : ℝ → ℝ) :
-    Complex.poissonIntegralHalfPlane (halfPlaneDatum ℓ b) (stripToHalfPlane ℓ t) =
-      ∫ T : ℝ, P_σ (t.im / ℓ) T * b (t.re - ℓ * T) := by
-  obtain ⟨hlow, hhigh⟩ : -ℓ < t.im ∧ t.im < ℓ := ht
-  have hbelow : -1 < t.im / ℓ := by rwa [lt_div_iff₀ hℓ, neg_one_mul]
-  have habove : t.im / ℓ < 1 := by rwa [div_lt_iff₀ hℓ, one_mul]
-  have hteq : (t.re : ℂ) + I * ((t.im / ℓ : ℝ) * ℓ : ℂ) = t :=
-    Complex.ext (by simp) (by simp [hℓ.ne'])
-  rw [← poissonIntegralHalfPlane_halfPlaneDatum hℓ hbelow habove t.re b, hteq]
+      ∫ T : ℝ, P_σ σ T * b (s - ℓ * T) :=
+  (poissonIntegralHalfPlane_halfPlaneDatum_eq_integral_P_σ hℓ hbelow habove s b).trans
+    (stripPoisson_integral_changeVariables hℓ σ s b)
 
 /-- The lower-edge harmonic measure has total mass `M_σ = (1 - σ)/2` (datum `b = 1`). -/
 theorem poissonIntegralHalfPlane_halfPlaneDatum_one {ℓ σ : ℝ} (hℓ : 0 < ℓ) (hbelow : -1 < σ)
@@ -9669,8 +9241,7 @@ theorem poissonIntegralHalfPlane_halfPlaneDatum_one {ℓ σ : ℝ} (hℓ : 0 < �
     Complex.poissonIntegralHalfPlane (halfPlaneDatum ℓ fun _ ↦ 1)
         (stripToHalfPlane ℓ ((s : ℂ) + I * (σ * ℓ : ℂ))) = M_σ σ := by
   rw [poissonIntegralHalfPlane_halfPlaneDatum hℓ hbelow habove s]
-  simp only [mul_one]
-  exact integral_stripPoissonKernel hbelow habove
+  simpa only [mul_one] using integral_stripPoissonKernel hbelow habove
 
 /-- The complementary upper-edge harmonic measure has mass `(1 + σ)/2`: the Poisson integral of
 the indicator of `(-∞, 0]`, the image of the upper edge, at the image of `t₀ = s + iσℓ`. -/
@@ -9681,14 +9252,11 @@ theorem poissonIntegralHalfPlane_indicator_Iic {ℓ σ : ℝ} (hℓ : 0 < ℓ) (
   have hz : 0 < (stripToHalfPlane ℓ ((s : ℂ) + I * (σ * ℓ : ℂ))).im :=
     stripToHalfPlane_im_pos hℓ (ofReal_add_I_mul_mul_mem_strip hℓ hbelow habove s)
   have h₁ : Integrable fun x : ℝ ↦ halfPlaneDatum ℓ (fun _ ↦ (1 : ℝ)) x / (1 + x ^ 2) :=
-    integrable_halfPlaneDatum_div_one_add_sq hℓ continuous_const (A := 1) fun y ↦ by
-      simp only [abs_one, one_mul]
-      linarith [abs_nonneg y]
+    integrable_halfPlaneDatum_div_one_add_sq hℓ continuous_const (A := 1) fun y ↦ by simp
   have h₂ : Integrable fun x : ℝ ↦ (if x ≤ 0 then (1 : ℝ) else 0) / (1 + x ^ 2) :=
     ((Complex.integrable_const_div_one_add_sq 1).indicator
       (measurableSet_Iic : MeasurableSet (Iic (0 : ℝ)))).congr (.of_forall fun x ↦ by
-        simp only [indicator_apply, mem_Iic]
-        split_ifs <;> simp)
+        by_cases hx : x ≤ 0 <;> simp [hx])
   have hsum : (fun _ ↦ (1 : ℝ)) =
       halfPlaneDatum ℓ (fun _ ↦ 1) + fun x ↦ if x ≤ 0 then (1 : ℝ) else 0 := by
     ext x
@@ -9696,8 +9264,7 @@ theorem poissonIntegralHalfPlane_indicator_Iic {ℓ σ : ℝ} (hℓ : 0 < ℓ) (
     split_ifs <;> linarith
   have h := Complex.poissonIntegralHalfPlane_const hz 1
   rw [hsum, Complex.poissonIntegralHalfPlane_add h₁ h₂ hz,
-    poissonIntegralHalfPlane_halfPlaneDatum_one hℓ hbelow habove s] at h
-  unfold M_σ at h
+    poissonIntegralHalfPlane_halfPlaneDatum_one hℓ hbelow habove s, M_σ] at h
   linarith
 
 end
@@ -10163,18 +9730,12 @@ theorem exists_abs_h_ℓD_le {d : ℕ} (hd : 0 < d) (R D : ℝ) :
 /-- The bottom edge `y - iℓ` lies in the closure of the strip `|Im z| < ℓ`. -/
 theorem ofReal_sub_I_mul_mem_closure_strip {ℓ : ℝ} (hℓ : 0 < ℓ) (y : ℝ) :
     (y : ℂ) - I * (ℓ : ℂ) ∈ closure (Complex.im ⁻¹' Ioo (-ℓ) ℓ) := by
-  rw [Complex.closure_preimage_im, closure_Ioo (by linarith : (-ℓ) ≠ ℓ)]
-  simp only [mem_preimage, mem_Icc, Complex.sub_im, Complex.ofReal_im, Complex.mul_im,
-    Complex.I_re, Complex.I_im, Complex.ofReal_re, zero_mul, one_mul, zero_add, zero_sub]
-  constructor <;> linarith
+  simp [Complex.closure_preimage_im, closure_Ioo (neg_lt_self hℓ).ne, hℓ.le]
 
 /-- The top edge `y + iℓ` lies in the closure of the strip `|Im z| < ℓ`. -/
 theorem ofReal_add_I_mul_mem_closure_strip {ℓ : ℝ} (hℓ : 0 < ℓ) (y : ℝ) :
     (y : ℂ) + I * (ℓ : ℂ) ∈ closure (Complex.im ⁻¹' Ioo (-ℓ) ℓ) := by
-  rw [Complex.closure_preimage_im, closure_Ioo (by linarith : (-ℓ) ≠ ℓ)]
-  simp only [mem_preimage, mem_Icc, Complex.add_im, Complex.ofReal_im, Complex.mul_im,
-    Complex.I_re, Complex.I_im, Complex.ofReal_re, zero_mul, one_mul, zero_add]
-  constructor <;> linarith
+  simp [Complex.closure_preimage_im, closure_Ioo (neg_lt_self hℓ).ne, hℓ.le]
 
 /-- **The Poisson principle for the strip** (the report's proof of Lemma 3.2, through the upper
 half-plane). Let `Z` be holomorphic and bounded on the open strip `|Im z| < ℓ` and continuous on
@@ -10198,11 +9759,10 @@ theorem norm_le_exp_integral_P_σ_of_strip {ℓ : ℝ} (hℓ : 0 < ℓ) {Z : ℂ
     (htop : ∀ y : ℝ, ‖Z ((y : ℂ) + I * (ℓ : ℂ))‖ ≤ 1)
     {σ : ℝ} (hσbelow : -1 < σ) (hσabove : σ < 1) (s : ℝ) :
     ‖Z ((s : ℂ) + I * (σ * ℓ : ℂ))‖ ≤ Real.exp (∫ T : ℝ, P_σ σ T * b (s - ℓ * T)) := by
-  have hstrip : IsOpen (Complex.im ⁻¹' Ioo (-ℓ) ℓ) := isOpen_Ioo.preimage Complex.continuous_im
   -- the transplanted function `F = Z ∘ Φ⁻¹` is analytic and bounded on the half-plane
   have hF : AnalyticOnNhd ℂ (Z ∘ halfPlaneToStrip ℓ) {w : ℂ | 0 < w.im} := fun w hw ↦
-    (hZ.differentiableOn.analyticOnNhd hstrip _ (halfPlaneToStrip_mem_strip hℓ hw)).comp
-      (halfPlaneToStrip_analyticAt ℓ hw)
+    (hZ.differentiableOn.analyticOnNhd (isOpen_Ioo.preimage Complex.continuous_im) _
+      (halfPlaneToStrip_mem_strip hℓ hw)).comp (halfPlaneToStrip_analyticAt ℓ hw)
   have hFK : ∀ w : ℂ, 0 < w.im → ‖(Z ∘ halfPlaneToStrip ℓ) w‖ ≤ K := fun w hw ↦
     hK _ (halfPlaneToStrip_mem_strip hℓ hw)
   -- boundary values of `F` at the real points `x ≠ 0`
@@ -10217,7 +9777,7 @@ theorem norm_le_exp_integral_P_σ_of_strip {ℓ : ℝ} (hℓ : 0 < ℓ) {Z : ℂ
         ((Real.log ‖(Z ∘ halfPlaneToStrip ℓ) w‖ : ℝ) : EReal))
         (𝓝[{w : ℂ | 0 < w.im}] (x : ℂ)) ≤ (halfPlaneDatum ℓ b x : EReal) := by
     intro x hx
-    rcases (show x ≠ 0 by simpa using hx).lt_or_gt with hx | hx
+    rcases (Finset.notMem_singleton.1 hx).lt_or_gt with hx | hx
     · rw [halfPlaneDatum_of_nonpos hx.le]
       exact (hlim (ofReal_add_I_mul_mem_closure_strip hℓ _)
         (tendsto_halfPlaneToStrip_ofReal_of_neg ℓ hx)).limsup_log_norm_le
@@ -10229,7 +9789,7 @@ theorem norm_le_exp_integral_P_σ_of_strip {ℓ : ℝ} (hℓ : 0 < ℓ) {Z : ℂ
   have hmem := ofReal_add_I_mul_mul_mem_strip hℓ hσbelow hσabove s
   have h := hF.log_norm_le_poissonIntegralHalfPlane hFK
     (integrable_halfPlaneDatum_div_one_add_sq hℓ hb hbound)
-    (fun x hx ↦ halfPlaneDatum_continuousAt hb (by simpa using hx)) hbdry _
+    (fun x hx ↦ halfPlaneDatum_continuousAt hb (Finset.notMem_singleton.1 hx)) hbdry _
     (stripToHalfPlane_im_pos hℓ hmem)
   rwa [Function.comp_apply, halfPlaneToStrip_stripToHalfPlane hℓ hmem,
     poissonIntegralHalfPlane_halfPlaneDatum hℓ hσbelow hσabove s b] at h
