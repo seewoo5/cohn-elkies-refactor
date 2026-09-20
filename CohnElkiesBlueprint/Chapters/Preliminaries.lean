@@ -377,7 +377,8 @@ Subharmonic functions, the maximum principle, the Poisson integral of the upper 
 the Poisson principle of Ahlfors, cited by the report in the proof of Lemma 3.2. Mathlib provides
 harmonic functions, the Poisson formula for discs, Jensen's formula and the maximum modulus
 principle, but no subharmonic functions and no Poisson theory of the half-plane; these are
-developed in the modules `CohnElkiesForMathlib/Analysis/Complex/Subharmonic/Basic.lean`,
+developed in the modules `CohnElkiesForMathlib/Analysis/Complex/Subharmonic/Defs.lean`,
+`CohnElkiesForMathlib/Analysis/Complex/Subharmonic/Basic.lean`,
 `CohnElkiesForMathlib/Analysis/Complex/PoissonHalfPlane.lean` and
 `CohnElkiesForMathlib/Analysis/Complex/Subharmonic/HalfPlane.lean`.
 :::

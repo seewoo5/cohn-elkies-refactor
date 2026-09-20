@@ -1,6 +1,7 @@
 import CohnElkiesForMathlib.Analysis.Complex.PhragmenLindelof
 import CohnElkiesForMathlib.Analysis.Complex.PoissonHalfPlane
 import CohnElkiesForMathlib.Analysis.Complex.Subharmonic.Basic
+import CohnElkiesForMathlib.Analysis.Complex.Subharmonic.Defs
 import CohnElkiesForMathlib.Analysis.Complex.Subharmonic.HalfPlane
 import CohnElkiesForMathlib.Analysis.Complex.Trigonometric
 import CohnElkiesForMathlib.Analysis.Fourier.CompactSupport

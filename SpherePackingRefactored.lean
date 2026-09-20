@@ -668,12 +668,12 @@ end Complex
 
 end CohnElkiesForMathlib_Analysis_Complex_PoissonHalfPlane
 
-/-! ## Module `CohnElkiesForMathlib.Analysis.Complex.Subharmonic.Basic` -/
+/-! ## Module `CohnElkiesForMathlib.Analysis.Complex.Subharmonic.Defs` -/
 
-section CohnElkiesForMathlib_Analysis_Complex_Subharmonic_Basic
+section CohnElkiesForMathlib_Analysis_Complex_Subharmonic_Defs
 
 /-!
-# Subharmonic functions in the complex plane
+# Subharmonic functions in the complex plane: definitions
 
 A function `u : ℂ → EReal` is *subharmonic* on a set `U ⊆ ℂ` (`SubharmonicOn u U`) if it is upper
 semicontinuous on `U`, never takes the value `⊤` on `U`, and satisfies the local sub-mean-value
@@ -682,18 +682,29 @@ the value `⊥ = -∞` (as `log ‖f‖` does at the zeros of an analytic functi
 is understood through the truncations `max u a`, `a : ℝ` (`EReal.truncateToReal`), which are
 bounded and measurable on circles: the inequality is required for every level `a`.
 
+This file contains the definitions and the bare minimum of supporting lemmas; the theory (harmonic
+functions are subharmonic, `log ‖f‖` is subharmonic for `f` analytic, the maximum principles) is
+developed in `CohnElkiesForMathlib.Analysis.Complex.Subharmonic.Basic`.
+
+## Main definitions
+
+* `EReal.truncateToReal a x = (max x a).toReal`: `x : EReal` truncated from below at the real
+  level `a`, as a real number, with its order and measurability API;
+* `SubharmonicOn u U`: `u : ℂ → EReal` is subharmonic on `U ⊆ ℂ`.
+
 ## Main results
 
-* `HarmonicOnNhd.subharmonicOn`: harmonic functions are subharmonic;
-* `SubharmonicOn.add_harmonic`: the sum of a subharmonic and a harmonic function is subharmonic;
-* `AnalyticOnNhd.subharmonicOn_log_norm`: `log ‖f‖` is subharmonic for `f` analytic (via Jensen's
-  formula);
-* `SubharmonicOn.eqOn_const_of_isMaxOn`: the strong maximum principle;
-* `SubharmonicOn.le_zero_of_limsup_frontier`: the weak maximum principle on a bounded open
-  preconnected set, with the boundary condition `limsup u (𝓝[Ω] ζ) ≤ 0` at every boundary point.
+* `UpperSemicontinuousOn.circleIntegrable_truncateToReal`,
+  `SubharmonicOn.circleIntegrable_truncateToReal`: the truncations of an upper semicontinuous
+  function with values in `[-∞, ∞)` are circle integrable over every circle in its domain, so the
+  circle averages in the definition are averages of integrable functions;
+* `SubharmonicOn.mono`: a subharmonic function on `U` is subharmonic on every subset of `U`;
+* `SubharmonicOn.eventually_closedBall_subset_and_le_circleAverage`: on an open set `U`, the
+  sub-mean-value inequality at `z ∈ U` holds for all sufficiently small radii `r` together with
+  `closedBall z r ⊆ U`.
 -/
 
-open Filter InnerProductSpace MeasureTheory Metric Real Set Topology
+open Filter MeasureTheory Metric Real Set Topology
 
 /-!
 ### Truncations of extended real numbers
@@ -832,6 +843,40 @@ theorem eventually_closedBall_subset_and_le_circleAverage (hU : IsOpen U)
       u z ≤ ((circleAverage (fun w ↦ EReal.truncateToReal a (u w)) z r : ℝ) : EReal) :=
   ((eventually_closedBall_subset (hU.mem_nhds hz)).filter_mono nhdsWithin_le_nhds).and
     (hu.le_circleAverage z hz)
+
+end SubharmonicOn
+
+end CohnElkiesForMathlib_Analysis_Complex_Subharmonic_Defs
+
+/-! ## Module `CohnElkiesForMathlib.Analysis.Complex.Subharmonic.Basic` -/
+
+section CohnElkiesForMathlib_Analysis_Complex_Subharmonic_Basic
+
+/-!
+# Subharmonic functions in the complex plane
+
+This file develops the theory of the subharmonic functions `SubharmonicOn u U` of
+`CohnElkiesForMathlib.Analysis.Complex.Subharmonic.Defs`: `u : ℂ → EReal` is upper semicontinuous
+on `U`, never takes the value `⊤` on `U`, and satisfies the local sub-mean-value inequality
+`u z ≤ ⨍ u` over all sufficiently small circles around every `z ∈ U`, where the circle average is
+understood through the truncations `EReal.truncateToReal a ∘ u`, `a : ℝ`.
+
+## Main results
+
+* `HarmonicOnNhd.subharmonicOn`: harmonic functions are subharmonic;
+* `SubharmonicOn.add_harmonic`: the sum of a subharmonic and a harmonic function is subharmonic;
+* `AnalyticOnNhd.subharmonicOn_log_norm`: `log ‖f‖` is subharmonic for `f` analytic (via Jensen's
+  formula);
+* `SubharmonicOn.eqOn_const_of_isMaxOn`: the strong maximum principle;
+* `SubharmonicOn.le_zero_of_limsup_frontier`: the weak maximum principle on a bounded open
+  preconnected set, with the boundary condition `limsup u (𝓝[Ω] ζ) ≤ 0` at every boundary point.
+-/
+
+open Filter InnerProductSpace MeasureTheory Metric Real Set Topology
+
+namespace SubharmonicOn
+
+variable {u : ℂ → EReal} {U : Set ℂ}
 
 /-!
 ### Harmonic functions

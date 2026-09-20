@@ -316,6 +316,7 @@ formula for discs, Jensen's formula (`AnalyticOnNhd.circleAverage_log_norm`), th
 principle and the Phragmén–Lindelöf principles for strips, quadrants and half-planes, but no
 subharmonic functions, no Poisson integral of the half-plane, no harmonic measure and no boundary
 theory (Dirichlet problem, Fatou's theorem). The Mathlib-candidate modules
+`CohnElkiesForMathlib/Analysis/Complex/Subharmonic/Defs.lean`,
 `CohnElkiesForMathlib/Analysis/Complex/Subharmonic/Basic.lean`,
 `CohnElkiesForMathlib/Analysis/Complex/PoissonHalfPlane.lean` and
 `CohnElkiesForMathlib/Analysis/Complex/Subharmonic/HalfPlane.lean` add what the proof needs:

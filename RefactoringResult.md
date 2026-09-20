@@ -25,7 +25,7 @@ Proposition 3.7 for `L¹` functions, the self-Fourier function `f₀`, the const
 
 (filled in as the work progresses)
 
-### 1.0 Result in numbers (final state, 2026-09-19)
+### 1.0 Result in numbers (final state, 2026-09-20)
 
 | | lines |
 |---|---|
@@ -33,8 +33,8 @@ Proposition 3.7 for `L¹` functions, the self-Fourier function `f₀`, the const
 | `CohnElkies/` after golfing, before the new theorems (Step 1, 52 modules) | 24,242 (−56 %) |
 | `CohnElkies/` at the end of Step 3 (53 modules, including the new material: `SignUncertainty/*` ≈ 2,350 lines, `UpperBound/SelfFourier` ≈ 220, Propositions 3.1/3.7; 2026-09-14) | 24,647 |
 | final `CohnElkies/` (61 modules; adds Appendix A ≈ 890 lines, the Cohn–Gonçalves existence theorem ≈ 1,340 lines, the general Poisson principle and (22) ≈ 470 lines, the conformal transfer strip ↔ half-plane and the report's proof of Lemma 3.2 ≈ 500 lines, §1.6, §7) | 27,265 |
-| final `CohnElkiesForMathlib/` (20 modules; adds `coth`, the compact-support theorem, weak sequential compactness, the no-concentration lemma, Gauss's digamma integral, subharmonic functions and the half-plane Poisson principle ≈ 1,200 lines) | 4,478 |
-| total (single file `SpherePackingRefactored.lean`, assembled from both) | 32,087 (−42 %) |
+| final `CohnElkiesForMathlib/` (21 modules; adds `coth`, the compact-support theorem, weak sequential compactness, the no-concentration lemma, Gauss's digamma integral, subharmonic functions and the half-plane Poisson principle ≈ 1,240 lines) | 4,518 |
+| total (single file `SpherePackingRefactored.lean`, assembled from both) | 32,132 (−42 %) |
 
 Excluding the newly formalized material (≈ 7,800 lines: both signs of Propositions 3.1/3.7, `f₀`,
 the `L¹` theory, Appendix A, the existence of extremizers, the Poisson principles and (22)), the
@@ -514,13 +514,14 @@ Root `CohnElkies.lean` imports `PackingBound`, `Manuscript`, `SignUncertainty.Ma
 `SchwartzTools`; `LowerBound/*` imports none of `UpperBound/*` and vice versa; the two bounds meet
 in `Asymptotics/Main`; the sphere-packing modules depend only on `Basic` and `Asymptotics`.
 
-### 2.2 `CohnElkiesForMathlib/` (Mathlib directory structure, Mathlib namespaces, imports only Mathlib)
+### 2.2 `CohnElkiesForMathlib/` (Mathlib directory structure, Mathlib namespaces, depends only on Mathlib)
 
 | module | content |
 |---|---|
 | `Analysis/Complex/PhragmenLindelof` | maximum principle in a horizontal strip for a function whose *modulus* extends continuously (`PhragmenLindelof.horizontal_strip_norm_extension`) |
 | `Analysis/Complex/PoissonHalfPlane` | the Poisson kernel `P(z, x) = π⁻¹ Im z/((x − Re z)² + (Im z)²)` and the Poisson integral `P[b]` of the upper half-plane for data with `b(x)/(1+x²)` integrable: mass `1`, harmonicity (as `Im` of the holomorphic Nevanlinna integral), monotonicity, boundary values `P[b](z) → b(x₀)` at continuity points, monotone convergence of the truncations `P[max b (−n)]` (§7) |
-| `Analysis/Complex/Subharmonic/Basic` | `SubharmonicOn u U` for `u : ℂ → EReal` (upper semicontinuous, `≠ ⊤`, sub-mean-value inequality through the truncations `EReal.truncateToReal`), harmonic ⇒ subharmonic, `u + h` for harmonic `h`, `log ‖f‖` subharmonic for analytic `f` (Jensen), the strong maximum principle `SubharmonicOn.eqOn_const_of_isMaxOn` and the weak one `SubharmonicOn.le_zero_of_limsup_frontier` (§7) |
+| `Analysis/Complex/Subharmonic/Defs` | `EReal.truncateToReal a x = (max x a).toReal` with its order and measurability API; `SubharmonicOn u U` for `u : ℂ → EReal` (upper semicontinuous, `≠ ⊤`, sub-mean-value inequality through the truncations), circle integrability of the truncations, `SubharmonicOn.mono` (§7) |
+| `Analysis/Complex/Subharmonic/Basic` | harmonic ⇒ subharmonic, `u + h` for harmonic `h`, `log ‖f‖` subharmonic for analytic `f` (Jensen), the upper semicontinuous regularization, the strong maximum principle `SubharmonicOn.eqOn_const_of_isMaxOn` and the weak one `SubharmonicOn.le_zero_of_limsup_frontier` (§7) |
 | `Analysis/Complex/Subharmonic/HalfPlane` | the extended maximum principle on the upper half-plane with a finite exceptional boundary set (`SubharmonicOn.le_zero_of_halfPlane`), Ahlfors's Poisson principle `SubharmonicOn.le_poissonIntegralHalfPlane` and its form `AnalyticOnNhd.log_norm_le_poissonIntegralHalfPlane` for `log ‖f‖` (§7) |
 | `Analysis/Complex/Trigonometric` | the hyperbolic cotangent `Real.coth = cosh / sinh`, which Mathlib lacks (it has `tanh`, `artanh`, `cot`): positivity, derivative, antitonicity of `coth` and of `log ∘ coth`, the bounds `log (coth x) ≤ 4 exp (-2x)` and `abs_log_coth_div_le`, and the integrability of `log (coth (π|y|/2))` and of its damped quotient |
 | `Analysis/Fourier/CompactSupport` | a function and its Fourier transform cannot both be compactly supported (`Real.ae_eq_zero_of_hasCompactSupport_fourierIntegral`), via the entire Fourier–Laplace transform along a ray |
@@ -992,14 +993,15 @@ theory must be `EReal`-valued (`⊥ = −∞` at zeros); and circle integrals of
 functions do not exist, so the sub-mean-value inequality is required for all truncations
 `max u a`, `a : ℝ`, which are bounded and measurable on circles.
 
-**New Mathlib-candidate modules** (`CohnElkiesForMathlib/Analysis/Complex/`, 1,200 lines, only
-`import Mathlib`, standard axioms; the line counts are after the `/cleanup` pass described at
-the end of this section):
+**New Mathlib-candidate modules** (`CohnElkiesForMathlib/Analysis/Complex/`, 1,240 lines, depending
+only on Mathlib, standard axioms; the line counts are after the `/cleanup` pass and the
+`Defs`/`Basic` split described at the end of this section):
 
-- `Subharmonic/Basic.lean` (432 lines): `EReal.truncateToReal a x = (max x a).toReal` with its
+- `Subharmonic/Defs.lean` (175 lines): `EReal.truncateToReal a x = (max x a).toReal` with its
   API; `SubharmonicOn u U` (`u : ℂ → EReal`: `UpperSemicontinuousOn`, `u ≠ ⊤`, and
-  `∀ z ∈ U, ∀ᶠ r in 𝓝[>] 0, ∀ a, u z ≤ circleAverage (truncateToReal a ∘ u) z r`);
-  `HarmonicOnNhd.subharmonicOn`, `SubharmonicOn.add_harmonic/sub_harmonic/add_const/sub_const`,
+  `∀ z ∈ U, ∀ᶠ r in 𝓝[>] 0, ∀ a, u z ≤ circleAverage (truncateToReal a ∘ u) z r`), the circle
+  integrability of the truncations and `SubharmonicOn.mono`.
+- `Subharmonic/Basic.lean` (297 lines): `HarmonicOnNhd.subharmonicOn`, `SubharmonicOn.add_harmonic/sub_harmonic/add_const/sub_const`,
   `AnalyticOnNhd.subharmonicOn_log_enorm` and `subharmonicOn_log_norm` (`log ‖f‖` with `⊥` at
   zeros, via Jensen's formula: the divisor term is nonnegative, and `log ‖f‖` and the truncation of
   `ENNReal.log ‖f‖ₑ` differ only on the discrete zero set); the upper semicontinuous
@@ -1098,7 +1100,8 @@ same import chain never concurrently; oleans of a round rebuilt with `lake build
 the next round), under the project's contract: no statement, name, visibility or declaration
 order changed (checked by a script comparing every declaration header with `HEAD`), `fun x ↦`,
 default heartbeats, docstrings kept. Result: 2,244 → 1,804 lines (−20 %):
-`Subharmonic/Basic.lean` 518 → 432, `PoissonHalfPlane.lean` 597 → 452 (9 unused lemmas
+`Subharmonic/Basic.lean` 518 → 432 (before the `Defs`/`Basic` split below), `PoissonHalfPlane.lean`
+597 → 452 (9 unused lemmas
 deleted: `poissonKernelHalfPlane_nonneg`, `poissonKernelHalfPlane_le`,
 `harmonicOnNhd_poissonKernelHalfPlane`, `poissonIntegralHalfPlane_neg/_sub/_const_mul`,
 `abs_poissonIntegralHalfPlane_le`, `continuousOn_poissonIntegralHalfPlane`,
@@ -1116,4 +1119,17 @@ chains collapsed to `.trans`, `abs_le` case splits replaced by `abs_le_max_abs_a
 `nlinarith` argument, majorants chosen so that their integrability is a term. Mathlib-naming
 facts recorded on the way: `LE.le.not_lt`/`LT.lt.not_le` are now `LE.le.not_gt`/`LT.lt.not_ge`;
 `Set.setOf_subset_setOf` is deprecated; `field_simp` discharges `(π : ℂ) ≠ 0` by itself.
+
+**`Defs`/`Basic` split (2026-09-20, at the owner's request).** `Subharmonic/Basic.lean` was split
+Mathlib-style (cf. `Mathlib/Analysis/Calculus/FDeriv/Defs.lean`, `Analysis/InnerProductSpace/Defs.lean`)
+into `Subharmonic/Defs.lean` (175 lines: `EReal.truncateToReal` and its API, the structure
+`SubharmonicOn`, the circle integrability of the truncations, `SubharmonicOn.mono` and the open-set
+form of the sub-mean-value inequality — the definitions and the minimal API needed to state and
+use them; imports only Mathlib) and `Subharmonic/Basic.lean` (297 lines: the theory — harmonic ⇒
+subharmonic, `log ‖f‖`, the regularization and the maximum principles; imports `Defs`). The cut
+is a single point of the old file; every declaration moved verbatim (byte-identical bodies,
+checked with `diff`), and `HalfPlane.lean` and the `CohnElkies` modules are unchanged. The
+directory `CohnElkiesForMathlib/Analysis/Complex/Subharmonic/` was kept: it mirrors Mathlib's
+`Mathlib/Analysis/Complex/Harmonic/` (harmonic functions on `ℂ`), next to which
+`PoissonHalfPlane.lean` mirrors `Mathlib/Analysis/Complex/Poisson.lean` (the disc kernel).
 

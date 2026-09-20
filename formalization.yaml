@@ -281,7 +281,7 @@ alignment:
       lean: "SubharmonicOn.le_poissonIntegralHalfPlane"
       module: "CohnElkiesForMathlib/Analysis/Complex/Subharmonic/HalfPlane.lean"
       status: "proved"
-      note: "SubharmonicOn (EReal-valued, sub-mean-value inequality through truncations), AnalyticOnNhd.subharmonicOn_log_norm (Jensen), the strong and weak maximum principles (CohnElkiesForMathlib/Analysis/Complex/Subharmonic/Basic.lean), the half-plane Poisson kernel and integral with harmonicity and boundary values (CohnElkiesForMathlib/Analysis/Complex/PoissonHalfPlane.lean), the extended maximum principle with a finite exceptional boundary set SubharmonicOn.le_zero_of_halfPlane and the form AnalyticOnNhd.log_norm_le_poissonIntegralHalfPlane for log|f|; Mathlib has none of these"
+      note: "SubharmonicOn (EReal-valued, sub-mean-value inequality through truncations; CohnElkiesForMathlib/Analysis/Complex/Subharmonic/Defs.lean), AnalyticOnNhd.subharmonicOn_log_norm (Jensen), the strong and weak maximum principles (CohnElkiesForMathlib/Analysis/Complex/Subharmonic/Basic.lean), the half-plane Poisson kernel and integral with harmonicity and boundary values (CohnElkiesForMathlib/Analysis/Complex/PoissonHalfPlane.lean), the extended maximum principle with a finite exceptional boundary set SubharmonicOn.le_zero_of_halfPlane and the form AnalyticOnNhd.log_norm_le_poissonIntegralHalfPlane for log|f|; Mathlib has none of these"
     - source: "Section 3, equation (22) (log-moment identity of the sech² density)"
       lean: "CohnElkies.integral_poissonLogisticDensity_mul_log_sqrt"
       module: "CohnElkies/LowerBound/LogMomentDigamma.lean"
