@@ -31,8 +31,10 @@ In the formalization the functions of this chapter are the structure
 `CohnElkies.RadialEigenfunction d ς`: a nonzero real radial test function $`g` with
 $`\widehat g = \varsigma g` and $`g(0) = 0`, for a unit $`\varsigma` of $`\mathbb{Z}`. The chapter
 corresponds to the modules `CohnElkies/LowerBound/*.lean`; the interior bound of Lemma 3.2 is
-proved by a Phragmén–Lindelöf argument and the limit of Lemma 3.4 by a Frullani-type
-computation, both recorded in the final chapter.
+proved, as in the report, by mapping the strip onto the upper half-plane and applying the
+Poisson principle for subharmonic functions (the preliminaries chapter), and the limit of Lemma
+3.4 by a Frullani-type computation recorded in the final chapter, which also contains an
+alternative proof of the Poisson principle for the strip by Phragmén–Lindelöf.
 
 # The Mellin-strip obstruction
 
@@ -82,44 +84,66 @@ $`H_\sigma(s) = \int_{\mathbb{R}}P_\sigma(T)\,h_\lambda(s - \lambda T)\,dT` with
 and $`P_\sigma(T) \ll_\sigma e^{-\pi|T|/2}`.
 :::
 
+:::lemma_ "lemma_strip_harmonic_measure" (lean := "CohnElkies.poissonIntegralHalfPlane_halfPlaneDatum") (parent := "grp_mellin_strip")
+(Harmonic measure of the strip.) Let $`\lambda > 0`. The conformal map
+$`\Phi(t) = \exp(\pi(t + i\lambda)/(2\lambda))` sends the strip $`\{|\operatorname{Im} t| < \lambda\}`
+onto the upper half-plane $`\mathbb{H}`, the lower edge $`y - i\lambda` to
+$`e^{\pi y/(2\lambda)} \in (0, \infty)`, the upper edge $`y + i\lambda` to
+$`-e^{\pi y/(2\lambda)} \in (-\infty, 0)`, and $`t_0 = s + i\sigma\lambda` to $`\rho e^{i\theta}`
+with $`\rho = e^{\pi s/(2\lambda)}` and $`\theta = \pi(1 + \sigma)/2`; its inverse is
+$`\Phi^{-1}(w) = (2\lambda/\pi)\log w - i\lambda` (principal branch), which extends continuously
+to $`\mathbb{R} \setminus \{0\}`. For a lower-edge datum $`b : \mathbb{R} \to \mathbb{R}` let
+$`\tilde b(x) = b((2\lambda/\pi)\log x)` for $`x > 0` and $`\tilde b(x) = 0` for $`x \le 0`. Then,
+with $`P_\sigma` from {uses "def_strip_poisson_kernel"}[] and the Poisson integral $`P[\,\cdot\,]`
+of {uses "def_halfplane_poisson_kernel"}[], for $`-1 < \sigma < 1` and $`s \in \mathbb{R}`,
+$`P[\tilde b](\Phi(s + i\sigma\lambda)) = \int_{\mathbb{R}}\lambda^{-1}P_\sigma\Bigl(\dfrac{s - y}{\lambda}\Bigr)b(y)\,dy = \int_{\mathbb{R}}P_\sigma(T)\,b(s - \lambda T)\,dT`:
+$`\lambda^{-1}P_\sigma((s - y)/\lambda)\,dy` is the harmonic measure of the lower edge at
+$`s + i\sigma\lambda`, of total mass $`M_\sigma = (1 - \sigma)/2`, and the upper edge has harmonic
+measure $`(1 + \sigma)/2`. If $`b` is continuous with $`|b(y)| \le A(1 + |y|)`, then $`\tilde b` is
+continuous on $`\mathbb{R} \setminus \{0\}` and $`\tilde b(x)/(1 + x^2)` is integrable.
+:::
+
+:::proof "lemma_strip_harmonic_measure"
+The boundary correspondence is read off from $`\exp(\pi(y \mp i\lambda + i\lambda)/(2\lambda))`
+and $`e^{i\pi} = -1`, and $`\Phi^{-1}` is continuous on $`\mathbb{H} \cup (\mathbb{R} \setminus \{0\})`
+because the principal logarithm is continuous on the slit plane and, on the negative axis
+approached from above, tends to $`\log|x| + i\pi`. On $`(0, \infty)` substitute
+$`x = e^{\pi y/(2\lambda)}`, $`dx = (\pi/(2\lambda))\,x\,dy`: the half-plane kernel at
+$`\rho e^{i\theta}` satisfies
+$`\dfrac{1}{\pi}\dfrac{\rho\sin\theta}{(x - \rho\cos\theta)^2 + \rho^2\sin^2\theta}\cdot\dfrac{\pi x}{2\lambda} = \dfrac{\sin\theta}{4\lambda\bigl(\tfrac12(\rho/x + x/\rho) - \cos\theta\bigr)} = \dfrac{1}{\lambda}P_\sigma\Bigl(\dfrac{s - y}{\lambda}\Bigr)`,
+since $`(x - \rho\cos\theta)^2 + \rho^2\sin^2\theta = \rho x\,(x/\rho + \rho/x - 2\cos\theta)` and
+$`\tfrac12(\rho/x + x/\rho) = \cosh(\pi(s - y)/(2\lambda))`; the substitution
+$`T = (s - y)/\lambda` gives the second form. The mass $`M_\sigma` is
+{uses "def_strip_poisson_kernel"}[], and the complementary mass of $`(-\infty, 0]` is
+$`1 - M_\sigma = (1 + \sigma)/2` since the kernel has total mass $`1`. Under the same substitution
+$`\tilde b(x)/(1 + x^2)` becomes $`e^{u}b((2\lambda/\pi)u)/(1 + e^{2u})`, which is dominated by
+$`A(1 + (2\lambda/\pi)|u|)e^{-|u|}`.
+:::
+
 :::lemma_ "lemma_strip_poisson_principle" (lean := "CohnElkies.norm_le_exp_integral_P_σ_of_strip") (parent := "grp_mellin_strip")
-(Poisson principle for the strip.) Let $`\lambda > 0` and let $`Z` be holomorphic on the open
-strip $`\{|\operatorname{Im} t| < \lambda\}`, continuous on its closure, and of growth
-$`|Z(t)| \le C\exp(Ce^{c|\operatorname{Re} t|})` there for some $`c < \pi/(2\lambda)` (for
-instance bounded). Let $`b : \mathbb{R} \to \mathbb{R}` be continuous with
-$`|b(y)| \le A(1 + |y|)`, and suppose $`\log|Z(y - i\lambda)| \le b(y)` and
-$`\log|Z(y + i\lambda)| \le 0` for all $`y \in \mathbb{R}`. Then for $`-1 < \sigma < 1` and
-$`s \in \mathbb{R}`,
+(Poisson principle for the strip.) Let $`\lambda > 0` and let $`Z` be holomorphic and bounded on
+the open strip $`\{|\operatorname{Im} t| < \lambda\}` and continuous on its closure. Let
+$`b : \mathbb{R} \to \mathbb{R}` be continuous with $`|b(y)| \le A(1 + |y|)`, and suppose
+$`\log|Z(y - i\lambda)| \le b(y)` and $`\log|Z(y + i\lambda)| \le 0` for all $`y \in \mathbb{R}`.
+Then for $`-1 < \sigma < 1` and $`s \in \mathbb{R}`,
 $`\log|Z(s + i\sigma\lambda)| \le \int_{\mathbb{R}}P_\sigma(T)\,b(s - \lambda T)\,dT`,
-with $`P_\sigma` from {uses "def_strip_poisson_kernel"}[]: $`\lambda^{-1}P_\sigma((s-y)/\lambda)\,dy`
-is the lower-edge harmonic measure of the strip at $`s+i\sigma\lambda`, of mass $`M_\sigma`,
-and the upper-edge measure has mass $`(1+\sigma)/2`.
+with $`P_\sigma` from {uses "def_strip_poisson_kernel"}[].
 :::
 
 :::proof "lemma_strip_poisson_principle"
-The conformal map $`\Phi(t) = \exp(\pi(t+i\lambda)/(2\lambda))` sends the open strip onto the upper
-half-plane, the lower edge $`y - i\lambda` to $`e^{\pi y/(2\lambda)} \in (0,\infty)`, the upper edge
-to $`(-\infty,0)`, and $`s + i\sigma\lambda` to $`\rho e^{i\theta}` with $`\rho = e^{\pi s/(2\lambda)}`,
-$`\theta = \pi(1+\sigma)/2`; transporting the half-plane Poisson kernel
-$`\rho\sin\theta/((x-\rho\cos\theta)^2 + \rho^2\sin^2\theta)` through $`x = e^{\pi y/(2\lambda)}`
-gives the lower-edge harmonic measure $`\lambda^{-1}P_\sigma((s-y)/\lambda)\,dy`, of mass
-$`M_\sigma = (\pi-\theta)/\pi = (1-\sigma)/2`. This density is the real part of the holomorphic
-kernel $`K_\lambda(z,y) = \frac{i}{4\lambda}\frac{E+1}{E-1}`, $`E = e^{\pi(z-y+i\lambda)/(2\lambda)}`,
-regularized to $`\widetilde K_\lambda(z,y) = K_\lambda(z,y) \pm i/(4\lambda)` so that it decays like
-$`e^{-\pi|y|/(2\lambda)}` in $`y`. Let $`W(z) = \int_{\mathbb{R}}\widetilde K_\lambda(z,y)\,b(y)\,dy`.
-Since $`|b(y)| \le A(1+|y|)`, $`W` is holomorphic on the open strip (differentiation under the
-integral sign), $`\operatorname{Re}W(s + i\sigma\lambda) = \int P_\sigma(T)\,b(s-\lambda T)\,dT`, and
-$`|\operatorname{Re}W(z)| \le B(1 + |\operatorname{Re}z|)` because $`M_\sigma \le 1` and
-$`\int P_\sigma(T)|T|\,dT` is bounded uniformly in $`\sigma`. By dominated convergence
-($`P_\sigma` concentrates at $`T = 0` as $`\sigma \downarrow -1` and tends to $`0` as
-$`\sigma \uparrow 1`), $`\operatorname{Re}W` extends continuously to the closed strip with boundary
-values $`b` on the lower edge and $`0` on the upper edge. Hence $`e^{-W}Z` is holomorphic on the
-open strip, its modulus $`e^{-\operatorname{Re}W}|Z|` extends continuously to the closed strip with
-values at most $`e^{-b(y)}|Z(y-i\lambda)| \le 1` on the lower edge and $`|Z(y+i\lambda)| \le 1` on
-the upper edge, and it is $`O(\exp(B'e^{c'|\operatorname{Re}z|}))` for some $`c' < \pi/(2\lambda)`.
-The Phragmén–Lindelöf principle for the strip ({uses "lemma_phragmen_lindelof_strip"}[]) gives
-$`e^{-\operatorname{Re}W}|Z| \le 1` inside, i.e.
-$`\log|Z(s+i\sigma\lambda)| \le \operatorname{Re}W(s+i\sigma\lambda) = \int P_\sigma(T)\,b(s-\lambda T)\,dT`.
+Let $`\Phi` and $`\tilde b` be as in {uses "lemma_strip_harmonic_measure"}[]. The function
+$`F = Z \circ \Phi^{-1}` is holomorphic and bounded on $`\mathbb{H}`, so $`\log|F|` is subharmonic
+and bounded above ({uses "lemma_log_norm_subharmonic"}[]). As $`w \to x` within $`\mathbb{H}`,
+$`F(w) \to Z((2\lambda/\pi)\log x - i\lambda)` for $`x > 0` and
+$`F(w) \to Z((2\lambda/\pi)\log(-x) + i\lambda)` for $`x < 0`, by the continuity of $`Z` on the
+closed strip; hence $`\limsup_{w \to x}\log|F(w)| \le \tilde b(x)` for every $`x \ne 0`, the
+lower-edge bound giving $`\tilde b(x) = b((2\lambda/\pi)\log x)` on $`(0, \infty)` and the
+upper-edge bound giving $`0` on $`(-\infty, 0)`. The datum $`\tilde b` is continuous off $`0` with
+$`\tilde b(x)/(1 + x^2)` integrable, so the Poisson principle for the upper half-plane
+({uses "cor_halfplane_poisson_principle_log"}[], with the exceptional set $`E = \{0\}`) gives
+$`\log|F| \le P[\tilde b]` on $`\mathbb{H}`. At $`w = \Phi(s + i\sigma\lambda)` this reads
+$`\log|Z(s + i\sigma\lambda)| \le P[\tilde b](\Phi(s + i\sigma\lambda)) = \int_{\mathbb{R}}P_\sigma(T)\,b(s - \lambda T)\,dT`
+by {uses "lemma_strip_harmonic_measure"}[].
 :::
 
 :::lemma_ "lemma_3_2" (lean := "CohnElkies.normalizedRadialMellinStrip_diffContOnCl") (parent := "grp_mellin_strip")

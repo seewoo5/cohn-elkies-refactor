@@ -179,9 +179,8 @@ automation:
 
 fidelity:
   divergences: >-
-    Proof arguments kept from the original formalization where they differ from the report: the
-    interior bound of Lemma 3.2 by a Phragmén-Lindelöf principle on the strip (with a capped
-    majorant) instead of the Poisson principle; one-sided Lemma 3.3; the limit of Lemma 3.4 via a
+    Proof arguments kept from the original formalization where they differ from the report:
+    one-sided Lemma 3.3; the limit of Lemma 3.4 via a
     Frullani/Wallis-kernel integral instead of the digamma log-moment identity (22); a single
     inverse-quadratic majorant in Lemma 3.5; Lemma 4.8 in strict-inequality form and Lemma 4.10 in
     positivity form; the upper half of Theorem 1.1 fused into a sandwich argument. The parameters
@@ -193,8 +192,12 @@ fidelity:
     invariance of the Haar measure is then needed). The Cohn-Elkies bound Δ_d ≤ LP_d, cited by the
     report, is proved. The existence of extremizers for A₋(d) (Cohn–Gonçalves 2019, Theorem 1.4)
     is proved with a qualitative compactness lemma (no-concentration of Fourier eigenfunctions)
-    instead of the Nazarov–Jaming uncertainty principle, and without Mazur's lemma. Details:
-    RefactoringResult.md §1.3-1.6 and §5.
+    instead of the Nazarov–Jaming uncertainty principle, and without Mazur's lemma. The interior
+    bound of Lemma 3.2 is proved as in the report, through the conformal map onto the upper
+    half-plane and the Poisson principle for subharmonic functions (Ahlfors), on a new
+    subharmonic-function/half-plane Poisson library; the earlier Phragmén-Lindelöf proof on the
+    strip is kept as an alternative (CohnElkies/LowerBound/PhragmenLindelofMajorization.lean).
+    Details: RefactoringResult.md §1.3-1.6, §5 and §7.
 
 review:
   status: "agent-reviewed"
@@ -273,7 +276,12 @@ alignment:
       lean: "CohnElkies.norm_le_exp_integral_P_σ_of_strip"
       module: "CohnElkies/LowerBound/CappedMajorization.lean"
       status: "proved"
-      note: "for continuous boundary data of linear growth and Z of Phragmén–Lindelöf growth, the form in which the report applies it; proved on the strip via the holomorphic Poisson integral and PhragmenLindelof.horizontal_strip_norm_extension"
+      note: "for bounded Z and continuous boundary data of linear growth, the form in which the report applies it; proved as in the report, by the conformal map onto the upper half-plane (CohnElkies/LowerBound/StripToHalfPlane.lean, harmonic-measure identity CohnElkies.poissonIntegralHalfPlane_halfPlaneDatum) and the half-plane Poisson principle; the alternative proof for Z of Phragmén–Lindelöf growth via the holomorphic Poisson integral and PhragmenLindelof.horizontal_strip_norm_extension is CohnElkies.norm_le_exp_integral_P_σ_of_strip_of_isBigO (CohnElkies/LowerBound/PhragmenLindelofMajorization.lean)"
+    - source: "Ahlfors, Complex Analysis: subharmonic functions, the maximum principle and the Poisson principle for the upper half-plane (cited in the proof of Lemma 3.2)"
+      lean: "SubharmonicOn.le_poissonIntegralHalfPlane"
+      module: "CohnElkiesForMathlib/Analysis/Complex/Subharmonic/HalfPlane.lean"
+      status: "proved"
+      note: "SubharmonicOn (EReal-valued, sub-mean-value inequality through truncations; CohnElkiesForMathlib/Analysis/Complex/Subharmonic/Defs.lean), AnalyticOnNhd.subharmonicOn_log_norm (Jensen), the strong and weak maximum principles (CohnElkiesForMathlib/Analysis/Complex/Subharmonic/Basic.lean), the half-plane Poisson kernel and integral with harmonicity and boundary values (CohnElkiesForMathlib/Analysis/Complex/PoissonHalfPlane.lean), the extended maximum principle with a finite exceptional boundary set SubharmonicOn.le_zero_of_halfPlane and the form AnalyticOnNhd.log_norm_le_poissonIntegralHalfPlane for log|f|; Mathlib has none of these"
     - source: "Section 3, equation (22) (log-moment identity of the sech² density)"
       lean: "CohnElkies.integral_poissonLogisticDensity_mul_log_sqrt"
       module: "CohnElkies/LowerBound/LogMomentDigamma.lean"

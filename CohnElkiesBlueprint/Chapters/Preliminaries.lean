@@ -369,3 +369,144 @@ and $`X_g(-t) = M_g(\lambda + it)` ({uses "def_radial_mellin"}[]). The propertie
 follow from $`\Gamma(\bar z) = \overline{\Gamma(z)}` ({uses "eq_7_gamma_identities"}[]) and
 $`|\pi^{it}| = 1`.
 :::
+
+# Subharmonic functions and the Poisson principle for the half-plane
+
+:::group "grp_poisson_principle"
+Subharmonic functions, the maximum principle, the Poisson integral of the upper half-plane and
+the Poisson principle of Ahlfors, cited by the report in the proof of Lemma 3.2. Mathlib provides
+harmonic functions, the Poisson formula for discs, Jensen's formula and the maximum modulus
+principle, but no subharmonic functions and no Poisson theory of the half-plane; these are
+developed in the modules `CohnElkiesForMathlib/Analysis/Complex/Subharmonic/Defs.lean`,
+`CohnElkiesForMathlib/Analysis/Complex/Subharmonic/Basic.lean`,
+`CohnElkiesForMathlib/Analysis/Complex/PoissonHalfPlane.lean` and
+`CohnElkiesForMathlib/Analysis/Complex/Subharmonic/HalfPlane.lean`.
+:::
+
+:::definition "def_subharmonic" (lean := "SubharmonicOn") (parent := "grp_poisson_principle")
+A function $`u : U \to [-\infty, \infty)` on a set $`U \subseteq \mathbb{C}` is *subharmonic* on
+$`U` if it is upper semicontinuous on $`U` and satisfies the sub-mean-value inequality
+$`u(z) \le \dfrac{1}{2\pi}\int_0^{2\pi} u(z + re^{i\phi})\,d\phi`
+for every $`z \in U` and all sufficiently small $`r > 0`; the circle average of $`u`, which may be
+$`-\infty`, is the infimum over $`a \in \mathbb{R}` of the circle averages of the truncations
+$`\max\{u, a\}`. Harmonic functions are subharmonic, and the sum of a subharmonic function and a
+harmonic function is subharmonic.
+:::
+
+:::lemma_ "lemma_log_norm_subharmonic" (lean := "AnalyticOnNhd.subharmonicOn_log_norm") (parent := "grp_poisson_principle")
+If $`f` is holomorphic on an open set $`U \subseteq \mathbb{C}`, then $`\log|f|`, with the value
+$`-\infty` at the zeros of $`f`, is subharmonic on $`U` ({uses "def_subharmonic"}[]).
+:::
+
+:::proof "lemma_log_norm_subharmonic"
+Upper semicontinuity follows from the continuity of $`f` and of
+$`\log : [0, \infty) \to [-\infty, \infty)`. At a zero of $`f` there is nothing to prove. At a
+point $`z` with $`f(z) \ne 0` take $`r > 0` with $`\{|w - z| \le r\} \subseteq U`; Jensen's
+formula gives
+$`\log|f(z)| = \dfrac{1}{2\pi}\int_0^{2\pi}\log|f(z + re^{i\phi})|\,d\phi - \sum_{|w - z| < r}\operatorname{ord}_w(f)\log\dfrac{r}{|w - z|}`,
+the sum running over the zeros $`w` of $`f` in the open disc, and the sum is nonnegative. As
+$`\log|f|` is integrable on the circle, its circle average is the infimum of the averages of its
+truncations, which differ from $`\log|f|` only on the finite set of zeros of $`f` on the circle.
+:::
+
+:::lemma_ "lemma_subharmonic_maximum_principle" (lean := "SubharmonicOn.le_zero_of_limsup_frontier") (parent := "grp_poisson_principle")
+Let $`\Omega \subseteq \mathbb{C}` be open, bounded and connected, and let $`u` be subharmonic on
+$`\Omega` ({uses "def_subharmonic"}[]) with $`\limsup_{z \to \zeta,\ z \in \Omega} u(z) \le 0` at
+every boundary point $`\zeta \in \partial\Omega`. Then $`u \le 0` on $`\Omega`.
+:::
+
+:::proof "lemma_subharmonic_maximum_principle"
+Strong maximum principle: if $`u` attains its supremum $`M` over $`\Omega` at $`z_0 \in \Omega`,
+then $`u = M` on $`\Omega`. Indeed, for small $`r` the sub-mean-value inequality gives
+$`M = u(z_0) \le \frac{1}{2\pi}\int_0^{2\pi}\max\{u(z_0 + re^{i\phi}), a\}\,d\phi \le M` for every
+$`a \le M`, so $`u = M` almost everywhere on every small circle around $`z_0`; by upper
+semicontinuity the set $`\{u \ge M\}` is closed and contains, with almost every point of every
+small circle, a neighbourhood of $`z_0` (every point near $`z_0` lies on such a circle, and the
+set $`\{u < M\}` is open, so it cannot meet the circles only in null sets unless it is empty
+near $`z_0`); hence $`\{u = M\}` is open and closed in the connected set $`\Omega`
+(`SubharmonicOn.eqOn_const_of_isMaxOn`). Now let $`g(\zeta) = \limsup_{z \to \zeta,\ z \in \Omega} u(z)`
+for $`\zeta \in \overline{\Omega}`: $`g` is upper semicontinuous, equals $`u` on $`\Omega` and is
+at most $`0` on $`\partial\Omega`, so it attains its maximum on the compact set $`\overline{\Omega}`.
+If $`u` were positive somewhere, this maximum would be positive and attained at a point of
+$`\Omega`, so $`u` would be a positive constant on $`\Omega`, contradicting the boundary condition
+at a point of $`\partial\Omega \ne \emptyset`.
+:::
+
+:::definition "def_halfplane_poisson_kernel" (lean := "Complex.poissonKernelHalfPlane") (parent := "grp_poisson_principle")
+For $`z = a + ih` in the upper half-plane $`\mathbb{H} = \{\operatorname{Im} z > 0\}` and
+$`x \in \mathbb{R}`, the Poisson kernel of $`\mathbb{H}` is
+$`P(z, x) = \dfrac{1}{\pi}\,\dfrac{h}{(x - a)^2 + h^2} = \dfrac{1}{\pi}\operatorname{Im}\dfrac{1}{x - z}`,
+and the Poisson integral of a boundary datum $`b : \mathbb{R} \to \mathbb{R}` with $`b(x)/(1 + x^2)`
+integrable is $`P[b](z) = \int_{\mathbb{R}} P(z, x)\,b(x)\,dx`. The kernel is positive with
+$`\int_{\mathbb{R}} P(z, x)\,dx = 1`, so $`P[b]` is monotone in $`b`, and
+$`\inf b \le P[b] \le \sup b`.
+:::
+
+:::lemma_ "lemma_halfplane_poisson_harmonic" (lean := "Complex.harmonicOnNhd_poissonIntegralHalfPlane") (parent := "grp_poisson_principle")
+For $`b : \mathbb{R} \to \mathbb{R}` with $`b(x)/(1 + x^2)` integrable, the Poisson integral
+$`P[b]` ({uses "def_halfplane_poisson_kernel"}[]) is harmonic on $`\mathbb{H}`, and
+$`P[b](z) \to b(x_0)` as $`z \to x_0` within $`\mathbb{H}` at every point $`x_0 \in \mathbb{R}` at
+which $`b` is continuous.
+:::
+
+:::proof "lemma_halfplane_poisson_harmonic"
+$`P[b]` is the imaginary part of the Nevanlinna integral
+$`N[b](z) = \dfrac{1}{\pi}\int_{\mathbb{R}}\Bigl(\dfrac{1}{x - z} - \dfrac{x}{1 + x^2}\Bigr)b(x)\,dx`,
+whose kernel is $`O((1 + x^2)^{-1})` locally uniformly in $`z \in \mathbb{H}`, together with its
+$`z`-derivative; differentiation under the integral sign shows that $`N[b]` is holomorphic on
+$`\mathbb{H}`, so $`P[b] = \operatorname{Im} N[b]` is harmonic. For the boundary values
+(`Complex.tendsto_poissonIntegralHalfPlane_of_continuousAt`), given $`\varepsilon > 0` choose
+$`\delta > 0` with $`|b(x) - b(x_0)| \le \varepsilon` for $`|x - x_0| < \delta`; since the kernel has
+total mass $`1`, $`|P[b](z) - b(x_0)| \le \varepsilon + \int_{|x - x_0| \ge \delta} P(z, x)\,|b(x) - b(x_0)|\,dx`,
+and on $`|x - x_0| \ge \delta` one has $`P(z, x) \le C\,\operatorname{Im} z\,(1 + x^2)^{-1}` for $`z`
+near $`x_0`, so the last integral tends to $`0` as $`z \to x_0`.
+:::
+
+:::lemma_ "lemma_halfplane_extended_maximum_principle" (lean := "SubharmonicOn.le_zero_of_halfPlane") (parent := "grp_poisson_principle")
+Let $`u` be subharmonic on $`\mathbb{H}` ({uses "def_subharmonic"}[]) and bounded above, and let
+$`E \subseteq \mathbb{R}` be finite. If $`\limsup_{z \to x,\ z \in \mathbb{H}} u(z) \le 0` for every
+$`x \in \mathbb{R} \setminus E`, then $`u \le 0` on $`\mathbb{H}`.
+:::
+
+:::proof "lemma_halfplane_extended_maximum_principle"
+Let $`u \le M` on $`\mathbb{H}` and $`\varepsilon > 0`. The function
+$`h(z) = \sum_{x_0 \in E}\log\Bigl|\dfrac{z - x_0}{z - x_0 + 2i}\Bigr| - \log|z + i|`
+is harmonic on $`\mathbb{H}`, nonpositive on the closed upper half-plane, tends to $`-\infty` at
+the points of $`E`, and satisfies $`h(z) \le -\log(|z| - 1)` for $`|z| > 1`. Consider $`u + \varepsilon h`,
+subharmonic on the half-disc $`\Omega_R = \{|z| < R\} \cap \mathbb{H}`, with $`R` so large that
+$`M - \varepsilon\log(R - 2) \le 0`: at real boundary points outside $`E` its $`\limsup` is at most
+$`0` because $`\varepsilon h \le 0`, at the points of $`E` because $`u \le M` and $`\varepsilon h \to -\infty`,
+and at boundary points of modulus $`R` because $`u + \varepsilon h \le M - \varepsilon\log(R - 2)`
+near them. The maximum principle ({uses "lemma_subharmonic_maximum_principle"}[]) gives
+$`u \le -\varepsilon h` on $`\Omega_R`, hence on $`\mathbb{H}`, for every $`\varepsilon > 0`; let
+$`\varepsilon \to 0`.
+:::
+
+:::theorem "thm_halfplane_poisson_principle" (lean := "SubharmonicOn.le_poissonIntegralHalfPlane") (parent := "grp_poisson_principle")
+(Poisson principle for the upper half-plane.) Let $`u` be subharmonic on $`\mathbb{H}`
+({uses "def_subharmonic"}[]) and bounded above, let $`b : \mathbb{R} \to \mathbb{R}` with
+$`b(x)/(1 + x^2)` integrable be continuous outside a finite set $`E \subseteq \mathbb{R}`, and
+suppose $`\limsup_{z \to x,\ z \in \mathbb{H}} u(z) \le b(x)` for every $`x \in \mathbb{R} \setminus E`.
+Then $`u \le P[b]` on $`\mathbb{H}` ({uses "def_halfplane_poisson_kernel"}[]).
+:::
+
+:::proof "thm_halfplane_poisson_principle"
+For $`n \in \mathbb{N}` the truncation $`b_n = \max\{b, -n\}` is bounded below, so $`P[b_n] \ge -n`
+and $`u - P[b_n]` is subharmonic on $`\mathbb{H}` ({uses "lemma_halfplane_poisson_harmonic"}[]) and
+bounded above by $`M + n`. At a real point $`x \notin E`,
+$`\limsup u \le b(x) \le b_n(x) = \lim P[b_n]`, so $`u \le P[b_n]` on $`\mathbb{H}` by the extended
+maximum principle ({uses "lemma_halfplane_extended_maximum_principle"}[]). Finally
+$`P[b_n] \downarrow P[b]` as $`n \to \infty` by monotone convergence.
+:::
+
+:::corollary "cor_halfplane_poisson_principle_log" (lean := "AnalyticOnNhd.log_norm_le_poissonIntegralHalfPlane") (parent := "grp_poisson_principle")
+Let $`f` be holomorphic and bounded on $`\mathbb{H}`, let $`b : \mathbb{R} \to \mathbb{R}` with
+$`b(x)/(1 + x^2)` integrable be continuous outside a finite set $`E \subseteq \mathbb{R}`, and
+suppose $`\limsup_{z \to x,\ z \in \mathbb{H}}\log|f(z)| \le b(x)` for every $`x \in \mathbb{R} \setminus E`.
+Then $`|f| \le e^{P[b]}` on $`\mathbb{H}` ({uses "def_halfplane_poisson_kernel"}[]).
+:::
+
+:::proof "cor_halfplane_poisson_principle_log"
+Apply {uses "thm_halfplane_poisson_principle"}[] to $`u = \log|f|`, which is subharmonic by
+{uses "lemma_log_norm_subharmonic"}[] and bounded above by $`\log\sup|f|`.
+:::

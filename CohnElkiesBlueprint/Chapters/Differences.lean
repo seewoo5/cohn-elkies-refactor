@@ -17,17 +17,23 @@ the preceding chapters can be matched with their Lean counterparts; the nodes be
 formal replacements of the report's arguments, with their own Lean declarations. It also lists
 what the formalization adds to the report (the Cohn–Elkies bound) and what is still missing.
 
-# The Poisson principle: Phragmén–Lindelöf on a strip
+# The Poisson principle: an alternative proof by Phragmén–Lindelöf
 
 The report proves the interior bound of Lemma 3.2 by mapping the strip conformally onto the upper
-half-plane and applying the Poisson principle to the subharmonic function $`\log|Z|`. The
-formalization proves the Poisson principle for the strip ({bpref "lemma_strip_poisson_principle"}[])
-for continuous boundary data of linear growth, which is the form in which the report uses it,
-without leaving the strip: the holomorphic Poisson integral $`W` of the boundary datum is built
-directly from the strip kernel, and a maximum-modulus (Phragmén–Lindelöf) argument is applied to
-$`e^{-W}Z`. Mathlib's `PhragmenLindelof.horizontal_strip` cannot be applied directly, because it
-requires the function itself, not only its modulus, to extend continuously to the closed strip
-(`DiffContOnCl`); only $`\operatorname{Re}W`, not $`W`, extends continuously.
+half-plane and applying the Poisson principle to the subharmonic function $`\log|Z|`; this is the
+proof formalized in {bpref "lemma_strip_poisson_principle"}[], on top of the subharmonic-function
+library of the preliminaries chapter. The formalization also contains a second, independent proof
+of the Poisson principle for the strip, which stays inside the strip: the holomorphic Poisson
+integral $`W` of the boundary datum is built directly from the strip kernel, and a maximum-modulus
+(Phragmén–Lindelöf) argument is applied to $`e^{-W}Z`. It gives the principle for functions of
+Phragmén–Lindelöf growth rather than only for bounded ones
+({bpref "lemma_strip_poisson_principle_phragmen_lindelof"}[]), and it re-derives the capped bound
+of Lemma 3.2 (`CohnElkies.norm_Z_g_le_exp_integral_of_cap_phragmenLindelof`,
+`CohnElkies.exists_capped_poisson_majorization_phragmenLindelof`, module
+`CohnElkies/LowerBound/PhragmenLindelofMajorization.lean`); nothing else depends on it. Mathlib's
+`PhragmenLindelof.horizontal_strip` cannot be applied directly, because it requires the function
+itself, not only its modulus, to extend continuously to the closed strip (`DiffContOnCl`); only
+$`\operatorname{Re}W`, not $`W`, extends continuously.
 
 :::lemma_ "lemma_phragmen_lindelof_strip" (lean := "PhragmenLindelof.horizontal_strip_norm_extension")
 Let $`a < b`, $`C > 0`, and let $`f : \mathbb{C} \to \mathbb{C}` be holomorphic on the open strip
@@ -47,6 +53,39 @@ so the maximum-modulus principle on the rectangles is applied to $`N` rather tha
 (`Complex.norm_extension_le_of_forall_mem_frontier_le`).
 :::
 
+:::lemma_ "lemma_strip_poisson_principle_phragmen_lindelof" (lean := "CohnElkies.norm_le_exp_integral_P_σ_of_strip_of_isBigO")
+(Poisson principle for the strip, functions of Phragmén–Lindelöf growth.) Let $`\lambda > 0` and
+let $`Z` be holomorphic on the open strip $`\{|\operatorname{Im} t| < \lambda\}`, continuous on
+its closure, and of growth $`|Z(t)| \le C\exp(Ce^{c|\operatorname{Re} t|})` there for some
+$`c < \pi/(2\lambda)`. Let $`b : \mathbb{R} \to \mathbb{R}` be continuous with
+$`|b(y)| \le A(1 + |y|)`, and suppose $`\log|Z(y - i\lambda)| \le b(y)` and
+$`\log|Z(y + i\lambda)| \le 0` for all $`y \in \mathbb{R}`. Then for $`-1 < \sigma < 1` and
+$`s \in \mathbb{R}`,
+$`\log|Z(s + i\sigma\lambda)| \le \int_{\mathbb{R}}P_\sigma(T)\,b(s - \lambda T)\,dT`,
+with $`P_\sigma` from {uses "def_strip_poisson_kernel"}[].
+:::
+
+:::proof "lemma_strip_poisson_principle_phragmen_lindelof"
+The lower-edge harmonic measure $`\lambda^{-1}P_\sigma((s-y)/\lambda)\,dy` of
+{uses "lemma_strip_harmonic_measure"}[] is the real part of the holomorphic kernel
+$`K_\lambda(z,y) = \frac{i}{4\lambda}\frac{E+1}{E-1}`, $`E = e^{\pi(z-y+i\lambda)/(2\lambda)}`,
+regularized to $`\widetilde K_\lambda(z,y) = K_\lambda(z,y) \pm i/(4\lambda)` so that it decays like
+$`e^{-\pi|y|/(2\lambda)}` in $`y`. Let $`W(z) = \int_{\mathbb{R}}\widetilde K_\lambda(z,y)\,b(y)\,dy`.
+Since $`|b(y)| \le A(1+|y|)`, $`W` is holomorphic on the open strip (differentiation under the
+integral sign), $`\operatorname{Re}W(s + i\sigma\lambda) = \int P_\sigma(T)\,b(s-\lambda T)\,dT`, and
+$`|\operatorname{Re}W(z)| \le B(1 + |\operatorname{Re}z|)` because $`M_\sigma \le 1` and
+$`\int P_\sigma(T)|T|\,dT` is bounded uniformly in $`\sigma`. By dominated convergence
+($`P_\sigma` concentrates at $`T = 0` as $`\sigma \downarrow -1` and tends to $`0` as
+$`\sigma \uparrow 1`), $`\operatorname{Re}W` extends continuously to the closed strip with boundary
+values $`b` on the lower edge and $`0` on the upper edge. Hence $`e^{-W}Z` is holomorphic on the
+open strip, its modulus $`e^{-\operatorname{Re}W}|Z|` extends continuously to the closed strip with
+values at most $`e^{-b(y)}|Z(y-i\lambda)| \le 1` on the lower edge and $`|Z(y+i\lambda)| \le 1` on
+the upper edge, and it is $`O(\exp(B'e^{c'|\operatorname{Re}z|}))` for some $`c' < \pi/(2\lambda)`.
+The Phragmén–Lindelöf principle for the strip ({uses "lemma_phragmen_lindelof_strip"}[]) gives
+$`e^{-\operatorname{Re}W}|Z| \le 1` inside, i.e.
+$`\log|Z(s+i\sigma\lambda)| \le \operatorname{Re}W(s+i\sigma\lambda) = \int P_\sigma(T)\,b(s-\lambda T)\,dT`.
+:::
+
 :::lemma_ "lemma_3_2_capped" (lean := "CohnElkies.norm_Z_g_le_exp_integral_of_cap")
 (Capped Poisson majorization.) In the setting of {uses "def_normalized_profile"}[] there is
 $`D_0 \in \mathbb{R}` such that for every $`D \ge D_0`, every $`-1 < \sigma < 1` and every
@@ -64,8 +103,8 @@ The bottom boundary values of $`Z` satisfy $`|Z(y - i\lambda)| \le e^{h_\lambda(
 \max\{0, \sup_y \log|Z(y - i\lambda)|\}` also $`|Z(y - i\lambda)| \le e^{h_{\lambda,D}(y)}` for all
 $`y`; the top boundary values satisfy $`|Z(y + i\lambda)| \le 1`. The capped majorant
 $`h_{\lambda,D}` is continuous with $`|h_{\lambda,D}(y)| \le A(1 + |y|)` (it is $`-\lambda\log|y| +
-O(1)` at infinity). The Poisson principle for the strip ({uses "lemma_strip_poisson_principle"}[],
-in its version for bounded $`Z`) gives the claim.
+O(1)` at infinity). The Poisson principle for the strip ({uses "lemma_strip_poisson_principle"}[])
+gives the claim.
 :::
 
 # One-sided Riemann bound in Lemma 3.3
@@ -265,6 +304,34 @@ $`\psi(m) = \lim_n(\log n - \sum_{k \le n}(m+k)^{-1})` and Gauss's integral repr
 ({bpref "lemma_digamma_gauss_integral"}[], listed as a TODO in Mathlib's digamma file). Mathlib (as
 of the pinned version) has `Complex.digamma` with its basic values and recurrence but no real
 digamma function and no series or asymptotic expansions.
+
+# Subharmonic functions and the half-plane Poisson principle
+
+The report's proof of Lemma 3.2 rests on the Poisson principle for the upper half-plane, applied
+to the subharmonic function $`\log|Z \circ \Phi^{-1}|`. Mathlib (as of the pinned version) has
+harmonic functions on inner product spaces (`InnerProductSpace.HarmonicOnNhd`, with the mean value
+property, Liouville's theorem, and the harmonicity of the real and imaginary parts and of
+$`\log|f|` away from the zeros of a holomorphic $`f`), the Poisson kernel and the Poisson
+formula for discs, Jensen's formula (`AnalyticOnNhd.circleAverage_log_norm`), the maximum modulus
+principle and the Phragmén–Lindelöf principles for strips, quadrants and half-planes, but no
+subharmonic functions, no Poisson integral of the half-plane, no harmonic measure and no boundary
+theory (Dirichlet problem, Fatou's theorem). The Mathlib-candidate modules
+`CohnElkiesForMathlib/Analysis/Complex/Subharmonic/Defs.lean`,
+`CohnElkiesForMathlib/Analysis/Complex/Subharmonic/Basic.lean`,
+`CohnElkiesForMathlib/Analysis/Complex/PoissonHalfPlane.lean` and
+`CohnElkiesForMathlib/Analysis/Complex/Subharmonic/HalfPlane.lean` add what the proof needs:
+subharmonic functions with values in $`[-\infty, \infty)` ({bpref "def_subharmonic"}[]), whose
+circle averages are handled through truncations because Mathlib's convention `Real.log 0 = 0`
+makes the real-valued $`\log|f|` unusable at zeros; the strong and weak maximum principles
+({bpref "lemma_subharmonic_maximum_principle"}[]); the subharmonicity of $`\log|f|` from Jensen's
+formula ({bpref "lemma_log_norm_subharmonic"}[]); the Poisson kernel and integral of the
+half-plane with harmonicity and boundary values ({bpref "def_halfplane_poisson_kernel"}[],
+{bpref "lemma_halfplane_poisson_harmonic"}[]); the extended maximum principle with a finite
+exceptional set ({bpref "lemma_halfplane_extended_maximum_principle"}[]); and the Poisson
+principle ({bpref "thm_halfplane_poisson_principle"}[]). The conformal transfer to the strip and
+the harmonic-measure identity are {bpref "lemma_strip_harmonic_measure"}[] (module
+`CohnElkies/LowerBound/StripToHalfPlane.lean`), and the report's proof of the strip principle is
+{bpref "lemma_strip_poisson_principle"}[] (module `CohnElkies/LowerBound/CappedMajorization.lean`).
 
 # Statements added in the reformalization
 
