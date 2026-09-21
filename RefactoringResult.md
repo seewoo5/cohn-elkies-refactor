@@ -1192,3 +1192,16 @@ directory `CohnElkiesForMathlib/Analysis/Complex/Subharmonic/` was kept: it mirr
   the definition of `v(u)` by `L_u'(0) = 0`; the damping `D_u` as an integral against
   `μ + λ w cosh`, hence the ideal density `w_*`, why it cannot be used, the truncation/taper `w_s`
   and the positive shell `w_B`; and the limiting radius `1/π` via Wallis.
+
+## 9. Blueprint: a group for Appendix A (2026-09-21)
+
+- The Appendix A chapter had no `:::group`, so its 21 nodes appeared one by one in the Group View
+  of the dependency graph (the owner: "make a blueprint group for Proposition A.1
+  (`A₊(d) < A₋(d)`)"). The seventh group `grp_appendix_a` ("Comparison of the constants"),
+  declared at the top of the chapter, now contains the whole chapter — the owner's choice over a
+  separate group for the Cohn–Gonçalves existence theorem, which the report only cites. The
+  chapter text is split into two sections: "Proposition A.1: the tail-integration operator"
+  ((87), the weighted integrability, (88), (89), `prop_a_1`, `prop_a_1_sign_radius`, and, moved up
+  next to the proposition as in the report, `cor_a_plus_lt_a_minus` and
+  `cor_sign_uncertainty_constant_lt_top`) and "Existence of extremizers" (the eleven
+  Cohn–Gonçalves nodes). Statements, proofs and `lean` links are unchanged.
