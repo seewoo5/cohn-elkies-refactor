@@ -9,6 +9,10 @@ open Informal
 
 #doc (Manual) "Comparison of the sign-uncertainty constants" =>
 
+:::group "grp_appendix_a"
+Comparison of the constants
+:::
+
 This chapter follows Appendix A of the report. Proposition A.1 is formalized in $`L^1`
 generality (modules `CohnElkies.SignUncertainty.MellinCancellation`,
 `CohnElkies.SignUncertainty.TailIntegral`, `CohnElkies.SignUncertainty.AppendixA`). The appendix's
@@ -25,12 +29,17 @@ eigenfunctions of the Fourier transform, proved by compactness (modules
 `CohnElkiesForMathlib.Analysis.Fourier.EigenfunctionConcentration`). The nodes depend on the
 definitions of the introduction and on the radial reduction of the preliminaries.
 
-For an anti-self-Fourier radial function $`g`, the central Mellin moment $`M_g(d/2)` vanishes.
-Integrating the radial tail of $`g` therefore produces a self-Fourier function with a strictly
-smaller last-sign radius. Throughout, $`d \ge 1`, $`\lambda = d/2`, and $`g` denotes the continuous
+# Proposition A.1: the tail-integration operator
+
+The tail-integration operator $`T_d` and the comparison $`\mathsf{A}_+(d) < \mathsf{A}_-(d)`
+(Proposition A.1 of the report). For an anti-self-Fourier radial function $`g`, the central Mellin
+moment $`M_g(d/2)` vanishes. Integrating the radial tail of $`g` therefore produces a self-Fourier
+function with a strictly smaller last-sign radius; applied to a radial extremizer for
+$`\mathsf{A}_-(d)`, whose existence is proved in the next section, this gives the strict
+inequality. Throughout, $`d \ge 1`, $`\lambda = d/2`, and $`g` denotes the continuous
 Fourier-inversion representative, as in {bpref "def_sign_eigenfunction_class"}[].
 
-:::definition "eq_87_tail_integration" (lean := "CohnElkies.tailIntegral, CohnElkies.tailIntegral_of_ne_zero")
+:::definition "eq_87_tail_integration" (lean := "CohnElkies.tailIntegral, CohnElkies.tailIntegral_of_ne_zero") (parent := "grp_appendix_a")
 Let $`g \in \mathcal{E}_-(d)` ({uses "def_sign_eigenfunction_class"}[]) be radial, i.e.
 $`0 \ne g \in L^1_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})` with $`\widehat g = -g` and $`g(0) = 0`.
 Define $`T_dg(0) = 0` and, for $`x \ne 0` (equation (87)),
@@ -40,7 +49,7 @@ $`(T_dg)(r) = \dfrac{\lambda}{2}r^{-\lambda}\int_r^\infty s^{\lambda-1}g(s)\,ds`
 (large-scale representation).
 :::
 
-:::lemma_ "lemma_eigenfunction_bounded_weighted" (lean := "CohnElkies.SignEigenfunction.continuous, CohnElkies.SignEigenfunction.norm_apply_le, CohnElkies.integrable_mul_norm_rpow_neg_half")
+:::lemma_ "lemma_eigenfunction_bounded_weighted" (lean := "CohnElkies.SignEigenfunction.continuous, CohnElkies.SignEigenfunction.norm_apply_le, CohnElkies.integrable_mul_norm_rpow_neg_half") (parent := "grp_appendix_a")
 Let $`g` be as in {uses "eq_87_tail_integration"}[]. Then $`g` is bounded and continuous, and
 $`\int_{\mathbb{R}^d}|g(x)||x|^{-\lambda}\,dx < \infty`.
 :::
@@ -51,7 +60,7 @@ Since $`g = -\widehat g \in L^1`, Fourier inversion makes $`g` bounded and conti
 finiteness of $`\int|g||x|^{-\lambda}`.
 :::
 
-:::lemma_ "eq_88_central_mellin_cancellation" (lean := "CohnElkies.SignEigenfunction.integral_mul_norm_rpow_eq_zero")
+:::lemma_ "eq_88_central_mellin_cancellation" (lean := "CohnElkies.SignEigenfunction.integral_mul_norm_rpow_eq_zero") (parent := "grp_appendix_a")
 Let $`g` be as in {uses "eq_87_tail_integration"}[]. Then the central Mellin moment vanishes
 (equation (88)): $`\int_{\mathbb{R}^d}g(x)|x|^{-\lambda}\,dx = 0`, i.e.
 $`M_g(\lambda) = \int_0^\infty g(r)\,r^{\lambda-1}\,dr = 0`, the integrals converging absolutely
@@ -78,7 +87,7 @@ $`\dfrac{\Gamma(\lambda/2)}{\pi^{\lambda/2}}S_d\int_0^\infty g(r)r^{\lambda-1}\,
 (88).
 :::
 
-:::lemma_ "lemma_tail_integral_integrable" (lean := "CohnElkies.SignEigenfunction.integrable_tailIntegral_kernel, CohnElkies.SignEigenfunction.integrable_tailIntegral, CohnElkies.SignEigenfunction.integral_norm_tailIntegral_le")
+:::lemma_ "lemma_tail_integral_integrable" (lean := "CohnElkies.SignEigenfunction.integrable_tailIntegral_kernel, CohnElkies.SignEigenfunction.integrable_tailIntegral, CohnElkies.SignEigenfunction.integral_norm_tailIntegral_le") (parent := "grp_appendix_a")
 Let $`g` be as in {uses "eq_87_tail_integration"}[]. The integral defining $`T_dg(x)` converges
 absolutely for $`x \ne 0`, and $`T_dg` is integrable with $`\|T_dg\|_1 \le \tfrac12\|g\|_1`.
 :::
@@ -91,7 +100,7 @@ $`|x|^{-d}\|g\|_1/S_d`: absolute convergence. Tonelli and $`d = 2\lambda` give
 $`\|T_dg\|_1 \le \tfrac\lambda2\|g\|_1\int_1^\infty t^{-\lambda-1}\,dt = \tfrac12\|g\|_1`.
 :::
 
-:::lemma_ "eq_89_small_scale_representation" (lean := "CohnElkies.SignEigenfunction.tailIntegral_eq_neg_integral_Ioo, CohnElkies.SignEigenfunction.continuous_tailIntegral")
+:::lemma_ "eq_89_small_scale_representation" (lean := "CohnElkies.SignEigenfunction.tailIntegral_eq_neg_integral_Ioo, CohnElkies.SignEigenfunction.continuous_tailIntegral") (parent := "grp_appendix_a")
 Let $`g` be as in {uses "eq_87_tail_integration"}[]. For every $`x`,
 $`T_dg(x) = -\dfrac{\lambda}{2}\int_0^1s^{\lambda-1}g(sx)\,ds` (small-scale representation,
 equation (89)); this representation is continuous on all of $`\mathbb{R}^d` and equals
@@ -107,7 +116,7 @@ representation follows from dominated convergence, $`g` being bounded and contin
 $`-\tfrac\lambda2g(0)\int_0^1s^{\lambda-1}ds = -g(0)/2 = 0`.
 :::
 
-:::lemma_ "eq_89_self_fourier" (lean := "CohnElkies.SignEigenfunction.fourier_tailIntegral")
+:::lemma_ "eq_89_self_fourier" (lean := "CohnElkies.SignEigenfunction.fourier_tailIntegral") (parent := "grp_appendix_a")
 Let $`g` be as in {uses "eq_87_tail_integration"}[]. Then (equation (89))
 $`\widehat{T_dg}(\xi) = \dfrac{\lambda}{2}\int_1^\infty t^{\lambda-d-1}\widehat g(\xi/t)\,dt`
 $`= -\dfrac{\lambda}{2}\int_0^1s^{\lambda-1}g(s\xi)\,ds = T_dg(\xi)`
@@ -122,7 +131,7 @@ expressions after the substitution $`s = 1/t`, and {uses "eq_89_small_scale_repr
 identifies the last one with $`T_dg(\xi)`.
 :::
 
-:::proposition "prop_a_1" (lean := "CohnElkies.SignEigenfunction.tailIntegral, CohnElkies.SignEigenfunction.tailIntegral_ne_zero")
+:::proposition "prop_a_1" (lean := "CohnElkies.SignEigenfunction.tailIntegral, CohnElkies.SignEigenfunction.tailIntegral_ne_zero") (parent := "grp_appendix_a")
 Let $`d \ge 1`, $`\lambda = d/2`, and let $`0 \ne g \in L^1_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})`
 satisfy $`\widehat g = -g` and $`g(0) = 0`, with $`T_dg` as in {uses "eq_87_tail_integration"}[].
 Then $`T_dg` is nonzero, continuous, radial and integrable, with
@@ -142,7 +151,7 @@ differentiating the large-scale representation gives rapid decay at infinity; th
 Schwartz.
 :::
 
-:::proposition "prop_a_1_sign_radius" (lean := "CohnElkies.SignEigenfunction.tailIntegral_pos, CohnElkies.SignEigenfunction.signRadius_tailIntegral_le, CohnElkies.SignEigenfunction.signRadius_tailIntegral_lt")
+:::proposition "prop_a_1_sign_radius" (lean := "CohnElkies.SignEigenfunction.tailIntegral_pos, CohnElkies.SignEigenfunction.signRadius_tailIntegral_le, CohnElkies.SignEigenfunction.signRadius_tailIntegral_lt") (parent := "grp_appendix_a")
 In the situation of {uses "prop_a_1"}[], $`r(T_dg) \le r(g)`, and if $`r(g) < \infty` then
 $`T_dg > 0` on $`\{|x| \ge r(g)\}` and $`r(T_dg) < r(g)` ({uses "def_sign_radius"}[]).
 :::
@@ -158,17 +167,47 @@ particular $`T_dg(R) > 0`, so by continuity $`T_dg > 0` on some $`[R - \delta, R
 $`\delta > 0`, hence $`T_dg \ge 0` on $`\{|x| \ge R - \delta\}` and $`r(T_dg) \le R - \delta < R`.
 :::
 
-:::definition "def_cg19_gaussian_difference" (lean := "CohnElkies.gaussianDifference")
+:::theorem "cor_a_plus_lt_a_minus" (lean := "CohnElkies.signUncertaintyConstant_one_lt_neg_one") (parent := "grp_appendix_a")
+For every $`d \ge 1`, $`\mathsf{A}_+(d) < \mathsf{A}_-(d)` ({uses "def_sign_uncertainty_constant"}[]).
+:::
+
+:::proof "cor_a_plus_lt_a_minus"
+By {uses "thm_cg19_1_4_existence"}[] there is an extremizer $`g \in \mathcal{E}_-(d)`,
+$`r(g) = \mathsf{A}_-(d) < \infty` ({uses "lemma_sign_uncertainty_constant_neg_one_lt_top"}[]). Put
+$`h = \mathcal{R}g`, a nonzero radial element of $`\mathcal{E}_-(d)` with $`r(h) \le r(g)`
+({uses "lemma_rotational_average_eigenfunction"}[], {uses "lemma_rotational_average_signs"}[]).
+By {uses "prop_a_1"}[] and {uses "prop_a_1_sign_radius"}[],
+$`\mathsf{A}_+(d) \le r(T_dh) < r(h) \le r(g) = \mathsf{A}_-(d)`.
+:::
+
+:::theorem "cor_sign_uncertainty_constant_lt_top" (lean := "CohnElkies.signUncertaintyConstant_lt_top, CohnElkies.signUncertaintyConstant_pos_lt_top") (parent := "grp_appendix_a")
+For every $`d \ge 1` and $`\varsigma = \pm 1`, $`\mathsf{A}_\varsigma(d) < \infty`
+({uses "def_sign_uncertainty_constant"}[]); together with
+{uses "lemma_sign_uncertainty_constant_pos"}[], $`0 < \mathsf{A}_\varsigma(d) < \infty`.
+:::
+
+:::proof "cor_sign_uncertainty_constant_lt_top"
+$`\mathsf{A}_+(d) < \mathsf{A}_-(d) < \infty` by {uses "cor_a_plus_lt_a_minus"}[] and
+{uses "lemma_sign_uncertainty_constant_neg_one_lt_top"}[].
+:::
+
+# Existence of extremizers
+
+The existence part of Theorem 1.4 of Cohn–Gonçalves (2019), used in
+{bpref "cor_a_plus_lt_a_minus"}[], following their §3.2 with the modifications described at the
+beginning of the chapter.
+
+:::definition "def_cg19_gaussian_difference" (lean := "CohnElkies.gaussianDifference") (parent := "grp_appendix_a")
 (Cohn–Gonçalves 2019, (3.1).) For $`t > 0` let
 $`\varphi_t(x) = \dfrac{e^{-t\pi|x|^2} - e^{-2t\pi|x|^2}}{t^{-d/2} - (2t)^{-d/2}}`.
 :::
 
-:::definition "def_cg19_gaussian_perturbation" (lean := "CohnElkies.gaussianPerturbation")
+:::definition "def_cg19_gaussian_perturbation" (lean := "CohnElkies.gaussianPerturbation") (parent := "grp_appendix_a")
 With $`\varphi_t` as in {uses "def_cg19_gaussian_difference"}[], let
 $`\psi_t = \varphi_t - \widehat{\varphi_t}`.
 :::
 
-:::lemma_ "lemma_cg19_gaussian_difference_properties" (lean := "CohnElkies.fourier_gaussianDifference, CohnElkies.gaussianDifference_nonneg, CohnElkies.gaussianDifference_apply_zero, CohnElkies.fourier_gaussianDifference_zero, CohnElkies.fourier_fourier_gaussianDifference, CohnElkies.fourierGaussianDifference_neg_of_lt")
+:::lemma_ "lemma_cg19_gaussian_difference_properties" (lean := "CohnElkies.fourier_gaussianDifference, CohnElkies.gaussianDifference_nonneg, CohnElkies.gaussianDifference_apply_zero, CohnElkies.fourier_gaussianDifference_zero, CohnElkies.fourier_fourier_gaussianDifference, CohnElkies.fourierGaussianDifference_neg_of_lt") (parent := "grp_appendix_a")
 Let $`d \ge 1` and $`t > 0`, with $`\varphi_t` as in {uses "def_cg19_gaussian_difference"}[].
 Then
 $`\widehat{\varphi_t}(\xi) = \dfrac{t^{-d/2}e^{-\pi|\xi|^2/t} - (2t)^{-d/2}e^{-\pi|\xi|^2/(2t)}}{t^{-d/2} - (2t)^{-d/2}}`,
@@ -184,7 +223,7 @@ if $`\pi|\xi|^2/(2t) > (d/2)\log 2`, i.e. $`|\xi|^2 > t\,d\log 2/\pi`. Applying 
 formula twice gives $`\widehat{\widehat{\varphi_t}} = \varphi_t`.
 :::
 
-:::lemma_ "lemma_cg19_gaussian_perturbation_properties" (lean := "CohnElkies.fourier_gaussianPerturbation, CohnElkies.gaussianPerturbation_apply_zero, CohnElkies.gaussianPerturbation_pos")
+:::lemma_ "lemma_cg19_gaussian_perturbation_properties" (lean := "CohnElkies.fourier_gaussianPerturbation, CohnElkies.gaussianPerturbation_apply_zero, CohnElkies.gaussianPerturbation_pos") (parent := "grp_appendix_a")
 Let $`d \ge 1` and $`t > 0`, with $`\psi_t` as in {uses "def_cg19_gaussian_perturbation"}[].
 Then $`\widehat{\psi_t} = -\psi_t`, $`\psi_t(0) = -1`, and $`\psi_t > 0` outside the ball of
 radius $`\sqrt{t\,d\log 2/\pi}`.
@@ -197,7 +236,7 @@ $`\psi_t(0) = 0 - 1`, and $`\psi_t = \varphi_t - \widehat{\varphi_t} > 0` where
 $`\widehat{\varphi_t} < 0`.
 :::
 
-:::lemma_ "lemma_cg19_3_1_origin_correction" (lean := "CohnElkies.originCorrection, CohnElkies.originCorrection_nonneg_outside, CohnElkies.originCorrection_eq_of_zero")
+:::lemma_ "lemma_cg19_3_1_origin_correction" (lean := "CohnElkies.originCorrection, CohnElkies.originCorrection_nonneg_outside, CohnElkies.originCorrection_eq_of_zero") (parent := "grp_appendix_a")
 (Cohn–Gonçalves 2019, Lemma 3.1, last paragraph.) Let $`d \ge 1`, $`R > 0`, and let
 $`g \in L^1(\mathbb{R}^d;\mathbb{R})` satisfy $`\widehat g = -g` pointwise, $`g \ne 0`,
 $`g \ge 0` on $`\{|x| \ge R\}` and $`g(0) \ge 0`. With $`t = \pi R^2/(d\log 2)` and $`\psi_t` as in
@@ -213,7 +252,7 @@ $`\psi_t(x) \ge 0` and $`h(x) \ge g(x) \ge 0`. If $`g(0) > 0` then $`h(x) > g(x)
 $`|x| > R`, so $`h \ne 0`; if $`g(0) = 0` then $`h = g \ne 0`.
 :::
 
-:::lemma_ "lemma_sign_uncertainty_constant_pos" (lean := "CohnElkies.signUncertaintyConstant_pos")
+:::lemma_ "lemma_sign_uncertainty_constant_pos" (lean := "CohnElkies.signUncertaintyConstant_pos") (parent := "grp_appendix_a")
 For every $`d \ge 1` and $`\varsigma = \pm 1`, $`\mathsf{A}_\varsigma(d) > 0`
 ({uses "def_sign_uncertainty_constant"}[]).
 :::
@@ -226,7 +265,7 @@ so $`\tfrac12 \le \operatorname{vol}(B_\rho)`; choosing $`\rho` with
 $`\operatorname{vol}(B_\rho) < \tfrac12` shows $`\mathsf{A}_\varsigma(d) \ge \rho > 0`.
 :::
 
-:::lemma_ "lemma_explicit_eigenfunction" (lean := "CohnElkies.explicitSignEigenfunction, CohnElkies.explicitEigenfunction_pos_of_le, CohnElkies.signRadius_explicitSignEigenfunction_lt_top")
+:::lemma_ "lemma_explicit_eigenfunction" (lean := "CohnElkies.explicitSignEigenfunction, CohnElkies.explicitEigenfunction_pos_of_le, CohnElkies.signRadius_explicitSignEigenfunction_lt_top") (parent := "grp_appendix_a")
 For every $`d \ge 1`, with $`\psi_t` as in {uses "def_cg19_gaussian_perturbation"}[],
 $`G = \psi_{1/4} - \psi_{1/2}` belongs to $`\mathcal{E}_-(d)` and is positive outside a ball, so
 $`r(G) < \infty`.
@@ -241,7 +280,7 @@ so that $`G \ge E_{1/4}\bigl(1 - e^{-\pi|x|^2/4}(1 + D/D' + 2^d)\bigr)/D > 0` on
 $`|x|^2 > (4/\pi)\log(1 + D/D' + 2^d)`; hence $`G \ne 0` and $`G \in \mathcal{E}_-(d)`.
 :::
 
-:::lemma_ "lemma_sign_uncertainty_constant_neg_one_lt_top" (lean := "CohnElkies.signUncertaintyConstant_neg_one_lt_top")
+:::lemma_ "lemma_sign_uncertainty_constant_neg_one_lt_top" (lean := "CohnElkies.signUncertaintyConstant_neg_one_lt_top") (parent := "grp_appendix_a")
 For every $`d \ge 1`, $`\mathsf{A}_-(d) < \infty` ({uses "def_sign_uncertainty_constant"}[]).
 :::
 
@@ -249,7 +288,7 @@ For every $`d \ge 1`, $`\mathsf{A}_-(d) < \infty` ({uses "def_sign_uncertainty_c
 $`\mathsf{A}_-(d) \le r(G) < \infty` for the explicit $`G` of {uses "lemma_explicit_eigenfunction"}[].
 :::
 
-:::lemma_ "lemma_weak_sequential_compactness" (lean := "InnerProductSpace.tendsto_subseq_inner_left_of_norm_le")
+:::lemma_ "lemma_weak_sequential_compactness" (lean := "InnerProductSpace.tendsto_subseq_inner_left_of_norm_le") (parent := "grp_appendix_a")
 Every bounded sequence $`(x_n)` in a separable Hilbert space $`E` has a weakly convergent
 subsequence: there are $`\varphi` strictly increasing and $`y \in E` with
 $`\|y\| \le \sup_n\|x_n\|` and $`\langle x_{\varphi(n)}, z\rangle \to \langle y, z\rangle` for
@@ -263,7 +302,7 @@ Banach–Alaoglu, Mathlib's `WeakDual.isSeqCompact_closedBall`); transporting th
 back along the Riesz isometry gives $`y`.
 :::
 
-:::lemma_ "lemma_fourier_eigenfunction_no_concentration" (lean := "Real.exists_pos_le_setIntegral_norm_compl_closedBall_of_fourier_eq_mul")
+:::lemma_ "lemma_fourier_eigenfunction_no_concentration" (lean := "Real.exists_pos_le_setIntegral_norm_compl_closedBall_of_fourier_eq_mul") (parent := "grp_appendix_a")
 Let $`V` be a nontrivial finite-dimensional real inner product space, $`c \in \mathbb{C}\setminus\{0\}`
 and $`R \ge 0`. There is $`\kappa > 0` such that every integrable $`f : V \to \mathbb{C}` with
 $`\widehat f = cf` pointwise and $`\|f\|_1 = 1` satisfies $`\int_{|x| > R}|f| \ge \kappa`.
@@ -284,7 +323,7 @@ Thus $`G` and $`\widehat G` are compactly supported and $`G \ne 0`, contradictin
 {uses "lemma_compactly_supported_eigenfunction_zero"}[].
 :::
 
-:::theorem "thm_cg19_1_4_existence" (lean := "CohnElkies.exists_signRadius_eq_signUncertaintyConstant_neg_one")
+:::theorem "thm_cg19_1_4_existence" (lean := "CohnElkies.exists_signRadius_eq_signUncertaintyConstant_neg_one") (parent := "grp_appendix_a")
 (Cohn–Gonçalves 2019, Theorem 1.4, existence part.) For every $`d \ge 1` there exists
 $`g \in \mathcal{E}_-(d)` with $`r(g) = \mathsf{A}_-(d)` ({uses "def_sign_uncertainty_constant"}[]).
 :::
@@ -320,28 +359,4 @@ only tested against explicit $`L^2` and smooth compactly supported functions; an
 the minimizing sequence by their Lemma 3.1 and infer $`f(0) = 0` for the limit from minimality,
 whereas here every element of $`\mathcal{E}_-(d)` already has $`\widehat g = -g` and $`g(0) = 0`,
 and the origin correction is applied once, to the limit.
-:::
-
-:::theorem "cor_a_plus_lt_a_minus" (lean := "CohnElkies.signUncertaintyConstant_one_lt_neg_one")
-For every $`d \ge 1`, $`\mathsf{A}_+(d) < \mathsf{A}_-(d)` ({uses "def_sign_uncertainty_constant"}[]).
-:::
-
-:::proof "cor_a_plus_lt_a_minus"
-By {uses "thm_cg19_1_4_existence"}[] there is an extremizer $`g \in \mathcal{E}_-(d)`,
-$`r(g) = \mathsf{A}_-(d) < \infty` ({uses "lemma_sign_uncertainty_constant_neg_one_lt_top"}[]). Put
-$`h = \mathcal{R}g`, a nonzero radial element of $`\mathcal{E}_-(d)` with $`r(h) \le r(g)`
-({uses "lemma_rotational_average_eigenfunction"}[], {uses "lemma_rotational_average_signs"}[]).
-By {uses "prop_a_1"}[] and {uses "prop_a_1_sign_radius"}[],
-$`\mathsf{A}_+(d) \le r(T_dh) < r(h) \le r(g) = \mathsf{A}_-(d)`.
-:::
-
-:::theorem "cor_sign_uncertainty_constant_lt_top" (lean := "CohnElkies.signUncertaintyConstant_lt_top, CohnElkies.signUncertaintyConstant_pos_lt_top")
-For every $`d \ge 1` and $`\varsigma = \pm 1`, $`\mathsf{A}_\varsigma(d) < \infty`
-({uses "def_sign_uncertainty_constant"}[]); together with
-{uses "lemma_sign_uncertainty_constant_pos"}[], $`0 < \mathsf{A}_\varsigma(d) < \infty`.
-:::
-
-:::proof "cor_sign_uncertainty_constant_lt_top"
-$`\mathsf{A}_+(d) < \mathsf{A}_-(d) < \infty` by {uses "cor_a_plus_lt_a_minus"}[] and
-{uses "lemma_sign_uncertainty_constant_neg_one_lt_top"}[].
 :::
