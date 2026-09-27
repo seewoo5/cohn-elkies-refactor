@@ -3,7 +3,7 @@ import Mathlib
 /-!
 # The Fourier transform under a linear change of variables
 
-`Real.fourier_comp_linearEquiv`: precomposing `f : V → ℂ` with a linear automorphism `A` of a
+`Real.fourier_comp_linearEquiv`: precomposing `f : V → E` with a linear automorphism `A` of a
 finite-dimensional real inner product space rescales `𝓕 f` by `|det A|⁻¹` and precomposes it with
 the adjoint of `A⁻¹`. This generalises `Real.fourier_comp_linearIsometry`.
 -/
@@ -17,16 +17,16 @@ noncomputable section
 namespace Real
 
 variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [FiniteDimensional ℝ V]
-  [MeasurableSpace V] [BorelSpace V]
+  [MeasurableSpace V] [BorelSpace V] {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
 
 /-- Precomposing with a linear equivalence `A` rescales the Fourier transform by `|det A|⁻¹` and
 precomposes it with the adjoint of `A⁻¹`.  This generalises `Real.fourier_comp_linearIsometry`. -/
-theorem fourier_comp_linearEquiv (A : V ≃ₗ[ℝ] V) (f : V → ℂ) (w : V) :
+theorem fourier_comp_linearEquiv (A : V ≃ₗ[ℝ] V) (f : V → E) (w : V) :
     𝓕 (fun x ↦ f (A x)) w =
       |LinearMap.det (A : V →ₗ[ℝ] V)|⁻¹ • 𝓕 f ((A.symm : V ≃ₗ[ℝ] V).toLinearMap.adjoint w) := by
   rw [Real.fourier_eq', Real.fourier_eq']
   set B : V →L[ℝ] V := A.toContinuousLinearEquiv.toContinuousLinearMap
-  set g : V → ℂ := fun x ↦
+  set g : V → E := fun x ↦
     Complex.exp ((-2 * π * inner ℝ x ((A.symm : V ≃ₗ[ℝ] V).toLinearMap.adjoint w) : ℝ) * I) • f x
     with hg
   have hdetB : B.det = LinearMap.det (A : V →ₗ[ℝ] V) := rfl
