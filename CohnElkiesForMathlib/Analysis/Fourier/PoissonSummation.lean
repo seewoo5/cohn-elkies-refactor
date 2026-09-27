@@ -15,7 +15,7 @@ The argument is the classical one.  For the standard lattice `ℤ^d`
 (`SchwartzMap.referenceIntegerLattice`) the periodization `∑' n : ℤ^d, f (· + n)` is a continuous
 function on the torus `(ℝ/ℤ)^d` whose `n`-th Fourier coefficient is `𝓕 f n`; evaluating its
 absolutely convergent Fourier series gives the formula for `ℤ^d`.  A general lattice is the image
-of `ℤ^d` under a linear equivalence `A`, and `Real.fourier_comp_linearEquiv` transports the
+of `ℤ^d` under a linear equivalence `A`, and `Real.fourier_comp_linearEquiv'` transports the
 `ℤ^d`-formula, the Jacobian `|det A|` being the covolume of `Λ`.
 -/
 
@@ -646,10 +646,11 @@ def latticePullback : 𝓢(EuclideanSpace ℝ (Fin d), ℂ) :=
 @[simp] lemma latticePullback_apply (x : EuclideanSpace ℝ (Fin d)) :
     latticePullback L f x = f (latticeCoordinateEquiv L x) := rfl
 
-/-- `Real.fourier_comp_linearEquiv` for `latticeCoordinateEquiv L`: the Jacobian is the covolume. -/
+/-- `Real.fourier_comp_linearEquiv'` for `latticeCoordinateEquiv L`: the Jacobian is the
+covolume. -/
 lemma fourier_latticePullback (w : EuclideanSpace ℝ (Fin d)) : 𝓕 ⇑(latticePullback L f) w =
     ((ZLattice.covolume L)⁻¹ : ℝ) * 𝓕 ⇑f (dualCoordinateTransport L w) := by
-  have h := Real.fourier_comp_linearEquiv (latticeCoordinateEquiv L) (⇑f) w
+  have h := Real.fourier_comp_linearEquiv' (latticeCoordinateEquiv L) (⇑f) w
   rw [← lattice_covolume_eq_coordinate_determinant L] at h
   simpa [latticePullback, dualCoordinateTransport, Function.comp_def, Complex.real_smul] using h
 

@@ -156,7 +156,7 @@ General lattice. Let $`A` be the coordinate automorphism of {uses "lemma_polar_l
 $`g = f \circ A` (`SchwartzMap.latticePullback`), a Schwartz function. Then
 $`\sum_{\lambda\in\Lambda} f(v+\lambda) = \sum_{n\in\mathbb{Z}^d} g(A^{-1}v + n)`, and the change
 of variables $`\widehat{g}(w) = |\det A|^{-1}\widehat f((A^{-1})^*w)` (
-`Real.fourier_comp_linearEquiv`,
+`Real.fourier_comp_linearEquiv'`,
 `SchwartzMap.fourier_latticePullback`) together with $`(A^{-1})^*\mathbb{Z}^d = \Lambda^*`,
 $`|\det A| = \operatorname{covol}(\Lambda)` and
 $`\langle A^{-1}v, n\rangle = \langle v, (A^{-1})^*n\rangle` (`wInner_latticeCoordinateEquiv_symm`)
