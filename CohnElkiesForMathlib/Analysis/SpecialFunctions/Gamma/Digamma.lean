@@ -1,4 +1,4 @@
-import Mathlib
+import Mathlib.Analysis.SpecialFunctions.Gamma.Digamma
 
 /-!
 # The real digamma function

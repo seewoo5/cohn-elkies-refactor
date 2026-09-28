@@ -1,4 +1,4 @@
-import Mathlib
+import Mathlib.MeasureTheory.Measure.Haar.Unique
 
 /-!
 # Haar measures on compact groups are right invariant

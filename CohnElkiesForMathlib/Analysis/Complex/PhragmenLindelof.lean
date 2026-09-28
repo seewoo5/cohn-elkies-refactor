@@ -1,4 +1,4 @@
-import Mathlib
+import Mathlib.Analysis.Complex.AbsMax
 
 /-!
 # Phragmén–Lindelöf in a horizontal strip for a function whose modulus extends continuously

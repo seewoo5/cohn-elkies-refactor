@@ -1,4 +1,4 @@
-import Mathlib
+import Mathlib.Analysis.Meromorphic.Complex
 
 /-!
 # Complements on the complex Gamma function

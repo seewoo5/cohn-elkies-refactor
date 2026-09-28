@@ -1,3 +1,6 @@
+import Mathlib.Analysis.Complex.RemovableSingularity
+import Mathlib.Analysis.Real.Pi.Bounds
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 import CohnElkies.Parameters
 import CohnElkiesForMathlib.Analysis.SpecialFunctions.Gamma.Basic
 
@@ -19,7 +22,7 @@ open Complex (I)
 noncomputable section
 
 open Filter Set MeasureTheory Real intervalIntegral
-open scoped ContDiff FourierTransform Interval RealInnerProductSpace Topology
+open scoped ContDiff Interval RealInnerProductSpace Topology
 
 /-- `∫_B^{B+1} (1 - cos(aT)) da`: the frequency-`T` oscillation of the positive shell. -/
 def shellOscillation (B T : ℝ) : ℝ := ∫ a in B..B + 1, (1 - cos (a * T))

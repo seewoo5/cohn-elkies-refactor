@@ -1,4 +1,4 @@
-import Mathlib
+import Mathlib.Analysis.SpecialFunctions.Gamma.Beta
 import CohnElkiesForMathlib.Analysis.Complex.Trigonometric
 
 /-!

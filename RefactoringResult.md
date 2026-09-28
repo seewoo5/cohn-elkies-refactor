@@ -1205,3 +1205,42 @@ directory `CohnElkiesForMathlib/Analysis/Complex/Subharmonic/` was kept: it mirr
   next to the proposition as in the report, `cor_a_plus_lt_a_minus` and
   `cor_sign_uncertainty_constant_lt_top`) and "Existence of extremizers" (the eleven
   Cohn–Gonçalves nodes). Statements, proofs and `lean` links are unchanged.
+
+## 10. Minimal imports (2026-09-28)
+
+- **No file imports all of Mathlib any more.** The 23 files that had `import Mathlib` (the 18
+  `CohnElkiesForMathlib` modules, `CohnElkies/{Basic, Parameters, LowerBound/PoissonKernel}`, the
+  comparator challenge and the single file) import only the Mathlib modules they use, and the 15
+  downstream modules that relied on the full import through them import what they use themselves
+  (69 imports in 37 modules; project imports unchanged). The project depends on 3135 of the 8530
+  Mathlib modules (`CohnElkiesForMathlib` alone on 3049, `Topology/Sequences.lean` on 418).
+- **Method.** `lake shake` only handles `module` files, so the imports were computed from what each
+  file uses: a scratch linter recorded, while every file was elaborated, the syntax kinds (tactics,
+  notation), the constants its identifiers resolve to (`simp` arguments, `rfl`-lemmas) and its
+  attributes, and an olean scan listed the constants used by its declarations, separating
+  instances. In import order, each module keeps its project imports and gets the Mathlib modules
+  it needs that are not already imported through them, without those implied by others.
+- **Instance-search artifacts dropped.** Instance search over all of Mathlib had taken odd paths:
+  `NormedCommRing ℂ` through `CommCStarAlgebra`, flatness/torsion-freeness through étale and
+  totally split algebras (`Trigonometric.lean`, `PhragmenLindelof.lean`), `IsOrderedRing ℝ`
+  through `StarOrderedRing`, `IsDomain` through simple rings, `SupSet`/`OrderBot` through
+  `CompletePartialOrder`, regularity axioms through completely regular spaces. Modules used only
+  through such instances were not imported, and instance search then finds the usual instances.
+  Instances that are the only source of a structure were kept: the Fourier transform on Schwartz
+  maps (`SchwartzSpace.Fourier`, which fixes the meaning of `𝓕 f` in `FullAdmissible`), the order
+  and topology of `ℕ∞` (and `Topology.Order.T5` for `T3Space ℕ∞` in `InfiniteSum/ENat.lean`), the
+  separability of `Lp` (`EigenfunctionConcentration.lean`).
+- **Each import is necessary**: every added import was checked by compiling its file without it
+  (all 69 fail). This also removed lemmas that `simp`/`fun_prop` had merely picked up
+  (`Real.ringHom_apply`, `Complex.ofReal_arctan`, `Measurable.abs`), and
+  `Mathlib.Order.Interval.Basic`, which only matched the namespace of `open scoped Interval`.
+  `UpperBound/Envelope.lean` no longer opens the unused scope `FourierTransform` (it would have
+  needed `Analysis.Fourier.Notation` just for the namespace).
+- **Comparator.** `ComparatorChallenges/CohnElkies.lean` and `CohnElkies/Basic.lean` import the
+  same two modules (`Analysis.Distribution.SchwartzSpace.Fourier`,
+  `Analysis.SpecialFunctions.Log.Base`), so the definitions block elaborates identically; all 81
+  constants of the challenge coincide with the solution's, and a local run of
+  `lake exe comparator` (without `landrun` and nanoda) accepts the solution.
+- **Single file.** `scripts/assemble_single_file.py` now gives `SpherePackingRefactored.lean` the
+  union of the modules' Mathlib imports, without those implied by others (32 imports; the import
+  graph is read from the sources in `.lake/packages`).

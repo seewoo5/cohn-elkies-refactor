@@ -1,4 +1,4 @@
-import Mathlib
+import Mathlib.Analysis.SpecialFunctions.Stirling
 
 /-!
 # Logarithmic forms of Stirling's formula

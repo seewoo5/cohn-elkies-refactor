@@ -4,7 +4,38 @@ Assembled automatically from the modules of `CohnElkiesForMathlib/` and `CohnElk
 (each module wrapped in a section named after it) by `scripts/assemble_single_file.py`;
 see `RefactoringResult.md`.
 -/
-import Mathlib
+import Mathlib.Algebra.Module.ZLattice.Covolume
+import Mathlib.Algebra.Module.ZLattice.Summable
+import Mathlib.Analysis.Calculus.FDeriv.ContinuousMultilinearMap
+import Mathlib.Analysis.Calculus.Taylor
+import Mathlib.Analysis.Complex.AbsMax
+import Mathlib.Analysis.Complex.JensenFormula
+import Mathlib.Analysis.Complex.RemovableSingularity
+import Mathlib.Analysis.Complex.UpperHalfPlane.Basic
+import Mathlib.Analysis.Distribution.AEEqOfIntegralContDiff
+import Mathlib.Analysis.Fourier.AddCircleMulti
+import Mathlib.Analysis.Fourier.Convolution
+import Mathlib.Analysis.InnerProductSpace.NormDet
+import Mathlib.Analysis.MellinInversion
+import Mathlib.Analysis.Normed.Module.WeakDual
+import Mathlib.Analysis.RCLike.Inner
+import Mathlib.Analysis.Real.Pi.Bounds
+import Mathlib.Analysis.SpecialFunctions.Gamma.Digamma
+import Mathlib.Analysis.SpecialFunctions.Log.Base
+import Mathlib.Analysis.SpecialFunctions.Log.ENNRealLogExp
+import Mathlib.Analysis.SpecialFunctions.Pow.Integral
+import Mathlib.Analysis.SpecialFunctions.Stirling
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
+import Mathlib.Analysis.SumIntegralComparisons
+import Mathlib.LinearAlgebra.BilinearForm.DualLattice
+import Mathlib.MeasureTheory.Function.LpSpace.ContinuousCompMeasurePreserving
+import Mathlib.MeasureTheory.Measure.Lebesgue.VolumeOfBalls
+import Mathlib.MeasureTheory.Measure.SeparableMeasure
+import Mathlib.MeasureTheory.Order.Group.Lattice
+import Mathlib.Probability.Moments.ComplexMGF
+import Mathlib.Tactic.NormNum.RealSqrt
+import Mathlib.Topology.Algebra.Star.Unitary
+import Mathlib.Topology.Instances.ENat
 
 /-! ## Module `CohnElkiesForMathlib.Analysis.Complex.PhragmenLindelof` -/
 
@@ -12377,7 +12408,7 @@ open Complex (I)
 noncomputable section
 
 open Filter Set MeasureTheory Real intervalIntegral
-open scoped ContDiff FourierTransform Interval RealInnerProductSpace Topology
+open scoped ContDiff Interval RealInnerProductSpace Topology
 
 /-- `∫_B^{B+1} (1 - cos(aT)) da`: the frequency-`T` oscillation of the positive shell. -/
 def shellOscillation (B T : ℝ) : ℝ := ∫ a in B..B + 1, (1 - cos (a * T))

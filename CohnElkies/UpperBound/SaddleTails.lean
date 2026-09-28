@@ -1,3 +1,5 @@
+import Mathlib.MeasureTheory.Order.Group.Lattice
+import Mathlib.Tactic.NormNum.RealSqrt
 import CohnElkies.UpperBound.GammaPhase
 import CohnElkiesForMathlib.Analysis.SpecialFunctions.ImproperIntegrals
 
