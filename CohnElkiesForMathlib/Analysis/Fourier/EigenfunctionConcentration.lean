@@ -1,3 +1,4 @@
+import Mathlib.MeasureTheory.Measure.SeparableMeasure
 import CohnElkiesForMathlib.Analysis.Fourier.CompactSupport
 import CohnElkiesForMathlib.Analysis.InnerProductSpace.WeakSequentialCompactness
 

@@ -1,4 +1,5 @@
-import Mathlib
+import Mathlib.Analysis.Distribution.SchwartzSpace.Fourier
+import Mathlib.Analysis.SpecialFunctions.Log.Base
 
 /-!
 # Comparator challenge: the Cohn–Elkies exponent and the sign-uncertainty constants

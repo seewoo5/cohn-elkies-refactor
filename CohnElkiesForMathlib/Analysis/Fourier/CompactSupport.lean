@@ -1,4 +1,5 @@
-import Mathlib
+import Mathlib.Analysis.Distribution.AEEqOfIntegralContDiff
+import Mathlib.Analysis.Distribution.SchwartzSpace.Fourier
 
 /-!
 # A function and its Fourier transform cannot both be compactly supported

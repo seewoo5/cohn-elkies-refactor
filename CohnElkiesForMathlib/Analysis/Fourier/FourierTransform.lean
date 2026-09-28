@@ -1,4 +1,5 @@
-import Mathlib
+import Mathlib.Analysis.Fourier.FourierTransform
+import Mathlib.Analysis.InnerProductSpace.NormDet
 
 /-!
 # The Fourier transform under a linear change of variables

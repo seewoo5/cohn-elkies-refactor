@@ -1,3 +1,4 @@
+import Mathlib.MeasureTheory.Function.LpSpace.ContinuousCompMeasurePreserving
 import CohnElkies.SignUncertainty.Basic
 
 /-! # `L¹` approximation lemmas (for the Schwartz approximation of report §2.1)

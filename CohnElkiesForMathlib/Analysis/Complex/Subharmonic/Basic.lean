@@ -1,3 +1,5 @@
+import Mathlib.Analysis.Complex.JensenFormula
+import Mathlib.Analysis.SpecialFunctions.Log.ENNRealLogExp
 import CohnElkiesForMathlib.Analysis.Complex.Subharmonic.Defs
 
 /-!

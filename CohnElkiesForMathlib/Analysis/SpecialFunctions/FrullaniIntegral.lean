@@ -1,4 +1,5 @@
-import Mathlib
+import Mathlib.Analysis.Real.Pi.Wallis
+import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 
 /-!
 # Exponential Frullani integrals and the Wallis product as a Laplace integral

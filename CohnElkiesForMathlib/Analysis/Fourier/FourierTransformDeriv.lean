@@ -1,4 +1,5 @@
-import Mathlib
+import Mathlib.Analysis.Fourier.FourierTransformDeriv
+import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 
 /-!
 # Integrability of the Fourier transform of a twice differentiable function

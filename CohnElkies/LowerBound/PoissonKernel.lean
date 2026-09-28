@@ -1,4 +1,4 @@
-import Mathlib
+import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 import CohnElkiesForMathlib.Analysis.SpecialFunctions.ImproperIntegrals
 
 /-!

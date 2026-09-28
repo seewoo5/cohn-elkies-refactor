@@ -1,3 +1,5 @@
+import Mathlib.Analysis.SpecialFunctions.Gamma.Beta
+import Mathlib.Analysis.SpecialFunctions.Pow.Integral
 import CohnElkies.Radial
 
 /-!

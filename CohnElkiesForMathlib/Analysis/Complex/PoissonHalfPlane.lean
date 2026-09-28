@@ -1,4 +1,6 @@
-import Mathlib
+import Mathlib.Analysis.Complex.UpperHalfPlane.Basic
+import Mathlib.Analysis.InnerProductSpace.Harmonic.Constructions
+import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 
 /-!
 # The Poisson kernel and the Poisson integral of the upper half-plane

@@ -1,3 +1,5 @@
+import Mathlib.Analysis.Complex.ExponentialBounds
+import Mathlib.Analysis.SumIntegralComparisons
 import CohnElkies.LowerBound.MellinStrip
 import CohnElkies.LowerBound.PoissonKernel
 import CohnElkiesForMathlib.Analysis.SpecialFunctions.Gamma.Basic

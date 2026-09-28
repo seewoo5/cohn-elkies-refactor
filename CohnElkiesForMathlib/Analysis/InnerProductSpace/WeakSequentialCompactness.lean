@@ -1,4 +1,5 @@
-import Mathlib
+import Mathlib.Analysis.InnerProductSpace.Dual
+import Mathlib.Analysis.Normed.Module.WeakDual
 
 /-!
 # Weak sequential compactness of bounded sets in a separable Hilbert space

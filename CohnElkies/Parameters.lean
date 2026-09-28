@@ -1,4 +1,5 @@
-import Mathlib
+import Mathlib.Analysis.Calculus.FDeriv.Pow
+import Mathlib.Analysis.SpecialFunctions.Log.Basic
 
 /-!
 # The parameters and polynomials of the upper-bound construction (report §4)

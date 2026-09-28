@@ -1,4 +1,4 @@
-import Mathlib
+import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
 
 /-!
 # Integrability of `e^{-a|x|}` and related functions on `ℝ`

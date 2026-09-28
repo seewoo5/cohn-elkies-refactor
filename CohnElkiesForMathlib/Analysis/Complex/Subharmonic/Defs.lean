@@ -1,4 +1,4 @@
-import Mathlib
+import Mathlib.MeasureTheory.Integral.CircleAverage
 
 /-!
 # Subharmonic functions in the complex plane: definitions

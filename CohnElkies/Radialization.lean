@@ -1,3 +1,5 @@
+import Mathlib.Analysis.Calculus.FDeriv.ContinuousMultilinearMap
+import Mathlib.Topology.Algebra.Star.Unitary
 import CohnElkies.Basic
 import CohnElkies.SchwartzTools
 import CohnElkiesForMathlib.MeasureTheory.Measure.Haar.Compact
