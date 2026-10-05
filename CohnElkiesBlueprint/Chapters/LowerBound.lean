@@ -223,7 +223,7 @@ complementary mass of $`(-\infty, 0]` is $`1 - M_\sigma = (1 + \sigma)/2` since 
 kernel has total mass $`1`.
 :::
 
-:::lemma_ "lemma_strip_poisson_principle" (lean := "CohnElkies.norm_le_exp_integral_P_σ_of_strip") (parent := "grp_mellin_strip")
+:::lemma_ "lemma_strip_poisson_inequality" (lean := "CohnElkies.norm_le_exp_integral_P_σ_of_strip") (parent := "grp_mellin_strip")
 (Poisson inequality for the strip.) Let $`\lambda > 0` and let $`Z` be holomorphic and bounded on
 the open strip $`\{|\operatorname{Im} t| < \lambda\}` and continuous on its closure. Let
 $`b : \mathbb{R} \to \mathbb{R}` be continuous with $`|b(y)| \le A(1 + |y|)`, and suppose
@@ -233,7 +233,7 @@ $`\log|Z(s + i\sigma\lambda)| \le \int_{\mathbb{R}}P_\sigma(T)\,b(s - \lambda T)
 with $`P_\sigma` from {uses "def_strip_poisson_kernel"}[].
 :::
 
-:::proof "lemma_strip_poisson_principle"
+:::proof "lemma_strip_poisson_inequality"
 Let $`\Phi` and $`\tilde b` be as in {uses "def_strip_conformal_map"}[] and
 {uses "def_halfplane_datum"}[]. The function $`F = Z \circ \Phi^{-1}` is holomorphic and bounded
 on $`\mathbb{H}` ({uses "lemma_strip_conformal_map"}[]), so $`\log|F|` is subharmonic and bounded
@@ -245,7 +245,7 @@ lower-edge bound giving $`\tilde b(x) = b((2\lambda/\pi)\log x)` on $`(0, \infty
 upper-edge bound giving $`0` on $`(-\infty, 0)`. The datum $`\tilde b` is continuous off $`0` with
 $`\tilde b(x)/(1 + x^2)` integrable ({uses "lemma_halfplane_datum_integrable"}[]), so the Poisson
 principle for the upper half-plane
-({uses "cor_halfplane_poisson_principle_log"}[], with the exceptional set $`E = \{0\}`) gives
+({uses "cor_halfplane_poisson_inequality_log"}[], with the exceptional set $`E = \{0\}`) gives
 $`\log|F| \le P[\tilde b]` on $`\mathbb{H}`. At $`w = \Phi(s + i\sigma\lambda)` this reads
 $`\log|Z(s + i\sigma\lambda)| \le P[\tilde b](\Phi(s + i\sigma\lambda)) = \int_{\mathbb{R}}P_\sigma(T)\,b(s - \lambda T)\,dT`
 by {uses "lemma_strip_harmonic_measure"}[].
@@ -317,7 +317,7 @@ $`Z` is bounded and holomorphic on the strip and continuous on its closure
 of $`h_\lambda` requires a bounded truncation. Choose
 $`D > \max\{0, \sup_y\log|Z(y - i\lambda)|\}` and let $`h_{\lambda,D} = \min\{h_\lambda, D\}`
 (with value $`D` at $`0`), a continuous function of logarithmic growth. The Poisson inequality
-({uses "lemma_strip_poisson_principle"}[]) applied to the bounded function $`Z` with lower majorant
+({uses "lemma_strip_poisson_inequality"}[]) applied to the bounded function $`Z` with lower majorant
 $`h_{\lambda,D}` and upper majorant $`0` gives the capped bound
 $`\log|Z(s+i\sigma\lambda)| \le \int P_\sigma(T)h_{\lambda,D}(s-\lambda T)\,dT`
 ({uses "lemma_3_2_capped"}[]). The integral $`H_\sigma(s)` converges absolutely, because
