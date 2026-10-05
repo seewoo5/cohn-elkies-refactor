@@ -8,7 +8,7 @@ More organized formalization are under `CohnElkies` and `CohnElkiesForMathlib`, 
 
 Some results in the original report were missing in their formalization, and we have added them here. 
 In particular, we have formalized both signs of the uncertainty principle, the self-Fourier function $f_0$, $L^1$ to Schwartz reduction, radial reduction. and Proposition A.1 ($A_+(d) < A_-(d)$ for all $d \ge 1$).
-Also, the proof of Lemma 3.2, whose original formal proof uses the Phragmén–Lindelöf principle on a strip, is replaced by a proof using Poisson principle for subharmonic functions (following the informal proof).
+Also, the proof of Lemma 3.2, whose original formal proof uses the Phragmén–Lindelöf principle on a strip, is replaced by a proof using Poisson inequality for subharmonic functions (following the informal proof).
 The Phragmén–Lindelöf principle based proof is still kept.
 The 30-digits approximation of the Cohn-Elkies exponent is removed, since it is unnecessary.
 

@@ -32,9 +32,9 @@ In the formalization the functions of this chapter are the structure
 $`\widehat g = \varsigma g` and $`g(0) = 0`, for a unit $`\varsigma` of $`\mathbb{Z}`. The chapter
 corresponds to the modules `CohnElkies/LowerBound/*.lean`; the interior bound of Lemma 3.2 is
 proved, as in the report, by mapping the strip onto the upper half-plane and applying the
-Poisson principle for subharmonic functions (the preliminaries chapter), and the limit of Lemma
+Poisson inequality for subharmonic functions (the preliminaries chapter), and the limit of Lemma
 3.4 by a Frullani-type computation recorded in the final chapter, which also contains an
-alternative proof of the Poisson principle for the strip by Phragmén–Lindelöf.
+alternative proof of the Poisson inequality for the strip by Phragmén–Lindelöf.
 
 # The Mellin-strip obstruction
 
@@ -224,7 +224,7 @@ kernel has total mass $`1`.
 :::
 
 :::lemma_ "lemma_strip_poisson_principle" (lean := "CohnElkies.norm_le_exp_integral_P_σ_of_strip") (parent := "grp_mellin_strip")
-(Poisson principle for the strip.) Let $`\lambda > 0` and let $`Z` be holomorphic and bounded on
+(Poisson inequality for the strip.) Let $`\lambda > 0` and let $`Z` be holomorphic and bounded on
 the open strip $`\{|\operatorname{Im} t| < \lambda\}` and continuous on its closure. Let
 $`b : \mathbb{R} \to \mathbb{R}` be continuous with $`|b(y)| \le A(1 + |y|)`, and suppose
 $`\log|Z(y - i\lambda)| \le b(y)` and $`\log|Z(y + i\lambda)| \le 0` for all $`y \in \mathbb{R}`.
@@ -316,7 +316,7 @@ $`Z` is bounded and holomorphic on the strip and continuous on its closure
 {uses "eq_16_upper_boundary"}[] and {uses "eq_17_lower_boundary"}[]. The logarithmic singularity
 of $`h_\lambda` requires a bounded truncation. Choose
 $`D > \max\{0, \sup_y\log|Z(y - i\lambda)|\}` and let $`h_{\lambda,D} = \min\{h_\lambda, D\}`
-(with value $`D` at $`0`), a continuous function of logarithmic growth. The Poisson principle
+(with value $`D` at $`0`), a continuous function of logarithmic growth. The Poisson inequality
 ({uses "lemma_strip_poisson_principle"}[]) applied to the bounded function $`Z` with lower majorant
 $`h_{\lambda,D}` and upper majorant $`0` gives the capped bound
 $`\log|Z(s+i\sigma\lambda)| \le \int P_\sigma(T)h_{\lambda,D}(s-\lambda T)\,dT`

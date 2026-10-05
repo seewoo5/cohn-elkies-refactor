@@ -16,6 +16,6 @@ manuscript), `CohnElkies.SignUncertainty.Main` (Theorem 1.2: `A_±(d)/√d → 1
 for `A₋(d)` of Cohn–Gonçalves, `A₊(d) < A₋(d)` for every `d ≥ 1`),
 `CohnElkies.LowerBound.LogMomentDigamma` (the log-moment identity (22) of the report, not used by
 the other modules) and `CohnElkies.LowerBound.PhragmenLindelofMajorization` (the alternative proof
-of the Poisson principle for the strip by Phragmén–Lindelöf, also not used by the other modules)
+of the Poisson inequality for the strip by Phragmén–Lindelöf, also not used by the other modules)
 import everything else.
 -/

@@ -3,9 +3,9 @@ import CohnElkies.LowerBound.CappedMajorant
 import CohnElkiesForMathlib.Analysis.Complex.Subharmonic.HalfPlane
 
 /-!
-# The Poisson principle in the strip and the majorization of `Z` (report §3.2, Lemma 3.2)
+# The Poisson inequality in the strip and the majorization of `Z` (report §3.2, Lemma 3.2)
 
-**Poisson principle for a horizontal strip** (`norm_le_exp_integral_P_σ_of_strip`): if `Z` is
+**Poisson inequality for a horizontal strip** (`norm_le_exp_integral_P_σ_of_strip`): if `Z` is
 holomorphic and bounded on the strip `|Im z| < ℓ` and continuous on its closure, with
 `‖Z‖ ≤ e^{b}` on the bottom edge for a continuous, linearly bounded profile `b` and `‖Z‖ ≤ 1` on
 the top edge, then `‖Z(s + iσℓ)‖ ≤ exp (∫ P_σ(T) b(s − ℓT) dT)` at every interior point. The proof
@@ -13,7 +13,7 @@ is the report's: the conformal map `Φ(t) = exp(π(t + iℓ)/(2ℓ))` sends the 
 half-plane `ℍ` (`CohnElkies.LowerBound.StripToHalfPlane`), `log ‖Z ∘ Φ⁻¹‖` is subharmonic and
 bounded above on `ℍ`, and its boundary values are at most the transported datum
 `b((2ℓ/π) log x)` on `(0, ∞)`, the image of the bottom edge, and `0` on `(-∞, 0)`, the image of
-the top edge. The Poisson principle for the upper half-plane
+the top edge. The Poisson inequality for the upper half-plane
 (`AnalyticOnNhd.log_norm_le_poissonIntegralHalfPlane`, with the single exceptional boundary
 point `0`) bounds `log ‖Z ∘ Φ⁻¹‖` by the half-plane Poisson integral of this datum, which at
 `Φ(s + iσℓ)` is the strip Poisson integral `∫ P_σ(T) b(s − ℓT) dT`: the harmonic-measure
@@ -142,7 +142,7 @@ theorem exists_abs_h_ℓD_le {d : ℕ} (hd : 0 < d) (R D : ℝ) :
     · rw [min_eq_right hmin]
       exact hDA.trans hfactor
 
-/-! ### The Poisson principle for the strip via the upper half-plane -/
+/-! ### The Poisson inequality for the strip via the upper half-plane -/
 
 /-- The bottom edge `y - iℓ` lies in the closure of the strip `|Im z| < ℓ`. -/
 theorem ofReal_sub_I_mul_mem_closure_strip {ℓ : ℝ} (hℓ : 0 < ℓ) (y : ℝ) :
@@ -154,7 +154,7 @@ theorem ofReal_add_I_mul_mem_closure_strip {ℓ : ℝ} (hℓ : 0 < ℓ) (y : ℝ
     (y : ℂ) + I * (ℓ : ℂ) ∈ closure (Complex.im ⁻¹' Ioo (-ℓ) ℓ) := by
   simp [Complex.closure_preimage_im, closure_Ioo (neg_lt_self hℓ).ne, hℓ.le]
 
-/-- **The Poisson principle for the strip** (the report's proof of Lemma 3.2, through the upper
+/-- **The Poisson inequality for the strip** (the report's proof of Lemma 3.2, through the upper
 half-plane). Let `Z` be holomorphic and bounded on the open strip `|Im z| < ℓ` and continuous on
 its closure, let `b` be continuous with `|b y| ≤ A (1 + |y|)`, and assume `‖Z(y − iℓ)‖ ≤ e^{b y}`
 on the bottom edge and `‖Z(y + iℓ)‖ ≤ 1` on the top edge. Then at every interior point
@@ -164,7 +164,7 @@ Poisson integral of `b`.
 Proof: `F = Z ∘ Φ⁻¹` is analytic and bounded on `ℍ`, where `Φ⁻¹(w) = (2ℓ/π) log w − iℓ`. As
 `w → x` within `ℍ`, `F w → Z((2ℓ/π) log x − iℓ)` for `x > 0` and `F w → Z((2ℓ/π) log(−x) + iℓ)`
 for `x < 0`, so `limsup log ‖F‖ ≤ b((2ℓ/π) log x)` on `(0, ∞)` and `≤ 0` on `(−∞, 0)`: this is
-the datum `halfPlaneDatum ℓ b`, continuous off `0`. The Poisson principle for the half-plane,
+the datum `halfPlaneDatum ℓ b`, continuous off `0`. The Poisson inequality for the half-plane,
 with the exceptional point `0`, gives `‖F‖ ≤ exp P[halfPlaneDatum ℓ b]` on `ℍ`, and at
 `w = Φ(s + iσℓ)` the Poisson integral is `∫ P_σ(T) b(s − ℓT) dT`
 (`poissonIntegralHalfPlane_halfPlaneDatum`). -/
@@ -202,7 +202,7 @@ theorem norm_le_exp_integral_P_σ_of_strip {ℓ : ℝ} (hℓ : 0 < ℓ) {Z : ℂ
     · rw [halfPlaneDatum_of_pos hx]
       exact (hlim (ofReal_sub_I_mul_mem_closure_strip hℓ _)
         (tendsto_halfPlaneToStrip_ofReal_of_pos ℓ hx)).limsup_log_norm_le (hbottom _)
-  -- the half-plane Poisson principle, evaluated at `Φ(s + iσℓ)`
+  -- the half-plane Poisson inequality, evaluated at `Φ(s + iσℓ)`
   have hmem := ofReal_add_I_mul_mul_mem_strip hℓ hσbelow hσabove s
   have h := hF.log_norm_le_poissonIntegralHalfPlane hFK
     (integrable_halfPlaneDatum_div_one_add_sq hℓ hb hbound)
@@ -238,7 +238,7 @@ theorem exists_norm_Z_g_bottom_le_exp_h_ℓD {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
     · rw [min_eq_right hmin]
       exact hexp
 
-/-- Report Lemma 3.2: `|Z(s + iσλ)| ≤ exp(∫ P_σ(T) h_{λ,D}(s − λT) dT)`, the Poisson principle
+/-- Report Lemma 3.2: `|Z(s + iσλ)| ≤ exp(∫ P_σ(T) h_{λ,D}(s − λT) dT)`, the Poisson inequality
 `norm_le_exp_integral_P_σ_of_strip` for the bounded function `Z_g` on the strip `|Im z| < λ = d/2`
 with the capped profile `b = h_{λ,D}`, which is continuous and linearly bounded; the top-edge
 bound is (16). -/

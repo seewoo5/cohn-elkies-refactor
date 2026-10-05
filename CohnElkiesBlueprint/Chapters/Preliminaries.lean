@@ -540,14 +540,14 @@ follow from $`\Gamma(\bar z) = \overline{\Gamma(z)}` ({uses "lemma_gamma_basic_i
 $`|\pi^{it}| = 1`.
 :::
 
-# Subharmonic functions and the Poisson principle for the half-plane
+# Subharmonic functions and the Poisson inequality for the half-plane
 
 :::group "grp_poisson_principle"
-Poisson principle
+Poisson inequality
 :::
 
 Subharmonic functions, the maximum principle, the Poisson integral of the upper half-plane and
-the Poisson principle of Ahlfors, cited by the report in the proof of Lemma 3.2. Mathlib provides
+the Poisson inequality of Ahlfors, cited by the report in the proof of Lemma 3.2. Mathlib provides
 harmonic functions, the Poisson formula for discs, Jensen's formula and the maximum modulus
 principle, but no subharmonic functions and no Poisson theory of the half-plane; these are
 developed in the modules `CohnElkiesForMathlib/Analysis/Complex/Subharmonic/Defs.lean`,
@@ -696,7 +696,7 @@ $`\varepsilon \to 0`.
 :::
 
 :::theorem "thm_halfplane_poisson_principle" (lean := "SubharmonicOn.le_poissonIntegralHalfPlane") (parent := "grp_poisson_principle")
-(Poisson principle for the upper half-plane.) Let $`u` be subharmonic on $`\mathbb{H}`
+(Poisson inequality for the upper half-plane.) Let $`u` be subharmonic on $`\mathbb{H}`
 ({uses "def_subharmonic"}[]) and bounded above, let $`b : \mathbb{R} \to \mathbb{R}` with
 $`b(x)/(1 + x^2)` integrable be continuous outside a finite set $`E \subseteq \mathbb{R}`, and
 suppose $`\limsup_{z \to x,\ z \in \mathbb{H}} u(z) \le b(x)` for every $`x \in \mathbb{R} \setminus E`.

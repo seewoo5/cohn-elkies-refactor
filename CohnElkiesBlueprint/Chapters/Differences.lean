@@ -17,13 +17,13 @@ the preceding chapters can be matched with their Lean counterparts; the nodes be
 formal replacements of the report's arguments, with their own Lean declarations. It also lists
 what the formalization adds to the report (the Cohn–Elkies bound) and what is still missing.
 
-# The Poisson principle: an alternative proof by Phragmén–Lindelöf
+# The Poisson inequality: an alternative proof by Phragmén–Lindelöf
 
 The report proves the interior bound of Lemma 3.2 by mapping the strip conformally onto the upper
-half-plane and applying the Poisson principle to the subharmonic function $`\log|Z|`; this is the
+half-plane and applying the Poisson inequality to the subharmonic function $`\log|Z|`; this is the
 proof formalized in {bpref "lemma_strip_poisson_principle"}[], on top of the subharmonic-function
 library of the preliminaries chapter. The formalization also contains a second, independent proof
-of the Poisson principle for the strip, which stays inside the strip: the holomorphic Poisson
+of the Poisson inequality for the strip, which stays inside the strip: the holomorphic Poisson
 integral $`W` of the boundary datum is built directly from the strip kernel, and a maximum-modulus
 (Phragmén–Lindelöf) argument is applied to $`e^{-W}Z`. It gives the principle for functions of
 Phragmén–Lindelöf growth rather than only for bounded ones
@@ -54,7 +54,7 @@ so the maximum-modulus principle on the rectangles is applied to $`N` rather tha
 :::
 
 :::lemma_ "lemma_strip_poisson_principle_phragmen_lindelof" (lean := "CohnElkies.norm_le_exp_integral_P_σ_of_strip_of_isBigO")
-(Poisson principle for the strip, functions of Phragmén–Lindelöf growth.) Let $`\lambda > 0` and
+(Poisson inequality for the strip, functions of Phragmén–Lindelöf growth.) Let $`\lambda > 0` and
 let $`Z` be holomorphic on the open strip $`\{|\operatorname{Im} t| < \lambda\}`, continuous on
 its closure, and of growth $`|Z(t)| \le C\exp(Ce^{c|\operatorname{Re} t|})` there for some
 $`c < \pi/(2\lambda)`. Let $`b : \mathbb{R} \to \mathbb{R}` be continuous with
@@ -106,7 +106,7 @@ The bottom boundary values of $`Z` satisfy $`|Z(y - i\lambda)| \le e^{h_\lambda(
 $`y`; the top boundary values satisfy $`|Z(y + i\lambda)| \le 1` ({uses "eq_16_upper_boundary"}[]).
 The capped majorant
 $`h_{\lambda,D}` is continuous with $`|h_{\lambda,D}(y)| \le A(1 + |y|)` (it is $`-\lambda\log|y| +
-O(1)` at infinity). The Poisson principle for the strip ({uses "lemma_strip_poisson_principle"}[])
+O(1)` at infinity). The Poisson inequality for the strip ({uses "lemma_strip_poisson_principle"}[])
 gives the claim.
 :::
 
@@ -346,9 +346,9 @@ $`\psi(m) = \lim_n(\log n - \sum_{k \le n}(m+k)^{-1})` and Gauss's integral repr
 of the pinned version) has `Complex.digamma` with its basic values and recurrence but no real
 digamma function and no series or asymptotic expansions.
 
-# Subharmonic functions and the half-plane Poisson principle
+# Subharmonic functions and the half-plane Poisson inequality
 
-The report's proof of Lemma 3.2 rests on the Poisson principle for the upper half-plane, applied
+The report's proof of Lemma 3.2 rests on the Poisson inequality for the upper half-plane, applied
 to the subharmonic function $`\log|Z \circ \Phi^{-1}|`. Mathlib (as of the pinned version) has
 harmonic functions on inner product spaces (`InnerProductSpace.HarmonicOnNhd`, with the mean value
 property, Liouville's theorem, and the harmonicity of the real and imaginary parts and of

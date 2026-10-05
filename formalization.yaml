@@ -194,7 +194,7 @@ fidelity:
     is proved with a qualitative compactness lemma (no-concentration of Fourier eigenfunctions)
     instead of the Nazarov–Jaming uncertainty principle, and without Mazur's lemma. The interior
     bound of Lemma 3.2 is proved as in the report, through the conformal map onto the upper
-    half-plane and the Poisson principle for subharmonic functions (Ahlfors), on a new
+    half-plane and the Poisson inequality for subharmonic functions (Ahlfors), on a new
     subharmonic-function/half-plane Poisson library; the earlier Phragmén-Lindelöf proof on the
     strip is kept as an alternative (CohnElkies/LowerBound/PhragmenLindelofMajorization.lean).
     Details: RefactoringResult.md §1.3-1.6, §5 and §7.
@@ -272,12 +272,12 @@ alignment:
       module: "CohnElkies/SignUncertainty/AppendixA.lean"
       status: "proved"
       note: "unconditional, for every d ≥ 1 (the non-strict A₊(d) ≤ A₋(d) and the conditional strict version were removed as subsumed)"
-    - source: "Section 3, proof of Lemma 3.2 (the strip Poisson principle, cited from Ahlfors)"
+    - source: "Section 3, proof of Lemma 3.2 (the strip Poisson inequality, cited from Ahlfors)"
       lean: "CohnElkies.norm_le_exp_integral_P_σ_of_strip"
       module: "CohnElkies/LowerBound/CappedMajorization.lean"
       status: "proved"
-      note: "for bounded Z and continuous boundary data of linear growth, the form in which the report applies it; proved as in the report, by the conformal map onto the upper half-plane (CohnElkies/LowerBound/StripToHalfPlane.lean, harmonic-measure identity CohnElkies.poissonIntegralHalfPlane_halfPlaneDatum) and the half-plane Poisson principle; the alternative proof for Z of Phragmén–Lindelöf growth via the holomorphic Poisson integral and PhragmenLindelof.horizontal_strip_norm_extension is CohnElkies.norm_le_exp_integral_P_σ_of_strip_of_isBigO (CohnElkies/LowerBound/PhragmenLindelofMajorization.lean)"
-    - source: "Ahlfors, Complex Analysis: subharmonic functions, the maximum principle and the Poisson principle for the upper half-plane (cited in the proof of Lemma 3.2)"
+      note: "for bounded Z and continuous boundary data of linear growth, the form in which the report applies it; proved as in the report, by the conformal map onto the upper half-plane (CohnElkies/LowerBound/StripToHalfPlane.lean, harmonic-measure identity CohnElkies.poissonIntegralHalfPlane_halfPlaneDatum) and the half-plane Poisson inequality; the alternative proof for Z of Phragmén–Lindelöf growth via the holomorphic Poisson integral and PhragmenLindelof.horizontal_strip_norm_extension is CohnElkies.norm_le_exp_integral_P_σ_of_strip_of_isBigO (CohnElkies/LowerBound/PhragmenLindelofMajorization.lean)"
+    - source: "Ahlfors, Complex Analysis: subharmonic functions, the maximum principle and the Poisson inequality for the upper half-plane (cited in the proof of Lemma 3.2)"
       lean: "SubharmonicOn.le_poissonIntegralHalfPlane"
       module: "CohnElkiesForMathlib/Analysis/Complex/Subharmonic/HalfPlane.lean"
       status: "proved"
