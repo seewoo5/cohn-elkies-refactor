@@ -540,14 +540,14 @@ follow from $`\Gamma(\bar z) = \overline{\Gamma(z)}` ({uses "lemma_gamma_basic_i
 $`|\pi^{it}| = 1`.
 :::
 
-# Subharmonic functions and the Poisson principle for the half-plane
+# Subharmonic functions and the Poisson inequality for the half-plane
 
-:::group "grp_poisson_principle"
-Poisson principle
+:::group "grp_poisson_inequality"
+Poisson inequality
 :::
 
 Subharmonic functions, the maximum principle, the Poisson integral of the upper half-plane and
-the Poisson principle of Ahlfors, cited by the report in the proof of Lemma 3.2. Mathlib provides
+the Poisson inequality of Ahlfors, cited by the report in the proof of Lemma 3.2. Mathlib provides
 harmonic functions, the Poisson formula for discs, Jensen's formula and the maximum modulus
 principle, but no subharmonic functions and no Poisson theory of the half-plane; these are
 developed in the modules `CohnElkiesForMathlib/Analysis/Complex/Subharmonic/Defs.lean`,
@@ -555,7 +555,7 @@ developed in the modules `CohnElkiesForMathlib/Analysis/Complex/Subharmonic/Defs
 `CohnElkiesForMathlib/Analysis/Complex/PoissonHalfPlane.lean` and
 `CohnElkiesForMathlib/Analysis/Complex/Subharmonic/HalfPlane.lean`.
 
-:::definition "def_subharmonic" (lean := "SubharmonicOn") (parent := "grp_poisson_principle")
+:::definition "def_subharmonic" (lean := "SubharmonicOn") (parent := "grp_poisson_inequality")
 A function $`u : U \to [-\infty, \infty)` on a set $`U \subseteq \mathbb{C}` is *subharmonic* on
 $`U` if it is upper semicontinuous on $`U` and satisfies the sub-mean-value inequality
 $`u(z) \le \dfrac{1}{2\pi}\int_0^{2\pi} u(z + re^{i\phi})\,d\phi`
@@ -564,7 +564,7 @@ $`-\infty`, is the infimum over $`a \in \mathbb{R}` of the circle averages of th
 $`\max\{u, a\}`.
 :::
 
-:::lemma_ "lemma_harmonic_subharmonic" (lean := "InnerProductSpace.HarmonicOnNhd.subharmonicOn, SubharmonicOn.add_harmonic") (parent := "grp_poisson_principle")
+:::lemma_ "lemma_harmonic_subharmonic" (lean := "InnerProductSpace.HarmonicOnNhd.subharmonicOn, SubharmonicOn.add_harmonic") (parent := "grp_poisson_inequality")
 Harmonic functions are subharmonic ({uses "def_subharmonic"}[]), and the sum of a subharmonic
 function on an open set and a harmonic function is subharmonic.
 :::
@@ -578,7 +578,7 @@ $`\max\{u, a - H\} + h \le \max\{u + h, a\}` there, so the mean value property o
 $`u(z) + h(z) \le \frac{1}{2\pi}\int\max\{u, a-H\} + \frac{1}{2\pi}\int h \le \frac{1}{2\pi}\int\max\{u + h, a\}`.
 :::
 
-:::lemma_ "lemma_log_norm_subharmonic" (lean := "AnalyticOnNhd.subharmonicOn_log_norm") (parent := "grp_poisson_principle")
+:::lemma_ "lemma_log_norm_subharmonic" (lean := "AnalyticOnNhd.subharmonicOn_log_norm") (parent := "grp_poisson_inequality")
 If $`f` is holomorphic on an open set $`U \subseteq \mathbb{C}`, then $`\log|f|`, with the value
 $`-\infty` at the zeros of $`f`, is subharmonic on $`U` ({uses "def_subharmonic"}[]).
 :::
@@ -594,7 +594,7 @@ $`\log|f|` is integrable on the circle, its circle average is the infimum of the
 truncations, which differ from $`\log|f|` only on the finite set of zeros of $`f` on the circle.
 :::
 
-:::lemma_ "lemma_subharmonic_maximum_principle" (lean := "SubharmonicOn.le_zero_of_limsup_frontier") (parent := "grp_poisson_principle")
+:::lemma_ "lemma_subharmonic_maximum_principle" (lean := "SubharmonicOn.le_zero_of_limsup_frontier") (parent := "grp_poisson_inequality")
 Let $`\Omega \subseteq \mathbb{C}` be open, bounded and connected, and let $`u` be subharmonic on
 $`\Omega` ({uses "def_subharmonic"}[]) with $`\limsup_{z \to \zeta,\ z \in \Omega} u(z) \le 0` at
 every boundary point $`\zeta \in \partial\Omega`. Then $`u \le 0` on $`\Omega`.
@@ -617,13 +617,13 @@ $`\Omega`, so $`u` would be a positive constant on $`\Omega`, contradicting the 
 at a point of $`\partial\Omega \ne \emptyset`.
 :::
 
-:::definition "def_halfplane_poisson_kernel" (lean := "Complex.poissonKernelHalfPlane") (parent := "grp_poisson_principle")
+:::definition "def_halfplane_poisson_kernel" (lean := "Complex.poissonKernelHalfPlane") (parent := "grp_poisson_inequality")
 For $`z = a + ih` in the upper half-plane $`\mathbb{H} = \{\operatorname{Im} z > 0\}` and
 $`x \in \mathbb{R}`, the Poisson kernel of $`\mathbb{H}` is
 $`P(z, x) = \dfrac{1}{\pi}\,\dfrac{h}{(x - a)^2 + h^2} = \dfrac{1}{\pi}\operatorname{Im}\dfrac{1}{x - z}`.
 :::
 
-:::lemma_ "lemma_halfplane_poisson_kernel_properties" (lean := "Complex.poissonKernelHalfPlane_pos, Complex.integral_poissonKernelHalfPlane") (parent := "grp_poisson_principle")
+:::lemma_ "lemma_halfplane_poisson_kernel_properties" (lean := "Complex.poissonKernelHalfPlane_pos, Complex.integral_poissonKernelHalfPlane") (parent := "grp_poisson_inequality")
 For $`z \in \mathbb{H}` the kernel of {uses "def_halfplane_poisson_kernel"}[] is positive with
 $`\int_{\mathbb{R}} P(z, x)\,dx = 1`.
 :::
@@ -632,13 +632,13 @@ $`\int_{\mathbb{R}} P(z, x)\,dx = 1`.
 $`\int_{\mathbb{R}}\dfrac{h\,dx}{(x-a)^2 + h^2} = \bigl[\arctan\dfrac{x - a}{h}\bigr]_{-\infty}^{\infty} = \pi`.
 :::
 
-:::definition "def_halfplane_poisson_integral" (lean := "Complex.poissonIntegralHalfPlane") (parent := "grp_poisson_principle")
+:::definition "def_halfplane_poisson_integral" (lean := "Complex.poissonIntegralHalfPlane") (parent := "grp_poisson_inequality")
 The Poisson integral of a boundary datum $`b : \mathbb{R} \to \mathbb{R}` with $`b(x)/(1 + x^2)`
 integrable is $`P[b](z) = \int_{\mathbb{R}} P(z, x)\,b(x)\,dx` for $`z \in \mathbb{H}`, with the
 kernel of {uses "def_halfplane_poisson_kernel"}[] (which is $`O((1 + x^2)^{-1})` for fixed $`z`).
 :::
 
-:::lemma_ "lemma_halfplane_poisson_integral_mono" (lean := "Complex.poissonIntegralHalfPlane_mono, Complex.poissonIntegralHalfPlane_le_of_le, Complex.le_poissonIntegralHalfPlane_of_le") (parent := "grp_poisson_principle")
+:::lemma_ "lemma_halfplane_poisson_integral_mono" (lean := "Complex.poissonIntegralHalfPlane_mono, Complex.poissonIntegralHalfPlane_le_of_le, Complex.le_poissonIntegralHalfPlane_of_le") (parent := "grp_poisson_inequality")
 The Poisson integral of {uses "def_halfplane_poisson_integral"}[] is monotone in $`b`, and
 $`\inf b \le P[b] \le \sup b` on $`\mathbb{H}`.
 :::
@@ -647,7 +647,7 @@ $`\inf b \le P[b] \le \sup b` on $`\mathbb{H}`.
 The kernel is positive with total mass $`1` ({uses "lemma_halfplane_poisson_kernel_properties"}[]).
 :::
 
-:::lemma_ "lemma_halfplane_poisson_harmonic" (lean := "Complex.harmonicOnNhd_poissonIntegralHalfPlane") (parent := "grp_poisson_principle")
+:::lemma_ "lemma_halfplane_poisson_harmonic" (lean := "Complex.harmonicOnNhd_poissonIntegralHalfPlane") (parent := "grp_poisson_inequality")
 For $`b : \mathbb{R} \to \mathbb{R}` with $`b(x)/(1 + x^2)` integrable, the Poisson integral
 $`P[b]` ({uses "def_halfplane_poisson_integral"}[]) is harmonic on $`\mathbb{H}`.
 :::
@@ -660,7 +660,7 @@ $`z`-derivative; differentiation under the integral sign shows that $`N[b]` is h
 $`\mathbb{H}`, so $`P[b] = \operatorname{Im} N[b]` is harmonic.
 :::
 
-:::lemma_ "lemma_halfplane_poisson_boundary_values" (lean := "Complex.tendsto_poissonIntegralHalfPlane_of_continuousAt") (parent := "grp_poisson_principle")
+:::lemma_ "lemma_halfplane_poisson_boundary_values" (lean := "Complex.tendsto_poissonIntegralHalfPlane_of_continuousAt") (parent := "grp_poisson_inequality")
 For $`b : \mathbb{R} \to \mathbb{R}` with $`b(x)/(1 + x^2)` integrable,
 $`P[b](z) \to b(x_0)` as $`z \to x_0` within $`\mathbb{H}` at every point $`x_0 \in \mathbb{R}` at
 which $`b` is continuous ({uses "def_halfplane_poisson_integral"}[]).
@@ -675,7 +675,7 @@ and on $`|x - x_0| \ge \delta` one has $`P(z, x) \le C\,\operatorname{Im} z\,(1 
 near $`x_0`, so the last integral tends to $`0` as $`z \to x_0`.
 :::
 
-:::lemma_ "lemma_halfplane_extended_maximum_principle" (lean := "SubharmonicOn.le_zero_of_halfPlane") (parent := "grp_poisson_principle")
+:::lemma_ "lemma_halfplane_extended_maximum_principle" (lean := "SubharmonicOn.le_zero_of_halfPlane") (parent := "grp_poisson_inequality")
 Let $`u` be subharmonic on $`\mathbb{H}` ({uses "def_subharmonic"}[]) and bounded above, and let
 $`E \subseteq \mathbb{R}` be finite. If $`\limsup_{z \to x,\ z \in \mathbb{H}} u(z) \le 0` for every
 $`x \in \mathbb{R} \setminus E`, then $`u \le 0` on $`\mathbb{H}`.
@@ -695,15 +695,15 @@ $`u \le -\varepsilon h` on $`\Omega_R`, hence on $`\mathbb{H}`, for every $`\var
 $`\varepsilon \to 0`.
 :::
 
-:::theorem "thm_halfplane_poisson_principle" (lean := "SubharmonicOn.le_poissonIntegralHalfPlane") (parent := "grp_poisson_principle")
-(Poisson principle for the upper half-plane.) Let $`u` be subharmonic on $`\mathbb{H}`
+:::theorem "thm_halfplane_poisson_inequality" (lean := "SubharmonicOn.le_poissonIntegralHalfPlane") (parent := "grp_poisson_inequality")
+(Poisson inequality for the upper half-plane.) Let $`u` be subharmonic on $`\mathbb{H}`
 ({uses "def_subharmonic"}[]) and bounded above, let $`b : \mathbb{R} \to \mathbb{R}` with
 $`b(x)/(1 + x^2)` integrable be continuous outside a finite set $`E \subseteq \mathbb{R}`, and
 suppose $`\limsup_{z \to x,\ z \in \mathbb{H}} u(z) \le b(x)` for every $`x \in \mathbb{R} \setminus E`.
 Then $`u \le P[b]` on $`\mathbb{H}` ({uses "def_halfplane_poisson_integral"}[]).
 :::
 
-:::proof "thm_halfplane_poisson_principle"
+:::proof "thm_halfplane_poisson_inequality"
 For $`n \in \mathbb{N}` the truncation $`b_n = \max\{b, -n\}` is bounded below, so $`P[b_n] \ge -n`
 and $`u - P[b_n]` is subharmonic on $`\mathbb{H}` ({uses "lemma_halfplane_poisson_harmonic"}[],
 {uses "lemma_harmonic_subharmonic"}[]) and bounded above by $`M + n`
@@ -713,14 +713,14 @@ maximum principle ({uses "lemma_halfplane_extended_maximum_principle"}[]). Final
 $`P[b_n] \downarrow P[b]` as $`n \to \infty` by monotone convergence.
 :::
 
-:::corollary "cor_halfplane_poisson_principle_log" (lean := "AnalyticOnNhd.log_norm_le_poissonIntegralHalfPlane") (parent := "grp_poisson_principle")
+:::corollary "cor_halfplane_poisson_inequality_log" (lean := "AnalyticOnNhd.log_norm_le_poissonIntegralHalfPlane") (parent := "grp_poisson_inequality")
 Let $`f` be holomorphic and bounded on $`\mathbb{H}`, let $`b : \mathbb{R} \to \mathbb{R}` with
 $`b(x)/(1 + x^2)` integrable be continuous outside a finite set $`E \subseteq \mathbb{R}`, and
 suppose $`\limsup_{z \to x,\ z \in \mathbb{H}}\log|f(z)| \le b(x)` for every $`x \in \mathbb{R} \setminus E`.
 Then $`|f| \le e^{P[b]}` on $`\mathbb{H}` ({uses "def_halfplane_poisson_integral"}[]).
 :::
 
-:::proof "cor_halfplane_poisson_principle_log"
-Apply {uses "thm_halfplane_poisson_principle"}[] to $`u = \log|f|`, which is subharmonic by
+:::proof "cor_halfplane_poisson_inequality_log"
+Apply {uses "thm_halfplane_poisson_inequality"}[] to $`u = \log|f|`, which is subharmonic by
 {uses "lemma_log_norm_subharmonic"}[] and bounded above by $`\log\sup|f|`.
 :::

@@ -16,7 +16,7 @@ introduction fixes the setting and states the main results. The next chapter pro
 Cohn–Elkies bound itself, which the report cites as an external input and which the Lean
 development proves from Poisson summation. The chapter on preliminaries collects the
 gamma-function identities, the radial reduction, the radial Mellin transform, and the subharmonic
-functions and half-plane Poisson principle behind the report's proof of Lemma 3.2; the chapter on
+functions and half-plane Poisson inequality behind the report's proof of Lemma 3.2; the chapter on
 the lower bound proves the universal obstruction (Proposition 3.1) and the packing lower bound
 (Theorem 3.8); the chapter on the upper bound constructs the asymptotically optimal functions
 (Theorem 4.1). The appendix compares the two sign-uncertainty constants (Proposition A.1 and

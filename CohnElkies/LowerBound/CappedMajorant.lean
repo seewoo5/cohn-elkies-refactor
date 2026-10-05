@@ -6,7 +6,7 @@ import CohnElkies.LowerBound.GammaBoundary
 The capped boundary function `h_{λ,D} = min (h_λ) D`, its continuity and limits, the
 holomorphic Poisson integral `W[b](z) = ∫ K'_ℓ(z, y) b(y) dy` of a boundary datum `b` built from
 the regularized Schwarz kernel of the strip, its differentiability and real part (the general
-Poisson principle for the strip is proved in `CohnElkies.LowerBound.CappedMajorization`), and the
+Poisson inequality for the strip is proved in `CohnElkies.LowerBound.CappedMajorization`), and the
 comparison of the strip Poisson kernel with its value at the centre.
 -/
 

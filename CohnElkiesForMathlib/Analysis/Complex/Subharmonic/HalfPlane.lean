@@ -2,7 +2,7 @@ import CohnElkiesForMathlib.Analysis.Complex.PoissonHalfPlane
 import CohnElkiesForMathlib.Analysis.Complex.Subharmonic.Basic
 
 /-!
-# The Poisson principle for the upper half-plane
+# The Poisson inequality for the upper half-plane
 
 Let `ℍ = {z : ℂ | 0 < Im z}` be the upper half-plane. We prove two maximum principles for a
 subharmonic function `u : ℂ → EReal` on `ℍ` (`SubharmonicOn u {z | 0 < z.im}`) that is bounded
@@ -11,7 +11,7 @@ finite exceptional set `E`:
 
 * `SubharmonicOn.le_zero_of_halfPlane` (extended maximum principle): if
   `limsup u (𝓝[ℍ] x) ≤ 0` for every real `x ∉ E`, then `u ≤ 0` on `ℍ`;
-* `SubharmonicOn.le_poissonIntegralHalfPlane` (**Poisson principle**, Ahlfors): if
+* `SubharmonicOn.le_poissonIntegralHalfPlane` (**Poisson inequality**, Ahlfors): if
   `limsup u (𝓝[ℍ] x) ≤ b x` for every real `x ∉ E`, where the boundary datum `b : ℝ → ℝ` has
   `b x / (1 + x ^ 2)` integrable and is continuous outside `E`, then `u ≤ P[b]` on `ℍ`, where
   `P[b] = Complex.poissonIntegralHalfPlane b` is the Poisson integral of `b`;
@@ -27,7 +27,7 @@ nonpositive on the closed upper half-plane and tends to `-∞` at every point of
 principle on the half-disc `{‖z‖ < R} ∩ ℍ` gives `u + ε h ≤ 0` there for `R` large; then let
 `ε → 0`. (The auxiliary function `ε h`, which absorbs the exceptional points and the point at
 infinity, is the device of the Phragmén–Lindelöf principle; no Phragmén–Lindelöf theorem for
-analytic functions is used.) The Poisson principle follows by applying the extended maximum
+analytic functions is used.) The Poisson inequality follows by applying the extended maximum
 principle to `u - P[bₙ]` for the truncations `bₙ = max b (-n)`, which are bounded below, and
 letting `n → ∞`.
 -/
@@ -62,7 +62,7 @@ end InnerProductSpace
 
 /-- If `f` tends to `f₀` along `l` with `‖f₀‖ ≤ exp c`, then `limsup log ‖f‖ ≤ c` along `l`, where
 `log ‖f‖` is extended by `⊥ = -∞` at the zeros of `f`: this is the form in which boundary
-conditions enter the Poisson principle for `log ‖f‖`. -/
+conditions enter the Poisson inequality for `log ‖f‖`. -/
 theorem Filter.Tendsto.limsup_log_norm_le {α : Type*} {l : Filter α} {f : α → ℂ} {f₀ : ℂ} {c : ℝ}
     (hf : Tendsto f l (𝓝 f₀)) (hf₀ : ‖f₀‖ ≤ Real.exp c) :
     limsup (fun z ↦ if f z = 0 then ⊥ else ((Real.log ‖f z‖ : ℝ) : EReal)) l ≤ (c : EReal) := by
@@ -157,7 +157,7 @@ theorem frontier_ball_inter_halfPlane_subset (R : ℝ) :
 end Complex
 
 /-!
-### The extended maximum principle and the Poisson principle
+### The extended maximum principle and the Poisson inequality
 -/
 
 namespace SubharmonicOn
@@ -252,7 +252,7 @@ theorem le_zero_of_halfPlane {E : Finset ℝ} {M : ℝ}
       nhdsWithin_le_nhds
   exact ge_of_tendsto hlim (eventually_nhdsWithin_of_forall key)
 
-/-- **Poisson principle for the upper half-plane** (Ahlfors): let `u` be subharmonic on `ℍ` and
+/-- **Poisson inequality for the upper half-plane** (Ahlfors): let `u` be subharmonic on `ℍ` and
 bounded above by a real constant, and let `b : ℝ → ℝ` be a boundary datum with `b x / (1 + x²)`
 integrable, continuous at every real point outside a finite set `E`. If `limsup u (𝓝[ℍ] x) ≤ b x`
 for every real `x ∉ E`, then `u ≤ P[b]` on `ℍ`, where `P[b]` is the Poisson integral of `b`.
@@ -296,7 +296,7 @@ theorem le_poissonIntegralHalfPlane {b : ℝ → ℝ} {E : Finset ℝ} {M : ℝ}
   -- let `n → ∞`
   exact ge_of_tendsto' (EReal.tendsto_coe.2 (tendsto_poissonIntegralHalfPlane_max hb hz)) key
 
-/-- **Poisson principle for `log ‖f‖`**: let `f` be analytic and bounded on `ℍ`, and let
+/-- **Poisson inequality for `log ‖f‖`**: let `f` be analytic and bounded on `ℍ`, and let
 `b : ℝ → ℝ` be a boundary datum with `b x / (1 + x²)` integrable, continuous at every real point
 outside a finite set `E`. If `limsup log ‖f‖ ≤ b x` as `z → x` within `ℍ` for every real `x ∉ E`
 (where `log ‖f‖` is extended by `⊥ = -∞` at the zeros of `f`; see

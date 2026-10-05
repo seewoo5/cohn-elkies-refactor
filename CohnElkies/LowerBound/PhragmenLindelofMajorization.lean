@@ -3,9 +3,9 @@ import CohnElkies.LowerBound.LimitingDensity
 import CohnElkiesForMathlib.Analysis.Complex.PhragmenLindelof
 
 /-!
-# The Poisson principle in the strip by Phragmén–Lindelöf (an alternative proof of Lemma 3.2)
+# The Poisson inequality in the strip by Phragmén–Lindelöf (an alternative proof of Lemma 3.2)
 
-A second proof of the Poisson principle for the strip, `norm_le_exp_integral_P_σ_of_strip` of
+A second proof of the Poisson inequality for the strip, `norm_le_exp_integral_P_σ_of_strip` of
 `CohnElkies.LowerBound.CappedMajorization`, which stays inside the strip instead of passing to the
 upper half-plane as the report does. It is proved here in the more general form
 `norm_le_exp_integral_P_σ_of_strip_of_isBigO`: for `Z` holomorphic on the strip `|Im z| < ℓ`,
@@ -632,7 +632,7 @@ private theorem exp_neg_W_b_reExtension_mul_norm_top_le_one {ℓ : ℝ} (hℓ : 
     simp [W_b_reExtension, stripTraceExtension, hv, (by linarith : ℓ ≠ -ℓ)]]
   simpa using hnorm
 
-/-- **Poisson principle for the strip** (report, proof of Lemma 3.2). Let `Z` be holomorphic on
+/-- **Poisson inequality for the strip** (report, proof of Lemma 3.2). Let `Z` be holomorphic on
 the open strip `|Im z| < ℓ` and continuous on its closure, with the Phragmén–Lindelöf growth
 `Z = O(exp (B e^{c |Re z|}))` as `|Re z| → ∞` in the strip for some `c < π/(2ℓ)`. Let `b` be a
 continuous profile with `|b y| ≤ A (1 + |y|)` such that `‖Z(y − iℓ)‖ ≤ e^{b(y)}` on the bottom
@@ -699,7 +699,7 @@ theorem isBigO_exp_mul_exp_abs_re_of_norm_le {ℓ : ℝ} (hℓ : 0 < ℓ) {Z : �
   ⟨0, by positivity, 0, IsBigO.of_bound K (eventually_inf_principal.mpr (.of_forall fun z hz ↦ by
     simpa using hK z hz))⟩
 
-/-- The Poisson principle for the strip, `norm_le_exp_integral_P_σ_of_strip`, proved by
+/-- The Poisson inequality for the strip, `norm_le_exp_integral_P_σ_of_strip`, proved by
 Phragmén–Lindelöf: the bounded case of `norm_le_exp_integral_P_σ_of_strip_of_isBigO`. -/
 theorem norm_le_exp_integral_P_σ_of_strip_phragmenLindelof {ℓ : ℝ} (hℓ : 0 < ℓ) {Z : ℂ → ℂ}
     (hZ : DiffContOnCl ℂ Z (Complex.im ⁻¹' Ioo (-ℓ) ℓ)) {K : ℝ}
@@ -717,7 +717,7 @@ theorem norm_le_exp_integral_P_σ_of_strip_phragmenLindelof {ℓ : ℝ} (hℓ : 
 
 /-- Report Lemma 3.2 by Phragmén–Lindelöf: the capped bound `norm_Z_g_le_exp_integral_of_cap`,
 derived from `norm_le_exp_integral_P_σ_of_strip_phragmenLindelof` instead of the half-plane
-Poisson principle. -/
+Poisson inequality. -/
 theorem norm_Z_g_le_exp_integral_of_cap_phragmenLindelof {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
     (g : RadialEigenfunction d ς) (R D : ℝ)
     (hcap : ∀ y : ℝ, ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤

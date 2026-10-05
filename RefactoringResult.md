@@ -1077,10 +1077,10 @@ formerly `norm_le_exp_integral_P_σ_of_strip`), `norm_le_exp_integral_P_σ_of_st
 principle for the half-plane" in the preliminaries chapter (`def_subharmonic`,
 `lemma_log_norm_subharmonic`, `lemma_subharmonic_maximum_principle`, `def_halfplane_poisson_kernel`,
 `lemma_halfplane_poisson_harmonic`, `lemma_halfplane_extended_maximum_principle`,
-`thm_halfplane_poisson_principle`, `cor_halfplane_poisson_principle_log`), the harmonic-measure
-node `lemma_strip_harmonic_measure`, `lemma_strip_poisson_principle` restated for bounded `Z` with
+`thm_halfplane_poisson_inequality`, `cor_halfplane_poisson_inequality_log`), the harmonic-measure
+node `lemma_strip_harmonic_measure`, `lemma_strip_poisson_inequality` restated for bounded `Z` with
 the report's proof, and in the Differences chapter the Phragmén–Lindelöf section rewritten as an
-alternative proof (`lemma_strip_poisson_principle_phragmen_lindelof`) plus a section on the Mathlib
+alternative proof (`lemma_strip_poisson_inequality_phragmen_lindelof`) plus a section on the Mathlib
 gaps listed above.
 
 **Incident (2026-09-19).** A `lake serve` process started by an old `lean-lsp-mcp` instance

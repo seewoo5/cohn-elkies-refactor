@@ -1186,7 +1186,7 @@ end CohnElkiesForMathlib_Analysis_Complex_Subharmonic_Basic
 section CohnElkiesForMathlib_Analysis_Complex_Subharmonic_HalfPlane
 
 /-!
-# The Poisson principle for the upper half-plane
+# The Poisson inequality for the upper half-plane
 
 Let `ℍ = {z : ℂ | 0 < Im z}` be the upper half-plane. We prove two maximum principles for a
 subharmonic function `u : ℂ → EReal` on `ℍ` (`SubharmonicOn u {z | 0 < z.im}`) that is bounded
@@ -1195,7 +1195,7 @@ finite exceptional set `E`:
 
 * `SubharmonicOn.le_zero_of_halfPlane` (extended maximum principle): if
   `limsup u (𝓝[ℍ] x) ≤ 0` for every real `x ∉ E`, then `u ≤ 0` on `ℍ`;
-* `SubharmonicOn.le_poissonIntegralHalfPlane` (**Poisson principle**, Ahlfors): if
+* `SubharmonicOn.le_poissonIntegralHalfPlane` (**Poisson inequality**, Ahlfors): if
   `limsup u (𝓝[ℍ] x) ≤ b x` for every real `x ∉ E`, where the boundary datum `b : ℝ → ℝ` has
   `b x / (1 + x ^ 2)` integrable and is continuous outside `E`, then `u ≤ P[b]` on `ℍ`, where
   `P[b] = Complex.poissonIntegralHalfPlane b` is the Poisson integral of `b`;
@@ -1211,7 +1211,7 @@ nonpositive on the closed upper half-plane and tends to `-∞` at every point of
 principle on the half-disc `{‖z‖ < R} ∩ ℍ` gives `u + ε h ≤ 0` there for `R` large; then let
 `ε → 0`. (The auxiliary function `ε h`, which absorbs the exceptional points and the point at
 infinity, is the device of the Phragmén–Lindelöf principle; no Phragmén–Lindelöf theorem for
-analytic functions is used.) The Poisson principle follows by applying the extended maximum
+analytic functions is used.) The Poisson inequality follows by applying the extended maximum
 principle to `u - P[bₙ]` for the truncations `bₙ = max b (-n)`, which are bounded below, and
 letting `n → ∞`.
 -/
@@ -1246,7 +1246,7 @@ end InnerProductSpace
 
 /-- If `f` tends to `f₀` along `l` with `‖f₀‖ ≤ exp c`, then `limsup log ‖f‖ ≤ c` along `l`, where
 `log ‖f‖` is extended by `⊥ = -∞` at the zeros of `f`: this is the form in which boundary
-conditions enter the Poisson principle for `log ‖f‖`. -/
+conditions enter the Poisson inequality for `log ‖f‖`. -/
 theorem Filter.Tendsto.limsup_log_norm_le {α : Type*} {l : Filter α} {f : α → ℂ} {f₀ : ℂ} {c : ℝ}
     (hf : Tendsto f l (𝓝 f₀)) (hf₀ : ‖f₀‖ ≤ Real.exp c) :
     limsup (fun z ↦ if f z = 0 then ⊥ else ((Real.log ‖f z‖ : ℝ) : EReal)) l ≤ (c : EReal) := by
@@ -1341,7 +1341,7 @@ theorem frontier_ball_inter_halfPlane_subset (R : ℝ) :
 end Complex
 
 /-!
-### The extended maximum principle and the Poisson principle
+### The extended maximum principle and the Poisson inequality
 -/
 
 namespace SubharmonicOn
@@ -1436,7 +1436,7 @@ theorem le_zero_of_halfPlane {E : Finset ℝ} {M : ℝ}
       nhdsWithin_le_nhds
   exact ge_of_tendsto hlim (eventually_nhdsWithin_of_forall key)
 
-/-- **Poisson principle for the upper half-plane** (Ahlfors): let `u` be subharmonic on `ℍ` and
+/-- **Poisson inequality for the upper half-plane** (Ahlfors): let `u` be subharmonic on `ℍ` and
 bounded above by a real constant, and let `b : ℝ → ℝ` be a boundary datum with `b x / (1 + x²)`
 integrable, continuous at every real point outside a finite set `E`. If `limsup u (𝓝[ℍ] x) ≤ b x`
 for every real `x ∉ E`, then `u ≤ P[b]` on `ℍ`, where `P[b]` is the Poisson integral of `b`.
@@ -1480,7 +1480,7 @@ theorem le_poissonIntegralHalfPlane {b : ℝ → ℝ} {E : Finset ℝ} {M : ℝ}
   -- let `n → ∞`
   exact ge_of_tendsto' (EReal.tendsto_coe.2 (tendsto_poissonIntegralHalfPlane_max hb hz)) key
 
-/-- **Poisson principle for `log ‖f‖`**: let `f` be analytic and bounded on `ℍ`, and let
+/-- **Poisson inequality for `log ‖f‖`**: let `f` be analytic and bounded on `ℍ`, and let
 `b : ℝ → ℝ` be a boundary datum with `b x / (1 + x²)` integrable, continuous at every real point
 outside a finite set `E`. If `limsup log ‖f‖ ≤ b x` as `z → x` within `ℍ` for every real `x ∉ E`
 (where `log ‖f‖` is extended by `⊥ = -∞` at the zeros of `f`; see
@@ -9438,7 +9438,7 @@ section CohnElkies_LowerBound_CappedMajorant
 The capped boundary function `h_{λ,D} = min (h_λ) D`, its continuity and limits, the
 holomorphic Poisson integral `W[b](z) = ∫ K'_ℓ(z, y) b(y) dy` of a boundary datum `b` built from
 the regularized Schwarz kernel of the strip, its differentiability and real part (the general
-Poisson principle for the strip is proved in `CohnElkies.LowerBound.CappedMajorization`), and the
+Poisson inequality for the strip is proved in `CohnElkies.LowerBound.CappedMajorization`), and the
 comparison of the strip Poisson kernel with its value at the centre.
 -/
 
@@ -9741,9 +9741,9 @@ end CohnElkies_LowerBound_CappedMajorant
 section CohnElkies_LowerBound_CappedMajorization
 
 /-!
-# The Poisson principle in the strip and the majorization of `Z` (report §3.2, Lemma 3.2)
+# The Poisson inequality in the strip and the majorization of `Z` (report §3.2, Lemma 3.2)
 
-**Poisson principle for a horizontal strip** (`norm_le_exp_integral_P_σ_of_strip`): if `Z` is
+**Poisson inequality for a horizontal strip** (`norm_le_exp_integral_P_σ_of_strip`): if `Z` is
 holomorphic and bounded on the strip `|Im z| < ℓ` and continuous on its closure, with
 `‖Z‖ ≤ e^{b}` on the bottom edge for a continuous, linearly bounded profile `b` and `‖Z‖ ≤ 1` on
 the top edge, then `‖Z(s + iσℓ)‖ ≤ exp (∫ P_σ(T) b(s − ℓT) dT)` at every interior point. The proof
@@ -9751,7 +9751,7 @@ is the report's: the conformal map `Φ(t) = exp(π(t + iℓ)/(2ℓ))` sends the 
 half-plane `ℍ` (`CohnElkies.LowerBound.StripToHalfPlane`), `log ‖Z ∘ Φ⁻¹‖` is subharmonic and
 bounded above on `ℍ`, and its boundary values are at most the transported datum
 `b((2ℓ/π) log x)` on `(0, ∞)`, the image of the bottom edge, and `0` on `(-∞, 0)`, the image of
-the top edge. The Poisson principle for the upper half-plane
+the top edge. The Poisson inequality for the upper half-plane
 (`AnalyticOnNhd.log_norm_le_poissonIntegralHalfPlane`, with the single exceptional boundary
 point `0`) bounds `log ‖Z ∘ Φ⁻¹‖` by the half-plane Poisson integral of this datum, which at
 `Φ(s + iσℓ)` is the strip Poisson integral `∫ P_σ(T) b(s − ℓT) dT`: the harmonic-measure
@@ -9880,7 +9880,7 @@ theorem exists_abs_h_ℓD_le {d : ℕ} (hd : 0 < d) (R D : ℝ) :
     · rw [min_eq_right hmin]
       exact hDA.trans hfactor
 
-/-! ### The Poisson principle for the strip via the upper half-plane -/
+/-! ### The Poisson inequality for the strip via the upper half-plane -/
 
 /-- The bottom edge `y - iℓ` lies in the closure of the strip `|Im z| < ℓ`. -/
 theorem ofReal_sub_I_mul_mem_closure_strip {ℓ : ℝ} (hℓ : 0 < ℓ) (y : ℝ) :
@@ -9892,7 +9892,7 @@ theorem ofReal_add_I_mul_mem_closure_strip {ℓ : ℝ} (hℓ : 0 < ℓ) (y : ℝ
     (y : ℂ) + I * (ℓ : ℂ) ∈ closure (Complex.im ⁻¹' Ioo (-ℓ) ℓ) := by
   simp [Complex.closure_preimage_im, closure_Ioo (neg_lt_self hℓ).ne, hℓ.le]
 
-/-- **The Poisson principle for the strip** (the report's proof of Lemma 3.2, through the upper
+/-- **The Poisson inequality for the strip** (the report's proof of Lemma 3.2, through the upper
 half-plane). Let `Z` be holomorphic and bounded on the open strip `|Im z| < ℓ` and continuous on
 its closure, let `b` be continuous with `|b y| ≤ A (1 + |y|)`, and assume `‖Z(y − iℓ)‖ ≤ e^{b y}`
 on the bottom edge and `‖Z(y + iℓ)‖ ≤ 1` on the top edge. Then at every interior point
@@ -9902,7 +9902,7 @@ Poisson integral of `b`.
 Proof: `F = Z ∘ Φ⁻¹` is analytic and bounded on `ℍ`, where `Φ⁻¹(w) = (2ℓ/π) log w − iℓ`. As
 `w → x` within `ℍ`, `F w → Z((2ℓ/π) log x − iℓ)` for `x > 0` and `F w → Z((2ℓ/π) log(−x) + iℓ)`
 for `x < 0`, so `limsup log ‖F‖ ≤ b((2ℓ/π) log x)` on `(0, ∞)` and `≤ 0` on `(−∞, 0)`: this is
-the datum `halfPlaneDatum ℓ b`, continuous off `0`. The Poisson principle for the half-plane,
+the datum `halfPlaneDatum ℓ b`, continuous off `0`. The Poisson inequality for the half-plane,
 with the exceptional point `0`, gives `‖F‖ ≤ exp P[halfPlaneDatum ℓ b]` on `ℍ`, and at
 `w = Φ(s + iσℓ)` the Poisson integral is `∫ P_σ(T) b(s − ℓT) dT`
 (`poissonIntegralHalfPlane_halfPlaneDatum`). -/
@@ -9940,7 +9940,7 @@ theorem norm_le_exp_integral_P_σ_of_strip {ℓ : ℝ} (hℓ : 0 < ℓ) {Z : ℂ
     · rw [halfPlaneDatum_of_pos hx]
       exact (hlim (ofReal_sub_I_mul_mem_closure_strip hℓ _)
         (tendsto_halfPlaneToStrip_ofReal_of_pos ℓ hx)).limsup_log_norm_le (hbottom _)
-  -- the half-plane Poisson principle, evaluated at `Φ(s + iσℓ)`
+  -- the half-plane Poisson inequality, evaluated at `Φ(s + iσℓ)`
   have hmem := ofReal_add_I_mul_mul_mem_strip hℓ hσbelow hσabove s
   have h := hF.log_norm_le_poissonIntegralHalfPlane hFK
     (integrable_halfPlaneDatum_div_one_add_sq hℓ hb hbound)
@@ -9976,7 +9976,7 @@ theorem exists_norm_Z_g_bottom_le_exp_h_ℓD {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
     · rw [min_eq_right hmin]
       exact hexp
 
-/-- Report Lemma 3.2: `|Z(s + iσλ)| ≤ exp(∫ P_σ(T) h_{λ,D}(s − λT) dT)`, the Poisson principle
+/-- Report Lemma 3.2: `|Z(s + iσλ)| ≤ exp(∫ P_σ(T) h_{λ,D}(s − λT) dT)`, the Poisson inequality
 `norm_le_exp_integral_P_σ_of_strip` for the bounded function `Z_g` on the strip `|Im z| < λ = d/2`
 with the capped profile `b = h_{λ,D}`, which is continuous and linearly bounded; the top-edge
 bound is (16). -/
@@ -24320,9 +24320,9 @@ end CohnElkies_LowerBound_LogMomentDigamma
 section CohnElkies_LowerBound_PhragmenLindelofMajorization
 
 /-!
-# The Poisson principle in the strip by Phragmén–Lindelöf (an alternative proof of Lemma 3.2)
+# The Poisson inequality in the strip by Phragmén–Lindelöf (an alternative proof of Lemma 3.2)
 
-A second proof of the Poisson principle for the strip, `norm_le_exp_integral_P_σ_of_strip` of
+A second proof of the Poisson inequality for the strip, `norm_le_exp_integral_P_σ_of_strip` of
 `CohnElkies.LowerBound.CappedMajorization`, which stays inside the strip instead of passing to the
 upper half-plane as the report does. It is proved here in the more general form
 `norm_le_exp_integral_P_σ_of_strip_of_isBigO`: for `Z` holomorphic on the strip `|Im z| < ℓ`,
@@ -24949,7 +24949,7 @@ private theorem exp_neg_W_b_reExtension_mul_norm_top_le_one {ℓ : ℝ} (hℓ : 
     simp [W_b_reExtension, stripTraceExtension, hv, (by linarith : ℓ ≠ -ℓ)]]
   simpa using hnorm
 
-/-- **Poisson principle for the strip** (report, proof of Lemma 3.2). Let `Z` be holomorphic on
+/-- **Poisson inequality for the strip** (report, proof of Lemma 3.2). Let `Z` be holomorphic on
 the open strip `|Im z| < ℓ` and continuous on its closure, with the Phragmén–Lindelöf growth
 `Z = O(exp (B e^{c |Re z|}))` as `|Re z| → ∞` in the strip for some `c < π/(2ℓ)`. Let `b` be a
 continuous profile with `|b y| ≤ A (1 + |y|)` such that `‖Z(y − iℓ)‖ ≤ e^{b(y)}` on the bottom
@@ -25016,7 +25016,7 @@ theorem isBigO_exp_mul_exp_abs_re_of_norm_le {ℓ : ℝ} (hℓ : 0 < ℓ) {Z : �
   ⟨0, by positivity, 0, IsBigO.of_bound K (eventually_inf_principal.mpr (.of_forall fun z hz ↦ by
     simpa using hK z hz))⟩
 
-/-- The Poisson principle for the strip, `norm_le_exp_integral_P_σ_of_strip`, proved by
+/-- The Poisson inequality for the strip, `norm_le_exp_integral_P_σ_of_strip`, proved by
 Phragmén–Lindelöf: the bounded case of `norm_le_exp_integral_P_σ_of_strip_of_isBigO`. -/
 theorem norm_le_exp_integral_P_σ_of_strip_phragmenLindelof {ℓ : ℝ} (hℓ : 0 < ℓ) {Z : ℂ → ℂ}
     (hZ : DiffContOnCl ℂ Z (Complex.im ⁻¹' Ioo (-ℓ) ℓ)) {K : ℝ}
@@ -25034,7 +25034,7 @@ theorem norm_le_exp_integral_P_σ_of_strip_phragmenLindelof {ℓ : ℝ} (hℓ : 
 
 /-- Report Lemma 3.2 by Phragmén–Lindelöf: the capped bound `norm_Z_g_le_exp_integral_of_cap`,
 derived from `norm_le_exp_integral_P_σ_of_strip_phragmenLindelof` instead of the half-plane
-Poisson principle. -/
+Poisson inequality. -/
 theorem norm_Z_g_le_exp_integral_of_cap_phragmenLindelof {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
     (g : RadialEigenfunction d ς) (R D : ℝ)
     (hcap : ∀ y : ℝ, ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤
@@ -32243,4 +32243,3 @@ end
 end CohnElkies
 
 end CohnElkies_SignUncertainty_Main
-
