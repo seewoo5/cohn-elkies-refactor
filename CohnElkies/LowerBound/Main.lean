@@ -32,7 +32,7 @@ theorem exists_interior_mass_bound {c : ℝ} (hc : 0 < c) (hcπ : c < π⁻¹) :
       ∫ x in Metric.ball (0 : Euclidean d) (c * √d), ‖g.toFun x‖ ≤
         C * exp (-γ * d) * ∫ x, ‖g.toFun x‖ := by
   obtain ⟨σ, γ, C, hσpos, hσone, hγ, hC, hmajor⟩ :=
-    exists_lowerStripPoissonMajorant_integrable_majorant hc hcπ
+    exists_H_σ_integrable_majorant hc hcπ
   have hσbelow : (-1 : ℝ) < σ := by linarith
   have hσ' : (0 : ℝ) < 1 - σ := sub_pos.mpr hσone
   have hM := lowerInverseQuadraticMass_pos

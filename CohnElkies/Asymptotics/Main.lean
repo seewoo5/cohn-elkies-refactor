@@ -63,7 +63,7 @@ theorem uniformAdmissibleLowerBound_of_signRadius (hsign : UniformAntiFourierSig
   · exact .of_forall fun d f ↦ hc0.trans (normalizedCost_nonneg f)
   · filter_upwards [hsign c hc0 hc, eventually_gt_atTop 0] with d hno hd f
     rw [← f.normalizedCost_radialize]
-    exact normalizedCost_ge_of_no_antiFourierWitness f.radialize hd c hno
+    exact normalizedCost_ge_of_no_antiSelfFourierWitness f.radialize hd c hno
 
 theorem normalizedProgram_eq_quotientInf_root_unconditional (d : ℕ) :
     normalizedProgram d = quotientRootMap d (sInf (quotientSet d)) :=
@@ -72,7 +72,7 @@ theorem normalizedProgram_eq_quotientInf_root_unconditional (d : ℕ) :
 theorem quotientInf_nonneg_unconditional (d : ℕ) : 0 ≤ sInf (quotientSet d) :=
   quotientInf_nonneg d (admissible_nonempty d)
 
-theorem linearProgram_nonneg (d : ℕ) : 0 ≤ LP d :=
+theorem LP_nonneg (d : ℕ) : 0 ≤ LP d :=
   mul_nonneg (geometricFactor_pos d).le (quotientInf_nonneg_unconditional d)
 
 /-- The two constants of Theorem 1.1 match: `√(2πe)/2 · (1/π) = √(e/(2π))`. -/
@@ -90,9 +90,9 @@ theorem sharpPackingRoot_of_sharpQuotient (hquotient : SharpQuotientAsymptotic) 
   unfold SharpPackingRootAsymptotic
   refine hproduct.congr' ?_
   filter_upwards [eventually_gt_atTop 0] with d hd
-  exact (linearProgram_root_eq_geometric_mul_normalizedProgram hd (admissible_nonempty d)).symm
+  exact (LP_root_eq_geometric_mul_normalizedProgram hd (admissible_nonempty d)).symm
 
-theorem eventually_linearProgram_pos_of_sharpQuotient (hquotient : SharpQuotientAsymptotic) :
+theorem eventually_LP_pos_of_sharpQuotient (hquotient : SharpQuotientAsymptotic) :
     ∀ᶠ d : ℕ in atTop, 0 < LP d := by
   have hnorm : ∀ᶠ d : ℕ in atTop, 0 < normalizedProgram d :=
     hquotient.eventually (Ioi_mem_nhds criticalRadius_pos)
@@ -109,7 +109,7 @@ theorem sharpLog_of_sharpQuotient (hquotient : SharpQuotientAsymptotic) : SharpL
   rw [log_criticalPackingBase] at hlogs
   unfold SharpLogAsymptotic
   refine hlogs.congr' ?_
-  filter_upwards [eventually_linearProgram_pos_of_sharpQuotient hquotient] with d hd
+  filter_upwards [eventually_LP_pos_of_sharpQuotient hquotient] with d hd
   rw [log_rpow hd]
   ring
 
@@ -125,7 +125,7 @@ theorem sharpBinaryLog_of_sharpQuotient (hquotient : SharpQuotientAsymptotic) :
   exact hscaled.congr fun d ↦ by rw [logb]; ring
 
 theorem saddleSourceSchwartzRealization : SaddleSourceSchwartzRealization :=
-  fun _ hε horder _ hd ↦ ⟨minusSaddleSchwartz hε hd horder, plusSaddleSchwartz hε hd horder,
+  fun _ hε horder _ hd ↦ ⟨fMinusSchwartz hε hd horder, fPlusSchwartz hε hd horder,
     fun _ ↦ rfl, fun _ ↦ rfl⟩
 
 /-- Theorem 1.1 in its four forms, from the eventual signs of the saddle-point pair `f_ε^±`. -/

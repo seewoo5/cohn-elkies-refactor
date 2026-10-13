@@ -114,92 +114,92 @@ theorem integral_ofReal_gaussianReal_one : ∫ x : Euclidean d, (gaussianReal 1 
   simpa using h
 
 /-- `κ_n(x) = (n+1)^d e^{-π (n+1)² ‖x‖²}`, the Gaussian approximate identity of report §2.1. -/
-def gaussianKernel (n : ℕ) (x : Euclidean d) : ℝ :=
+def κ_n (n : ℕ) (x : Euclidean d) : ℝ :=
   (n + 1 : ℝ) ^ d * gaussianReal ((n + 1 : ℝ) ^ 2) x
 
 /-- `η_n(x) = e^{-π ‖x‖²/(n+1)²}`, the Gaussian cutoff of report §2.1. -/
-def gaussianCutoff (n : ℕ) (x : Euclidean d) : ℝ := gaussianReal (((n + 1 : ℝ) ^ 2)⁻¹) x
+def η_n (n : ℕ) (x : Euclidean d) : ℝ := gaussianReal (((n + 1 : ℝ) ^ 2)⁻¹) x
 
-theorem gaussianKernel_eq_scaledKernel (n : ℕ) :
-    (fun x : Euclidean d ↦ (gaussianKernel n x : ℂ)) =
+theorem κ_n_eq_scaledKernel (n : ℕ) :
+    (fun x : Euclidean d ↦ (κ_n n x : ℂ)) =
       scaledKernel (fun x ↦ (gaussianReal 1 x : ℂ)) (n + 1) := by
   funext x
-  simp [gaussianKernel, scaledKernel, gaussianReal_smul]
+  simp [κ_n, scaledKernel, gaussianReal_smul]
 
-theorem continuous_gaussianKernel (n : ℕ) : Continuous (gaussianKernel (d := d) n) :=
+theorem continuous_κ_n (n : ℕ) : Continuous (κ_n (d := d) n) :=
   continuous_const.mul (continuous_gaussianReal _)
 
-theorem continuous_gaussianCutoff (n : ℕ) : Continuous (gaussianCutoff (d := d) n) :=
+theorem continuous_η_n (n : ℕ) : Continuous (η_n (d := d) n) :=
   continuous_gaussianReal _
 
-theorem gaussianKernel_nonneg (n : ℕ) (x : Euclidean d) : 0 ≤ gaussianKernel n x :=
+theorem κ_n_nonneg (n : ℕ) (x : Euclidean d) : 0 ≤ κ_n n x :=
   mul_nonneg (by positivity) (gaussianReal_pos _ _).le
 
-theorem gaussianKernel_le (n : ℕ) (x : Euclidean d) : gaussianKernel n x ≤ (n + 1 : ℝ) ^ d :=
+theorem κ_n_le (n : ℕ) (x : Euclidean d) : κ_n n x ≤ (n + 1 : ℝ) ^ d :=
   mul_le_of_le_one_right (by positivity) (gaussianReal_le_one (by positivity) x)
 
-theorem gaussianKernel_neg (n : ℕ) (x : Euclidean d) :
-    gaussianKernel n (-x) = gaussianKernel n x := by
-  simp [gaussianKernel, gaussianReal_neg]
+theorem κ_n_neg (n : ℕ) (x : Euclidean d) :
+    κ_n n (-x) = κ_n n x := by
+  simp [κ_n, gaussianReal_neg]
 
-theorem gaussianCutoff_nonneg (n : ℕ) (x : Euclidean d) : 0 ≤ gaussianCutoff n x :=
+theorem η_n_nonneg (n : ℕ) (x : Euclidean d) : 0 ≤ η_n n x :=
   (gaussianReal_pos _ _).le
 
-theorem gaussianCutoff_le_one (n : ℕ) (x : Euclidean d) : gaussianCutoff n x ≤ 1 :=
+theorem η_n_le_one (n : ℕ) (x : Euclidean d) : η_n n x ≤ 1 :=
   gaussianReal_le_one (by positivity) x
 
-theorem gaussianCutoff_eq_of_norm_eq (n : ℕ) : IsRadial (gaussianCutoff (d := d) n) :=
+theorem η_n_eq_of_norm_eq (n : ℕ) : IsRadial (η_n (d := d) n) :=
   fun x y h ↦ gaussianReal_eq_of_norm_eq _ x y h
 
-theorem integrable_gaussianKernel (n : ℕ) : Integrable (gaussianKernel (d := d) n) :=
+theorem integrable_κ_n (n : ℕ) : Integrable (κ_n (d := d) n) :=
   (integrable_gaussianReal (by positivity)).const_mul _
 
 /-- `η_n → 1` pointwise. -/
-theorem tendsto_gaussianCutoff (x : Euclidean d) :
-    Tendsto (fun n ↦ gaussianCutoff n x) atTop (𝓝 1) := by
+theorem tendsto_η_n (x : Euclidean d) :
+    Tendsto (fun n ↦ η_n n x) atTop (𝓝 1) := by
   have h0 : Tendsto (fun n : ℕ ↦ (n + 1 : ℝ)⁻¹) atTop (𝓝 0) :=
     tendsto_inv_atTop_zero.comp (tendsto_atTop_add_const_right _ 1 tendsto_natCast_atTop_atTop)
   have h1 : Tendsto (fun n : ℕ ↦ (((n + 1 : ℝ) ^ 2)⁻¹ : ℝ)) atTop (𝓝 0) := by
     simpa [inv_pow] using h0.pow 2
   have h2 : Tendsto (fun n : ℕ ↦ -(π * (((n + 1 : ℝ) ^ 2)⁻¹) * ‖x‖ ^ 2)) atTop (𝓝 0) := by
     simpa using ((h1.const_mul π).mul_const (‖x‖ ^ 2)).neg
-  simpa [gaussianCutoff, gaussianReal, Function.comp_def] using
+  simpa [η_n, gaussianReal, Function.comp_def] using
     (Real.continuous_exp.tendsto 0).comp h2
 
 /-- `𝓕 κ_n = η_n`. -/
-theorem fourier_gaussianKernel (n : ℕ) (w : Euclidean d) :
-    𝓕 (fun x ↦ (gaussianKernel n x : ℂ)) w = gaussianCutoff n w := by
+theorem fourier_κ_n (n : ℕ) (w : Euclidean d) :
+    𝓕 (fun x ↦ (κ_n n x : ℂ)) w = η_n n w := by
   have hn : (0 : ℝ) < n + 1 := by positivity
-  have h : (fun x : Euclidean d ↦ (gaussianKernel n x : ℂ)) =
+  have h : (fun x : Euclidean d ↦ (κ_n n x : ℂ)) =
       fun x ↦ ((n : ℂ) + 1) ^ d * (gaussianReal ((n + 1 : ℝ) ^ 2) x : ℂ) := by
     funext x
-    simp [gaussianKernel]
+    simp [κ_n]
   rw [h, fourier_const_mul_apply, fourier_gaussianReal (by positivity), rpow_sq_half hn.le]
-  unfold gaussianCutoff
+  unfold η_n
   push_cast
   rw [← mul_assoc, mul_inv_cancel₀ (pow_ne_zero _ (Nat.cast_add_one_ne_zero n)), one_mul]
 
 /-- `𝓕 η_n = κ_n`. -/
-theorem fourier_gaussianCutoff (n : ℕ) (w : Euclidean d) :
-    𝓕 (fun x ↦ (gaussianCutoff n x : ℂ)) w = gaussianKernel n w := by
+theorem fourier_η_n (n : ℕ) (w : Euclidean d) :
+    𝓕 (fun x ↦ (η_n n x : ℂ)) w = κ_n n w := by
   have hn : (0 : ℝ) < n + 1 := by positivity
-  unfold gaussianCutoff gaussianKernel
+  unfold η_n κ_n
   rw [fourier_gaussianReal (by positivity), Real.inv_rpow (by positivity), rpow_sq_half hn.le,
     inv_inv, inv_inv]
   push_cast
   ring
 
 /-- `∫ κ_n = 1`. -/
-theorem integral_gaussianKernel (n : ℕ) : ∫ x : Euclidean d, (gaussianKernel n x : ℂ) = 1 := by
-  have h := fourier_gaussianKernel (d := d) n 0
+theorem integral_κ_n (n : ℕ) : ∫ x : Euclidean d, (κ_n n x : ℂ) = 1 := by
+  have h := fourier_κ_n (d := d) n 0
   rw [fourier_zero_eq_integral] at h
-  simpa [gaussianCutoff] using h
+  simpa [η_n] using h
 
-theorem integral_norm_gaussianKernel (n : ℕ) :
-    ∫ x : Euclidean d, ‖(gaussianKernel n x : ℂ)‖ = 1 := by
-  have h := integral_gaussianKernel (d := d) n
+theorem integral_norm_κ_n (n : ℕ) :
+    ∫ x : Euclidean d, ‖(κ_n n x : ℂ)‖ = 1 := by
+  have h := integral_κ_n (d := d) n
   rw [integral_complex_ofReal] at h
-  simp_rw [Complex.norm_real, Real.norm_of_nonneg (gaussianKernel_nonneg n _)]
+  simp_rw [Complex.norm_real, Real.norm_of_nonneg (κ_n_nonneg n _)]
   exact_mod_cast h
 
 /-! ### The moment bound for Gaussian cutoffs -/
@@ -219,8 +219,8 @@ theorem pow_mul_exp_neg_sq_le {c : ℝ} (hc : 0 < c) (k : ℕ) {r : ℝ} (hr : 0
         nlinarith [sq_nonneg ((k : ℝ) - 2 * c * r)]
 
 /-- The Gaussian cutoff `η_n` beats every polynomial: `(1 + ‖x‖)^k η_n(x)` is bounded. -/
-theorem pow_mul_gaussianCutoff_le (n k : ℕ) (x : Euclidean d) :
-    (1 + ‖x‖) ^ k * gaussianCutoff n x ≤
+theorem pow_mul_η_n_le (n k : ℕ) (x : Euclidean d) :
+    (1 + ‖x‖) ^ k * η_n n x ≤
       Real.exp ((k : ℝ) ^ 2 / (4 * (π * ((n + 1 : ℝ) ^ 2)⁻¹))) :=
   pow_mul_exp_neg_sq_le (by positivity) k (norm_nonneg x)
 

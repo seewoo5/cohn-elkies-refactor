@@ -6,7 +6,7 @@ import CohnElkies.MellinFourier
 
 The inverse Mellin kernel `r^{-z}`, the Gaussian pole representatives and the subtraction of
 finitely many poles, the profile `f_P(r) = (1/2π) ∫ M_P(λ - it) r^{-λ + it} dt` on the critical
-line (`mellinProfile`), the pair `f₊`, `f₋` (`fPlus`, `fMinus`), polynomial bounds on the Gamma
+line (`f_P`), the pair `f₊`, `f₋` (`fPlus`, `fMinus`), polynomial bounds on the Gamma
 factor and the shell phase on shifted lines and horizontal strips, the integrability of the
 weighted data, the rectangular contour shift, and the Fourier representation of the profiles:
 `f_P` is the Fourier transform of an explicit `L¹` function, is real valued, and its Mellin data
@@ -71,14 +71,14 @@ structure IsPoleDatum (M : ℂ → ℂ) (ρ : ℕ → ℂ) : Prop where
 
 /-- Lemma 4.3: the Mellin data `M_P` of an entire polynomial factor `P` is a pole datum with
 residues `poleResidue ε ℓ P`. -/
-theorem isPoleDatum_mellinData {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) (ℓ : ℝ)
+theorem isPoleDatum_M_P {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) (ℓ : ℝ)
     {P : ℂ → ℂ} (hP : Differentiable ℂ P) :
-    IsPoleDatum (mellinData ε ℓ P) (poleResidue ε ℓ P) where
-  meromorphic := mellinData_meromorphic hε horder ℓ hP
-  differentiableAt _ hz := mellinData_differentiableAt_of_not_pole hε horder ℓ hP hz
+    IsPoleDatum (M_P ε ℓ P) (poleResidue ε ℓ P) where
+  meromorphic := M_P_meromorphic hε horder ℓ hP
+  differentiableAt _ hz := M_P_differentiableAt_of_not_pole hε horder ℓ hP hz
   decomposition n := ⟨nthPoleRegularPart ε ℓ P n,
     nthPoleRegularPart_differentiableOn hε horder ℓ hP n,
-    fun _ hz hne ↦ mellinData_nthPole_decomposition ε ℓ P hz hne⟩
+    fun _ hz hne ↦ M_P_nthPole_decomposition ε ℓ P hz hne⟩
 
 /-- The Mellin datum `M` with the polar parts of its first `N + 1` poles subtracted. -/
 def finitePoleSubtraction (M : ℂ → ℂ) (ρ : ℕ → ℂ) (N : ℕ) (z : ℂ) : ℂ :=
@@ -241,41 +241,41 @@ theorem mellinEnvelope_vertical (ε ℓ t : ℝ) :
     show (ℓ : ℂ) - ((ℓ : ℂ) - I * (t : ℂ)) = I * (t : ℂ) by ring]
 
 /-- On the critical line `z = λ - it` the Mellin data is the spectrum: `M_P(λ - it) = X_P(t)`. -/
-theorem mellinData_vertical (ε ℓ : ℝ) (P : ℂ → ℂ) (t : ℝ) :
-    mellinData ε ℓ P ((ℓ : ℂ) - I * (t : ℂ)) = spectrum ε ℓ P t := by
-  unfold mellinData spectrum
+theorem M_P_vertical (ε ℓ : ℝ) (P : ℂ → ℂ) (t : ℝ) :
+    M_P ε ℓ P ((ℓ : ℂ) - I * (t : ℂ)) = X_P ε ℓ P t := by
+  unfold M_P X_P
   rw [mellinEnvelope_vertical, mellinShellArgument_vertical]
 
 /-- The radial profile `f_P` of a Mellin datum `M_P`: its inverse Mellin transform for `r ≠ 0`,
 with the prescribed real value `c` at the origin. The profiles `f₊`, `f₋`, `f₀` of the report
 are the cases `P = P₊, P₋, P₀` (with `c = f_P(0)` given by `poleResidue_zero`). -/
-def mellinProfile (ε ℓ : ℝ) (P : ℂ → ℂ) (c r : ℝ) : ℂ :=
-  if r = 0 then (c : ℂ) else mellinInv ℓ (mellinData ε ℓ P) r
+def f_P (ε ℓ : ℝ) (P : ℂ → ℂ) (c r : ℝ) : ℂ :=
+  if r = 0 then (c : ℂ) else mellinInv ℓ (M_P ε ℓ P) r
 
 /-- The radial function `x ↦ f_P(‖x‖)` on `ℝ ^ d`. -/
-def mellinProfileFun (ε : ℝ) (d : ℕ) (P : ℂ → ℂ) (c : ℝ) (x : Euclidean d) : ℂ :=
-  mellinProfile ε (d / 2 : ℝ) P c ‖x‖
+def f_PFun (ε : ℝ) (d : ℕ) (P : ℂ → ℂ) (c : ℝ) (x : Euclidean d) : ℂ :=
+  f_P ε (d / 2 : ℝ) P c ‖x‖
 
-theorem mellinProfile_zero (ε ℓ : ℝ) (P : ℂ → ℂ) (c : ℝ) : mellinProfile ε ℓ P c 0 = c := by
-  simp [mellinProfile]
+theorem f_P_zero (ε ℓ : ℝ) (P : ℂ → ℂ) (c : ℝ) : f_P ε ℓ P c 0 = c := by
+  simp [f_P]
 
-theorem mellinProfile_of_ne_zero (ε ℓ : ℝ) (P : ℂ → ℂ) (c : ℝ) {r : ℝ} (hr : r ≠ 0) :
-    mellinProfile ε ℓ P c r = mellinInv ℓ (mellinData ε ℓ P) r := by
-  simp [mellinProfile, hr]
+theorem f_P_of_ne_zero (ε ℓ : ℝ) (P : ℂ → ℂ) (c : ℝ) {r : ℝ} (hr : r ≠ 0) :
+    f_P ε ℓ P c r = mellinInv ℓ (M_P ε ℓ P) r := by
+  simp [f_P, hr]
 
-theorem mellinProfileFun_radial (ε : ℝ) (d : ℕ) (P : ℂ → ℂ) (c : ℝ) :
-    IsRadial (mellinProfileFun ε d P c) := fun _ _ hxy ↦ by simp only [mellinProfileFun, hxy]
+theorem f_PFun_radial (ε : ℝ) (d : ℕ) (P : ℂ → ℂ) (c : ℝ) :
+    IsRadial (f_PFun ε d P c) := fun _ _ hxy ↦ by simp only [f_PFun, hxy]
 
-@[simp] theorem mellinProfileFun_zero (ε : ℝ) (d : ℕ) (P : ℂ → ℂ) (c : ℝ) :
-    mellinProfileFun ε d P c (0 : Euclidean d) = c := by
-  simp [mellinProfileFun, mellinProfile]
+@[simp] theorem f_PFun_zero (ε : ℝ) (d : ℕ) (P : ℂ → ℂ) (c : ℝ) :
+    f_PFun ε d P c (0 : Euclidean d) = c := by
+  simp [f_PFun, f_P]
 
 /-- The radial profile `f₊` of the report, the inverse Mellin transform of `M₊`; definitionally
-`mellinProfile ε ℓ (PPlus ε) (originValue ε ℓ)`. -/
+`f_P ε ℓ (PPlus ε) (originValue ε ℓ)`. -/
 def fPlus (ε ℓ r : ℝ) : ℂ := if r = 0 then (originValue ε ℓ : ℂ) else mellinInv ℓ (MPlus ε ℓ) r
 
 /-- The radial profile `f₋` of the report, the inverse Mellin transform of `M₋`; definitionally
-`mellinProfile ε ℓ (PMinus ε) (originValue ε ℓ)`. -/
+`f_P ε ℓ (PMinus ε) (originValue ε ℓ)`. -/
 def fMinus (ε ℓ r : ℝ) : ℂ := if r = 0 then (originValue ε ℓ : ℂ) else mellinInv ℓ (MMinus ε ℓ) r
 
 /-- The radial function `x ↦ f₊(‖x‖)` on `ℝ ^ d`. -/
@@ -284,28 +284,28 @@ def fPlusFun (ε : ℝ) (d : ℕ) (x : Euclidean d) : ℂ := fPlus ε (d / 2 : �
 /-- The radial function `x ↦ f₋(‖x‖)` on `ℝ ^ d`. -/
 def fMinusFun (ε : ℝ) (d : ℕ) (x : Euclidean d) : ℂ := fMinus ε (d / 2 : ℝ) ‖x‖
 
-@[simp] theorem plusSaddleFunction_zero (ε : ℝ) (d : ℕ) :
+@[simp] theorem fPlusFun_zero (ε : ℝ) (d : ℕ) :
     fPlusFun ε d (0 : Euclidean d) = (originValue ε (d / 2 : ℝ) : ℂ) := by simp [fPlusFun, fPlus]
 
-@[simp] theorem minusSaddleFunction_zero (ε : ℝ) (d : ℕ) :
+@[simp] theorem fMinusFun_zero (ε : ℝ) (d : ℕ) :
     fMinusFun ε d (0 : Euclidean d) = (originValue ε (d / 2 : ℝ) : ℂ) := by simp [fMinusFun, fMinus]
 
 theorem saddleFunction_zero_pos {ε : ℝ} (hε : 0 < ε) (d : ℕ) :
     0 < (fPlusFun ε d (0 : Euclidean d)).re ∧ 0 < (fMinusFun ε d (0 : Euclidean d)).re :=
-  ⟨by simpa using saddleOriginValue_pos hε (d / 2 : ℝ),
-    by simpa using saddleOriginValue_pos hε (d / 2 : ℝ)⟩
+  ⟨by simpa using originValue_pos hε (d / 2 : ℝ),
+    by simpa using originValue_pos hε (d / 2 : ℝ)⟩
 
-theorem fPlus_eq_mellinProfile (ε ℓ : ℝ) :
-    fPlus ε ℓ = mellinProfile ε ℓ (PPlus ε) (originValue ε ℓ) := rfl
+theorem fPlus_eq_f_P (ε ℓ : ℝ) :
+    fPlus ε ℓ = f_P ε ℓ (PPlus ε) (originValue ε ℓ) := rfl
 
-theorem fMinus_eq_mellinProfile (ε ℓ : ℝ) :
-    fMinus ε ℓ = mellinProfile ε ℓ (PMinus ε) (originValue ε ℓ) := rfl
+theorem fMinus_eq_f_P (ε ℓ : ℝ) :
+    fMinus ε ℓ = f_P ε ℓ (PMinus ε) (originValue ε ℓ) := rfl
 
-theorem fPlusFun_eq_mellinProfileFun (ε : ℝ) (d : ℕ) :
-    fPlusFun ε d = mellinProfileFun ε d (PPlus ε) (originValue ε (d / 2 : ℝ)) := rfl
+theorem fPlusFun_eq_f_PFun (ε : ℝ) (d : ℕ) :
+    fPlusFun ε d = f_PFun ε d (PPlus ε) (originValue ε (d / 2 : ℝ)) := rfl
 
-theorem fMinusFun_eq_mellinProfileFun (ε : ℝ) (d : ℕ) :
-    fMinusFun ε d = mellinProfileFun ε d (PMinus ε) (originValue ε (d / 2 : ℝ)) := rfl
+theorem fMinusFun_eq_f_PFun (ε : ℝ) (d : ℕ) :
+    fMinusFun ε d = f_PFun ε d (PMinus ε) (originValue ε (d / 2 : ℝ)) := rfl
 
 /-! ### Gamma factors on vertical and horizontal lines -/
 
@@ -375,9 +375,9 @@ theorem horizontalShellVariation_mono {ε : ℝ} (hε : 0 < ε) (horder : a₀ε
     {H K : ℝ} (hH : 0 ≤ H) (hHK : H ≤ K) :
     horizontalShellVariation ε H ≤ horizontalShellVariation ε K :=
   add_le_add
-    (integral_abs_mul_cosh_mono horder (shortShellDensity_intervalIntegrable hε horder) hH hHK)
+    (integral_abs_mul_cosh_mono horder (w_s_intervalIntegrable hε horder) hH hHK)
     (integral_abs_mul_cosh_mono (by linarith)
-      ((positiveShellDensity_continuous ε).intervalIntegrable _ _) hH hHK)
+      ((w_B_continuous ε).intervalIntegrable _ _) hH hHK)
 
 theorem norm_integral_shellPhase_le {w : ℝ → ℝ} {p q H : ℝ} (hpq : p ≤ q) (hp : 0 ≤ p)
     (hw : IntervalIntegrable w volume p q) {z : ℂ} (hz : |z.im| ≤ H) :
@@ -399,16 +399,16 @@ theorem norm_integral_shellPhase_le {w : ℝ → ℝ} {p q H : ℝ} (hpq : p ≤
           abs_mul, abs_of_nonneg ha0, abs_of_nonneg hH]
         exact mul_le_mul_of_nonneg_left hz ha0
 
-theorem norm_mellinShellPhase_le {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
+theorem norm_h_ε_le {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
     {z : ℂ} {H : ℝ} (hstrip : |z.im| ≤ H) : ‖h_ε ε z‖ ≤ horizontalShellVariation ε H := by
   have hcutoff : 0 < a₀ε ε := by unfold a₀ε; positivity
   have hlocation : 0 < Bε ε := by unfold Bε; positivity
   unfold h_ε horizontalShellVariation
   refine (norm_add_le _ _).trans (add_le_add
     (norm_integral_shellPhase_le horder hcutoff.le
-      (shortShellDensity_intervalIntegrable hε horder) hstrip)
+      (w_s_intervalIntegrable hε horder) hstrip)
     (norm_integral_shellPhase_le (by linarith) hlocation.le
-      ((positiveShellDensity_continuous ε).intervalIntegrable _ _) hstrip))
+      ((w_B_continuous ε).intervalIntegrable _ _) hstrip))
 
 /-! ### Polynomial bounds on the shifted lines `Re z = a` -/
 
@@ -444,7 +444,7 @@ theorem norm_shellExponential_shiftedLine_le {ε ℓ : ℝ} (hε : 0 < ε) (hℓ
     _ = ℓ * ‖h_ε ε (I * (((a : ℂ) + (t : ℂ) * I) - (ℓ : ℂ)) / (ℓ : ℂ))‖ := by
         rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hℓ]
     _ ≤ ℓ * horizontalShellVariation ε |(a - ℓ) / ℓ| :=
-        mul_le_mul_of_nonneg_left (norm_mellinShellPhase_le hε horder him.le) hℓ.le
+        mul_le_mul_of_nonneg_left (norm_h_ε_le hε horder him.le) hℓ.le
 
 theorem mellinShellArgument_shiftedLine_le {ℓ : ℝ} (hℓ : 0 < ℓ) (a : ℝ) {t : ℝ} (ht : 1 ≤ |t|) :
     1 + ‖I * (((a : ℂ) + (t : ℂ) * I) - (ℓ : ℂ)) / (ℓ : ℂ)‖ ≤
@@ -481,11 +481,11 @@ theorem saddleShiftedLineMajorant_nonneg {ε ℓ a : ℝ} (hℓ : 0 < ℓ) (k m 
 
 /-- Lemma 4.3: on the line `Re z = a` the Mellin datum `M_P` decays faster than any polynomial,
 with the explicit majorant `saddleShiftedLineMajorant`. -/
-theorem mellinData_shiftedLine_polynomial_bound {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem M_P_shiftedLine_polynomial_bound {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : ∀ z : ℂ, ‖P z‖ ≤ (1 + |β ε|) * (1 + ‖z‖) ^ 3)
     (a : ℝ) {t : ℝ} (ht : 1 ≤ |t|) (k m : ℕ) (hshift : 0 < a / 2 + (k : ℝ)) :
-    |t| ^ m * ‖mellinData ε ℓ P ((a : ℂ) + (t : ℂ) * I)‖ ≤ saddleShiftedLineMajorant ε ℓ a k m := by
-  unfold mellinData
+    |t| ^ m * ‖M_P ε ℓ P ((a : ℂ) + (t : ℂ) * I)‖ ≤ saddleShiftedLineMajorant ε ℓ a k m := by
+  unfold M_P
   have hC : (0 : ℝ) ≤ (1 + |β ε|) * (1 + ℓ⁻¹ + |(a - ℓ) / ℓ|) ^ 3 := by positivity
   have hG : (0 : ℝ) ≤ (2 : ℝ) ^ (k + (m + 3)) * Gamma (a / 2 + (k + (m + 3) : ℝ)) := by
     positivity [Real.Gamma_pos_of_pos (gammaShift_pos m hshift)]
@@ -610,20 +610,20 @@ theorem exists_horizontalStrip_polynomial_bound {ε ℓ : ℝ} (hε : 0 < ε) (h
     (horizontalStripHeight_bound hℓ ha) k m hshifta)).trans (hC (Set.mem_image_of_mem _ ha))
 
 /-- Lemma 4.3: uniform polynomial decay of `M_P` on horizontal strips. -/
-theorem mellinData_horizontalStrip_polynomial_bound {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem M_P_horizontalStrip_polynomial_bound {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) {A B : ℝ} (hAB : A ≤ B)
     (m : ℕ) :
     ∃ C : ℝ, 0 ≤ C ∧ ∀ a ∈ Set.Icc A B, ∀ t : ℝ, 1 ≤ |t| →
-      |t| ^ m * ‖mellinData ε ℓ P ((a : ℂ) + (t : ℂ) * I)‖ ≤ C :=
+      |t| ^ m * ‖M_P ε ℓ P ((a : ℂ) + (t : ℂ) * I)‖ ≤ C :=
   exists_horizontalStrip_polynomial_bound hε hℓ horder
     (fun a _ ht k m hs ↦
-      mellinData_shiftedLine_polynomial_bound hε hℓ horder hP.norm_le a ht k m hs) hAB m
+      M_P_shiftedLine_polynomial_bound hε hℓ horder hP.norm_le a ht k m hs) hAB m
 
 /-! ### The envelope `E` on the critical line -/
 
-theorem saddleEnvelope_conj (ε ℓ t : ℝ) : starRingEnd ℂ (E ε ℓ t) = E ε ℓ (-t) := by
+theorem E_conj (ε ℓ t : ℝ) : starRingEnd ℂ (E ε ℓ t) = E ε ℓ (-t) := by
   have hphase : starRingEnd ℂ (h_ε ε ((t : ℂ) / (ℓ : ℂ))) = h_ε ε (-((t : ℂ) / (ℓ : ℂ))) := by
-    rw [← Complex.ofReal_div, mellinShellPhase_real_conj, mellinShellPhase_neg]
+    rw [← Complex.ofReal_div, h_ε_real_conj, h_ε_neg]
   unfold E
   simp only [map_mul, ← Complex.exp_conj, ← Complex.Gamma_conj, map_div₀, map_sub,
     Complex.conj_ofReal, Complex.conj_I, map_ofNat, Complex.ofReal_neg, neg_div]
@@ -633,19 +633,19 @@ theorem saddleEnvelope_conj (ε ℓ t : ℝ) : starRingEnd ℂ (E ε ℓ t) = E 
 theorem norm_shellExponential_le {ε ℓ : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) (t : ℝ) :
     ‖Complex.exp ((ℓ : ℂ) * h_ε ε ((t : ℂ) / (ℓ : ℂ)))‖ ≤
       exp (2 * |ℓ| * saddleShellTotalVariation ε) := by
-  rw [← Complex.ofReal_div, mellinShellPhase_ofReal, Complex.norm_exp]
+  rw [← Complex.ofReal_div, h_ε_ofReal, Complex.norm_exp]
   simp only [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im, mul_zero, sub_zero]
   refine Real.exp_le_exp.mpr ?_
-  calc ℓ * realOscillatoryShellPhase ε (t / ℓ)
-      ≤ |ℓ| * |realOscillatoryShellPhase ε (t / ℓ)| := by
+  calc ℓ * h_εℝ ε (t / ℓ)
+      ≤ |ℓ| * |h_εℝ ε (t / ℓ)| := by
         rw [← abs_mul]
         exact le_abs_self _
     _ ≤ |ℓ| * (2 * saddleShellTotalVariation ε) := by
         gcongr
-        exact abs_realOscillatoryShellPhase_le hε horder (t / ℓ)
+        exact abs_h_εℝ_le hε horder (t / ℓ)
     _ = 2 * |ℓ| * saddleShellTotalVariation ε := by ring
 
-theorem saddleEnvelope_vertical_polynomial_bound {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem E_vertical_polynomial_bound {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) (t : ℝ) (k : ℕ) :
     |t| ^ k * ‖E ε ℓ t‖ ≤
       (2 : ℝ) ^ k * Gamma (ℓ / 2 + k) * exp (2 * |ℓ| * saddleShellTotalVariation ε) := by
@@ -736,19 +736,19 @@ theorem shiftedLine_moment_integrable {M : ℂ → ℂ} {ε ℓ a : ℝ} (hℓ :
     (hdiff _ (saddleShiftedLine_ne_pole hpole t)).continuousAt.comp_of_eq hline rfl
 
 /-- Lemma 4.3: every moment of `M_P` is integrable on a pole-free vertical line. -/
-theorem mellinData_shiftedLine_moment_integrable {ε ℓ a : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem M_P_shiftedLine_moment_integrable {ε ℓ a : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P)
     (hpole : ∀ n : ℕ, a ≠ -(2 * n : ℝ)) (j : ℕ) :
-    Integrable fun t : ℝ ↦ (t : ℂ) ^ j * mellinData ε ℓ P ((a : ℂ) + (t : ℂ) * I) :=
+    Integrable fun t : ℝ ↦ (t : ℂ) ^ j * M_P ε ℓ P ((a : ℂ) + (t : ℂ) * I) :=
   shiftedLine_moment_integrable hℓ
-    (fun _ hz ↦ mellinData_differentiableAt_of_not_pole hε horder ℓ hP.differentiable hz)
-    (fun ht k m hs ↦ mellinData_shiftedLine_polynomial_bound hε hℓ horder hP.norm_le a ht k m hs)
+    (fun _ hz ↦ M_P_differentiableAt_of_not_pole hε horder ℓ hP.differentiable hz)
+    (fun ht k m hs ↦ M_P_shiftedLine_polynomial_bound hε hℓ horder hP.norm_le a ht k m hs)
     hpole j
 
-theorem plusSaddleMellinData_shiftedLine_moment_integrable {ε ℓ a : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem MPlus_shiftedLine_moment_integrable {ε ℓ a : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) (hpole : ∀ n : ℕ, a ≠ -(2 * n : ℝ)) (j : ℕ) :
     Integrable fun t : ℝ ↦ (t : ℂ) ^ j * MPlus ε ℓ ((a : ℂ) + (t : ℂ) * I) :=
-  mellinData_shiftedLine_moment_integrable hε hℓ horder (isSaddlePolynomial_PPlus ε) hpole j
+  M_P_shiftedLine_moment_integrable hε hℓ horder (isSaddlePolynomial_PPlus ε) hpole j
 
 /-! ### The inverse Mellin weight `r ^ (-z)` -/
 
@@ -767,13 +767,13 @@ theorem integrable_inversePower_mul {a r : ℝ} (hr : 0 < r) {G : ℝ → ℂ} (
     (hweight.aestronglyMeasurable.mul hG.aestronglyMeasurable) (.of_forall fun t ↦ ?_)
   rw [norm_mul, saddleMellinInversePower_shiftedLine_norm hr]
 
-theorem mellinData_shiftedLine_weighted_integrable {ε ℓ a r : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem M_P_shiftedLine_weighted_integrable {ε ℓ a r : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P)
     (hpole : ∀ n : ℕ, a ≠ -(2 * n : ℝ)) (hr : 0 < r) :
     Integrable fun t : ℝ ↦ saddleMellinInversePower r ((a : ℂ) + (t : ℂ) * I) *
-      mellinData ε ℓ P ((a : ℂ) + (t : ℂ) * I) :=
+      M_P ε ℓ P ((a : ℂ) + (t : ℂ) * I) :=
   integrable_inversePower_mul hr
-    (by simpa using mellinData_shiftedLine_moment_integrable hε hℓ horder hP hpole 0)
+    (by simpa using M_P_shiftedLine_moment_integrable hε hℓ horder hP hpole 0)
 
 /-! ### The Gaussian pole representatives on a vertical line -/
 
@@ -859,16 +859,16 @@ theorem saddleHorizontalIntegral_tendsto_zero {F : ℂ → ℂ} {A B C : ℝ} (h
   rw [habs, Complex.ofReal_mul] at htail
   exact (le_div_iff₀ hTpos).2 (by linarith)
 
-theorem mellinData_weighted_horizontalIntegral_tendsto_zero {ε ℓ r : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem M_P_weighted_horizontalIntegral_tendsto_zero {ε ℓ r : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (hr : 0 < r) {A B : ℝ}
     (hAB : A ≤ B) (s : ℝ) (hs : |s| = 1) :
     Tendsto (fun T : ℝ ↦ ∫ a in A..B,
         saddleMellinInversePower r ((a : ℂ) + (s * T : ℂ) * I) *
-          mellinData ε ℓ P ((a : ℂ) + (s * T : ℂ) * I)) atTop (𝓝 0) := by
+          M_P ε ℓ P ((a : ℂ) + (s * T : ℂ) * I)) atTop (𝓝 0) := by
   obtain ⟨C, -, hbound⟩ := weighted_horizontalStrip_bound hr hAB
-    (mellinData_horizontalStrip_polynomial_bound hε hℓ horder hP hAB 1)
+    (M_P_horizontalStrip_polynomial_bound hε hℓ horder hP hAB 1)
   exact saddleHorizontalIntegral_tendsto_zero
-    (F := fun z ↦ saddleMellinInversePower r z * mellinData ε ℓ P z) hAB (by simpa using hbound)
+    (F := fun z ↦ saddleMellinInversePower r z * M_P ε ℓ P z) hAB (by simpa using hbound)
     s hs
 
 /-- On a horizontal strip the weighted Gaussian representative decays like `1 / |t|`. -/
@@ -1078,30 +1078,30 @@ theorem rapidContourIntegrand_isRapid {M : ℂ → ℂ} {ρ : ℕ → ℂ} (hM :
 
 /-- Lemma 4.3 for the Mellin data `M_P`: the vertical integrals of its contour integrand over two
 pole-free lines of the half-plane `Re z > -2 (N + 1)` agree. -/
-theorem mellinData_rapidContourIntegrand_vertical_integral_eq {ε ℓ r A B : ℝ} (hε : 0 < ε)
+theorem M_P_rapidContourIntegrand_vertical_integral_eq {ε ℓ r A B : ℝ} (hε : 0 < ε)
     (hℓ : 0 < ℓ) (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (hr : 0 < r)
     (N : ℕ) (hhalf : -(2 * ((N : ℝ) + 1)) < A) (hAB : A ≤ B)
     (hApole : ∀ n : ℕ, A ≠ -(2 * n : ℝ)) (hBpole : ∀ n : ℕ, B ≠ -(2 * n : ℝ)) :
-    (∫ t : ℝ, rapidContourIntegrand (mellinData ε ℓ P) (poleResidue ε ℓ P) N r
+    (∫ t : ℝ, rapidContourIntegrand (M_P ε ℓ P) (poleResidue ε ℓ P) N r
         ((B : ℂ) + (t : ℂ) * I)) =
-      ∫ t : ℝ, rapidContourIntegrand (mellinData ε ℓ P) (poleResidue ε ℓ P) N r
+      ∫ t : ℝ, rapidContourIntegrand (M_P ε ℓ P) (poleResidue ε ℓ P) N r
         ((A : ℂ) + (t : ℂ) * I) :=
-  have hM := isPoleDatum_mellinData hε horder ℓ hP.differentiable
+  have hM := isPoleDatum_M_P hε horder ℓ hP.differentiable
   contourIntegrand_vertical_integral_eq hr hhalf hAB hApole hBpole
-    (by simpa using mellinData_shiftedLine_moment_integrable hε hℓ horder hP hApole 0)
-    (by simpa using mellinData_shiftedLine_moment_integrable hε hℓ horder hP hBpole 0)
-    (mellinData_horizontalStrip_polynomial_bound hε hℓ horder hP hAB 1)
+    (by simpa using M_P_shiftedLine_moment_integrable hε hℓ horder hP hApole 0)
+    (by simpa using M_P_shiftedLine_moment_integrable hε hℓ horder hP hBpole 0)
+    (M_P_horizontalStrip_polynomial_bound hε hℓ horder hP hAB 1)
     (rapidContourIntegrand_isRapid hM N r) (rapidContourIntegrand_boundary_rectangle hM N hr)
 
 /-! ### The spectrum on the critical line and its Fourier transform -/
 
 /-- Lemma 4.3: all moments `|t| ^ k ‖X_P(t)‖` of a spectrum `X_P(t) = E_λ(t) P(t/λ)` are
 integrable. -/
-theorem spectrum_norm_moment_integrable {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem X_P_norm_moment_integrable {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (k : ℕ) :
-    Integrable fun t : ℝ ↦ |t| ^ k * ‖spectrum ε ℓ P t‖ := by
+    Integrable fun t : ℝ ↦ |t| ^ k * ‖X_P ε ℓ P t‖ := by
   have hdecay : ∀ j : ℕ, ∃ C : ℝ, 0 ≤ C ∧ ∀ t : ℝ, 1 ≤ |t| →
-      |t| ^ j * ‖spectrum ε ℓ P t‖ ≤ C := fun j ↦ by
+      |t| ^ j * ‖X_P ε ℓ P t‖ ≤ C := fun j ↦ by
     refine ⟨(1 + |β ε|) * (1 + ℓ⁻¹) ^ 3 * ((2 : ℝ) ^ (j + 3) * Gamma (ℓ / 2 + (j + 3)) *
       exp (2 * |ℓ| * saddleShellTotalVariation ε)), ?_, fun t ht ↦ ?_⟩
     · have hpos : 0 < Gamma (ℓ / 2 + ((j : ℝ) + 3)) := Real.Gamma_pos_of_pos (by positivity)
@@ -1117,17 +1117,17 @@ theorem spectrum_norm_moment_integrable {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 
               field_simp [hℓ.ne']
               nlinarith
           _ = (1 + |β ε|) * (1 + ℓ⁻¹) ^ 3 * |t| ^ 3 := by ring
-      unfold spectrum
+      unfold X_P
       calc |t| ^ j * ‖E ε ℓ t * P ((t : ℂ) / (ℓ : ℂ))‖
           = |t| ^ j * ‖E ε ℓ t‖ * ‖P ((t : ℂ) / (ℓ : ℂ))‖ := by rw [norm_mul]; ring
         _ ≤ |t| ^ j * ‖E ε ℓ t‖ * ((1 + |β ε|) * (1 + ℓ⁻¹) ^ 3 * |t| ^ 3) := by gcongr
         _ = (1 + |β ε|) * (1 + ℓ⁻¹) ^ 3 * (|t| ^ (j + 3) * ‖E ε ℓ t‖) := by rw [pow_add]; ring
         _ ≤ _ := by
             simpa only [Nat.cast_add, Nat.cast_ofNat] using mul_le_mul_of_nonneg_left
-              (saddleEnvelope_vertical_polynomial_bound hε hℓ horder t (j + 3))
+              (E_vertical_polynomial_bound hε hℓ horder t (j + 3))
               (by positivity : (0 : ℝ) ≤ (1 + |β ε|) * (1 + ℓ⁻¹) ^ 3)
   simpa [norm_mul, norm_pow, Complex.norm_real, Real.norm_eq_abs] using
-    (integrable_of_continuous_polynomial_decay (spectrum_continuous hε hℓ horder hP.continuous)
+    (integrable_of_continuous_polynomial_decay (X_P_continuous hε hℓ horder hP.continuous)
       hdecay k).norm
 
 /-- If all moments of a continuous `F` are integrable, so are all moments of `y ↦ F(-2πy)`. -/
@@ -1149,13 +1149,13 @@ theorem integrable_norm_moment_comp_neg_two_pi {F : ℝ → ℂ} (hF : Continuou
   simpa [neg_mul, mul_assoc] using key
 
 /-- The Fourier data `y ↦ X_P(-2πy)` of report (40). -/
-def fourierData (ε ℓ : ℝ) (P : ℂ → ℂ) (y : ℝ) : ℂ := spectrum ε ℓ P (-(2 * π * y))
+def fourierData (ε ℓ : ℝ) (P : ℂ → ℂ) (y : ℝ) : ℂ := X_P ε ℓ P (-(2 * π * y))
 
 theorem fourierData_norm_moment_integrable {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (k : ℕ) :
     Integrable fun y : ℝ ↦ ‖y‖ ^ k * ‖fourierData ε ℓ P y‖ :=
-  integrable_norm_moment_comp_neg_two_pi (spectrum_continuous hε hℓ horder hP.continuous)
-    (fun j ↦ spectrum_norm_moment_integrable hε hℓ horder hP j) k
+  integrable_norm_moment_comp_neg_two_pi (X_P_continuous hε hℓ horder hP.continuous)
+    (fun j ↦ X_P_norm_moment_integrable hε hℓ horder hP j) k
 
 /-! ### The profiles `f_±` as Fourier transforms -/
 
@@ -1168,14 +1168,14 @@ theorem mellinInv_eq_fourier (σ : ℝ) (F : ℂ → ℂ) {r : ℝ} (hr : 0 < r)
   simpa using (Complex.ofReal_cpow hr.le (-σ)).symm
 
 /-- Report (40): `f_P(r) = r^{-λ} 𝓕(X_P(-2π ·))(log r)` for `r > 0`. -/
-theorem mellinProfile_eq_fourier (ε ℓ : ℝ) (P : ℂ → ℂ) (c : ℝ) {r : ℝ} (hr : 0 < r) :
-    mellinProfile ε ℓ P c r = (r ^ (-ℓ) : ℝ) * (𝓕 (fourierData ε ℓ P)) (log r) := by
-  have hline : (fun y : ℝ ↦ mellinData ε ℓ P ((ℓ : ℂ) + 2 * (π : ℂ) * (y : ℂ) * I)) =
+theorem f_P_eq_fourier (ε ℓ : ℝ) (P : ℂ → ℂ) (c : ℝ) {r : ℝ} (hr : 0 < r) :
+    f_P ε ℓ P c r = (r ^ (-ℓ) : ℝ) * (𝓕 (fourierData ε ℓ P)) (log r) := by
+  have hline : (fun y : ℝ ↦ M_P ε ℓ P ((ℓ : ℂ) + 2 * (π : ℂ) * (y : ℂ) * I)) =
       fourierData ε ℓ P := funext fun y ↦ by
     rw [show ((ℓ : ℂ) + 2 * (π : ℂ) * (y : ℂ) * I) = (ℓ : ℂ) - I * ((-(2 * π * y) : ℝ) : ℂ) by
       push_cast; ring]
-    exact mellinData_vertical ε ℓ P _
-  rw [mellinProfile_of_ne_zero ε ℓ P c hr.ne', mellinInv_eq_fourier ℓ (mellinData ε ℓ P) hr,
+    exact M_P_vertical ε ℓ P _
+  rw [f_P_of_ne_zero ε ℓ P c hr.ne', mellinInv_eq_fourier ℓ (M_P ε ℓ P) hr,
     hline]
 
 /-- A profile of the shape `r ↦ r ^ (-λ) · G (log r)` with `G` smooth is smooth on `(0, ∞)`. -/
@@ -1197,25 +1197,25 @@ theorem contDiffOn_comp_norm {d : ℕ} {f : ℝ → ℂ} (hf : ContDiffOn ℝ �
   simpa only [Function.comp_def] using hf.comp hnorm fun x hx ↦ norm_pos_iff.2 hx
 
 /-- Lemma 4.3: `x ↦ f_P(‖x‖)` is smooth away from the origin. -/
-theorem mellinProfileFun_contDiffOn {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
+theorem f_PFun_contDiffOn {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (c : ℝ) :
-    ContDiffOn ℝ ∞ (mellinProfileFun ε d P c) ({0}ᶜ : Set (Euclidean d)) :=
+    ContDiffOn ℝ ∞ (f_PFun ε d P c) ({0}ᶜ : Set (Euclidean d)) :=
   contDiffOn_comp_norm (contDiffOn_profile
     (Real.contDiff_fourier (N := ⊤) fun n _ ↦ fourierData_norm_moment_integrable hε
       (div_pos (by exact_mod_cast hd) two_pos) horder hP n)
-    fun r hr ↦ mellinProfile_eq_fourier ε _ P c hr)
+    fun r hr ↦ f_P_eq_fourier ε _ P c hr)
 
 /-! ### Real-valuedness of the profiles -/
 
 /-- Conjugate symmetry of the spectrum of a saddle polynomial: `conj X_P(t) = X_P(-t)`. -/
-theorem spectrum_conj {ε : ℝ} {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (ℓ t : ℝ) :
-    starRingEnd ℂ (spectrum ε ℓ P t) = spectrum ε ℓ P (-t) := by
-  unfold spectrum
-  rw [map_mul, saddleEnvelope_conj, hP.conj_eq, map_div₀, Complex.conj_ofReal,
+theorem X_P_conj {ε : ℝ} {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (ℓ t : ℝ) :
+    starRingEnd ℂ (X_P ε ℓ P t) = X_P ε ℓ P (-t) := by
+  unfold X_P
+  rw [map_mul, E_conj, hP.conj_eq, map_div₀, Complex.conj_ofReal,
     Complex.conj_ofReal, Complex.ofReal_neg, neg_div]
 
 /-- Conjugate symmetry of a Mellin datum on the critical line, from that of its spectrum. -/
-theorem mellinData_conj_vertical {ℓ : ℝ} {M : ℂ → ℂ} {X : ℝ → ℂ}
+theorem M_P_conj_vertical {ℓ : ℝ} {M : ℂ → ℂ} {X : ℝ → ℂ}
     (hvert : ∀ t : ℝ, M ((ℓ : ℂ) - I * (t : ℂ)) = X t)
     (hconj : ∀ t : ℝ, starRingEnd ℂ (X t) = X (-t)) (t : ℝ) :
     starRingEnd ℂ (M ((ℓ : ℂ) + (t : ℂ) * I)) = M ((ℓ : ℂ) + (-t : ℂ) * I) := by
@@ -1258,44 +1258,44 @@ theorem mellinInv_real_of_hermitian (σ : ℝ) (F : ℂ → ℂ)
   simp only [Complex.real_smul, map_mul, Complex.conj_ofReal, hint]
 
 /-- Lemma 4.3: the profile `f_P` of a saddle polynomial is real on `[0, ∞)`. -/
-theorem mellinProfile_im {ε : ℝ} {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (ℓ c : ℝ) {r : ℝ}
-    (hr : 0 ≤ r) : (mellinProfile ε ℓ P c r).im = 0 := by
-  unfold mellinProfile
+theorem f_P_im {ε : ℝ} {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (ℓ c : ℝ) {r : ℝ}
+    (hr : 0 ≤ r) : (f_P ε ℓ P c r).im = 0 := by
+  unfold f_P
   split_ifs with h
   · simp
   · exact mellinInv_real_of_hermitian _ _
-      (mellinData_conj_vertical (mellinData_vertical ε ℓ P) (spectrum_conj hP ℓ)) (hr.lt_of_ne' h)
+      (M_P_conj_vertical (M_P_vertical ε ℓ P) (X_P_conj hP ℓ)) (hr.lt_of_ne' h)
 
 /-- Lemma 4.3: `x ↦ f_P(‖x‖)` is real valued. -/
-theorem mellinProfileFun_im {ε : ℝ} {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (d : ℕ) (c : ℝ) :
-    IsRealValued (mellinProfileFun ε d P c) := fun x ↦ mellinProfile_im hP _ c (norm_nonneg x)
+theorem f_PFun_im {ε : ℝ} {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (d : ℕ) (c : ℝ) :
+    IsRealValued (f_PFun ε d P c) := fun x ↦ f_P_im hP _ c (norm_nonneg x)
 
 /-! ### The multiplier identity -/
 
 /-- The multiplier identity `m_λ(t) E_λ(-t) = E_λ(t)` for the envelope. -/
-theorem mellinMultiplier_mul_E_neg {ε ℓ : ℝ} (hℓ : 0 < ℓ) (t : ℝ) :
+theorem m_ℓ_mul_E_neg {ε ℓ : ℝ} (hℓ : 0 < ℓ) (t : ℝ) :
     m_ℓ ℓ t * E ε ℓ (-t) = E ε ℓ t := by
   have hphase : Complex.exp (I * (t : ℂ) * (log π : ℂ)) *
       Complex.exp (I * (-t : ℂ) * (log π : ℂ) / 2) =
         Complex.exp (I * (t : ℂ) * (log π : ℂ) / 2) := by
     rw [← Complex.exp_add]; congr 1; ring
   unfold m_ℓ E
-  rw [Complex.ofReal_neg, neg_div, mellinShellPhase_neg,
+  rw [Complex.ofReal_neg, neg_div, h_ε_neg,
     show ((ℓ : ℂ) - I * (-t : ℂ)) / 2 = ((ℓ : ℂ) + I * (t : ℂ)) / 2 by ring]
   calc _ = Complex.exp (I * (t : ℂ) * (log π : ℂ)) *
         Complex.exp (I * (-t : ℂ) * (log π : ℂ) / 2) *
         Complex.Gamma (((ℓ : ℂ) - I * (t : ℂ)) / 2) *
         Complex.exp ((ℓ : ℂ) * h_ε ε ((t : ℂ) / (ℓ : ℂ))) := by
-          field_simp [mellinMultiplier_denominator_ne_zero hℓ t]
+          field_simp [m_ℓ_denominator_ne_zero hℓ t]
     _ = _ := by rw [hphase]
 
 /-- The multiplier identity `m_λ(t) X_P(-t) = X_Q(t)` of report (40) whenever `P(-ζ) = Q(ζ)`;
 the cases `(P, Q) = (P₋, P₊)` and `(P₀, P₀)` give `f̂₋ = f₊` and `f̂₀ = f₀`. -/
-theorem mellinMultiplier_mul_spectrum_neg {ε ℓ : ℝ} (hℓ : 0 < ℓ) {P Q : ℂ → ℂ}
+theorem m_ℓ_mul_X_P_neg {ε ℓ : ℝ} (hℓ : 0 < ℓ) {P Q : ℂ → ℂ}
     (hPQ : ∀ z : ℂ, P (-z) = Q z) (t : ℝ) :
-    m_ℓ ℓ t * spectrum ε ℓ P (-t) = spectrum ε ℓ Q t := by
-  unfold spectrum
-  rw [Complex.ofReal_neg, neg_div, hPQ, ← mul_assoc, mellinMultiplier_mul_E_neg hℓ]
+    m_ℓ ℓ t * X_P ε ℓ P (-t) = X_P ε ℓ Q t := by
+  unfold X_P
+  rw [Complex.ofReal_neg, neg_div, hPQ, ← mul_assoc, m_ℓ_mul_E_neg hℓ]
 
 end
 

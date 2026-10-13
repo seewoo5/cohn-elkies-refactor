@@ -72,55 +72,55 @@ section SaddlePair
 
 variable {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε)
 
-theorem isRealValued_plusSaddleSchwartz : IsRealValued (plusSaddleSchwartz hε hd horder) :=
+theorem isRealValued_fPlusSchwartz : IsRealValued (fPlusSchwartz hε hd horder) :=
   plusSaddle_real_of_source fun _ ↦ rfl
 
-theorem isRealValued_minusSaddleSchwartz : IsRealValued (minusSaddleSchwartz hε hd horder) :=
+theorem isRealValued_fMinusSchwartz : IsRealValued (fMinusSchwartz hε hd horder) :=
   minusSaddle_real_of_source fun _ ↦ rfl
 
-theorem isRadial_plusSaddleSchwartz : IsRadial (plusSaddleSchwartz hε hd horder) :=
+theorem isRadial_fPlusSchwartz : IsRadial (fPlusSchwartz hε hd horder) :=
   isRadial_of_source (F := fPlus ε ((d : ℝ) / 2)) fun _ ↦ rfl
 
-theorem isRadial_minusSaddleSchwartz : IsRadial (minusSaddleSchwartz hε hd horder) :=
+theorem isRadial_fMinusSchwartz : IsRadial (fMinusSchwartz hε hd horder) :=
   isRadial_of_source (F := fMinus ε ((d : ℝ) / 2)) fun _ ↦ rfl
 
 /-- Report (40): `𝓕 f₋ = f₊`. -/
-theorem fourier_minusSaddleSchwartz :
-    (𝓕 (minusSaddleSchwartz hε hd horder) : TestFunction d) = plusSaddleSchwartz hε hd horder :=
+theorem fourier_fMinusSchwartz :
+    (𝓕 (fMinusSchwartz hε hd horder) : TestFunction d) = fPlusSchwartz hε hd horder :=
   saddleSource_fourier_minus_eq_plus hε hd horder _ _ (fun _ ↦ rfl) (fun _ ↦ rfl)
 
 /-- Report (83): `f₋(0) = f₊(0)`. -/
-theorem minusSaddleSchwartz_zero_eq :
-    minusSaddleSchwartz hε hd horder 0 = plusSaddleSchwartz hε hd horder 0 :=
+theorem fMinusSchwartz_zero_eq :
+    fMinusSchwartz hε hd horder 0 = fPlusSchwartz hε hd horder 0 :=
   saddleSource_zero_eq (ε := ε) _ _ (fun _ ↦ rfl) (fun _ ↦ rfl)
 
 /-- `f₊ - f₋ = 𝓕 f₋ - f₋` is the anti-self-Fourier part of `f₋` (report (40)). -/
-theorem antiFourierPart_minusSaddleSchwartz :
-    antiFourierPart (minusSaddleSchwartz hε hd horder) =
-      plusSaddleSchwartz hε hd horder - minusSaddleSchwartz hε hd horder := by
-  rw [antiFourierPart, fourier_minusSaddleSchwartz]
+theorem antiFourierPart_fMinusSchwartz :
+    antiFourierPart (fMinusSchwartz hε hd horder) =
+      fPlusSchwartz hε hd horder - fMinusSchwartz hε hd horder := by
+  rw [antiFourierPart, fourier_fMinusSchwartz]
 
 /-- Report, proof of Theorem 1.2: `g_{ε,d,-} = f₊ - f₋` is a real radial test function with
 `𝓕 g = -g` (by (40) and Fourier inversion) and `g(0) = f₊(0) - f₋(0) = 0` (by (83)); it is a
 radial eigenfunction with eigenvalue `-1` once it is known to be nonzero. -/
-def minusSaddleEigenfunction
-    (hne : plusSaddleSchwartz hε hd horder - minusSaddleSchwartz hε hd horder ≠ 0) :
+def gMinus
+    (hne : fPlusSchwartz hε hd horder - fMinusSchwartz hε hd horder ≠ 0) :
     RadialEigenfunction d (-1) where
-  toFun := plusSaddleSchwartz hε hd horder - minusSaddleSchwartz hε hd horder
+  toFun := fPlusSchwartz hε hd horder - fMinusSchwartz hε hd horder
   real := by
     intro x
-    rw [sub_apply, Complex.sub_im, isRealValued_plusSaddleSchwartz hε hd horder x,
-      isRealValued_minusSaddleSchwartz hε hd horder x, sub_zero]
+    rw [sub_apply, Complex.sub_im, isRealValued_fPlusSchwartz hε hd horder x,
+      isRealValued_fMinusSchwartz hε hd horder x, sub_zero]
   radial := by
     intro x y hxy
-    rw [sub_apply, sub_apply, isRadial_plusSaddleSchwartz hε hd horder x y hxy,
-      isRadial_minusSaddleSchwartz hε hd horder x y hxy]
+    rw [sub_apply, sub_apply, isRadial_fPlusSchwartz hε hd horder x y hxy,
+      isRadial_fMinusSchwartz hε hd horder x y hxy]
   ne_zero := hne
   fourier_eq := by
-    rw [← antiFourierPart_minusSaddleSchwartz hε hd horder,
-      fourier_antiFourierPart _ (isRadial_minusSaddleSchwartz hε hd horder)]
+    rw [← antiFourierPart_fMinusSchwartz hε hd horder,
+      fourier_antiFourierPart _ (isRadial_fMinusSchwartz hε hd horder)]
     simp
-  zero := by rw [sub_apply, minusSaddleSchwartz_zero_eq hε hd horder, sub_self]
+  zero := by rw [sub_apply, fMinusSchwartz_zero_eq hε hd horder, sub_self]
 
 end SaddlePair
 
@@ -132,26 +132,26 @@ outside the ball of radius `R_{ε,d}` (there `f₊ ≥ 0 > f₋`). -/
 theorem eventually_exists_radialEigenfunction_neg_one : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ᶠ d : ℕ in atTop, ∃ g : RadialEigenfunction d (-1),
       ∀ x : Euclidean d, R_ε ε d ≤ ‖x‖ → 0 < (g.toFun x).re := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
     saddleSourceEventualSigns, eventually_fMinus_re_neg_of_radius] with ε hε₀ horder hsigns hneg
   have hε : 0 < ε := hε₀
   filter_upwards [hsigns, hneg, eventually_gt_atTop 0] with d hsign hneg_d hd0
   have hpos : ∀ x : Euclidean d, R_ε ε d ≤ ‖x‖ →
-      0 < ((plusSaddleSchwartz hε hd0 horder - minusSaddleSchwartz hε hd0 horder) x).re := by
+      0 < ((fPlusSchwartz hε hd0 horder - fMinusSchwartz hε hd0 horder) x).re := by
     intro x hx
     have h1 : 0 ≤ (fPlusFun ε d x).re := hsign.1 x
     have h2 : (fMinusFun ε d x).re < 0 := hneg_d ‖x‖ hx
-    rw [sub_apply, Complex.sub_re, plusSaddleSchwartz_apply, minusSaddleSchwartz_apply]
+    rw [sub_apply, Complex.sub_re, fPlusSchwartz_apply, fMinusSchwartz_apply]
     linarith
-  have hne : plusSaddleSchwartz hε hd0 horder - minusSaddleSchwartz hε hd0 horder ≠ 0 := by
+  have hne : fPlusSchwartz hε hd0 horder - fMinusSchwartz hε hd0 horder ≠ 0 := by
     intro hzero
     have hx : ‖R_ε ε d • radialUnitDirection hd0‖ = R_ε ε d := by
       rw [norm_smul, norm_radialUnitDirection hd0, mul_one, Real.norm_eq_abs,
-        abs_of_pos (saddleSourceRadius_pos ε d)]
+        abs_of_pos (R_ε_pos ε d)]
     have h := hpos (R_ε ε d • radialUnitDirection hd0) hx.symm.le
     rw [hzero] at h
     simp at h
-  exact ⟨minusSaddleEigenfunction hε hd0 horder hne, hpos⟩
+  exact ⟨gMinus hε hd0 horder hne, hpos⟩
 
 /-! ### `A_ς(d) ≤ R_{ε,d}` and the `limsup` bound -/
 
@@ -187,7 +187,7 @@ theorem eventually_limsup_signUncertaintyConstant_div_sqrt_le (ς : ℤˣ) :
   filter_upwards [self_mem_nhdsWithin, eventually_signUncertaintyConstant_le ς] with ε hε hle
   have hlim : Tendsto (fun d : ℕ ↦ ENNReal.ofReal (R_ε ε d / √(d : ℝ))) atTop
       (𝓝 (ENNReal.ofReal (α_ε ε))) :=
-    ENNReal.tendsto_ofReal (tendsto_saddleSourceRadius_normalized hε)
+    ENNReal.tendsto_ofReal (tendsto_R_ε_normalized hε)
   refine (limsup_le_limsup ?_).trans hlim.limsup_eq.le
   filter_upwards [hle, eventually_gt_atTop 0] with d hd hd0
   have hsq : 0 < √(d : ℝ) := Real.sqrt_pos.2 (Nat.cast_pos.2 hd0)
@@ -199,7 +199,7 @@ theorem eventually_limsup_signUncertaintyConstant_div_sqrt_le (ς : ℤˣ) :
 theorem limsup_signUncertaintyConstant_div_sqrt_le (ς : ℤˣ) :
     limsup (fun d : ℕ ↦ signUncertaintyConstant ς d / ENNReal.ofReal (Real.sqrt d)) atTop ≤
       ENNReal.ofReal (Real.pi⁻¹) :=
-  ge_of_tendsto (ENNReal.tendsto_ofReal tendsto_limitingSaddleRadius)
+  ge_of_tendsto (ENNReal.tendsto_ofReal tendsto_α_ε)
     (eventually_limsup_signUncertaintyConstant_div_sqrt_le ς)
 
 end

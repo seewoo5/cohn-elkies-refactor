@@ -167,8 +167,8 @@ theorem norm_integral_w_B_cosRem_le {ε : ℝ} (hε : 0 < ε) (u T : ℝ) :
       |T| ^ 3 / 6 * upperPositiveShellThirdMoment ε (u - 1) := by
   have hB : (0 : ℝ) ≤ Bε ε := by unfold Bε; positivity
   refine (norm_integral_cosRem_le (w_B ε) (by linarith) hB
-    (positiveShellDensity_continuous ε).continuousOn
-    (fun a _ ↦ by unfold w_B; exact div_nonneg (shellWeight_pos ε).le (cosh_pos a).le) u T).trans_eq
+    (w_B_continuous ε).continuousOn
+    (fun a _ ↦ by unfold w_B; exact div_nonneg (Qε_pos ε).le (cosh_pos a).le) u T).trans_eq
     ?_
   unfold upperPositiveShellThirdMoment
   congr 1
@@ -185,7 +185,7 @@ theorem norm_integral_w_s_cosRem_le {ε : ℝ} (hε : 0 < ε) (horder : a₀ε �
     have hd : 0 < 2 * a ^ 2 * cosh a := by positivity
     simpa using div_nonneg (mul_nonneg (hmargin a ha) (exp_pos _).le) hd.le
   have hbound := norm_integral_cosRem_le (fun a : ℝ ↦ -w_s ε a) horder ha₀.le
-    (shortShellDensity_continuousOn_support hε).neg hnonneg u T
+    (w_s_continuousOn_support hε).neg hnonneg u T
   have hneg : (∫ a in a₀ε ε..Aε ε, ((-w_s ε a : ℝ) : ℂ) * cosRem a u T) =
       -∫ a in a₀ε ε..Aε ε, (w_s ε a : ℂ) * cosRem a u T := by
     rw [← intervalIntegral.integral_neg]
@@ -238,7 +238,7 @@ theorem integral_cosRem_eq (w : ℝ → ℝ) {b c : ℝ} (hbc : b ≤ c) (hw : C
 /-- The centred shell phase `ℓ (h_ε(T + iu) - h_ε(iu) + i T h_ε'(u))` of report (46). -/
 def shellPhase (ε ℓ u T : ℝ) : ℂ :=
   (ℓ : ℂ) * (h_ε ε ((T : ℂ) + I * (u : ℂ)) - (h_εI ε u : ℂ) +
-    I * (T * saddleSourceShellDerivative ε u : ℂ))
+    I * (T * H_ε ε u : ℂ))
 
 /-- The quadratic remainder of the shell phase, integrated over both shells. -/
 def shellRem (ε u T : ℝ) : ℂ := (∫ a in a₀ε ε..Aε ε, (w_s ε a : ℂ) * cosRem a u T) +
@@ -246,7 +246,7 @@ def shellRem (ε u T : ℝ) : ℂ := (∫ a in a₀ε ε..Aε ε, (w_s ε a : �
 
 theorem shellRem_eq {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) (u T : ℝ) :
     shellRem ε u T = h_ε ε ((T : ℂ) + I * (u : ℂ)) - (h_εI ε u : ℂ) +
-      I * (T * saddleSourceShellDerivative ε u : ℂ) +
+      I * (T * H_ε ε u : ℂ) +
       (T ^ 2 / 2 * upperNetShellVariance ε (u - 1) : ℂ) := by
   have hVs : (∫ a in a₀ε ε..Aε ε, w_s ε a * a ^ 2 * cosh (u * a)) = -V_s ε (u - 1) := by
     unfold V_s
@@ -261,14 +261,14 @@ theorem shellRem_eq {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) (u
     have harg (a : ℝ) : Complex.cos ((a : ℂ) * (I * (u : ℂ))) = (cosh (u * a) : ℂ) := by
       rw [show (a : ℂ) * (I * (u : ℂ)) = ((u * a : ℝ) : ℂ) * I by push_cast; ring,
         Complex.cos_mul_I, ← Complex.ofReal_cosh]
-    rw [← mellinShellPhase_imaginary]
+    rw [← h_ε_imaginary]
     unfold h_ε
     congr 1 <;> exact intervalIntegral.integral_congr fun a _ ↦ by rw [harg]
   unfold shellRem
-  rw [integral_cosRem_eq (w_s ε) horder (shortShellDensity_continuousOn_support hε) u T,
+  rw [integral_cosRem_eq (w_s ε) horder (w_s_continuousOn_support hε) u T,
     integral_cosRem_eq (w_B ε) (by linarith : Bε ε ≤ Bε ε + 1)
-      (positiveShellDensity_continuous ε).continuousOn u T, hVs, hVB, hI]
-  unfold h_ε saddleSourceShellDerivative upperNetShellVariance
+      (w_B_continuous ε).continuousOn u T, hVs, hVB, hI]
+  unfold h_ε H_ε upperNetShellVariance
   push_cast
   ring
 
@@ -313,7 +313,7 @@ theorem integrableOn_Gker {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η) (T : �
   have hmeas : Measurable (Gker ℓ η T) := by unfold Gker expI μ_ℓ; fun_prop
   refine hmajor.mono' hmeas.aestronglyMeasurable ?_
   filter_upwards [ae_restrict_mem measurableSet_Ioi] with a ha
-  have hd := upperGammaMeasureDensity_pos (η := η) hℓ ha
+  have hd := μ_ℓ_pos (η := η) hℓ ha
   unfold Gker
   rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hd]
   calc ‖expI (a * T) - 1 - I * (a * T : ℂ)‖ * μ_ℓ ℓ η a
@@ -330,7 +330,7 @@ def Gker₃ (ℓ η T a : ℝ) : ℂ :=
 
 theorem norm_Gker₃_le {ℓ η a : ℝ} (hℓ : 0 < ℓ) (ha : 0 < a) (T : ℝ) :
     ‖Gker₃ ℓ η T a‖ ≤ |T| ^ 3 / 6 * (a ^ 3 * μ_ℓ ℓ η a) := by
-  have hd := upperGammaMeasureDensity_pos (η := η) hℓ ha
+  have hd := μ_ℓ_pos (η := η) hℓ ha
   unfold Gker₃
   rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hd]
   calc ‖expI (a * T) - 1 - I * (a * T : ℂ) + ((a * T) ^ 2 / 2 : ℂ)‖ * μ_ℓ ℓ η a
@@ -595,13 +595,14 @@ noncomputable section
 open Filter MeasureTheory Real Set intervalIntegral
 open scoped Topology
 
-/-- Report (44): the stationary log radius `v_ℓ(u)`. -/
-def vℓ (ε ℓ u : ℝ) : ℝ :=
-  -(Real.log π) / 2 + Real.digamma (ℓ * (1 + u) / 2) / 2 + saddleSourceShellDerivative ε u
+/-- Report (44): the saddle log-radius `v(u)` for real `λ = ℓ` (`logRadius` is the case
+`λ = d/2`). -/
+def v_ℓ (ε ℓ u : ℝ) : ℝ :=
+  -(Real.log π) / 2 + Real.digamma (ℓ * (1 + u) / 2) / 2 + H_ε ε u
 
-theorem saddleSourceStationaryLogRadius_eq_saddleLogRadius (ε : ℝ) (d : ℕ) (u : ℝ) :
-    vℓ ε ((d : ℝ) / 2) u = logRadius ε d u := by
-  rw [saddleLogRadius_eq_digamma_add_shellDerivative]; rfl
+theorem v_ℓ_eq_logRadius (ε : ℝ) (d : ℕ) (u : ℝ) :
+    v_ℓ ε ((d : ℝ) / 2) u = logRadius ε d u := by
+  rw [logRadius_eq_digamma_add_H_ε]; rfl
 
 /-- The centred saddle phase `L_u(T)` of report (46): gamma part plus shell part. -/
 def L_u (ε ℓ u T : ℝ) : ℂ := G_ℓη ℓ (1 + u) T + shellPhase ε ℓ u T
@@ -614,7 +615,7 @@ theorem norm_L_u_add_le {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (hu : -
   have heq : L_u ε ℓ u T + (ℓ * V_u ε ℓ u / 2 * T ^ 2 : ℂ) =
       (G_ℓη ℓ (1 + u) T + (ℓ * V_γ ℓ (1 + u) / 2 * T ^ 2 : ℂ)) +
         (shellPhase ε ℓ u T + (ℓ * upperNetShellVariance ε (u - 1) / 2 * T ^ 2 : ℂ)) := by
-    unfold L_u V_u upperSaddleVariance
+    unfold L_u V_u V_uδ
     rw [show (2 : ℝ) + (u - 1) = 1 + u by ring]
     push_cast
     ring
@@ -654,26 +655,26 @@ theorem expL_eq {ε ℓ u : ℝ} (hℓ : 0 < ℓ) (hu : -1 < u) (v T : ℝ) :
     push_cast
     ring
   unfold expL saddleSourceNormalizedEnvelope mellinEnvelope saddleSourceContourEnvelopeScale
-  rw [saddleSourceMellinContour_shellArgument hℓ, saddleSourceMellinContour_gammaArgument, hpi,
+  rw [z_contour_shellArgument hℓ, z_contour_gammaArgument, hpi,
     hshell]
   push_cast
   field_simp [hπ, hG, hs]
 
 theorem expL_stationary_eq {ε ℓ u : ℝ} (hℓ : 0 < ℓ) (hu : -1 < u) (T : ℝ) :
-    expL ε ℓ u (vℓ ε ℓ u) T = Complex.exp (L_u ε ℓ u T) := by
+    expL ε ℓ u (v_ℓ ε ℓ u) T = Complex.exp (L_u ε ℓ u T) := by
   have hη : 0 < 1 + u := by linarith
   have hphase : Complex.exp (I * (ℓ * T * Real.log π / 2 : ℂ)) *
-      Complex.exp (I * (ℓ * T * vℓ ε ℓ u : ℂ)) =
+      Complex.exp (I * (ℓ * T * v_ℓ ε ℓ u : ℂ)) =
       Complex.exp (I * (ℓ * T / 2 * Real.digamma (ℓ * (1 + u) / 2) : ℂ)) *
-        Complex.exp (I * (ℓ * T * saddleSourceShellDerivative ε u : ℂ)) := by
+        Complex.exp (I * (ℓ * T * H_ε ε u : ℂ)) := by
     rw [← Complex.exp_add, ← Complex.exp_add]
     congr 1
-    unfold vℓ
+    unfold v_ℓ
     push_cast
     ring
   have hshell : Complex.exp (shellPhase ε ℓ u T) =
       Complex.exp ((ℓ : ℂ) * (h_ε ε ((T : ℂ) + I * (u : ℂ)) - (h_εI ε u : ℂ))) *
-        Complex.exp (I * (ℓ * T * saddleSourceShellDerivative ε u : ℂ)) := by
+        Complex.exp (I * (ℓ * T * H_ε ε u : ℂ)) := by
     rw [← Complex.exp_add]
     congr 1
     unfold shellPhase
@@ -689,7 +690,7 @@ theorem expL_stationary_eq {ε ℓ u : ℝ} (hℓ : 0 < ℓ) (hu : -1 < u) (T : 
 theorem norm_expL_sub_gaussian_le {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (hu : -1 < u)
     (horder : a₀ε ε ≤ Aε ε) (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) (T : ℝ)
     (hsmall : ℓ * M₃ ε ℓ (u - 1) / 6 * |T| ^ 3 ≤ 1) :
-    ‖expL ε ℓ u (vℓ ε ℓ u) T - (saddleSourceGaussianKernel ε ℓ u T : ℂ)‖ ≤
+    ‖expL ε ℓ u (v_ℓ ε ℓ u) T - (saddleSourceGaussianKernel ε ℓ u T : ℂ)‖ ≤
       2 * saddleSourceGaussianKernel ε ℓ u T * (ℓ * M₃ ε ℓ (u - 1) / 6 * |T| ^ 3) := by
   have hR := norm_L_u_add_le hε hℓ hu horder hmargin T
   have hg : 0 < saddleSourceGaussianKernel ε ℓ u T := by
@@ -718,11 +719,11 @@ for an arbitrary polynomial factor `P`. -/
 theorem norm_integral_sub_gaussian_le {ε ℓ u R q p : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (hu : -1 < u)
     (horder : a₀ε ε ≤ Aε ε) (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a)
     (hV : 0 < V_u ε ℓ u) (hq : 0 ≤ q) (hqone : q ≤ 1) (hp : 0 ≤ p) (P : ℂ → ℂ)
-    (hsource : Integrable fun T : ℝ ↦ expL ε ℓ u (vℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)))
+    (hsource : Integrable fun T : ℝ ↦ expL ε ℓ u (v_ℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)))
     (hcubic : ∀ T : ℝ, |T| ≤ R → ℓ * M₃ ε ℓ (u - 1) / 6 * |T| ^ 3 ≤ q)
     (hpoly : ∀ T : ℝ, |T| ≤ R →
       ‖P ((T : ℂ) + I * (u : ℂ)) - P (I * (u : ℂ))‖ ≤ p * ‖P (I * (u : ℂ))‖) :
-    ‖∫ T : ℝ in Icc (-R) R, (expL ε ℓ u (vℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)) -
+    ‖∫ T : ℝ in Icc (-R) R, (expL ε ℓ u (v_ℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)) -
         (saddleSourceGaussianKernel ε ℓ u T : ℂ) * P (I * (u : ℂ)))‖ ≤
       (2 * q + (1 + 2 * q) * p) * ‖P (I * (u : ℂ))‖ *
         ∫ T : ℝ, saddleSourceGaussianKernel ε ℓ u T := by
@@ -734,11 +735,11 @@ theorem norm_integral_sub_gaussian_le {ε ℓ u R q p : ℝ} (hε : 0 < ε) (h�
   have hmajor : Integrable fun T : ℝ ↦
       (2 * q + (1 + 2 * q) * p) * ‖P (I * (u : ℂ))‖ * saddleSourceGaussianKernel ε ℓ u T :=
     hgaussian.const_mul _
-  have hintegrable : Integrable fun T : ℝ ↦ expL ε ℓ u (vℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)) -
+  have hintegrable : Integrable fun T : ℝ ↦ expL ε ℓ u (v_ℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)) -
       (saddleSourceGaussianKernel ε ℓ u T : ℂ) * P (I * (u : ℂ)) :=
     hsource.sub (hgaussian.ofReal.mul_const _)
   have hpoint : ∀ T ∈ Icc (-R) R,
-      ‖expL ε ℓ u (vℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)) -
+      ‖expL ε ℓ u (v_ℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)) -
           (saddleSourceGaussianKernel ε ℓ u T : ℂ) * P (I * (u : ℂ))‖ ≤
         (2 * q + (1 + 2 * q) * p) * ‖P (I * (u : ℂ))‖ * saddleSourceGaussianKernel ε ℓ u T := by
     intro T hT
@@ -750,9 +751,9 @@ theorem norm_integral_sub_gaussian_le {ε ℓ u R q p : ℝ} (hε : 0 < ε) (h�
       have h := norm_add_le (P ((T : ℂ) + I * (u : ℂ)) - P (I * (u : ℂ))) (P (I * (u : ℂ)))
       rw [sub_add_cancel] at h
       linarith [hpoly T (abs_le.mpr ⟨hT.1, hT.2⟩)]
-    rw [show expL ε ℓ u (vℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)) -
+    rw [show expL ε ℓ u (v_ℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)) -
         (saddleSourceGaussianKernel ε ℓ u T : ℂ) * P (I * (u : ℂ)) =
-        (expL ε ℓ u (vℓ ε ℓ u) T - (saddleSourceGaussianKernel ε ℓ u T : ℂ)) *
+        (expL ε ℓ u (v_ℓ ε ℓ u) T - (saddleSourceGaussianKernel ε ℓ u T : ℂ)) *
             P ((T : ℂ) + I * (u : ℂ)) +
           (saddleSourceGaussianKernel ε ℓ u T : ℂ) *
             (P ((T : ℂ) + I * (u : ℂ)) - P (I * (u : ℂ))) by ring]
@@ -777,12 +778,12 @@ theorem centeredIntegrand_centralGaussianError_le {ε ℓ u R q p : ℝ} (hε : 
     (hcubic : ∀ T : ℝ, |T| ≤ R → ℓ * M₃ ε ℓ (u - 1) / 6 * |T| ^ 3 ≤ q)
     (hpoly : ∀ T : ℝ, |T| ≤ R →
       ‖P ((T : ℂ) + I * (u : ℂ)) - P (I * (u : ℂ))‖ ≤ p * ‖P (I * (u : ℂ))‖) :
-    ‖∫ T : ℝ in Icc (-R) R, (centeredIntegrand ε ℓ P u (vℓ ε ℓ u) T -
+    ‖∫ T : ℝ in Icc (-R) R, (centeredIntegrand ε ℓ P u (v_ℓ ε ℓ u) T -
         gaussianIntegrand ε ℓ P u T)‖ ≤
       (2 * q + (1 + 2 * q) * p) * ‖P (I * (u : ℂ))‖ *
         ∫ T : ℝ, saddleSourceGaussianKernel ε ℓ u T :=
   norm_integral_sub_gaussian_le hε hℓ hu horder hmargin hV hq hqone hp P
-    (centeredIntegrand_integrable hε hℓ hu horder hP (vℓ ε ℓ u)) hcubic hpoly
+    (centeredIntegrand_integrable hε hℓ hu horder hP (v_ℓ ε ℓ u)) hcubic hpoly
 
 end
 

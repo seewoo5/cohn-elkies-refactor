@@ -108,22 +108,22 @@ variable {d : ℕ} {ς : ℤˣ}
 
 theorem diffContOnCl_Z_g (hd : 0 < d) (g : RadialEigenfunction d ς) (R : ℝ) :
     DiffContOnCl ℂ (Z_g hd g.toFun R) (Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2)) :=
-  normalizedRadialMellinStrip_diffContOnCl hd g.toFun g.radial g.zero R
+  Z_g_diffContOnCl hd g.toFun g.radial g.zero R
 
 /-- Report (16): `|Z(y + iλ)| ≤ 1` on the top edge of the strip. -/
 theorem norm_Z_g_top_le_one (hd : 0 < d) (g : RadialEigenfunction d ς) (R y : ℝ) :
     ‖Z_g hd g.toFun R ((y : ℂ) + I * ((d : ℂ) / 2))‖ ≤ 1 :=
-  normalizedRadialMellinStrip_top_norm_le_one hd g.toFun g.radial g.ne_zero R y
+  Z_g_top_norm_le_one hd g.toFun g.radial g.ne_zero R y
 
 theorem exists_norm_Z_g_le (hd : 0 < d) (g : RadialEigenfunction d ς) (R : ℝ) :
     ∃ C : ℝ, 0 ≤ C ∧ ∀ z : ℂ, -((d : ℝ) / 2) ≤ z.im → z.im ≤ (d : ℝ) / 2 →
       ‖Z_g hd g.toFun R z‖ ≤ C :=
-  normalizedRadialMellinStrip_uniform_bound hd g.toFun g.radial g.zero R
+  Z_g_uniform_bound hd g.toFun g.radial g.zero R
 
 theorem integrable_Z_g_shifted (hd : 0 < d) (g : RadialEigenfunction d ς) {R : ℝ} (hR : 0 < R)
     {a : ℝ} (ha : a < (d : ℝ)) :
     Integrable (fun t : ℝ ↦ Z_g hd g.toFun R ((t : ℂ) + I * ((d : ℂ) / 2 - a))) :=
-  normalizedRadialMellinStrip_shifted_integrable hd g.toFun g.real hR ha
+  Z_g_shifted_integrable hd g.toFun g.real hR ha
 
 /-- Lemmas 3.2 and 3.6 of the report combined: the mass of a radial eigenfunction `g` in the
 ball of radius `R` is controlled by the `L¹` norm of `Z` on the interior line `Im z = σλ`:
@@ -142,7 +142,7 @@ theorem setIntegral_ball_norm_le (hd : 0 < d) (g : RadialEigenfunction d ς) {R 
       ((s : ℂ) + I * ((d : ℂ) / 2 - ((1 - σ) * ((d : ℝ) / 2) : ℝ))))
     (fun v ↦ by
       simpa only [Complex.ofReal_mul, Complex.ofReal_ofNat] using
-        normalizedRadialMellinStrip_shifted_fourier_inversion hd g.toFun g.radial g.real g.zero
+        Z_g_shifted_fourier_inversion hd g.toFun g.radial g.real g.zero
           hR haless v)
   rwa [show (d : ℂ) / 2 - ((1 - σ) * ((d : ℝ) / 2) : ℝ) = σ * ((d : ℂ) / 2) by push_cast; ring,
     g.setIntegral_Iic_abs_logProfile hd hR, div_le_iff₀ g.L1norm_pos] at hupper
@@ -154,7 +154,7 @@ report (14). -/
 def h_ℓ (ℓ R y : ℝ) : ℝ := ℓ * log (π * R ^ 2) + log ‖Complex.Gamma (-I * (y : ℂ) / 2)‖ -
     log ‖Complex.Gamma ((ℓ : ℂ) + I * (y : ℂ) / 2)‖
 
-theorem lowerGammaBoundaryLog_continuousOn {ℓ : ℝ} (hℓ : 0 < ℓ) (R : ℝ) {S : Set ℝ}
+theorem h_ℓ_continuousOn {ℓ : ℝ} (hℓ : 0 < ℓ) (R : ℝ) {S : Set ℝ}
     (hS : ∀ y ∈ S, y ≠ 0) : ContinuousOn (h_ℓ ℓ R) S := by
   have key : ∀ f : ℝ → ℂ, Continuous f → (∀ y ∈ S, ∀ m : ℕ, f y ≠ -(m : ℂ)) →
       ContinuousOn (fun y : ℝ ↦ log ‖Complex.Gamma (f y)‖) S := by
@@ -179,15 +179,15 @@ theorem lowerGammaBoundaryLog_continuousOn {ℓ : ℝ} (hℓ : 0 < ℓ) (R : ℝ
       (key (fun y : ℝ ↦ -I * (y : ℂ) / 2) (by fun_prop) hnumPole)).sub
     (key (fun y : ℝ ↦ (ℓ : ℂ) + I * (y : ℂ) / 2) (by fun_prop) fun y _ ↦ hdenPole y)
 
-theorem lowerGammaBoundaryLog_measurable {ℓ : ℝ} (hℓ : 0 < ℓ) (R : ℝ) : Measurable (h_ℓ ℓ R) :=
+theorem h_ℓ_measurable {ℓ : ℝ} (hℓ : 0 < ℓ) (R : ℝ) : Measurable (h_ℓ ℓ R) :=
   measurable_of_continuousOn_compl_singleton (0 : ℝ)
-    (lowerGammaBoundaryLog_continuousOn hℓ R fun y hy ↦ by simpa using hy)
+    (h_ℓ_continuousOn hℓ R fun y hy ↦ by simpa using hy)
 
 /-- Lemma 3.2 of the report: `log |Z(y - iλ)| ≤ h_λ(y)` on the bottom edge of the strip. -/
 theorem RadialEigenfunction.norm_Z_g_bottom_le_exp_h_ℓ {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
     (g : RadialEigenfunction d ς) {R : ℝ} (hR : 0 < R) (y : ℝ) (hy : y ≠ 0) :
     ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤ exp (h_ℓ ((d : ℝ) / 2) R y) := by
-  simpa [h_ℓ] using normalizedRadialMellinStrip_bottom_norm_le_gamma hd g.toFun g.radial g.zero
+  simpa [h_ℓ] using Z_g_bottom_norm_le_gamma hd g.toFun g.radial g.zero
     g.fourier_eq g.ne_zero R hR y hy
 
 /-- The Poisson extension `H_σ(s) = ∫ P_σ(T) h_λ(s - λT) dT` of the lower-boundary
@@ -242,7 +242,7 @@ theorem norm_gamma_neg_imaginary (y : ℝ) :
 
 /-- Even dimensions: the gamma recurrence (7) turns `h_n` into a Riemann sum; report, proof of
 Lemma 3.3. -/
-theorem lowerGammaBoundaryLog_integer (k : ℕ) (R : ℝ) {y : ℝ} (hy : y ≠ 0) :
+theorem h_ℓ_integer (k : ℕ) (R : ℝ) {y : ℝ} (hy : y ≠ 0) :
     h_ℓ (k : ℝ) R y = (k : ℝ) * log (π * R ^ 2) -
       ∑ j ∈ Finset.range k, log (√((j : ℝ) ^ 2 + (y / 2) ^ 2)) := by
   have hbase : ‖Complex.Gamma (I * (y : ℂ) / 2)‖ ≠ 0 :=
@@ -263,7 +263,7 @@ theorem lower_sqrtFactor_ge_abs_half (c y : ℝ) : |y| / 2 ≤ √(c ^ 2 + (y / 
   refine (Real.le_sqrt (by positivity) (by positivity)).2 ?_
   nlinarith [sq_nonneg c, sq_abs y]
 
-theorem lowerGammaBoundaryLog_integer_log_tail (k : ℕ) {R y : ℝ} (hR : 0 < R) (hy : y ≠ 0) :
+theorem h_ℓ_integer_log_tail (k : ℕ) {R y : ℝ} (hR : 0 < R) (hy : y ≠ 0) :
     h_ℓ (k : ℝ) R y ≤ (k : ℝ) * log (2 * π * R ^ 2 / |y|) := by
   have hyhalf : 0 < |y| / 2 := by positivity
   have hsum : (k : ℝ) * log (|y| / 2) ≤
@@ -275,7 +275,7 @@ theorem lowerGammaBoundaryLog_integer_log_tail (k : ℕ) {R y : ℝ} (hR : 0 < R
     rw [← Real.log_div (mul_ne_zero pi_ne_zero (pow_ne_zero 2 hR.ne')) hyhalf.ne']
     congr 1
     field_simp [abs_ne_zero.mpr hy]
-  rw [lowerGammaBoundaryLog_integer k R hy, ← hlogratio]
+  rw [h_ℓ_integer k R hy, ← hlogratio]
   nlinarith [hsum]
 
 theorem lower_abs_log_sqrtFactor_le {c y : ℝ} (hc : 0 ≤ c) (hy : 0 < y) :
@@ -328,7 +328,7 @@ theorem lower_exp_log_sqrtFactor_integrable {a c : ℝ} (ha : 0 < a) (hc : 0 ≤
     measurableSet_Ioi
   simp only [abs_of_pos (mem_Ioi.mp hy)]
 
-theorem lowerGammaBoundaryLog_integer_exp_integrable {a : ℝ} (ha : 0 < a) (k : ℕ) (R : ℝ) :
+theorem h_ℓ_integer_exp_integrable {a : ℝ} (ha : 0 < a) (k : ℕ) (R : ℝ) :
     Integrable (fun y : ℝ ↦ exp ((-a) * |y|) * h_ℓ (k : ℝ) R y) := by
   have hconstant : Integrable (fun y : ℝ ↦ ((k : ℝ) * log (π * R ^ 2)) * exp ((-a) * |y|)) :=
     (integrable_exp_neg_mul_abs ha).const_mul ((k : ℝ) * log (π * R ^ 2))
@@ -341,7 +341,7 @@ theorem lowerGammaBoundaryLog_integer_exp_integrable {a : ℝ} (ha : 0 < a) (k :
     simpa only [mul_sub, Finset.mul_sum, mul_comm] using! hconstant.sub hsum
   refine hmodel.congr ?_
   filter_upwards [Measure.ae_ne (volume : Measure ℝ) 0] with y hy
-  rw [lowerGammaBoundaryLog_integer k R hy]
+  rw [h_ℓ_integer k R hy]
 
 /-- Integrability of `K̃_λ(z, ·) h_λ` on one half-line `S`, given the kernel bound with sign `u`
 (`u = 1` on `(0, ∞)`, `u = -1` on `(-∞, 0)`). -/
@@ -355,7 +355,7 @@ private theorem integrableOn_K'_ℓ_mul_h_ℓ {ℓ R : ℝ} (hℓ : 0 < ℓ) {z 
     IntegrableOn (fun y : ℝ ↦ K'_ℓ ℓ z y * (h_ℓ ℓ R y : ℂ)) S := by
   have hcast : ContinuousOn (fun y : ℝ ↦ (h_ℓ ℓ R y : ℂ)) S := by
     simpa [Function.comp_def] using Complex.continuous_ofReal.comp_continuousOn
-      (lowerGammaBoundaryLog_continuousOn hℓ R hne)
+      (h_ℓ_continuousOn hℓ R hne)
   refine (hgammaabs.integrableOn.const_mul (exp (u * (π * z.re / (2 * ℓ))) /
     (2 * ℓ * sin (π * (z.im + ℓ) / (2 * ℓ))))).mono'
     ((hcont.mul hcast).aestronglyMeasurable hS) ?_
@@ -372,7 +372,7 @@ private theorem integrableOn_K'_ℓ_mul_h_ℓ {ℓ R : ℝ} (hℓ : 0 < ℓ) {z 
 
 /-- The regularized strip kernel times the boundary majorant is integrable on the boundary
 line; report, proof of Lemma 3.2. -/
-theorem lowerStripGammaOuter_integrable_of_exp_integrable {ℓ R : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+theorem integrable_K'_ℓ_mul_h_ℓ_of_exp_integrable {ℓ R : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ)
     (hgamma : Integrable (fun y : ℝ ↦ exp (-(π / (2 * ℓ)) * |y|) * h_ℓ ℓ R y)) :
     Integrable (fun y : ℝ ↦ K'_ℓ ℓ z y * (h_ℓ ℓ R y : ℂ)) := by
@@ -382,15 +382,15 @@ theorem lowerStripGammaOuter_integrable_of_exp_integrable {ℓ R : ℝ} (hℓ : 
     integrableOn_Ici_iff_integrableOn_Ioi]
   exact ⟨integrableOn_K'_ℓ_mul_h_ℓ hℓ hgammaabs _ (-1) measurableSet_Iio
       (fun y hy ↦ (mem_Iio.mp hy).ne)
-      (stripRegularizedHolomorphicPoissonKernel_continuousOn_Iio hℓ hz)
+      (K'_ℓ_continuousOn_Iio hℓ hz)
       (fun y hy ↦ by
-        simpa using norm_stripRegularizedHolomorphicPoissonKernel_of_neg hℓ hz (mem_Iio.mp hy))
+        simpa using norm_K'_ℓ_of_neg hℓ hz (mem_Iio.mp hy))
       (fun y hy ↦ by rw [abs_of_neg (mem_Iio.mp hy)]; ring),
     integrableOn_K'_ℓ_mul_h_ℓ hℓ hgammaabs _ 1 measurableSet_Ioi (fun y hy ↦ (mem_Ioi.mp hy).ne')
-      (stripRegularizedHolomorphicPoissonKernel_continuousOn_Ioi hℓ hz)
+      (K'_ℓ_continuousOn_Ioi hℓ hz)
       (fun y hy ↦ by
         simpa using
-          norm_stripRegularizedHolomorphicPoissonKernel_of_nonneg hℓ hz (mem_Ioi.mp hy).le)
+          norm_K'_ℓ_of_nonneg hℓ hz (mem_Ioi.mp hy).le)
       (fun y hy ↦ by rw [abs_of_pos (mem_Ioi.mp hy)]; ring)⟩
 
 theorem norm_halfIntegerGammaFactor (j : ℕ) (y : ℝ) :
@@ -408,7 +408,7 @@ theorem halfIntegerGammaFactor_ne_zero (j : ℕ) (y : ℝ) :
 
 /-- Odd dimensions: the gamma identities (7) split `h_λ` into a midpoint Riemann sum and a
 boundary correction; report, proof of Lemma 3.3. -/
-theorem lowerGammaBoundaryLog_halfInteger_factorized (k : ℕ) (R : ℝ) {y : ℝ} (_hy : y ≠ 0) :
+theorem h_ℓ_halfInteger_factorized (k : ℕ) (R : ℝ) {y : ℝ} (_hy : y ≠ 0) :
     h_ℓ ((k : ℝ) + 1 / 2) R y = ((k : ℝ) + 1 / 2) * log (π * R ^ 2) -
       ∑ j ∈ Finset.range k, log (√(((j : ℝ) + 1 / 2) ^ 2 + (y / 2) ^ 2)) +
       (log ‖Complex.Gamma (I * (y : ℂ) / 2)‖ -
@@ -442,17 +442,17 @@ theorem natCast_div_two_cases (d : ℕ) :
   · exact Or.inl ⟨k, by push_cast; ring⟩
   · exact Or.inr ⟨k, by push_cast; ring⟩
 
-theorem lowerGammaBoundaryLog_halfInteger (k : ℕ) (R : ℝ) {y : ℝ} (hy : y ≠ 0) :
+theorem h_ℓ_halfInteger (k : ℕ) (R : ℝ) {y : ℝ} (hy : y ≠ 0) :
     h_ℓ ((k : ℝ) + 1 / 2) R y = ((k : ℝ) + 1 / 2) * log (π * R ^ 2) -
         ∑ j ∈ Finset.range k, log (√(((j : ℝ) + 1 / 2) ^ 2 + (y / 2) ^ 2)) +
         1 / 2 * log (coth (π * |y| / 2) / (|y| / 2)) := by
-  rw [lowerGammaBoundaryLog_halfInteger_factorized k R hy]
+  rw [h_ℓ_halfInteger_factorized k R hy]
   congr 1
   simpa [abs_div, mul_div_assoc] using
     Complex.log_norm_Gamma_I_mul_sub_log_norm_Gamma_one_half_add_I_mul
       (x := y / 2) (div_ne_zero hy two_ne_zero)
 
-theorem lowerGammaBoundaryLog_halfInteger_log_tail (k : ℕ) {R y : ℝ} (hR : 0 < R) (hy : y ≠ 0) :
+theorem h_ℓ_halfInteger_log_tail (k : ℕ) {R y : ℝ} (hR : 0 < R) (hy : y ≠ 0) :
     h_ℓ ((k : ℝ) + 1 / 2) R y ≤ ((k : ℝ) + 1 / 2) * log (2 * π * R ^ 2 / |y|) +
       1 / 2 * log (coth (π * |y| / 2)) := by
   have hyhalf : 0 < |y| / 2 := by positivity
@@ -465,20 +465,20 @@ theorem lowerGammaBoundaryLog_halfInteger_log_tail (k : ℕ) {R y : ℝ} (hR : 0
     rw [← Real.log_div (mul_ne_zero Real.pi_ne_zero (pow_ne_zero 2 hR.ne')) hyhalf.ne']
     congr 1
     field_simp [abs_ne_zero.mpr hy]
-  rw [lowerGammaBoundaryLog_halfInteger k R hy,
+  rw [h_ℓ_halfInteger k R hy,
     Real.log_div (coth_pos (by positivity)).ne' hyhalf.ne', ← hlogratio]
   linarith
 
-theorem lowerGammaBoundaryLog_dimension_log_tail {d : ℕ} (_hd : 0 < d) {R y : ℝ} (hR : 0 < R)
+theorem h_ℓ_dimension_log_tail {d : ℕ} (_hd : 0 < d) {R y : ℝ} (hR : 0 < R)
     (hy : y ≠ 0) :
     h_ℓ ((d : ℝ) / 2) R y ≤ (d : ℝ) / 2 * log (2 * π * R ^ 2 / |y|) +
       1 / 2 * log (coth (π * |y| / 2)) := by
   have hcoth : 0 ≤ log (coth (π * |y| / 2)) := log_coth_nonneg (by positivity)
   obtain ⟨k, hk⟩ | ⟨k, hk⟩ := natCast_div_two_cases d <;> rw [hk]
-  · linarith [lowerGammaBoundaryLog_integer_log_tail k hR hy]
-  · exact lowerGammaBoundaryLog_halfInteger_log_tail k hR hy
+  · linarith [h_ℓ_integer_log_tail k hR hy]
+  · exact h_ℓ_halfInteger_log_tail k hR hy
 
-theorem lowerGammaBoundaryLog_dimension_scaled_log_tail {d : ℕ} (hd : 0 < d) {c Y : ℝ}
+theorem h_ℓ_dimension_scaled_log_tail {d : ℕ} (hd : 0 < d) {c Y : ℝ}
     (hc : 0 < c) (hY : Y ≠ 0) :
     h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * Y) ≤ (d : ℝ) / 2 * log (4 * π * c ^ 2 / |Y|) +
       1 / 2 * log (coth (π * |(d : ℝ) / 2 * Y| / 2)) := by
@@ -488,11 +488,11 @@ theorem lowerGammaBoundaryLog_dimension_scaled_log_tail {d : ℕ} (hd : 0 < d) {
     rw [abs_mul, abs_of_pos hℓ, mul_pow, Real.sq_sqrt hdreal.le]
     field_simp [hℓ.ne', abs_ne_zero.mpr hY, hdreal.ne']
     ring
-  have htail := lowerGammaBoundaryLog_dimension_log_tail hd (mul_pos hc (Real.sqrt_pos.2 hdreal))
+  have htail := h_ℓ_dimension_log_tail hd (mul_pos hc (Real.sqrt_pos.2 hdreal))
     (mul_ne_zero hℓ.ne' hY)
   rwa [hratio] at htail
 
-theorem lowerGammaBoundaryLog_dimension_scaled_log_tail_uniform {d : ℕ} (hd : 2 ≤ d) {c Y : ℝ}
+theorem h_ℓ_dimension_scaled_log_tail_uniform {d : ℕ} (hd : 2 ≤ d) {c Y : ℝ}
     (hc : 0 < c) (hY : Y ≠ 0) :
     h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * Y) ≤ (d : ℝ) / 2 * log (4 * π * c ^ 2 / |Y|) +
       1 / 2 * log (coth (π * |Y| / 2)) := by
@@ -503,7 +503,7 @@ theorem lowerGammaBoundaryLog_dimension_scaled_log_tail_uniform {d : ℕ} (hd : 
     nlinarith [mul_nonneg Real.pi_pos.le (abs_nonneg Y)]
   have hcoth := antitoneOn_log_coth (by positivity : (0 : ℝ) < π * |Y| / 2)
     (by positivity : (0 : ℝ) < π * |(d : ℝ) / 2 * Y| / 2) hcompare
-  linarith [lowerGammaBoundaryLog_dimension_scaled_log_tail hdpos hc hY]
+  linarith [h_ℓ_dimension_scaled_log_tail hdpos hc hY]
 
 /-- The positive part `(log (A / |y|))⁺` is integrable for every `A > 0`. -/
 theorem lower_positiveLogRatio_integrable {A : ℝ} (hA : 0 < A) :
@@ -551,7 +551,7 @@ theorem lowerGammaScaledPositivePart_le {d : ℕ} (hd : 2 ≤ d) {c Y : ℝ} (hc
     mul_le_mul_of_nonneg_left (le_max_left _ _) (by positivity)
   unfold lowerGammaScaledPositivePart
   refine max_le ?_ (by positivity)
-  linarith [lowerGammaBoundaryLog_dimension_scaled_log_tail_uniform hd hc hY]
+  linarith [h_ℓ_dimension_scaled_log_tail_uniform hd hc hY]
 
 theorem lowerGammaScaledPositivePart_integrable {d : ℕ} (hd : 2 ≤ d) {c : ℝ} (hc : 0 < c) :
     Integrable (lowerGammaScaledPositivePart d c) := by
@@ -559,7 +559,7 @@ theorem lowerGammaScaledPositivePart_integrable {d : ℕ} (hd : 2 ≤ d) {c : �
   have hℓ : 0 < (d : ℝ) / 2 := by positivity
   refine (((lower_positiveLogRatio_integrable (by positivity : (0 : ℝ) < 4 * π * c ^ 2)).const_mul
     ((d : ℝ) / 2)).add (integrable_log_coth_pi_mul_abs_div_two.const_mul (1 / 2))).mono'
-    ((((lowerGammaBoundaryLog_measurable hℓ (c * √d)).comp
+    ((((h_ℓ_measurable hℓ (c * √d)).comp
       (by fun_prop : Measurable fun Y : ℝ ↦ (d : ℝ) / 2 * Y)).max
         measurable_const).aestronglyMeasurable) ?_
   filter_upwards [Measure.ae_ne (volume : Measure ℝ) 0] with Y hY
@@ -584,7 +584,7 @@ theorem lowerGammaScaledPositivePart_integral_le {d : ℕ} (hd : 2 ≤ d) {c : �
         rw [integral_add (hpositive.const_mul _) (hcoth.const_mul _), integral_const_mul,
           integral_const_mul]
 
-theorem lowerGammaBoundaryLog_dimension_scaled_nonpos_of_large {d : ℕ} (hd : 2 ≤ d) {c Y : ℝ}
+theorem h_ℓ_dimension_scaled_nonpos_of_large {d : ℕ} (hd : 2 ≤ d) {c Y : ℝ}
     (hc : 0 < c) (hlarge : max 1 (8 * π * c ^ 2) ≤ |Y|) :
     h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * Y) ≤ 0 := by
   have hyone : 1 ≤ |Y| := (le_max_left 1 _).trans hlarge
@@ -611,7 +611,7 @@ theorem lowerGammaBoundaryLog_dimension_scaled_nonpos_of_large {d : ℕ} (hd : 2
   have hmain : (d : ℝ) / 2 * log (4 * π * c ^ 2 / |Y|) ≤ -log 2 := by
     linarith [mul_le_mul_of_nonneg_left hlogratio (by positivity : (0 : ℝ) ≤ (d : ℝ) / 2),
       mul_nonneg (sub_nonneg.mpr hℓ) (by linarith : (0 : ℝ) ≤ log 2)]
-  linarith [lowerGammaBoundaryLog_dimension_scaled_log_tail_uniform hd hc hY]
+  linarith [h_ℓ_dimension_scaled_log_tail_uniform hd hc hY]
 
 theorem lowerGammaScaledPositivePart_support {d : ℕ} (hd : 2 ≤ d) {c : ℝ} (hc : 0 < c) :
     Function.support (lowerGammaScaledPositivePart d c) ⊆
@@ -619,7 +619,7 @@ theorem lowerGammaScaledPositivePart_support {d : ℕ} (hd : 2 ≤ d) {c : ℝ} 
   intro Y hY
   have hsmall : |Y| < max 1 (8 * π * c ^ 2) := by
     by_contra! hnot
-    exact hY (max_eq_right (lowerGammaBoundaryLog_dimension_scaled_nonpos_of_large hd hc hnot))
+    exact hY (max_eq_right (h_ℓ_dimension_scaled_nonpos_of_large hd hc hnot))
   exact abs_le.1 hsmall.le
 
 theorem exists_lowerGammaScaledPositivePart_uniform_bound {c : ℝ} (hc : 0 < c) :
@@ -643,14 +643,14 @@ theorem exists_lowerGammaScaledPositivePart_uniform_bound {c : ℝ} (hc : 0 < c)
     linarith [hbound d hd, mul_le_mul_of_nonneg_left
       (le_max_right (max 1 (8 * π * c ^ 2)) (J + 1 / 2 * K)) (by linarith : (0 : ℝ) ≤ (d : ℝ) / 2)]
 
-theorem lowerGammaBoundaryLog_dimension_neg {d : ℕ} (R : ℝ) {y : ℝ} (hy : y ≠ 0) :
+theorem h_ℓ_dimension_neg {d : ℕ} (R : ℝ) {y : ℝ} (hy : y ≠ 0) :
     h_ℓ ((d : ℝ) / 2) R (-y) = h_ℓ ((d : ℝ) / 2) R y := by
   obtain ⟨k, hk⟩ | ⟨k, hk⟩ := natCast_div_two_cases d <;> rw [hk]
-  · rw [lowerGammaBoundaryLog_integer k R (neg_ne_zero.mpr hy),
-      lowerGammaBoundaryLog_integer k R hy]
+  · rw [h_ℓ_integer k R (neg_ne_zero.mpr hy),
+      h_ℓ_integer k R hy]
     simp [div_pow]
-  · rw [lowerGammaBoundaryLog_halfInteger k R (neg_ne_zero.mpr hy),
-      lowerGammaBoundaryLog_halfInteger k R hy]
+  · rw [h_ℓ_halfInteger k R (neg_ne_zero.mpr hy),
+      h_ℓ_halfInteger k R hy]
     simp [div_pow]
 
 /-- The factors `log √(c² + (y/2)²)` of the boundary profile increase in `y > 0`. -/
@@ -658,16 +658,16 @@ theorem lower_log_sqrtFactor_mono (c : ℝ) {x y : ℝ} (hx : 0 < x) (hxy : x �
     log (√(c ^ 2 + (x / 2) ^ 2)) ≤ log (√(c ^ 2 + (y / 2) ^ 2)) :=
   Real.log_le_log (Real.sqrt_pos.2 (by positivity)) (Real.sqrt_le_sqrt (by nlinarith))
 
-theorem lowerGammaBoundaryLog_integer_antitoneOn (k : ℕ) (R : ℝ) :
+theorem h_ℓ_integer_antitoneOn (k : ℕ) (R : ℝ) :
     AntitoneOn (h_ℓ (k : ℝ) R) (Ioi (0 : ℝ)) := by
   intro x hx y hy hxy
   have hx' : 0 < x := hx
   have hy' : 0 < y := hy
-  rw [lowerGammaBoundaryLog_integer k R hy'.ne', lowerGammaBoundaryLog_integer k R hx'.ne']
+  rw [h_ℓ_integer k R hy'.ne', h_ℓ_integer k R hx'.ne']
   linarith [Finset.sum_le_sum fun j (_ : j ∈ Finset.range k) ↦
     lower_log_sqrtFactor_mono (j : ℝ) hx' hxy]
 
-theorem lowerGammaBoundaryLog_halfInteger_antitoneOn (k : ℕ) (R : ℝ) :
+theorem h_ℓ_halfInteger_antitoneOn (k : ℕ) (R : ℝ) :
     AntitoneOn (h_ℓ ((k : ℝ) + 1 / 2) R) (Ioi (0 : ℝ)) := by
   intro x hx y hy hxy
   have hx' : 0 < x := hx
@@ -677,16 +677,16 @@ theorem lowerGammaBoundaryLog_halfInteger_antitoneOn (k : ℕ) (R : ℝ) :
       (by positivity : (0 : ℝ) < π * y / 2) (by gcongr)) (half_pos hy').le).trans
       (div_le_div_of_nonneg_left (coth_pos (by positivity)).le (half_pos hx') (by linarith))
   have hcoth := Real.log_le_log (div_pos (coth_pos (by positivity)) (half_pos hy')) hratio
-  rw [lowerGammaBoundaryLog_halfInteger k R hy'.ne', lowerGammaBoundaryLog_halfInteger k R hx'.ne',
+  rw [h_ℓ_halfInteger k R hy'.ne', h_ℓ_halfInteger k R hx'.ne',
     abs_of_pos hx', abs_of_pos hy']
   linarith [Finset.sum_le_sum fun j (_ : j ∈ Finset.range k) ↦
     lower_log_sqrtFactor_mono ((j : ℝ) + 1 / 2) hx' hxy]
 
-theorem lowerGammaBoundaryLog_dimension_antitoneOn {d : ℕ} (R : ℝ) :
+theorem h_ℓ_dimension_antitoneOn {d : ℕ} (R : ℝ) :
     AntitoneOn (h_ℓ ((d : ℝ) / 2) R) (Ioi (0 : ℝ)) := by
   obtain ⟨k, hk⟩ | ⟨k, hk⟩ := natCast_div_two_cases d <;> rw [hk]
-  · exact lowerGammaBoundaryLog_integer_antitoneOn k R
-  · exact lowerGammaBoundaryLog_halfInteger_antitoneOn k R
+  · exact h_ℓ_integer_antitoneOn k R
+  · exact h_ℓ_halfInteger_antitoneOn k R
 
 /-- An even function that is antitone on `[0, ∞)` and compactly supported has intervals
 `(-r, r) ⊆ {f > t} ⊆ [-r, r]` as superlevel sets. -/
@@ -714,7 +714,7 @@ theorem even_antitone_superlevel_interval {f : ℝ → ℝ} {B t : ℝ} (heven :
   · exact ⟨0, le_rfl, by simp, fun x hx ↦
       absurd ⟨|x|, abs_nonneg x, by rw [habs]; exact hx⟩ hne⟩
 
-theorem lowerGammaBoundaryLog_halfInteger_exp_integrable {a : ℝ} (ha : 0 < a) (k : ℕ) (R : ℝ) :
+theorem h_ℓ_halfInteger_exp_integrable {a : ℝ} (ha : 0 < a) (k : ℕ) (R : ℝ) :
     Integrable fun y : ℝ ↦ exp ((-a) * |y|) * h_ℓ ((k : ℝ) + 1 / 2) R y := by
   have hsum : Integrable fun y : ℝ ↦ ∑ j ∈ Finset.range k,
       exp ((-a) * |y|) * log (√(((j : ℝ) + 1 / 2) ^ 2 + (y / 2) ^ 2)) :=
@@ -726,26 +726,26 @@ theorem lowerGammaBoundaryLog_halfInteger_exp_integrable {a : ℝ} (ha : 0 < a) 
       ((integrable_exp_neg_mul_abs_mul_log_coth_div ha).const_mul (1 / 2))
   refine hbase.congr ?_
   filter_upwards [Measure.ae_ne (volume : Measure ℝ) 0] with y hy
-  simp only [lowerGammaBoundaryLog_halfInteger k R hy, mul_add, mul_sub, Finset.mul_sum]
+  simp only [h_ℓ_halfInteger k R hy, mul_add, mul_sub, Finset.mul_sum]
   ring
 
-theorem lowerGammaBoundaryLog_dimension_exp_integrable {d : ℕ} (_hd : 0 < d) {a : ℝ} (ha : 0 < a)
+theorem h_ℓ_dimension_exp_integrable {d : ℕ} (_hd : 0 < d) {a : ℝ} (ha : 0 < a)
     (R : ℝ) : Integrable fun y : ℝ ↦ exp ((-a) * |y|) * h_ℓ ((d : ℝ) / 2) R y := by
   obtain ⟨k, hk⟩ | ⟨k, hk⟩ := natCast_div_two_cases d <;> rw [hk]
-  · exact lowerGammaBoundaryLog_integer_exp_integrable ha k R
-  · exact lowerGammaBoundaryLog_halfInteger_exp_integrable ha k R
+  · exact h_ℓ_integer_exp_integrable ha k R
+  · exact h_ℓ_halfInteger_exp_integrable ha k R
 
-theorem lowerStripGammaOuter_integrable_dimension {d : ℕ} (hd : 0 < d) {R : ℝ} {z : ℂ}
+theorem integrable_K'_ℓ_mul_h_ℓ {d : ℕ} (hd : 0 < d) {R : ℝ} {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2)) :
     Integrable fun y : ℝ ↦ K'_ℓ ((d : ℝ) / 2) z y * (h_ℓ ((d : ℝ) / 2) R y : ℂ) := by
   have hℓ : 0 < (d : ℝ) / 2 := by positivity
-  exact lowerStripGammaOuter_integrable_of_exp_integrable hℓ hz
-    (lowerGammaBoundaryLog_dimension_exp_integrable hd (by positivity) R)
+  exact integrable_K'_ℓ_mul_h_ℓ_of_exp_integrable hℓ hz
+    (h_ℓ_dimension_exp_integrable hd (by positivity) R)
 
 /-- `f_T T x = log √(x² + T²/4)`, the integrand of the Riemann sum of report Lemma 3.3. -/
 def f_T (T x : ℝ) : ℝ := log (√(x ^ 2 + T ^ 2 / 4))
 
-theorem lowerRiemannLog_monotoneOn {T : ℝ} (hT : T ≠ 0) : MonotoneOn (f_T T) (Ici (0 : ℝ)) := by
+theorem f_T_monotoneOn {T : ℝ} (hT : T ≠ 0) : MonotoneOn (f_T T) (Ici (0 : ℝ)) := by
   intro x hx y hy hxy
   have hx' : (0 : ℝ) ≤ x := hx
   have hy' : (0 : ℝ) ≤ y := hy
@@ -788,7 +788,7 @@ theorem lower_integer_leftRiemann_error {T : ℝ} (hT : T ≠ 0) {k : ℕ} (hk :
       (k : ℝ) * (∫ x in (0 : ℝ)..1, f_T T x) - ∑ j ∈ Finset.range k,
             f_T T ((j : ℝ) / (k : ℝ)) ≤
         f_T T 1 - f_T T 0 :=
-  monotone_leftRiemann_error (f_T T) hk ((lowerRiemannLog_monotoneOn hT).mono fun _ hx ↦ hx.1)
+  monotone_leftRiemann_error (f_T T) hk ((f_T_monotoneOn hT).mono fun _ hx ↦ hx.1)
 
 theorem monotone_midpointIntegral_error (f : ℝ → ℝ) (k : ℕ)
     (hf : MonotoneOn f (Icc (0 : ℝ) (k : ℝ))) :
@@ -811,7 +811,7 @@ theorem lower_halfInteger_midpointRiemann_error {T : ℝ} (hT : T ≠ 0) {ℓ : 
         ∑ j ∈ Finset.range k, f_T T (((j : ℝ) + 1 / 2) / ℓ)| ≤
       f_T T ((k : ℝ) / ℓ) - f_T T 0 := by
   have hscaled : MonotoneOn (fun x : ℝ ↦ f_T T (x / ℓ)) (Icc (0 : ℝ) (k : ℝ)) :=
-    fun x hx y hy hxy ↦ lowerRiemannLog_monotoneOn hT (div_nonneg hx.1 hℓ.le)
+    fun x hx y hy hxy ↦ f_T_monotoneOn hT (div_nonneg hx.1 hℓ.le)
       (div_nonneg hy.1 hℓ.le) (div_le_div_of_nonneg_right hxy hℓ.le)
   have hmid := monotone_midpointIntegral_error (fun x : ℝ ↦ f_T T (x / ℓ)) k hscaled
   have hscale : (∫ x in (0 : ℝ)..(k : ℝ), f_T T (x / ℓ)) =
@@ -846,10 +846,10 @@ theorem lowerRiemannLogPrimitive_hasDerivAt {T : ℝ} (hT : T ≠ 0) (x : ℝ) :
   nlinarith [sq_abs T]
 
 /-- The Riemann-sum integral of Lemma 3.3, evaluated by the primitive above. -/
-theorem integral_lowerRiemannLog {T : ℝ} (hT : T ≠ 0) :
+theorem integral_f_T {T : ℝ} (hT : T ≠ 0) :
     -(∫ x in (0 : ℝ)..1, f_T T x) = 1 + lowerEndpointPhase T := by
   have hmono : MonotoneOn (f_T T) ([[0, 1]] : Set ℝ) := by
-    simpa using (lowerRiemannLog_monotoneOn hT).mono fun _ hx ↦ hx.1
+    simpa using (f_T_monotoneOn hT).mono fun _ hx ↦ hx.1
   have ha : 0 < |T| / 2 := half_pos (abs_pos.mpr hT)
   have hatan : arctan (1 / (|T| / 2)) = π / 2 - arctan (|T| / 2) := by
     simpa [one_div] using Real.arctan_inv_of_pos ha

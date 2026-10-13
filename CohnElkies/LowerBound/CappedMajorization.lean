@@ -63,7 +63,7 @@ theorem exists_abs_h_ℓ_le_natCast (k : ℕ) (R : ℝ) :
   refine ⟨|(k : ℝ) * Real.log (π * R ^ 2)| + (∑ j ∈ Finset.range k, (j : ℝ)) + k,
     by positivity, fun x hx ↦ ?_⟩
   have hx0 : (0 : ℝ) ≤ x := by linarith
-  rw [lowerGammaBoundaryLog_integer k R (show (0 : ℝ) < x by linarith).ne']
+  rw [h_ℓ_integer k R (show (0 : ℝ) < x by linarith).ne']
   have hsum := abs_sum_log_sqrtFactor_le (k := k) (c := fun j : ℕ ↦ (j : ℝ))
     (fun j ↦ Nat.cast_nonneg j) hx
   have habs := abs_sub ((k : ℝ) * Real.log (π * R ^ 2))
@@ -87,7 +87,7 @@ theorem exists_abs_h_ℓ_le_natCast_add_half (k : ℕ) (R : ℝ) :
       (π * x + |Real.log π| + x) / 2 := by
     rw [abs_mul, abs_of_nonneg (by norm_num : (0 : ℝ) ≤ 1 / 2)]
     linarith [Real.abs_log_coth_div_le (show 0 < x / 2 by linarith), abs_log_half_le_half hx]
-  rw [lowerGammaBoundaryLog_halfInteger k R hx0.ne', abs_of_pos hx0,
+  rw [h_ℓ_halfInteger k R hx0.ne', abs_of_pos hx0,
     show π * x / 2 = π * (x / 2) by ring]
   have hmain := abs_sub (((k : ℝ) + 1 / 2) * Real.log (π * R ^ 2))
     (∑ j ∈ Finset.range k, Real.log (√(((j : ℝ) + 1 / 2) ^ 2 + (x / 2) ^ 2)))
@@ -101,7 +101,7 @@ theorem exists_abs_h_ℓ_le_natCast_add_half (k : ℕ) (R : ℝ) :
 theorem h_ℓ_eq_abs {d : ℕ} (R : ℝ) {y : ℝ} (hy : y ≠ 0) :
     h_ℓ ((d : ℝ) / 2) R y = h_ℓ ((d : ℝ) / 2) R |y| := by
   rcases abs_choice y with h | h <;> rw [h]
-  exact (lowerGammaBoundaryLog_dimension_neg R hy).symm
+  exact (h_ℓ_dimension_neg R hy).symm
 
 /-- Report Lemma 3.2: away from the pole the boundary profile `h_{d/2}` is linearly bounded. -/
 theorem exists_abs_h_ℓ_le (d : ℕ) (R : ℝ) :
@@ -124,7 +124,7 @@ theorem exists_abs_h_ℓD_le {d : ℕ} (hd : 0 < d) (R D : ℝ) :
   have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
   obtain ⟨A₀, hA₀, htail⟩ := exists_abs_h_ℓ_le d R
   obtain ⟨K, hK⟩ := (isCompact_Icc : IsCompact (Icc (-2 : ℝ) 2)).exists_bound_of_continuousOn
-    (lowerGammaBoundaryCapped_continuous hℓ R D).continuousOn
+    (h_ℓD_continuous hℓ R D).continuousOn
   obtain ⟨A, hA, hKA, hDA, hA₀A⟩ : ∃ A : ℝ, 0 ≤ A ∧ K ≤ A ∧ |D| ≤ A ∧ A₀ ≤ A :=
     ⟨max 0 (max K (max |D| A₀)), le_max_left _ _, (le_max_left _ _).trans (le_max_right _ _),
       (le_max_left _ _).trans ((le_max_right _ _).trans (le_max_right _ _)),
@@ -256,7 +256,7 @@ theorem norm_Z_g_le_exp_integral_of_cap {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
   obtain ⟨K, -, hK⟩ := g.exists_norm_Z_g_le hd R
   rw [hcast] at hcap ⊢
   exact norm_le_exp_integral_P_σ_of_strip hℓ (g.diffContOnCl_Z_g hd R)
-    (fun z hz ↦ hK z hz.1.le hz.2.le) (lowerGammaBoundaryCapped_continuous hℓ R D) hbound hcap
+    (fun z hz ↦ hK z hz.1.le hz.2.le) (h_ℓD_continuous hℓ R D) hbound hcap
     (fun y ↦ by rw [← hcast]; exact g.norm_Z_g_top_le_one hd R y) hbelow habove s
 
 /-- Report Lemma 3.2: for every large enough cap `D`, the normalized Mellin transform of a

@@ -159,7 +159,7 @@ theorem cosh_ratio_upper {a δ : ℝ} (ha : 0 ≤ a) (hδ : 0 ≤ δ) :
 /-- The positive shell density `w_B(a) = Q_ε / cosh a` of report (35), carried on `[B, B+1]`. -/
 def w_B (ε a : ℝ) : ℝ := Qε ε / cosh a
 
-theorem positiveShellDensity_continuous (ε : ℝ) : Continuous (w_B ε) :=
+theorem w_B_continuous (ε : ℝ) : Continuous (w_B ε) :=
   continuous_const.div Real.continuous_cosh fun a ↦ (cosh_pos a).ne'
 
 /-- Damping `D_B(T)` produced by the positive shell on the contour of height `1 + δ`. -/
@@ -167,10 +167,10 @@ def D_B (ε ℓ δ T : ℝ) : ℝ :=
   ℓ * ∫ a in Bε ε..Bε ε + 1, w_B ε a * cosh ((1 + δ) * a) * (1 - cos (a * T))
 
 /-- Report (60): `D_B(T) ≥ c λ Q e^{δB} min(T², 1)`. -/
-theorem positiveShellDamping_lower_bound {ε ℓ δ T : ℝ} (hε : 0 < ε) (hℓ : 0 ≤ ℓ) (hδ : 0 ≤ δ) :
+theorem D_B_lower_bound {ε ℓ δ T : ℝ} (hε : 0 < ε) (hℓ : 0 ≤ ℓ) (hδ : 0 ≤ δ) :
     ℓ / 50 * Qε ε * exp (δ * Bε ε) * min (T ^ 2) 1 ≤ D_B ε ℓ δ T := by
   have hB : 0 ≤ Bε ε := by unfold Bε; positivity
-  have hQ : 0 < Qε ε := shellWeight_pos ε
+  have hQ : 0 < Qε ε := Qε_pos ε
   set C : ℝ := Qε ε * exp (δ * Bε ε) / 2 with hC
   have hosc : Continuous fun a : ℝ ↦ 1 - cos (a * T) := by fun_prop
   have hpoint : ∀ a ∈ Icc (Bε ε) (Bε ε + 1),
@@ -188,7 +188,7 @@ theorem positiveShellDamping_lower_bound {ε ℓ δ T : ℝ} (hε : 0 < ε) (h�
     (continuous_const.mul hosc).intervalIntegrable _ _
   have hint₂ : IntervalIntegrable (fun a : ℝ ↦ w_B ε a * cosh ((1 + δ) * a) *
       (1 - cos (a * T))) volume (Bε ε) (Bε ε + 1) :=
-    (((positiveShellDensity_continuous ε).mul (by fun_prop)).mul hosc).intervalIntegrable _ _
+    (((w_B_continuous ε).mul (by fun_prop)).mul hosc).intervalIntegrable _ _
   have hmono := intervalIntegral.integral_mono_on (μ := volume) (by linarith : Bε ε ≤ Bε ε + 1)
     hint₁ hint₂ hpoint
   rw [intervalIntegral.integral_const_mul] at hmono
@@ -210,11 +210,11 @@ theorem positiveShellRadiusContribution_bounds {ε : ℝ} (hε : 0 < ε) :
     0 ≤ positiveShellRadiusContribution ε ∧
       positiveShellRadiusContribution ε ≤ (Bε ε + 1) * Qε ε * exp (ε / 4 * (Bε ε + 1)) := by
   have hB : 0 ≤ Bε ε := by unfold Bε; positivity
-  have hQ : 0 < Qε ε := shellWeight_pos ε
+  have hQ : 0 < Qε ε := Qε_pos ε
   have hδ : (0 : ℝ) ≤ ε / 4 := by positivity
   have hw (a : ℝ) : 0 ≤ w_B ε a := (div_pos hQ (cosh_pos a)).le
   have hcont : Continuous fun a : ℝ ↦ w_B ε a * a * sinh ((1 + ε / 4) * a) :=
-    ((positiveShellDensity_continuous ε).mul continuous_id).mul (by fun_prop)
+    ((w_B_continuous ε).mul continuous_id).mul (by fun_prop)
   unfold positiveShellRadiusContribution
   refine ⟨intervalIntegral.integral_nonneg (by linarith) fun a ha ↦
     mul_nonneg (mul_nonneg (hw a) (hB.trans ha.1))
@@ -241,7 +241,7 @@ theorem positiveShellRadiusContribution_bounds {ε : ℝ} (hε : 0 < ε) :
 on `[a₀, A]`. -/
 def w_s (ε a : ℝ) : ℝ := -(bε ε a * exp (-2 * a) / (2 * a ^ 2 * cosh a))
 
-theorem shortShellDensity_intervalIntegrable {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) :
+theorem w_s_intervalIntegrable {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) :
     IntervalIntegrable (w_s ε) volume (a₀ε ε) (Aε ε) := by
   have hn : Continuous fun a : ℝ ↦ bε ε a * exp (-2 * a) := by unfold bε; fun_prop
   have hd : Continuous fun a : ℝ ↦ 2 * a ^ 2 * cosh a := by fun_prop
@@ -271,12 +271,12 @@ def h_ε (ε : ℝ) (z : ℂ) : ℂ :=
   (∫ a in a₀ε ε..Aε ε, (w_s ε a : ℂ) * (Complex.cos ((a : ℂ) * z) - 1)) +
   ∫ a in Bε ε..Bε ε + 1, (w_B ε a : ℂ) * (Complex.cos ((a : ℂ) * z) - 1)
 
-theorem mellinShellPhase_neg (ε : ℝ) (z : ℂ) : h_ε ε (-z) = h_ε ε z := by
+theorem h_ε_neg (ε : ℝ) (z : ℂ) : h_ε ε (-z) = h_ε ε z := by
   unfold h_ε
   congr 1 <;> exact intervalIntegral.integral_congr fun a _ ↦ by simp
 
-/-- `h_ε` restricted to the real axis. -/
-def realOscillatoryShellPhase (ε t : ℝ) : ℝ :=
+/-- `h_ε` restricted to the real axis: `h_εℝ ε t = h_ε(t) = ∫ w(a)(cos(at) - 1) da`. -/
+def h_εℝ (ε t : ℝ) : ℝ :=
   (∫ a in a₀ε ε..Aε ε, w_s ε a * (cos (a * t) - 1)) +
   ∫ a in Bε ε..Bε ε + 1, w_B ε a * (cos (a * t) - 1)
 
@@ -293,16 +293,16 @@ theorem intervalIntegral_ofReal_shell {w g : ℝ → ℝ} {a b : ℝ} {z : ℂ}
   rw [← intervalIntegral.integral_ofReal]
   exact intervalIntegral.integral_congr fun x _ ↦ by rw [hg]; push_cast; ring
 
-theorem mellinShellPhase_ofReal (ε t : ℝ) :
-    h_ε ε (t : ℂ) = (realOscillatoryShellPhase ε t : ℂ) := by
+theorem h_ε_ofReal (ε t : ℝ) :
+    h_ε ε (t : ℂ) = (h_εℝ ε t : ℂ) := by
   have hg (x : ℝ) : Complex.cos ((x : ℂ) * (t : ℂ)) = (cos (x * t) : ℂ) := by
     rw [← Complex.ofReal_mul, ← Complex.ofReal_cos]
-  unfold h_ε realOscillatoryShellPhase
+  unfold h_ε h_εℝ
   rw [intervalIntegral_ofReal_shell hg, intervalIntegral_ofReal_shell hg]
   push_cast
   ring
 
-theorem mellinShellPhase_imaginary (ε u : ℝ) : h_ε ε (I * (u : ℂ)) = (h_εI ε u : ℂ) := by
+theorem h_ε_imaginary (ε u : ℝ) : h_ε ε (I * (u : ℂ)) = (h_εI ε u : ℂ) := by
   have hg (x : ℝ) : Complex.cos ((x : ℂ) * (I * (u : ℂ))) = (cosh (x * u) : ℂ) := by
     rw [show (x : ℂ) * (I * (u : ℂ)) = (x : ℂ) * (u : ℂ) * I by ring, ← Complex.ofReal_mul,
       Complex.cos_mul_I, ← Complex.ofReal_cosh]
@@ -311,7 +311,7 @@ theorem mellinShellPhase_imaginary (ε u : ℝ) : h_ε ε (I * (u : ℂ)) = (h_�
   push_cast
   ring
 
-theorem realHyperbolicShellPhase_neg (ε u : ℝ) : h_εI ε (-u) = h_εI ε u := by
+theorem h_εI_neg (ε u : ℝ) : h_εI ε (-u) = h_εI ε u := by
   unfold h_εI
   congr 1 <;> exact intervalIntegral.integral_congr fun a _ ↦ by simp
 
@@ -348,7 +348,7 @@ theorem shellIntegral_differentiable (w : ℝ → ℝ) (hw : Continuous w) {a b 
     ⟨Metric.ball_subset_closedBall hz, hx⟩
   exact hC (Set.mem_image_of_mem (fun q : ℂ × ℝ ↦ ‖F' q.1 q.2‖) hpair)
 
-theorem mellinShellPhase_differentiable {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) :
+theorem h_ε_differentiable {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) :
     Differentiable ℂ (h_ε ε) := by
   have heq : (fun z : ℂ ↦ ∫ a in a₀ε ε..Aε ε, (w_s ε a : ℂ) * (Complex.cos ((a : ℂ) * z) - 1)) =
       fun z : ℂ ↦ ∫ a in a₀ε ε..Aε ε,
@@ -361,11 +361,11 @@ theorem mellinShellPhase_differentiable {ε : ℝ} (hε : 0 < ε) (horder : a₀
     rw [heq]
     exact shellIntegral_differentiable _ (shortShellDensityExt_continuous hε) horder
   exact hshort.add
-    (shellIntegral_differentiable _ (positiveShellDensity_continuous ε) (by linarith))
+    (shellIntegral_differentiable _ (w_B_continuous ε) (by linarith))
 
-theorem mellinShellPhase_analyticOnNhd {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) :
+theorem h_ε_analyticOnNhd {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) :
     AnalyticOnNhd ℂ (h_ε ε) Set.univ :=
-  Complex.analyticOnNhd_univ_iff_differentiable.mpr (mellinShellPhase_differentiable hε horder)
+  Complex.analyticOnNhd_univ_iff_differentiable.mpr (h_ε_differentiable hε horder)
 
 /-- Total variation `∫ |w_s| + ∫ |w_B|` of the two shells. -/
 def saddleShellTotalVariation (ε : ℝ) : ℝ :=
@@ -386,18 +386,18 @@ theorem abs_integral_cos_sub_one_le {w : ℝ → ℝ} {a b : ℝ} (hab : a ≤ b
   rw [abs_mul]
   nlinarith [abs_nonneg (w x)]
 
-theorem abs_realOscillatoryShellPhase_le {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) (t : ℝ) :
-    |realOscillatoryShellPhase ε t| ≤ 2 * saddleShellTotalVariation ε := by
-  unfold realOscillatoryShellPhase saddleShellTotalVariation
-  linarith [abs_integral_cos_sub_one_le horder (shortShellDensity_intervalIntegrable hε horder) t,
+theorem abs_h_εℝ_le {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) (t : ℝ) :
+    |h_εℝ ε t| ≤ 2 * saddleShellTotalVariation ε := by
+  unfold h_εℝ saddleShellTotalVariation
+  linarith [abs_integral_cos_sub_one_le horder (w_s_intervalIntegrable hε horder) t,
     abs_integral_cos_sub_one_le (by linarith : Bε ε ≤ Bε ε + 1)
-      ((positiveShellDensity_continuous ε).intervalIntegrable _ _) t,
+      ((w_B_continuous ε).intervalIntegrable _ _) t,
     abs_add_le (∫ a in a₀ε ε..Aε ε, w_s ε a * (cos (a * t) - 1))
       (∫ a in Bε ε..Bε ε + 1, w_B ε a * (cos (a * t) - 1))]
 
-theorem mellinShellPhase_real_conj (ε t : ℝ) :
+theorem h_ε_real_conj (ε t : ℝ) :
     starRingEnd ℂ (h_ε ε (t : ℂ)) = h_ε ε (t : ℂ) := by
-  rw [mellinShellPhase_ofReal]
+  rw [h_ε_ofReal]
   exact Complex.conj_ofReal _
 
 /-- The perturbed Gamma envelope `E_λ(t) = π^{it/2} Γ((λ - it)/2) e^{λ h_ε(t/λ)}`, report (38). -/
@@ -423,24 +423,25 @@ theorem E_continuous {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (horder : a�
     simpa [Function.comp_def] using (Complex.continuousAt_Gamma _ hpoles).comp_of_eq harg rfl
   have hphase : Continuous fun t : ℝ ↦ Complex.exp ((ℓ : ℂ) * h_ε ε ((t : ℂ) / (ℓ : ℂ))) :=
     Complex.continuous_exp.comp (continuous_const.mul
-      ((mellinShellPhase_differentiable hε horder).continuous.comp (by fun_prop)))
+      ((h_ε_differentiable hε horder).continuous.comp (by fun_prop)))
   exact (((by fun_prop) : Continuous fun t : ℝ ↦
     Complex.exp (I * (t : ℂ) * (log π : ℂ) / 2)).mul hgamma).mul hphase
 
-/-- The spectrum `X_P(t) = E_λ(t) P(t/λ)` of a polynomial factor `P` (report (38)); `XPlus` and
-`XMinus` are the cases `P = P₊, P₋`. -/
-def spectrum (ε ℓ : ℝ) (P : ℂ → ℂ) (t : ℝ) : ℂ := E ε ℓ t * P ((t : ℂ) / (ℓ : ℂ))
+/-- The prescribed Mellin data `X_{f_P}(t) = E_λ(t) P(t/λ)` of report (38) on the critical line, for
+a polynomial factor `P` (the report's `X_{f_j}`, `j ∈ {-, 0, +}`); `XPlus`, `XMinus` and `XZero` are
+the cases `P = P₊, P₋, P₀`. -/
+def X_P (ε ℓ : ℝ) (P : ℂ → ℂ) (t : ℝ) : ℂ := E ε ℓ t * P ((t : ℂ) / (ℓ : ℂ))
 
-theorem spectrum_continuous {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (horder : a₀ε ε ≤ Aε ε)
-    {P : ℂ → ℂ} (hP : Continuous P) : Continuous (spectrum ε ℓ P) :=
+theorem X_P_continuous {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (horder : a₀ε ε ≤ Aε ε)
+    {P : ℂ → ℂ} (hP : Continuous P) : Continuous (X_P ε ℓ P) :=
   (E_continuous hε hℓ horder).mul (hP.comp (by fun_prop))
 
 /-- The common value `f_±(0) = 2π^{λ/2} e^{λ h_ε(i)} β` at the origin, report (42). -/
 def originValue (ε ℓ : ℝ) : ℝ := 2 * π ^ (ℓ / 2) * exp (ℓ * h_εI ε 1) * β ε
 
-theorem saddleOriginValue_pos {ε : ℝ} (hε : 0 < ε) (ℓ : ℝ) : 0 < originValue ε ℓ := by
+theorem originValue_pos {ε : ℝ} (hε : 0 < ε) (ℓ : ℝ) : 0 < originValue ε ℓ := by
   unfold originValue
-  positivity [beta_pos hε, Real.pi_pos]
+  positivity [β_pos hε, Real.pi_pos]
 
 /-- `E_λ` in the Mellin coordinate `z = λ - it`. -/
 def mellinEnvelope (ε ℓ : ℝ) (z : ℂ) : ℂ :=
@@ -464,13 +465,14 @@ def saddleRegularMellinFactor (ε ℓ : ℝ) (z : ℂ) : ℂ :=
 def regularMellinFactor (ε ℓ : ℝ) (P : ℂ → ℂ) (z : ℂ) : ℂ :=
   saddleRegularMellinFactor ε ℓ z * P (I * (z - (ℓ : ℂ)) / (ℓ : ℂ))
 
-/-- The Mellin data `M_P(z) = E_λ(i(z - λ)) P(i(z - λ)/λ)` for a polynomial factor `P`;
-`MPlus` and `MMinus` are the cases `P = P₊, P₋`. -/
-def mellinData (ε ℓ : ℝ) (P : ℂ → ℂ) (z : ℂ) : ℂ :=
+/-- The Mellin data `M_P(z) = E_λ(i(z - λ)) P(i(z - λ)/λ)` for a polynomial factor `P`, i.e. `X_P`
+in the Mellin variable `z = λ - it`: the Mellin transform `M_{f_P}` of the profile `f_P`
+(report (8), (38)); `MPlus` and `MMinus` are the cases `P = P₊, P₋`. -/
+def M_P (ε ℓ : ℝ) (P : ℂ → ℂ) (z : ℂ) : ℂ :=
   mellinEnvelope ε ℓ z * P (I * (z - (ℓ : ℂ)) / (ℓ : ℂ))
 
 /-- The pole-free factor of `M₊`; definitionally `regularMellinFactor ε ℓ (PPlus ε)`. -/
-def plusSaddleRegularMellinFactor (ε ℓ : ℝ) (z : ℂ) : ℂ := regularMellinFactor ε ℓ (PPlus ε) z
+def regularMellinFactorPlus (ε ℓ : ℝ) (z : ℂ) : ℂ := regularMellinFactor ε ℓ (PPlus ε) z
 
 /-! ### The polynomial factors `P₊`, `P₋` -/
 
@@ -478,23 +480,23 @@ theorem differentiable_PPlus (ε : ℝ) : Differentiable ℂ (PPlus ε) := by un
 
 theorem differentiable_PMinus (ε : ℝ) : Differentiable ℂ (PMinus ε) := by unfold PMinus; fun_prop
 
-theorem minusPolynomial_neg (ε : ℝ) (z : ℂ) : PMinus ε (-z) = PPlus ε z := by
+theorem PMinus_neg (ε : ℝ) (z : ℂ) : PMinus ε (-z) = PPlus ε z := by
   unfold PMinus PPlus
   ring
 
-theorem plusPolynomial_conj (ε : ℝ) (z : ℂ) :
+theorem PPlus_conj (ε : ℝ) (z : ℂ) :
     starRingEnd ℂ (PPlus ε z) = PMinus ε (starRingEnd ℂ z) := by
   unfold PPlus PMinus
   simp only [map_add, map_mul, map_pow, map_one, Complex.conj_ofReal, Complex.conj_I]
   ring
 
-theorem minusPolynomial_conj (ε : ℝ) (z : ℂ) :
+theorem PMinus_conj (ε : ℝ) (z : ℂ) :
     starRingEnd ℂ (PMinus ε z) = PPlus ε (starRingEnd ℂ z) := by
   unfold PMinus PPlus
   simp only [map_add, map_sub, map_mul, map_pow, map_one, Complex.conj_ofReal, Complex.conj_I]
   ring
 
-theorem norm_plusPolynomial_le (ε : ℝ) (z : ℂ) :
+theorem norm_PPlus_le (ε : ℝ) (z : ℂ) :
     ‖PPlus ε z‖ ≤ (1 + |β ε|) * (1 + ‖z‖) ^ 3 := by
   have h0 : (0 : ℝ) ≤ ‖z‖ := norm_nonneg z
   have hcube : (1 : ℝ) ≤ (1 + ‖z‖) ^ 3 := one_le_pow₀ (by linarith)
@@ -511,10 +513,10 @@ theorem norm_plusPolynomial_le (ε : ℝ) (z : ℂ) :
       gcongr
   nlinarith [mul_le_mul_of_nonneg_left hcube (abs_nonneg (β ε))]
 
-theorem norm_minusPolynomial_le (ε : ℝ) (z : ℂ) :
+theorem norm_PMinus_le (ε : ℝ) (z : ℂ) :
     ‖PMinus ε z‖ ≤ (1 + |β ε|) * (1 + ‖z‖) ^ 3 := by
-  rw [← Complex.conj_conj z, ← plusPolynomial_conj, RCLike.norm_conj]
-  simpa using norm_plusPolynomial_le ε (starRingEnd ℂ z)
+  rw [← Complex.conj_conj z, ← PPlus_conj, RCLike.norm_conj]
+  simpa using norm_PPlus_le ε (starRingEnd ℂ z)
 
 /-- The properties of the polynomial factors `P₊`, `P₋`, `P₀` used throughout §4 of the report:
 entire, of cubic growth `‖P ζ‖ ≤ (1 + |β|)(1 + ‖ζ‖)³`, and with the conjugation symmetry
@@ -526,13 +528,13 @@ structure IsSaddlePolynomial (ε : ℝ) (P : ℂ → ℂ) : Prop where
 
 theorem isSaddlePolynomial_PPlus (ε : ℝ) : IsSaddlePolynomial ε (PPlus ε) where
   differentiable := differentiable_PPlus ε
-  norm_le := norm_plusPolynomial_le ε
-  conj_eq z := by rw [plusPolynomial_conj, ← minusPolynomial_neg, neg_neg]
+  norm_le := norm_PPlus_le ε
+  conj_eq z := by rw [PPlus_conj, ← PMinus_neg, neg_neg]
 
 theorem isSaddlePolynomial_PMinus (ε : ℝ) : IsSaddlePolynomial ε (PMinus ε) where
   differentiable := differentiable_PMinus ε
-  norm_le := norm_minusPolynomial_le ε
-  conj_eq z := by rw [minusPolynomial_conj, minusPolynomial_neg]
+  norm_le := norm_PMinus_le ε
+  conj_eq z := by rw [PMinus_conj, PMinus_neg]
 
 theorem IsSaddlePolynomial.continuous {ε : ℝ} {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) :
     Continuous P :=
@@ -545,14 +547,14 @@ theorem IsSaddlePolynomial.im_imaginary {ε : ℝ} {P : ℂ → ℂ} (hP : IsSad
   rw [map_mul, Complex.conj_I, Complex.conj_ofReal, neg_mul, neg_neg] at h
   exact Complex.conj_eq_iff_im.mp h
 
-theorem mellinData_eq_gamma_mul_regular (ε ℓ : ℝ) (P : ℂ → ℂ) (z : ℂ) :
-    mellinData ε ℓ P z = Complex.Gamma (z / 2) * regularMellinFactor ε ℓ P z := by
-  unfold mellinData mellinEnvelope regularMellinFactor saddleRegularMellinFactor
+theorem M_P_eq_gamma_mul_regular (ε ℓ : ℝ) (P : ℂ → ℂ) (z : ℂ) :
+    M_P ε ℓ P z = Complex.Gamma (z / 2) * regularMellinFactor ε ℓ P z := by
+  unfold M_P mellinEnvelope regularMellinFactor saddleRegularMellinFactor
   ring
 
-theorem mellinData_eq (ε ℓ : ℝ) (P : ℂ → ℂ) :
-    mellinData ε ℓ P = fun z ↦ Complex.Gamma (z / 2) * regularMellinFactor ε ℓ P z :=
-  funext (mellinData_eq_gamma_mul_regular ε ℓ P)
+theorem M_P_eq (ε ℓ : ℝ) (P : ℂ → ℂ) :
+    M_P ε ℓ P = fun z ↦ Complex.Gamma (z / 2) * regularMellinFactor ε ℓ P z :=
+  funext (M_P_eq_gamma_mul_regular ε ℓ P)
 
 theorem saddleRegularMellinFactor_differentiable {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
     (ℓ : ℝ) : Differentiable ℂ (saddleRegularMellinFactor ε ℓ) := by
@@ -560,7 +562,7 @@ theorem saddleRegularMellinFactor_differentiable {ε : ℝ} (hε : 0 < ε) (hord
   have hphase : Differentiable ℂ fun z : ℂ ↦
       Complex.exp ((ℓ : ℂ) * h_ε ε (I * (z - (ℓ : ℂ)) / (ℓ : ℂ))) :=
     Complex.differentiable_exp.comp
-      (((mellinShellPhase_differentiable hε horder).comp harg).const_mul (ℓ : ℂ))
+      (((h_ε_differentiable hε horder).comp harg).const_mul (ℓ : ℂ))
   exact ((by fun_prop) : Differentiable ℂ fun z : ℂ ↦
     Complex.exp (((ℓ : ℂ) - z) * (log π : ℂ) / 2)).mul hphase
 
@@ -573,9 +575,9 @@ theorem regularMellinFactor_differentiable {ε : ℝ} (hε : 0 < ε) (horder : a
   unfold regularMellinFactor
   exact (saddleRegularMellinFactor_differentiable hε horder ℓ).mul (hP.comp (by fun_prop))
 
-theorem mellinData_meromorphic {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) (ℓ : ℝ)
-    {P : ℂ → ℂ} (hP : Differentiable ℂ P) : Meromorphic (mellinData ε ℓ P) := by
-  rw [mellinData_eq]
+theorem M_P_meromorphic {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) (ℓ : ℝ)
+    {P : ℂ → ℂ} (hP : Differentiable ℂ P) : Meromorphic (M_P ε ℓ P) := by
+  rw [M_P_eq]
   exact Complex.meromorphic_Gamma_div_two.mul (meromorphicOn_univ.mp
     (Complex.analyticOnNhd_univ_iff_differentiable.mpr
       (regularMellinFactor_differentiable hε horder ℓ hP)).meromorphicOn)
@@ -594,18 +596,18 @@ theorem saddleMellinGamma_differentiableAt_of_not_pole {z : ℂ}
   (Complex.differentiableAt_Gamma (z / 2) fun n hn ↦
     hz n (by linear_combination 2 * hn)).comp z (by fun_prop)
 
-theorem mellinData_differentiableOn_rightHalfPlane {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
+theorem M_P_differentiableOn_rightHalfPlane {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
     (ℓ : ℝ) {P : ℂ → ℂ} (hP : Differentiable ℂ P) :
-    DifferentiableOn ℂ (mellinData ε ℓ P) {z : ℂ | 0 < z.re} := by
+    DifferentiableOn ℂ (M_P ε ℓ P) {z : ℂ | 0 < z.re} := by
   have hgamma : DifferentiableOn ℂ (fun z : ℂ ↦ Complex.Gamma (z / 2)) {z : ℂ | 0 < z.re} :=
     fun z hz ↦ (saddleMellinGamma_differentiableAt_of_re_pos hz).differentiableWithinAt
-  rw [mellinData_eq]
+  rw [M_P_eq]
   exact hgamma.mul (regularMellinFactor_differentiable hε horder ℓ hP).differentiableOn
 
-theorem mellinData_differentiableAt_of_not_pole {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
+theorem M_P_differentiableAt_of_not_pole {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
     (ℓ : ℝ) {P : ℂ → ℂ} (hP : Differentiable ℂ P) {z : ℂ}
-    (hz : ∀ n : ℕ, z ≠ -(2 * n : ℂ)) : DifferentiableAt ℂ (mellinData ε ℓ P) z := by
-  rw [mellinData_eq]
+    (hz : ∀ n : ℕ, z ≠ -(2 * n : ℂ)) : DifferentiableAt ℂ (M_P ε ℓ P) z := by
+  rw [M_P_eq]
   exact (saddleMellinGamma_differentiableAt_of_not_pole hz).mul
     (regularMellinFactor_differentiable hε horder ℓ hP z)
 
@@ -622,17 +624,17 @@ theorem shellArgument_neg_even {ℓ : ℝ} (hℓ : 0 < ℓ) (n : ℕ) :
   ring
 
 /-- `h_ε(-i) = h_ε(i)` is real, report (42). -/
-theorem mellinShellPhase_neg_I (ε : ℝ) : h_ε ε (-I) = (h_εI ε 1 : ℂ) := by
-  rw [mellinShellPhase_neg]
-  simpa using mellinShellPhase_imaginary ε 1
+theorem h_ε_neg_I (ε : ℝ) : h_ε ε (-I) = (h_εI ε 1 : ℂ) := by
+  rw [h_ε_neg]
+  simpa using h_ε_imaginary ε 1
 
 /-- `P₊(-i) = β`, report (42). -/
-theorem plusPolynomial_neg_I (ε : ℝ) : PPlus ε (-I) = (β ε : ℂ) := by
-  simpa using plusPolynomial_imaginary ε (-1)
+theorem PPlus_neg_I (ε : ℝ) : PPlus ε (-I) = (β ε : ℂ) := by
+  simpa using PPlus_imaginary ε (-1)
 
 /-- `P₋(-i) = β`, report (42). -/
-theorem minusPolynomial_neg_I (ε : ℝ) : PMinus ε (-I) = (β ε : ℂ) := by
-  simpa using minusPolynomial_imaginary ε (-1)
+theorem PMinus_neg_I (ε : ℝ) : PMinus ε (-I) = (β ε : ℂ) := by
+  simpa using PMinus_imaginary ε (-1)
 
 theorem saddleRegularMellinFactor_zero {ε ℓ : ℝ} (hℓ : 0 < ℓ) :
     saddleRegularMellinFactor ε ℓ 0 = ((π ^ (ℓ / 2) * exp (ℓ * h_εI ε 1) : ℝ) : ℂ) := by
@@ -642,7 +644,7 @@ theorem saddleRegularMellinFactor_zero {ε ℓ : ℝ} (hℓ : 0 < ℓ) :
     push_cast
     ring
   unfold saddleRegularMellinFactor
-  rw [shellArgument_zero hℓ, hpi, mellinShellPhase_neg_I, ← Complex.ofReal_mul,
+  rw [shellArgument_zero hℓ, hpi, h_ε_neg_I, ← Complex.ofReal_mul,
     ← Complex.ofReal_exp, ← Complex.ofReal_mul]
 
 /-- Report (41): the regular factor at the `n`-th pole `z = -2n`. -/
@@ -656,15 +658,15 @@ theorem saddleRegularMellinFactor_neg_even {ε ℓ : ℝ} (hℓ : 0 < ℓ) (n : 
     push_cast
     ring
   unfold saddleRegularMellinFactor
-  rw [hpi, shellArgument_neg_even hℓ n, mellinShellPhase_imaginary,
-    realHyperbolicShellPhase_neg, ← Complex.ofReal_mul, ← Complex.ofReal_exp,
+  rw [hpi, shellArgument_neg_even hℓ n, h_ε_imaginary,
+    h_εI_neg, ← Complex.ofReal_mul, ← Complex.ofReal_exp,
     ← Complex.ofReal_mul]
 
-theorem plusSaddleRegularMellinFactor_neg_even {ε ℓ : ℝ} (hℓ : 0 < ℓ) (n : ℕ) :
-    plusSaddleRegularMellinFactor ε ℓ (-(2 * n : ℂ)) =
+theorem regularMellinFactorPlus_neg_even {ε ℓ : ℝ} (hℓ : 0 < ℓ) (n : ℕ) :
+    regularMellinFactorPlus ε ℓ (-(2 * n : ℂ)) =
       ((π ^ (ℓ / 2 + (n : ℝ)) * exp (ℓ * h_εI ε (1 + 2 * (n : ℝ) / ℓ)) : ℝ) : ℂ) *
         PPlus ε (I * ((-(1 + 2 * (n : ℝ) / ℓ) : ℝ) : ℂ)) := by
-  unfold plusSaddleRegularMellinFactor regularMellinFactor
+  unfold regularMellinFactorPlus regularMellinFactor
   rw [saddleRegularMellinFactor_neg_even hℓ n, shellArgument_neg_even hℓ n]
 
 /-- Report (42): twice the regular factor at `z = 0` is `2π^{λ/2} e^{λ h_ε(i)} P(-i)`. -/
@@ -783,8 +785,8 @@ def nthPoleRegularPart (ε ℓ : ℝ) (P : ℂ → ℂ) (n : ℕ) : ℂ → ℂ 
   dslope (nthPoleNumerator ε ℓ P n) (-(2 * n : ℂ))
 
 /-- The residues `Res_{z = -2n} M₊`; definitionally `poleResidue ε ℓ (PPlus ε) n`. -/
-def plusSaddlePoleResidue (ε ℓ : ℝ) (n : ℕ) : ℂ := (2 : ℂ) * (-1 : ℂ) ^ n / (n.factorial : ℂ) *
-    plusSaddleRegularMellinFactor ε ℓ (-(2 * n : ℂ))
+def poleResiduePlus (ε ℓ : ℝ) (n : ℕ) : ℂ := (2 : ℂ) * (-1 : ℂ) ^ n / (n.factorial : ℂ) *
+    regularMellinFactorPlus ε ℓ (-(2 * n : ℂ))
 
 /-- Report (42): the residue at `z = 0` is `2π^{λ/2} e^{λ h_ε(i)} P(-i)`, the value `f_P(0)`. -/
 theorem poleResidue_zero {ε ℓ : ℝ} (hℓ : 0 < ℓ) (P : ℂ → ℂ) :
@@ -794,14 +796,14 @@ theorem poleResidue_zero {ε ℓ : ℝ} (hℓ : 0 < ℓ) (P : ℂ → ℂ) :
 /-- Report (42): `f₊(0) = 2π^{λ/2} e^{λ h_ε(i)} β`. -/
 theorem poleResidue_PPlus_zero {ε ℓ : ℝ} (hℓ : 0 < ℓ) :
     poleResidue ε ℓ (PPlus ε) 0 = (originValue ε ℓ : ℂ) := by
-  rw [poleResidue_zero hℓ, plusPolynomial_neg_I, originValue]
+  rw [poleResidue_zero hℓ, PPlus_neg_I, originValue]
   push_cast
   ring
 
 /-- Report (42): `f₋(0) = 2π^{λ/2} e^{λ h_ε(i)} β`. -/
 theorem poleResidue_PMinus_zero {ε ℓ : ℝ} (hℓ : 0 < ℓ) :
     poleResidue ε ℓ (PMinus ε) 0 = (originValue ε ℓ : ℂ) := by
-  rw [poleResidue_zero hℓ, minusPolynomial_neg_I, originValue]
+  rw [poleResidue_zero hℓ, PMinus_neg_I, originValue]
   push_cast
   ring
 
@@ -818,18 +820,18 @@ theorem nthPoleNumerator_at_pole (ε ℓ : ℝ) (P : ℂ → ℂ) (n : ℕ) :
   unfold nthPoleNumerator poleResidue
   rw [gammaPoleNumerator_at_pole]
 
-theorem mellinData_eq_nthPoleNumerator_div (ε ℓ : ℝ) (P : ℂ → ℂ) {n : ℕ} {z : ℂ}
+theorem M_P_eq_nthPoleNumerator_div (ε ℓ : ℝ) (P : ℂ → ℂ) {n : ℕ} {z : ℂ}
     (hstrip : z ∈ saddlePoleStrip n) (hpole : z ≠ -(2 * n : ℂ)) :
-    mellinData ε ℓ P z = nthPoleNumerator ε ℓ P n z / (z + (2 * n : ℂ)) := by
-  rw [mellinData_eq_gamma_mul_regular, Gamma_half_eq_gammaPoleNumerator_div hstrip hpole,
+    M_P ε ℓ P z = nthPoleNumerator ε ℓ P n z / (z + (2 * n : ℂ)) := by
+  rw [M_P_eq_gamma_mul_regular, Gamma_half_eq_gammaPoleNumerator_div hstrip hpole,
     nthPoleNumerator]
   ring
 
 /-- Report (41): near the pole `z = -2n` the Mellin data is `residue/(z + 2n)` plus a regular
 part. -/
-theorem mellinData_nthPole_decomposition (ε ℓ : ℝ) (P : ℂ → ℂ) {n : ℕ} {z : ℂ}
+theorem M_P_nthPole_decomposition (ε ℓ : ℝ) (P : ℂ → ℂ) {n : ℕ} {z : ℂ}
     (hstrip : z ∈ saddlePoleStrip n) (hpole : z ≠ -(2 * n : ℂ)) :
-    mellinData ε ℓ P z =
+    M_P ε ℓ P z =
       poleResidue ε ℓ P n / (z + (2 * n : ℂ)) + nthPoleRegularPart ε ℓ P n z := by
   have hcoord : z + (2 * n : ℂ) ≠ 0 := fun h ↦ hpole (by linear_combination h)
   have hslope : (z + (2 * n : ℂ)) * nthPoleRegularPart ε ℓ P n z =
@@ -837,7 +839,7 @@ theorem mellinData_nthPole_decomposition (ε ℓ : ℝ) (P : ℂ → ℂ) {n : �
     have hbase := sub_smul_dslope (nthPoleNumerator ε ℓ P n) (-(2 * n : ℂ)) z
     rw [nthPoleNumerator_at_pole] at hbase
     simpa only [nthPoleRegularPart, sub_neg_eq_add, smul_eq_mul] using hbase
-  rw [mellinData_eq_nthPoleNumerator_div ε ℓ P hstrip hpole,
+  rw [M_P_eq_nthPoleNumerator_div ε ℓ P hstrip hpole,
     show nthPoleNumerator ε ℓ P n z =
       poleResidue ε ℓ P n + (z + (2 * n : ℂ)) * nthPoleRegularPart ε ℓ P n z by
       rw [hslope]; ring]

@@ -34,7 +34,7 @@ def Z_g {d : ℕ} (hd : 0 < d) (f : TestFunction d) (R : ℝ) (z : ℂ) : ℂ :=
 
 /-- Lemma 3.2 of the report: `Z` is holomorphic on the strip `|Im z| < d/2` and continuous on
 its closure. -/
-theorem normalizedRadialMellinStrip_diffContOnCl {d : ℕ}
+theorem Z_g_diffContOnCl {d : ℕ}
     (hd : 0 < d) (f : TestFunction d) (hf : IsRadial f)
     (hzero : f (0 : Euclidean d) = 0) (R : ℝ) :
     DiffContOnCl ℂ (Z_g hd f R) (Complex.im ⁻¹'
@@ -84,7 +84,7 @@ theorem norm_integral_mul_cpow_le_L1norm {d : ℕ} (hd : 0 < d) (f : TestFunctio
   rw [norm_mul]
   exact mul_le_of_le_one_right (norm_nonneg _) (hcpow ‖x‖ (norm_nonneg x))
 
-theorem normalizedRadialMellinStrip_top_norm_eq {d : ℕ}
+theorem Z_g_top_norm_eq {d : ℕ}
     (hd : 0 < d) (f : TestFunction d) (hnonzero : f ≠ 0) (R : ℝ) (y : ℝ) :
     ‖Z_g hd f R ((y : ℂ) + I * ((d : ℂ) / 2))‖ =
       sphereArea d / L1norm f * ‖mellin (radialProfile hd f) ((d : ℂ) - I * (y : ℂ))‖ := by
@@ -96,10 +96,10 @@ theorem normalizedRadialMellinStrip_top_norm_eq {d : ℕ}
       (log R : ℂ))).re = 0 := by
     norm_num
   rw [norm_Z_g hd f, hmellin, hphase, exp_zero, mul_one,
-    abs_of_pos (div_pos (radialSurfaceArea_pos hd) (radialL1Mass_pos f hnonzero))]
+    abs_of_pos (div_pos (sphereArea_pos hd) (L1norm_pos_of_ne_zero f hnonzero))]
 
 /-- Report (16): on the top edge `Im z = d/2` of the strip, `|Z(y + iλ)| ≤ 1`. -/
-theorem normalizedRadialMellinStrip_top_norm_le_one {d : ℕ} (hd : 0 < d) (f : TestFunction d)
+theorem Z_g_top_norm_le_one {d : ℕ} (hd : 0 < d) (f : TestFunction d)
     (hf : IsRadial f) (hnonzero : f ≠ 0)
     (R : ℝ) (y : ℝ) :
     ‖Z_g hd f R ((y : ℂ) + I * ((d : ℂ) / 2))‖ ≤ 1 := by
@@ -107,11 +107,11 @@ theorem normalizedRadialMellinStrip_top_norm_le_one {d : ℕ} (hd : 0 < d) (f : 
       sphereArea d • mellin (radialProfile hd f) ((d : ℂ) - I * (y : ℂ)) := by
     simpa only [show ((d : ℂ) - I * (y : ℂ)) - (d : ℂ) = -(I * (y : ℂ)) by ring] using
       integral_radialProfile_cpow hd f hf ((d : ℂ) - I * (y : ℂ))
-  rw [normalizedRadialMellinStrip_top_norm_eq hd f hnonzero, div_mul_eq_mul_div,
-    div_le_one (radialL1Mass_pos f hnonzero)]
+  rw [Z_g_top_norm_eq hd f hnonzero, div_mul_eq_mul_div,
+    div_le_one (L1norm_pos_of_ne_zero f hnonzero)]
   calc sphereArea d * ‖mellin (radialProfile hd f) ((d : ℂ) - I * (y : ℂ))‖
       = ‖sphereArea d • mellin (radialProfile hd f) ((d : ℂ) - I * (y : ℂ))‖ := by
-        rw [norm_smul, Real.norm_eq_abs, abs_of_pos (radialSurfaceArea_pos hd)]
+        rw [norm_smul, Real.norm_eq_abs, abs_of_pos (sphereArea_pos hd)]
     _ ≤ L1norm f := by
         rw [← hpolar]
         exact norm_integral_mul_cpow_le_L1norm hd f y
@@ -261,11 +261,11 @@ private theorem norm_Z_g_bottom {d : ℕ} (hd : 0 < d) (f : TestFunction d) (hno
       (log R : ℂ))).re = (d : ℝ) * log R := by
     norm_num
   rw [norm_Z_g hd f, hmellin, hphase,
-    abs_of_pos (div_pos (radialSurfaceArea_pos hd) (radialL1Mass_pos f hnonzero))]
+    abs_of_pos (div_pos (sphereArea_pos hd) (L1norm_pos_of_ne_zero f hnonzero))]
 
 /-- Lemma 3.2 of the report: on the bottom edge `Im z = -d/2`, `log |Z(y - iλ)| ≤ h_λ(y)`, the
 majorant (14). -/
-theorem normalizedRadialMellinStrip_bottom_norm_le_gamma {d : ℕ}
+theorem Z_g_bottom_norm_le_gamma {d : ℕ}
     (hd : 0 < d) (f : TestFunction d) (hf : IsRadial f)
     (hzero : f (0 : Euclidean d) = 0) {ς : ℤˣ}
     (hς : (𝓕 f : TestFunction d) = ((ς : ℤ) : ℂ) • f)
@@ -277,8 +277,8 @@ theorem normalizedRadialMellinStrip_bottom_norm_le_gamma {d : ℕ}
           Real.log ‖Complex.Gamma ((d : ℂ) / 2 + I * (y : ℂ) / 2)‖) := by
   have hdual : sphereArea d / L1norm f *
       ‖mellin (radialProfile hd f) ((d : ℂ) + I * (y : ℂ))‖ ≤ 1 := by
-    have htop := normalizedRadialMellinStrip_top_norm_le_one hd f hf hnonzero R (-y)
-    rw [normalizedRadialMellinStrip_top_norm_eq hd f hnonzero] at htop
+    have htop := Z_g_top_norm_le_one hd f hf hnonzero R (-y)
+    rw [Z_g_top_norm_eq hd f hnonzero] at htop
     simpa using htop
   have hboundary := radial_fourier_mellin_eigenfunction_boundary_norm hd f hf hzero hς y hy
   rw [show -(I * (y : ℂ)) / 2 = -I * (y : ℂ) / 2 by ring] at hboundary
@@ -339,7 +339,7 @@ theorem radialProfile_mellin_uniform_strip_bound {d : ℕ}
       (le_add_of_nonneg_left (Real.rpow_nonneg hr.le _))
 
 /-- Lemma 3.2 of the report: `Z` is bounded on the closed strip `|Im z| ≤ d/2`. -/
-theorem normalizedRadialMellinStrip_uniform_bound {d : ℕ}
+theorem Z_g_uniform_bound {d : ℕ}
     (hd : 0 < d) (f : TestFunction d) (hf : IsRadial f)
     (hzero : f (0 : Euclidean d) = 0) (R : ℝ) :
     ∃ C : ℝ, 0 ≤ C ∧ ∀ z : ℂ, -((d : ℝ) / 2) ≤ z.im → z.im ≤ (d : ℝ) / 2 →
@@ -420,7 +420,7 @@ private theorem ofReal_pow_mul_cpow_neg {R : ℝ} (hR : 0 < R) {d : ℕ} {a t : 
 
 /-- Lemma 3.6 of the report: on the horizontal line `Im z = λ - a`, `Z` is the Fourier transform
 of the weighted profile `v ↦ e^{-a v} φ(v)`. -/
-theorem normalizedRadialMellinStrip_shifted_eq_fourier {d : ℕ} (hd : 0 < d) (f : TestFunction d)
+theorem Z_g_shifted_eq_fourier {d : ℕ} (hd : 0 < d) (f : TestFunction d)
     (hreal : IsRealValued f) (R : ℝ) (hR : 0 < R) (a t : ℝ) :
     Z_g hd f R ((t : ℂ) + I * ((d : ℂ) / 2 - a)) =
       (𝓕 (fun v : ℝ ↦ (exp (-a * v) : ℂ) * (φ_g hd f R v : ℂ)) : ℝ → ℂ) (t / (2 * π)) := by
@@ -462,7 +462,7 @@ theorem normalizedRadialMellinStrip_shifted_eq_fourier {d : ℕ} (hd : 0 < d) (f
   exact hscale.symm.trans hfourier.symm
 
 /-- Lemma 3.6 of the report: `Z` restricted to a horizontal line of the strip is integrable. -/
-theorem normalizedRadialMellinStrip_shifted_integrable
+theorem Z_g_shifted_integrable
     {d : ℕ} (hd : 0 < d) (f : TestFunction d)
     (hreal : IsRealValued f)
     {R : ℝ} (hR : 0 < R) {a : ℝ}
@@ -473,12 +473,12 @@ theorem normalizedRadialMellinStrip_shifted_integrable
   have hscale : ((2 * π)⁻¹ : ℝ) ≠ 0 := inv_ne_zero (mul_ne_zero (by norm_num) pi_ne_zero)
   refine ((logProfile_weighted_fourier_integrable hd f hreal hR ha).comp_mul_right'
     hscale).congr (.of_forall fun t ↦ ?_)
-  simpa [div_eq_mul_inv] using (normalizedRadialMellinStrip_shifted_eq_fourier hd f hreal R hR
+  simpa [div_eq_mul_inv] using (Z_g_shifted_eq_fourier hd f hreal R hR
     a t).symm
 
 /-- Lemma 3.6 of the report: Fourier inversion recovers `φ` from the values of `Z` on the
 shifted line `Im z = λ - a`. -/
-theorem normalizedRadialMellinStrip_shifted_fourier_inversion
+theorem Z_g_shifted_fourier_inversion
     {d : ℕ} (hd : 0 < d) (f : TestFunction d)
     (hf : IsRadial f) (hreal : IsRealValued f)
     (hzero : f (0 : Euclidean d) = 0)
@@ -497,7 +497,7 @@ theorem normalizedRadialMellinStrip_shifted_fourier_inversion
       I * ((d : ℂ) / 2 - a))) =
       (𝓕 (fun u : ℝ ↦ (exp (-a * u) : ℂ) * (φ_g hd f R u : ℂ)) : ℝ → ℂ) := by
     funext ξ
-    have h := normalizedRadialMellinStrip_shifted_eq_fourier hd f hreal R hR a (2 * π * ξ)
+    have h := Z_g_shifted_eq_fourier hd f hreal R hR a (2 * π * ξ)
     rw [show 2 * π * ξ / (2 * π) = ξ by field_simp] at h
     simp only [Complex.ofReal_mul, Complex.ofReal_ofNat] at h
     exact h

@@ -8,7 +8,7 @@ The envelope of `M_P` on the contour `z = λ(1 + u) - iλT`, the rewriting of `f
 integral over the contour with the centered integrand `e^{L(T)} P(...)`, the Gaussian kernel of
 variance `V_u`, the positivity of the variance on the first branch, and the integrability of the
 centered integrands; the sign of `f_P` at the saddle point follows once the Gaussian error is small
-(`mellinProfile_exp_re_mul_pos_of_gaussian_error`).
+(`f_P_exp_re_mul_pos_of_gaussian_error`).
 -/
 
 namespace CohnElkies
@@ -35,7 +35,7 @@ theorem saddleSourceContourEnvelopeScale_pos {ε ℓ u : ℝ} (hℓ : 0 < ℓ) (
 theorem saddleSourceContour_mellinEnvelope_norm {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (hu : -1 < u) (horder : a₀ε ε ≤ Aε ε) (T : ℝ) :
     ‖mellinEnvelope ε ℓ (z_contour ℓ u T)‖ =
-      saddleSourceContourEnvelopeScale ε ℓ u * exp (-saddleSourceContourDamping ε ℓ u T) := by
+      saddleSourceContourEnvelopeScale ε ℓ u * exp (-D_u ε ℓ u T) := by
   have hπ : ‖Complex.exp (((ℓ : ℂ) - z_contour ℓ u T) * (log π : ℂ) / 2)‖ =
       exp (-(ℓ * u) * log π / 2) := by
     rw [Complex.norm_exp]
@@ -44,19 +44,19 @@ theorem saddleSourceContour_mellinEnvelope_norm {ε ℓ u : ℝ} (hε : 0 < ε) 
     ring
   have hΓ : ‖Complex.Gamma (z_contour ℓ u T / 2)‖ =
       Gamma (ℓ * (1 + u) / 2) * exp (-D_γ ℓ (1 + u) T) := by
-    rw [saddleSourceMellinContour_gammaArgument]
+    rw [z_contour_gammaArgument]
     have h := upperGammaShifted_modulus_eq_exp_neg_damping (η := 1 + u) hℓ (by linarith) T
     push_cast at h
     exact h
   have hshell : ‖Complex.exp ((ℓ : ℂ) * h_ε ε (I * (z_contour ℓ u T - (ℓ : ℂ)) / (ℓ : ℂ)))‖ =
       exp (ℓ * h_εI ε u) * exp (-(D_B ε ℓ (u - 1) T - D_s ε ℓ (u - 1) T)) := by
-    rw [saddleSourceMellinContour_shellArgument hℓ]
+    rw [z_contour_shellArgument hℓ]
     exact norm_saddleShellExponential_eq_exp_neg_damping hε horder ℓ T u
   have hexp : exp (-D_γ ℓ (1 + u) T) * exp (-(D_B ε ℓ (u - 1) T - D_s ε ℓ (u - 1) T)) =
-      exp (-saddleSourceContourDamping ε ℓ u T) := by
+      exp (-D_u ε ℓ u T) := by
     rw [← exp_add]
     congr 1
-    unfold saddleSourceContourDamping
+    unfold D_u
     ring
   unfold mellinEnvelope
   rw [norm_mul, norm_mul, hπ, hΓ, hshell]
@@ -70,7 +70,7 @@ def saddleSourceNormalizedEnvelope (ε ℓ u T : ℝ) : ℂ :=
 
 theorem saddleSourceNormalizedEnvelope_norm {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (hu : -1 < u)
     (horder : a₀ε ε ≤ Aε ε) (T : ℝ) :
-    ‖saddleSourceNormalizedEnvelope ε ℓ u T‖ = exp (-saddleSourceContourDamping ε ℓ u T) := by
+    ‖saddleSourceNormalizedEnvelope ε ℓ u T‖ = exp (-D_u ε ℓ u T) := by
   have hscale := saddleSourceContourEnvelopeScale_pos (ε := ε) hℓ hu
   unfold saddleSourceNormalizedEnvelope
   rw [norm_div, saddleSourceContour_mellinEnvelope_norm hε hℓ hu horder T,
@@ -80,9 +80,9 @@ theorem saddleSourceNormalizedEnvelope_norm {ε ℓ u : ℝ} (hε : 0 < ε) (h�
 def expL (ε ℓ u v T : ℝ) : ℂ :=
   saddleSourceNormalizedEnvelope ε ℓ u T * Complex.exp (I * (ℓ * T * v : ℂ))
 
-theorem saddleSourceCenteredEnvelope_norm {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (hu : -1 < u)
+theorem expL_norm {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (hu : -1 < u)
     (horder : a₀ε ε ≤ Aε ε) (v T : ℝ) :
-    ‖expL ε ℓ u v T‖ = exp (-saddleSourceContourDamping ε ℓ u T) := by
+    ‖expL ε ℓ u v T‖ = exp (-D_u ε ℓ u T) := by
   unfold expL
   rw [norm_mul, saddleSourceNormalizedEnvelope_norm hε hℓ hu horder T,
     show ‖Complex.exp (I * (ℓ * T * v : ℂ))‖ = 1 by rw [Complex.norm_exp]; simp, mul_one]
@@ -94,21 +94,21 @@ def centeredIntegrand (ε ℓ : ℝ) (P : ℂ → ℂ) (u v T : ℝ) : ℂ :=
 theorem centeredIntegrand_norm {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (hu : -1 < u)
     (horder : a₀ε ε ≤ Aε ε) (P : ℂ → ℂ) (v T : ℝ) :
     ‖centeredIntegrand ε ℓ P u v T‖ =
-      exp (-saddleSourceContourDamping ε ℓ u T) * ‖P ((T : ℂ) + I * (u : ℂ))‖ := by
+      exp (-D_u ε ℓ u T) * ‖P ((T : ℂ) + I * (u : ℂ))‖ := by
   unfold centeredIntegrand
-  rw [norm_mul, saddleSourceCenteredEnvelope_norm hε hℓ hu horder]
+  rw [norm_mul, expL_norm hε hℓ hu horder]
 
-@[simp] theorem saddleSourceContourDamping_eq_firstBranch (ε ℓ u T : ℝ) :
-    saddleSourceContourDamping ε ℓ u T = saddleSourceContourDamping ε ℓ u T := rfl
+@[simp] theorem D_u_eq_firstBranch (ε ℓ u T : ℝ) :
+    D_u ε ℓ u T = D_u ε ℓ u T := rfl
 
-@[simp] theorem saddleSourceContourDamping_eq_secondBranch (ε ℓ δ T : ℝ) :
-    saddleSourceContourDamping ε ℓ (1 + δ) T = D_u ε ℓ δ T := by
-  simp [saddleSourceContourDamping, D_u, show 1 + (1 + δ) = 2 + δ from by ring,
+@[simp] theorem D_u_eq_secondBranch (ε ℓ δ T : ℝ) :
+    D_u ε ℓ (1 + δ) T = D_uδ ε ℓ δ T := by
+  simp [D_u, D_uδ, show 1 + (1 + δ) = 2 + δ from by ring,
     show 1 + δ - 1 = δ from by ring]
 
 /-! ### Rewriting the Mellin integral on the contour -/
 
-theorem saddleSourceMellinContour_integral_change {ℓ : ℝ} (hℓ : 0 < ℓ) (u : ℝ) (F : ℂ → ℂ) :
+theorem z_contour_integral_change {ℓ : ℝ} (hℓ : 0 < ℓ) (u : ℝ) (F : ℂ → ℂ) :
     (∫ t : ℝ, F (((ℓ * (1 + u) : ℝ) : ℂ) + (t : ℂ) * I)) =
       (ℓ : ℂ) * ∫ T : ℝ, F (z_contour ℓ u T) := by
   have hpt (T : ℝ) : F (z_contour ℓ u T) =
@@ -140,17 +140,17 @@ theorem saddleProfile_eq_sourceContourIntegral {M : ℂ → ℂ} {f : ℝ → �
     f r = (ℓ / (2 * π) : ℂ) *
       ∫ T : ℝ, saddleMellinInversePower r (z_contour ℓ u T) * M (z_contour ℓ u T) := by
   have hη : 0 < 1 + u := by linarith
-  rw [hcontour (ℓ * (1 + u)) (by positivity), saddleSourceMellinContour_integral_change hℓ u
+  rw [hcontour (ℓ * (1 + u)) (by positivity), z_contour_integral_change hℓ u
     fun z ↦ saddleMellinInversePower r z * M z]
   ring
 
-theorem mellinProfile_eq_sourceContourIntegral {ε ℓ r u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem f_P_eq_sourceContourIntegral {ε ℓ r u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (c : ℝ) (hr : 0 < r)
     (hu : -1 < u) :
-    mellinProfile ε ℓ P c r = (ℓ / (2 * π) : ℂ) *
-      ∫ T : ℝ, saddleMellinInversePower r (z_contour ℓ u T) * mellinData ε ℓ P (z_contour ℓ u T) :=
+    f_P ε ℓ P c r = (ℓ / (2 * π) : ℂ) *
+      ∫ T : ℝ, saddleMellinInversePower r (z_contour ℓ u T) * M_P ε ℓ P (z_contour ℓ u T) :=
   saddleProfile_eq_sourceContourIntegral hℓ hu fun _a ha ↦
-    mellinProfile_eq_positive_contour hε hℓ horder hP c hr ha
+    f_P_eq_positive_contour hε hℓ horder hP c hr ha
 
 theorem saddleSourceContour_inversePower_exp (ℓ u v T : ℝ) :
     saddleMellinInversePower (exp v) (z_contour ℓ u T) =
@@ -189,7 +189,7 @@ theorem saddleSourceCenteredIntegrand_sourcePointwise {ε ℓ u : ℝ} (hℓ : 0
           P (I * (z_contour ℓ u T - (ℓ : ℂ)) / (ℓ : ℂ))) =
       (exp (-(ℓ * (1 + u) * v)) * saddleSourceContourEnvelopeScale ε ℓ u : ℂ) *
         (expL ε ℓ u v T * P ((T : ℂ) + I * (u : ℂ))) := by
-  rw [saddleSourceContour_inversePower_exp, saddleSourceMellinContour_shellArgument hℓ,
+  rw [saddleSourceContour_inversePower_exp, z_contour_shellArgument hℓ,
     saddleSourceContour_envelope_eq_scale_mul_normalized hℓ hu T]
   unfold expL
   push_cast
@@ -197,7 +197,7 @@ theorem saddleSourceCenteredIntegrand_sourcePointwise {ε ℓ u : ℝ} (hℓ : 0
 
 theorem centeredIntegrand_sourcePointwise {ε ℓ u : ℝ} (hℓ : 0 < ℓ) (hu : -1 < u) (P : ℂ → ℂ)
     (v T : ℝ) :
-    saddleMellinInversePower (exp v) (z_contour ℓ u T) * mellinData ε ℓ P (z_contour ℓ u T) =
+    saddleMellinInversePower (exp v) (z_contour ℓ u T) * M_P ε ℓ P (z_contour ℓ u T) =
       (exp (-(ℓ * (1 + u) * v)) * saddleSourceContourEnvelopeScale ε ℓ u : ℂ) *
         centeredIntegrand ε ℓ P u v T :=
   saddleSourceCenteredIntegrand_sourcePointwise hℓ hu P v T
@@ -216,18 +216,19 @@ theorem saddleProfile_exp_eq_centeredIntegral {ε ℓ u v : ℝ} {f : ℝ → �
   ring
 
 /-- Report (46): `f_P(e^v)` is a positive multiple of the integral of the centered integrand. -/
-theorem mellinProfile_exp_eq_centeredIntegral {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (hu : -1 < u)
+theorem f_P_exp_eq_centeredIntegral {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (hu : -1 < u)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (c v : ℝ) :
-    mellinProfile ε ℓ P c (exp v) = (saddleSourceCenteredPrefactor ε ℓ u v : ℂ) *
+    f_P ε ℓ P c (exp v) = (saddleSourceCenteredPrefactor ε ℓ u v : ℂ) *
       ∫ T : ℝ, centeredIntegrand ε ℓ P u v T :=
   saddleProfile_exp_eq_centeredIntegral
-    (mellinProfile_eq_sourceContourIntegral hε hℓ horder hP c (exp_pos v) hu)
+    (f_P_eq_sourceContourIntegral hε hℓ horder hP c (exp_pos v) hu)
     fun T ↦ centeredIntegrand_sourcePointwise hℓ hu P v T
 
 /-! ### The Gaussian approximation of report (71) -/
 
-/-- The variance `V(u)` of the Gaussian approximation, report (71). -/
-def V_u (ε ℓ u : ℝ) : ℝ := upperSaddleVariance ε ℓ (u - 1)
+/-- The saddle variance `V(u) = v'(u)` of report (44), the variance of the Gaussian approximation
+in Lemma 4.8. -/
+def V_u (ε ℓ u : ℝ) : ℝ := V_uδ ε ℓ (u - 1)
 
 /-- The Gaussian `e^{-λV(u)T²/2}` of report (71). -/
 def saddleSourceGaussianKernel (ε ℓ u T : ℝ) : ℝ := exp (-(ℓ * V_u ε ℓ u / 2) * T ^ 2)
@@ -270,19 +271,19 @@ theorem gaussianIntegrand_integral_re (ε ℓ : ℝ) (P : ℂ → ℂ) (u : ℝ)
   simp only [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im, zero_mul, sub_zero]
   ring
 
-theorem eventually_saddleSourceGaussianVariance_secondBranch_pos : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_V_u_secondBranch_pos : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ ℓ : ℝ, 0 < ℓ → ∀ δ : ℝ, ε / 2 ≤ δ → 0 < V_u ε ℓ (1 + δ) := by
-  filter_upwards [eventually_upperSaddleVariance_pos] with ε hpositive ℓ hℓ δ hδ
+  filter_upwards [eventually_V_uδ_pos] with ε hpositive ℓ hℓ δ hδ
   simpa [V_u] using hpositive ℓ hℓ δ hδ
 
 /-- Report §4.3: a Gaussian approximation with error smaller than the Gaussian mass
 `‖P(iu)‖ ∫ e^{-λV T²/2}` forces `f_P(e^v)` to have the sign of `P(iu)`, i.e.
 `Re P(iu) · Re f_P(e^v) > 0`. -/
-theorem mellinProfile_exp_re_mul_pos_of_gaussian_error {ε ℓ u v : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem f_P_exp_re_mul_pos_of_gaussian_error {ε ℓ u v : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (hu : -1 < u) (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (c : ℝ)
     (herror : ‖(∫ T : ℝ, centeredIntegrand ε ℓ P u v T) - ∫ T : ℝ, gaussianIntegrand ε ℓ P u T‖ <
       ‖P (I * (u : ℂ))‖ * ∫ T : ℝ, saddleSourceGaussianKernel ε ℓ u T) :
-    0 < (P (I * (u : ℂ))).re * (mellinProfile ε ℓ P c (exp v)).re := by
+    0 < (P (I * (u : ℂ))).re * (f_P ε ℓ P c (exp v)).re := by
   set a : ℝ := (P (I * (u : ℂ))).re with ha
   set G : ℝ := ∫ T : ℝ, saddleSourceGaussianKernel ε ℓ u T with hG
   set J : ℂ := ∫ T : ℝ, centeredIntegrand ε ℓ P u v T with hJdef
@@ -305,17 +306,17 @@ theorem mellinProfile_exp_re_mul_pos_of_gaussian_error {ε ℓ u v : ℝ} (hε :
       rw [← abs_mul]
       exact neg_abs_le _
     nlinarith
-  rw [mellinProfile_exp_eq_centeredIntegral hε hℓ hu horder hP c v, ← hJdef]
+  rw [f_P_exp_eq_centeredIntegral hε hℓ hu horder hP c v, ← hJdef]
   simp only [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im, zero_mul, sub_zero]
   rw [mul_left_comm]
   exact mul_pos (saddleSourceCenteredPrefactor_pos hℓ hu v) hJ
 
 /-! ### Positivity of the variance on the first branch -/
 
-theorem saddleSourcePositiveShellVariance_nonneg (ε δ : ℝ) : 0 ≤ V_B ε δ := by
+theorem V_B_nonneg (ε δ : ℝ) : 0 ≤ V_B ε δ := by
   refine intervalIntegral.integral_nonneg (by linarith) fun a _ ↦ ?_
   unfold w_B
-  exact mul_nonneg (mul_nonneg (div_nonneg (shellWeight_pos ε).le (cosh_pos a).le)
+  exact mul_nonneg (mul_nonneg (div_nonneg (Qε_pos ε).le (cosh_pos a).le)
     (sq_nonneg a)) (cosh_pos _).le
 
 /-- Report §4.3: on the first branch the short shell carries at most `(1 - 2ε)` of the gamma
@@ -333,7 +334,7 @@ theorem upperFirstBranch_shortVariance_le_gamma {ε ℓ u : ℝ} (hε : 0 < ε) 
   have hshortOn : IntegrableOn (fun a : ℝ ↦ ℓ * (-w_s ε a) * cosh (u * a) * a ^ 2)
       (Ioc (a₀ε ε) (Aε ε)) := by
     refine (intervalIntegrable_iff_integrableOn_Ioc_of_le horder).mp ?_
-    exact ((((shortShellDensity_intervalIntegrable hε horder).neg.const_mul ℓ).mul_continuousOn
+    exact ((((w_s_intervalIntegrable hε horder).neg.const_mul ℓ).mul_continuousOn
       (by fun_prop)).mul_continuousOn (by fun_prop))
   have hpoint (a : ℝ) (ha : a ∈ Ioc (a₀ε ε) (Aε ε)) :
       ℓ * (-w_s ε a) * cosh (u * a) * a ^ 2 ≤ (1 - 2 * ε) * (a ^ 2 * μ_ℓ ℓ (1 + u) a) := by
@@ -344,7 +345,7 @@ theorem upperFirstBranch_shortVariance_le_gamma {ε ℓ u : ℝ} (hε : 0 < ε) 
     ((hgamma.mono_set hsubset).const_mul (1 - 2 * ε)) measurableSet_Ioc hpoint
   have hnonneg : 0 ≤ᵐ[volume.restrict (Ioi (0 : ℝ))] fun a : ℝ ↦ a ^ 2 * μ_ℓ ℓ (1 + u) a := by
     filter_upwards [ae_restrict_mem measurableSet_Ioi] with a ha
-    exact mul_nonneg (sq_nonneg a) (upperGammaMeasureDensity_pos hℓ ha).le
+    exact mul_nonneg (sq_nonneg a) (μ_ℓ_pos hℓ ha).le
   have hrestrict := mul_le_mul_of_nonneg_left (setIntegral_mono_set hgamma hnonneg
     (Filter.Eventually.of_forall fun a ha ↦ hsubset ha)) hfactor
   have hshortEq : ℓ * V_s ε (u - 1) =
@@ -368,32 +369,32 @@ theorem upperFirstBranch_shortVariance_le_gamma {ε ℓ u : ℝ} (hε : 0 < ε) 
         unfold V_γ
         ring
 
-theorem upperFirstBranch_saddleSourceGaussianVariance_lower_bound {ε ℓ u : ℝ} (hε : 0 < ε)
+theorem upperFirstBranch_V_u_lower_bound {ε ℓ u : ℝ} (hε : 0 < ε)
     (hεsmall : ε ≤ 1 / 4) (hℓ : 0 < ℓ) (hulower : -1 < u) (huupper : u ≤ 1 + ε / 2)
     (horder : a₀ε ε ≤ Aε ε) (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) :
     2 * ε * V_γ ℓ (1 + u) ≤ V_u ε ℓ u := by
   have hshort :=
     upperFirstBranch_shortVariance_le_gamma hε hεsmall hℓ hulower huupper horder hmargin
-  have hpositive := saddleSourcePositiveShellVariance_nonneg ε (u - 1)
-  unfold V_u upperSaddleVariance upperNetShellVariance
+  have hpositive := V_B_nonneg ε (u - 1)
+  unfold V_u V_uδ upperNetShellVariance
   rw [show 2 + (u - 1) = 1 + u from by ring]
   nlinarith
 
-theorem eventually_saddleSourceGaussianVariance_firstBranch_pos : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_V_u_firstBranch_pos : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ ℓ : ℝ, 0 < ℓ → ∀ u : ℝ, -1 < u → u ≤ 1 + ε / 2 → 0 < V_u ε ℓ u := by
   have hsmall : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ε ≤ 1 / 4 := by
     have htendsto : Tendsto (fun ε : ℝ ↦ ε) (𝓝[>] (0 : ℝ)) (𝓝 (0 : ℝ)) :=
       tendsto_id.mono_left nhdsWithin_le_nhds
     filter_upwards [htendsto.eventually (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1 / 4))] with ε hε
     exact hε.le
-  filter_upwards [self_mem_nhdsWithin, hsmall, eventually_upper_shortCutoff_le_shortEndpoint,
-    eventually_upper_shortMargin_positive] with ε hε hεsmall horder hmargin ℓ hℓ u hulower huupper
+  filter_upwards [self_mem_nhdsWithin, hsmall, eventually_upper_a₀ε_le_Aε,
+    eventually_upper_bε_positive] with ε hε hεsmall horder hmargin ℓ hℓ u hulower huupper
   change 0 < ε at hε
   have hη : 0 < 1 + u := by linarith
   have hgammaPos : 0 < V_γ ℓ (1 + u) :=
-    (show (0 : ℝ) < 1 / (2 * (1 + u)) by positivity).trans_le (upperGammaVariance_bounds hℓ hη).1
+    (show (0 : ℝ) < 1 / (2 * (1 + u)) by positivity).trans_le (V_γ_bounds hℓ hη).1
   exact (mul_pos (by positivity : (0 : ℝ) < 2 * ε) hgammaPos).trans_le
-    (upperFirstBranch_saddleSourceGaussianVariance_lower_bound hε hεsmall hℓ hulower huupper horder
+    (upperFirstBranch_V_u_lower_bound hε hεsmall hℓ hulower huupper horder
       fun a ha ↦ le_trans (by norm_num) (hmargin a ha))
 
 /-! ### Integrability of the centered integrands -/
@@ -431,7 +432,7 @@ theorem centeredIntegrand_integrable {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 <
   have hη : 0 < 1 + u := by linarith
   have ha : 0 < ℓ * (1 + u) := by positivity
   exact saddleSourceCenteredIntegrand_integrable hℓ hu
-    (mellinData_shiftedLine_weighted_integrable hε hℓ horder hP (saddlePositiveContour_ne_pole ha)
+    (M_P_shiftedLine_weighted_integrable hε hℓ horder hP (saddlePositiveContour_ne_pole ha)
       (exp_pos v))
     fun T ↦ centeredIntegrand_sourcePointwise hℓ hu P v T
 

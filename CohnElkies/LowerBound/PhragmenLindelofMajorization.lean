@@ -39,12 +39,12 @@ open scoped Filter FourierTransform Real SchwartzMap Topology
 theorem P_σ_le_exponentialMajorant {σ : ℝ} (hσ : 0 ≤ σ) (habove : σ < 1) (T : ℝ) :
     P_σ σ T ≤ stripPoissonExponentialMajorant T := by
   obtain ⟨hnonneg, hle⟩ := stripNormalizedPoissonExtension_le_majorant hσ habove.le T
-  have hmass := stripBottomMass_pos habove
+  have hmass := M_σ_pos habove
   have hP : P_σ σ T = M_σ σ * stripNormalizedPoissonExtension σ T := by
     rw [← stripNormalizedPoissonKernel_eq_extension (by linarith) habove T,
       stripNormalizedPoissonKernel]
     field_simp
-  nlinarith [mul_nonneg (sub_nonneg.mpr (stripBottomMass_lt_one (by linarith : -1 < σ)).le) hnonneg]
+  nlinarith [mul_nonneg (sub_nonneg.mpr (M_σ_lt_one (by linarith : -1 < σ)).le) hnonneg]
 
 theorem integrable_exponentialMajorant_mul_abs :
     Integrable fun T : ℝ ↦ stripPoissonExponentialMajorant T * |T| := by
@@ -59,7 +59,7 @@ theorem integrable_P_σ_mul_abs_of_nonneg {σ : ℝ} (hσ : 0 ≤ σ) (habove : 
   have hmeas : Measurable fun T : ℝ ↦ P_σ σ T * |T| := by unfold P_σ θ; fun_prop
   refine integrable_exponentialMajorant_mul_abs.mono' hmeas.aestronglyMeasurable
     (.of_forall fun T ↦ ?_)
-  have hpos := stripPoissonKernel_pos (by linarith) habove T
+  have hpos := P_σ_pos (by linarith) habove T
   rw [Real.norm_eq_abs, abs_of_nonneg (mul_nonneg hpos.le (abs_nonneg T))]
   exact mul_le_mul_of_nonneg_right (P_σ_le_exponentialMajorant hσ habove T) (abs_nonneg T)
 
@@ -67,7 +67,7 @@ theorem integrable_P_σ_mul_abs_of_nonneg {σ : ℝ} (hσ : 0 ≤ σ) (habove : 
 theorem integrable_P_σ_mul_abs {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
     Integrable fun T : ℝ ↦ P_σ σ T * |T| :=
   (le_or_gt σ 0).elim
-    (fun hσ ↦ stripPoissonKernel_lower_product_integrable hbelow hσ continuous_abs
+    (fun hσ ↦ P_σ_lower_product_integrable hbelow hσ continuous_abs
       (integrable_P_σ_mul_abs_of_nonneg le_rfl one_pos))
     (fun hσ ↦ integrable_P_σ_mul_abs_of_nonneg hσ.le habove)
 
@@ -82,18 +82,18 @@ theorem exists_integral_P_σ_mul_abs_le :
       (Real.one_lt_cosh.mpr (half_pos Real.pi_pos).ne')
     exact ⟨1 / (1 - (Real.cosh (π / 2))⁻¹), one_div_pos.mpr (by linarith),
       fun σ T hbelow hσ hT ↦ by
-        simpa using stripPoissonKernel_le_center_of_lower_of_abs_ge hbelow hσ one_pos hT⟩
+        simpa using P_σ_le_center_of_lower_of_abs_ge hbelow hσ one_pos hT⟩
   have hcenter : Integrable fun T : ℝ ↦ P_σ 0 T * |T| :=
     integrable_P_σ_mul_abs_of_nonneg le_rfl one_pos
   have hJ : 0 ≤ ∫ T : ℝ, P_σ 0 T * |T| := integral_nonneg fun T ↦
-    mul_nonneg (stripPoissonKernel_pos (by norm_num) one_pos T).le (abs_nonneg T)
+    mul_nonneg (P_σ_pos (by norm_num) one_pos T).le (abs_nonneg T)
   have hE : 0 ≤ ∫ T : ℝ, stripPoissonExponentialMajorant T * |T| := integral_nonneg fun T ↦ by
     unfold stripPoissonExponentialMajorant; positivity
   refine ⟨1 + C * (∫ T : ℝ, P_σ 0 T * |T|) + ∫ T : ℝ, stripPoissonExponentialMajorant T * |T|,
     by positivity, fun σ hbelow habove ↦ ?_⟩
   have hmoment : Integrable fun T : ℝ ↦ P_σ σ T * |T| := integrable_P_σ_mul_abs hbelow habove
   rcases le_or_gt σ 0 with hσ | hσ
-  · have hk : Integrable (P_σ σ) := stripPoissonKernel_integrable hbelow habove
+  · have hk : Integrable (P_σ σ) := P_σ_integrable hbelow habove
     have hscaled : Integrable fun T : ℝ ↦ C * (P_σ 0 T * |T|) := hcenter.const_mul C
     have hS : MeasurableSet {T : ℝ | 1 ≤ |T|} :=
       (isClosed_le continuous_const continuous_abs).measurableSet
@@ -105,17 +105,17 @@ theorem exists_integral_P_σ_mul_abs_le :
                 (abs_nonneg T)
         _ ≤ ∫ T : ℝ, C * (P_σ 0 T * |T|) := setIntegral_le_integral hscaled
             (.of_forall fun T ↦ mul_nonneg hC.le (mul_nonneg
-              (stripPoissonKernel_pos (by norm_num) one_pos T).le (abs_nonneg T)))
+              (P_σ_pos (by norm_num) one_pos T).le (abs_nonneg T)))
         _ = C * ∫ T : ℝ, P_σ 0 T * |T| := integral_const_mul _ _
     have hnear : (∫ T in {T : ℝ | 1 ≤ |T|}ᶜ, P_σ σ T * |T|) ≤ 1 := by
       calc (∫ T in {T : ℝ | 1 ≤ |T|}ᶜ, P_σ σ T * |T|) ≤ ∫ T in {T : ℝ | 1 ≤ |T|}ᶜ, P_σ σ T :=
             setIntegral_mono_on hmoment.integrableOn hk.integrableOn hS.compl fun T hT ↦ by
               have hT' : |T| ≤ 1 := le_of_lt (not_le.mp hT)
-              nlinarith [(stripPoissonKernel_pos hbelow habove T).le]
+              nlinarith [(P_σ_pos hbelow habove T).le]
         _ ≤ ∫ T : ℝ, P_σ σ T := setIntegral_le_integral hk
-            (.of_forall fun T ↦ (stripPoissonKernel_pos hbelow habove T).le)
-        _ = M_σ σ := integral_stripPoissonKernel hbelow habove
-        _ ≤ 1 := (stripBottomMass_lt_one hbelow).le
+            (.of_forall fun T ↦ (P_σ_pos hbelow habove T).le)
+        _ = M_σ σ := integral_P_σ hbelow habove
+        _ ≤ 1 := (M_σ_lt_one hbelow).le
     linarith [integral_add_compl hS hmoment]
   · linarith [integral_mono hmoment integrable_exponentialMajorant_mul_abs fun T ↦
       mul_le_mul_of_nonneg_right (P_σ_le_exponentialMajorant hσ.le habove T) (abs_nonneg T),
@@ -169,7 +169,7 @@ moment: `|P_σ(T) b(x − ℓT)| ≤ A (1 + |x|) P_σ(T) + A ℓ P_σ(T) |T|`. -
 theorem norm_P_σ_mul_le_of_abs_le {ℓ σ : ℝ} (hℓ : 0 < ℓ) (hbelow : -1 < σ) (habove : σ < 1)
     {b : ℝ → ℝ} {A : ℝ} (hA : 0 ≤ A) (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) (x T : ℝ) :
     ‖P_σ σ T * b (x - ℓ * T)‖ ≤ A * (1 + |x|) * P_σ σ T + A * ℓ * (P_σ σ T * |T|) := by
-  have hkpos := stripPoissonKernel_pos hbelow habove T
+  have hkpos := P_σ_pos hbelow habove T
   have hb : |b (x - ℓ * T)| ≤ A * (1 + |x| + ℓ * |T|) := by
     refine (hbound _).trans (mul_le_mul_of_nonneg_left ?_ hA)
     have habs := abs_sub x (ℓ * T)
@@ -187,7 +187,7 @@ theorem integrable_P_σ_mul_of_abs_le {ℓ σ : ℝ} (hℓ : 0 < ℓ) (hbelow : 
   have hmeas : Measurable fun T : ℝ ↦ P_σ σ T * b (x - ℓ * T) :=
     (by unfold P_σ θ; fun_prop : Measurable fun T : ℝ ↦ P_σ σ T).mul
       (hb.measurable.comp (by fun_prop))
-  exact (((stripPoissonKernel_integrable hbelow habove).const_mul _).add
+  exact (((P_σ_integrable hbelow habove).const_mul _).add
     ((integrable_P_σ_mul_abs hbelow habove).const_mul _)).mono' hmeas.aestronglyMeasurable
     (.of_forall fun T ↦ norm_P_σ_mul_le_of_abs_le hℓ hbelow habove hA hbound x T)
 
@@ -202,7 +202,7 @@ theorem exists_abs_W_b_re_le {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb 
   refine ⟨A * (1 + ℓ * M), by positivity, fun z hz ↦ ?_⟩
   obtain ⟨hbelow, habove⟩ := im_div_mem_Ioo_of_mem_strip hℓ hz
   have hconstant : Integrable fun T : ℝ ↦ A * (1 + |z.re|) * P_σ (z.im / ℓ) T :=
-    (stripPoissonKernel_integrable hbelow habove).const_mul _
+    (P_σ_integrable hbelow habove).const_mul _
   have hlinear : Integrable fun T : ℝ ↦ A * ℓ * (P_σ (z.im / ℓ) T * |T|) :=
     (integrable_P_σ_mul_abs hbelow habove).const_mul _
   rw [W_b_re_of_mem_strip hℓ hb hbound hz]
@@ -213,9 +213,9 @@ theorem exists_abs_W_b_re_le {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb 
           (.of_forall fun T ↦ norm_P_σ_mul_le_of_abs_le hℓ hbelow habove hA hbound z.re T)
     _ = A * (1 + |z.re|) * M_σ (z.im / ℓ) + A * ℓ * ∫ T : ℝ, P_σ (z.im / ℓ) T * |T| := by
         rw [integral_add hconstant hlinear, integral_const_mul, integral_const_mul,
-          integral_stripPoissonKernel hbelow habove]
+          integral_P_σ hbelow habove]
     _ ≤ A * (1 + ℓ * M) * (1 + |z.re|) := by
-        have h₁ := mul_le_mul_of_nonneg_left (stripBottomMass_lt_one hbelow).le
+        have h₁ := mul_le_mul_of_nonneg_left (M_σ_lt_one hbelow).le
           (by positivity : (0 : ℝ) ≤ A * (1 + |z.re|))
         have h₂ := mul_le_mul_of_nonneg_left (hmoment _ hbelow habove)
           (by positivity : (0 : ℝ) ≤ A * ℓ)
@@ -358,16 +358,16 @@ theorem tendsto_integral_far_bottom {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → �
   obtain ⟨C, hC, hCle⟩ : ∃ C : ℝ, 0 < C ∧ ∀ σ T : ℝ, -1 < σ → σ ≤ 0 → δ ≤ |T| →
       P_σ σ T ≤ C * P_σ 0 T :=
     ⟨1 / (1 - (Real.cosh (π * δ / 2))⁻¹), one_div_pos.mpr hCpos,
-      fun σ T hbelow hσ hT ↦ stripPoissonKernel_le_center_of_lower_of_abs_ge hbelow hσ hδ hT⟩
+      fun σ T hbelow hσ hT ↦ P_σ_le_center_of_lower_of_abs_ge hbelow hσ hδ hT⟩
   obtain ⟨hre, hσ, hrange⟩ := tendsto_bottom_edge hℓ s
   refine tendsto_setIntegral_P_σ_mul hℓ hb hA hbound
     (isClosed_le continuous_const continuous_abs).measurableSet
-    ((stripPoissonKernel_integrable (by norm_num) one_pos).const_mul C)
+    ((P_σ_integrable (by norm_num) one_pos).const_mul C)
     (by simpa [mul_assoc] using (integrable_P_σ_mul_abs_of_nonneg le_rfl one_pos).const_mul C)
-    (fun T ↦ mul_nonneg hC.le (stripPoissonKernel_pos (by norm_num) one_pos T).le) hre
-    (hrange.mono fun z hz T ↦ (stripPoissonKernel_pos hz.1 (by linarith [hz.2]) T).le)
+    (fun T ↦ mul_nonneg hC.le (P_σ_pos (by norm_num) one_pos T).le) hre
+    (hrange.mono fun z hz T ↦ (P_σ_pos hz.1 (by linarith [hz.2]) T).le)
     (hrange.mono fun z hz T hT ↦ hCle _ T hz.1 hz.2 hT) fun T hT ↦ ?_
-  refine (stripPoissonKernel_tendsto_zero_bottom_of_ne ?_).comp hσ
+  refine (P_σ_tendsto_zero_bottom_of_ne ?_).comp hσ
   rintro rfl
   simp only [Set.mem_ofPred_eq, abs_zero] at hT
   linarith
@@ -394,9 +394,9 @@ theorem tendsto_integral_bottom_of_eq_zero {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ
     hre.eventually (Metric.ball_mem_nhds s (half_pos hη))] with z hz hzfar hzre
   have hzabove : z.im / ℓ < 1 := by linarith [hz.2]
   have hzre' : |z.re - s| < η / 2 := by simpa [Metric.mem_ball, Real.dist_eq] using hzre
-  have hk : Integrable (P_σ (z.im / ℓ)) := stripPoissonKernel_integrable hz.1 hzabove
+  have hk : Integrable (P_σ (z.im / ℓ)) := P_σ_integrable hz.1 hzabove
   have hprod : Integrable fun T : ℝ ↦ P_σ (z.im / ℓ) T * b (z.re - ℓ * T) :=
-    stripPoissonKernel_lower_product_integrable hz.1 hz.2
+    P_σ_lower_product_integrable hz.1 hz.2
       (hb.comp (by fun_prop : Continuous fun T : ℝ ↦ z.re - ℓ * T)) (hcentral z.re)
   have hnear : ‖∫ T in {T : ℝ | η / (2 * ℓ) ≤ |T|}ᶜ, P_σ (z.im / ℓ) T * b (z.re - ℓ * T)‖ ≤
       ε / 2 := by
@@ -414,14 +414,14 @@ theorem tendsto_integral_bottom_of_eq_zero {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ
             linarith
           have hbsmall : |b (z.re - ℓ * T)| < ε / 2 := by
             simpa [Real.dist_eq, hszero] using hcontrol harg
-          have hkpos := stripPoissonKernel_pos hz.1 hzabove T
+          have hkpos := P_σ_pos hz.1 hzabove T
           rw [norm_mul, Real.norm_eq_abs, abs_of_pos hkpos, Real.norm_eq_abs]
           nlinarith [mul_nonneg hkpos.le (sub_nonneg.mpr hbsmall.le)]
       _ ≤ ∫ T : ℝ, ε / 2 * P_σ (z.im / ℓ) T := setIntegral_le_integral (hk.const_mul (ε / 2))
-          (.of_forall fun T ↦ mul_nonneg hhalf.le (stripPoissonKernel_pos hz.1 hzabove T).le)
+          (.of_forall fun T ↦ mul_nonneg hhalf.le (P_σ_pos hz.1 hzabove T).le)
       _ = ε / 2 * M_σ (z.im / ℓ) := by
-          rw [integral_const_mul, integral_stripPoissonKernel hz.1 hzabove]
-      _ ≤ ε / 2 := by nlinarith [(stripBottomMass_lt_one hz.1).le]
+          rw [integral_const_mul, integral_P_σ hz.1 hzabove]
+      _ ≤ ε / 2 := by nlinarith [(M_σ_lt_one hz.1).le]
   rw [dist_zero_right] at hzfar ⊢
   rw [← integral_add_compl hS hprod]
   exact lt_of_le_of_lt (norm_add_le _ _) (by linarith)
@@ -439,7 +439,7 @@ theorem tendsto_integral_bottom {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (
     nlinarith [abs_sub (b y) (b s), hbound y, abs_nonneg y, abs_nonneg (b s)]
   have hcentral₀ : ∀ t : ℝ, Integrable fun T : ℝ ↦ P_σ 0 T * (b (t - ℓ * T) - b s) := fun t ↦ by
     have h : Integrable fun T : ℝ ↦ P_σ 0 T * b (t - ℓ * T) - P_σ 0 T * b s :=
-      (hcentral t).sub ((stripPoissonKernel_integrable (by norm_num) one_pos).mul_const (b s))
+      (hcentral t).sub ((P_σ_integrable (by norm_num) one_pos).mul_const (b s))
     simpa [mul_sub] using h
   have hzero := tendsto_integral_bottom_of_eq_zero hℓ hb₀ (by positivity) hbound₀ hcentral₀ s
     (by simp)
@@ -456,15 +456,15 @@ theorem tendsto_integral_bottom {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (
         M_σ (z.im / ℓ) * b s := by
     filter_upwards [hrange] with z hz
     have hzabove : z.im / ℓ < 1 := by linarith [hz.2]
-    have hprod₀ := stripPoissonKernel_lower_product_integrable hz.1 hz.2
+    have hprod₀ := P_σ_lower_product_integrable hz.1 hz.2
       (hb₀.comp (by fun_prop : Continuous fun T : ℝ ↦ z.re - ℓ * T)) (hcentral₀ z.re)
-    have hk : Integrable (P_σ (z.im / ℓ)) := stripPoissonKernel_integrable hz.1 hzabove
+    have hk : Integrable (P_σ (z.im / ℓ)) := P_σ_integrable hz.1 hzabove
     calc (∫ T : ℝ, P_σ (z.im / ℓ) T * b (z.re - ℓ * T))
         = ∫ T : ℝ, (P_σ (z.im / ℓ) T * (b (z.re - ℓ * T) - b s) + P_σ (z.im / ℓ) T * b s) := by
           simp [mul_sub]
       _ = (∫ T : ℝ, P_σ (z.im / ℓ) T * (b (z.re - ℓ * T) - b s)) +
             ∫ T : ℝ, P_σ (z.im / ℓ) T * b s := integral_add hprod₀ (hk.mul_const (b s))
-      _ = _ := by rw [integral_mul_const, integral_stripPoissonKernel hz.1 hzabove]
+      _ = _ := by rw [integral_mul_const, integral_P_σ hz.1 hzabove]
   simpa using (hzero.add (hmass.mul_const (b s))).congr' heq.symm
 
 /-- At the top edge the kernel vanishes: `P_σ(T) → 0` as `σ → 1`, since `θ σ → π`. -/
@@ -503,7 +503,7 @@ theorem tendsto_integral_top {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb 
   simpa using tendsto_setIntegral_P_σ_mul (S := univ) hℓ hb hA hbound MeasurableSet.univ
     stripPoissonExponentialMajorant_integrable integrable_exponentialMajorant_mul_abs
     (fun T ↦ by unfold stripPoissonExponentialMajorant; positivity) hre
-    (hrange.mono fun z hz T ↦ (stripPoissonKernel_pos (by linarith [hz.1]) hz.2 T).le)
+    (hrange.mono fun z hz T ↦ (P_σ_pos (by linarith [hz.1]) hz.2 T).le)
     (hrange.mono fun z hz T _ ↦ P_σ_le_exponentialMajorant hz.1 hz.2 T)
     fun T _ ↦ (tendsto_P_σ_one T).comp hσ
 
@@ -732,7 +732,7 @@ theorem norm_Z_g_le_exp_integral_of_cap_phragmenLindelof {d : ℕ} {ς : ℤˣ} 
   obtain ⟨K, -, hK⟩ := g.exists_norm_Z_g_le hd R
   rw [hcast] at hcap ⊢
   exact norm_le_exp_integral_P_σ_of_strip_phragmenLindelof hℓ (g.diffContOnCl_Z_g hd R)
-    (fun z hz ↦ hK z hz.1.le hz.2.le) (lowerGammaBoundaryCapped_continuous hℓ R D) hA hbound hcap
+    (fun z hz ↦ hK z hz.1.le hz.2.le) (h_ℓD_continuous hℓ R D) hA hbound hcap
     (fun y ↦ by rw [← hcast]; exact g.norm_Z_g_top_le_one hd R y) hbelow habove s
 
 /-- Report Lemma 3.2 by Phragmén–Lindelöf: `exists_capped_poisson_majorization` derived from

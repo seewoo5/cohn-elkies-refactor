@@ -78,8 +78,9 @@ theorem integral_tailWeight_expAbs_le {k : ℝ} (hk : 0 < k) :
 
 /-! ### The second-branch tail, report Lemma 4.8 (74)–(75) -/
 
-/-- Half-width `t₀ = 1/(2(B_ε+1))` of the window where `D_u` is quadratically coercive. -/
-def secondBranchFreq (ε : ℝ) : ℝ := 1 / (2 * (Bε ε + 1))
+/-- The frequency `T₀ = (2(B + 1))⁻¹` of report §4.3, the half-width of the window where `D_u` is
+quadratically coercive (Lemma 4.7). -/
+def T₀ε (ε : ℝ) : ℝ := 1 / (2 * (Bε ε + 1))
 
 /-- Gaussian rate `λV(1+δ)/(100e)` of the local lower bound for `D_u`. -/
 def secondBranchRate (ε ℓ δ : ℝ) : ℝ := ℓ / (100 * exp 1) * V_u ε ℓ (1 + δ)
@@ -92,19 +93,19 @@ def secondBranchLinearRate (ℓ : ℝ) : ℝ := ℓ / (8 * exp 1)
 
 /-- Height of the shell barrier `D_B` outside the local window. -/
 def secondBranchBarrier (ε ℓ δ : ℝ) : ℝ :=
-  99 / 5000 * ℓ * Qε ε * exp (δ * Bε ε) * secondBranchFreq ε ^ 2
+  99 / 5000 * ℓ * Qε ε * exp (δ * Bε ε) * T₀ε ε ^ 2
 
 /-- Splitting `e^{-D_u}` into the local Gaussian and the barrier-suppressed outer part. -/
 theorem eventually_secondBranch_damping_pointwise : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 0 < ℓ →
     ∀ δ : ℝ, ε / 2 ≤ δ → ∀ T : ℝ,
-      saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ (1 + δ) T) ≤
+      saddleGaussianTailWeight T * exp (-D_u ε ℓ (1 + δ) T) ≤
         saddleGaussianTailWeight T * exp (-secondBranchRate ε ℓ δ * T ^ 2) +
           exp (-secondBranchBarrier ε ℓ δ) *
             (saddleGaussianTailWeight T * exp (-secondBranchGammaRate ℓ δ * T ^ 2) +
               saddleGaussianTailWeight T * exp (-secondBranchLinearRate ℓ * |T|)) := by
   filter_upwards [self_mem_nhdsWithin,
-      eventually_saddleSourceContourDamping_secondBranch_local_coercivity,
-      eventually_upperSaddleDamping_gamma_add_shell] with ε hε hlocal hdom
+      eventually_D_u_secondBranch_local_coercivity,
+      eventually_D_uδ_gamma_add_shell] with ε hε hlocal hdom
   change 0 < ε at hε
   intro ℓ hℓ δ hδ T
   have hδ0 : (0 : ℝ) ≤ δ := by nlinarith
@@ -115,41 +116,41 @@ theorem eventually_secondBranch_damping_pointwise : ∀ᶠ ε : ℝ in 𝓝[>] (
   have houter : 0 ≤ exp (-secondBranchBarrier ε ℓ δ) *
       (saddleGaussianTailWeight T * exp (-secondBranchGammaRate ℓ δ * T ^ 2) +
         saddleGaussianTailWeight T * exp (-secondBranchLinearRate ℓ * |T|)) := by positivity
-  by_cases hinside : |T| ≤ secondBranchFreq ε
-  · have hexp : exp (-saddleSourceContourDamping ε ℓ (1 + δ) T) ≤
+  by_cases hinside : |T| ≤ T₀ε ε
+  · have hexp : exp (-D_u ε ℓ (1 + δ) T) ≤
         exp (-secondBranchRate ε ℓ δ * T ^ 2) := by
       refine Real.exp_le_exp.2 ?_
-      have := hlocal ℓ hℓ δ hδ T (by simpa [secondBranchFreq] using hinside)
+      have := hlocal ℓ hℓ δ hδ T (by simpa [T₀ε] using hinside)
       unfold secondBranchRate
       linarith
     linarith [mul_le_mul_of_nonneg_left hexp hw]
-  · have ht₀ : 0 < secondBranchFreq ε := by unfold secondBranchFreq Bε; positivity
-    have hmin : secondBranchFreq ε ^ 2 ≤ min (T ^ 2) 1 := by
+  · have ht₀ : 0 < T₀ε ε := by unfold T₀ε Bε; positivity
+    have hmin : T₀ε ε ^ 2 ≤ min (T ^ 2) 1 := by
       refine le_min ?_ ?_
       · simpa [sq_abs] using pow_le_pow_left₀ ht₀.le (le_of_not_ge hinside) 2
-      · have : secondBranchFreq ε ≤ 1 := by
-          unfold secondBranchFreq
+      · have : T₀ε ε ≤ 1 := by
+          unfold T₀ε
           rw [div_le_one (by positivity)]
           linarith
         nlinarith
     have hbarrier : secondBranchBarrier ε ℓ δ ≤ 99 / 100 * D_B ε ℓ δ T := by
-      have hshell := positiveShellDamping_lower_bound (ε := ε) (ℓ := ℓ) (δ := δ) (T := T)
+      have hshell := D_B_lower_bound (ε := ε) (ℓ := ℓ) (δ := δ) (T := T)
         hε hℓ.le hδ0
       have hstep := mul_le_mul_of_nonneg_left hmin
-        (by positivity [shellWeight_pos ε] : (0 : ℝ) ≤ ℓ / 50 * Qε ε * exp (δ * Bε ε))
+        (by positivity [Qε_pos ε] : (0 : ℝ) ≤ ℓ / 50 * Qε ε * exp (δ * Bε ε))
       unfold secondBranchBarrier
       nlinarith
     have hcombined : secondBranchBarrier ε ℓ δ +
         secondBranchLinearRate ℓ * min (T ^ 2 / (2 + δ)) |T| ≤
-          saddleSourceContourDamping ε ℓ (1 + δ) T := by
-      rw [saddleSourceContourDamping_eq_secondBranch]
+          D_u ε ℓ (1 + δ) T := by
+      rw [D_u_eq_secondBranch]
       unfold secondBranchLinearRate
       linarith [hdom ℓ hℓ δ hδ T,
-        upperGammaDamping_lower_bound hℓ (show (0 : ℝ) < 2 + δ by linarith) T]
-    have hexp : exp (-saddleSourceContourDamping ε ℓ (1 + δ) T) ≤
+        D_γ_lower_bound hℓ (show (0 : ℝ) < 2 + δ by linarith) T]
+    have hexp : exp (-D_u ε ℓ (1 + δ) T) ≤
         exp (-secondBranchBarrier ε ℓ δ) * (exp (-secondBranchGammaRate ℓ δ * T ^ 2) +
           exp (-secondBranchLinearRate ℓ * |T|)) := by
-      calc exp (-saddleSourceContourDamping ε ℓ (1 + δ) T)
+      calc exp (-D_u ε ℓ (1 + δ) T)
           ≤ exp (-(secondBranchBarrier ε ℓ δ +
               secondBranchLinearRate ℓ * min (T ^ 2 / (2 + δ)) |T|)) :=
             Real.exp_le_exp.2 (by linarith)
@@ -171,7 +172,7 @@ theorem eventually_secondBranch_damping_pointwise : ∀ᶠ ε : ℝ in 𝓝[>] (
 theorem eventually_secondBranch_weighted_tail_le : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 0 < ℓ →
     ∀ δ : ℝ, ε / 2 ≤ δ → ∀ R : ℝ, 0 ≤ R → 6 ≤ secondBranchRate ε ℓ δ →
       (∫ T : ℝ in saddleGaussianTailSet R,
-          saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ (1 + δ) T)) ≤
+          saddleGaussianTailWeight T * exp (-D_u ε ℓ (1 + δ) T)) ≤
         2 * exp (-(secondBranchRate ε ℓ δ / 4) * R ^ 2) * √(π / (secondBranchRate ε ℓ δ / 4)) +
           exp (-secondBranchBarrier ε ℓ δ) *
             (2 * max 1 ((√(secondBranchGammaRate ℓ δ / 6) ^ 3)⁻¹) *
@@ -203,7 +204,7 @@ theorem eventually_secondBranch_weighted_tail_le : ∀ᶠ ε : ℝ in 𝓝[>] (0
   have hgammaFull := integral_tailWeight_gaussian_le hq
   have hlinearFull := integral_tailWeight_expAbs_le ha
   calc (∫ T : ℝ in saddleGaussianTailSet R,
-        saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ (1 + δ) T))
+        saddleGaussianTailWeight T * exp (-D_u ε ℓ (1 + δ) T))
       ≤ ∫ T : ℝ in saddleGaussianTailSet R, (saddleGaussianTailWeight T *
           exp (-secondBranchRate ε ℓ δ * T ^ 2) + exp (-secondBranchBarrier ε ℓ δ) *
             (saddleGaussianTailWeight T * exp (-secondBranchGammaRate ℓ δ * T ^ 2) +
@@ -232,7 +233,7 @@ theorem eventually_secondBranch_normalized_tail_le : ∀ᶠ ε : ℝ in 𝓝[>] 
     ∀ δ : ℝ, ε / 2 ≤ δ → ∀ z : ℝ, 0 ≤ z → 6 ≤ secondBranchRate ε ℓ δ →
       √(ℓ * V_u ε ℓ (1 + δ)) * (∫ T : ℝ in saddleGaussianTailSet
             (z / √(ℓ * V_u ε ℓ (1 + δ))),
-          saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ (1 + δ) T)) ≤
+          saddleGaussianTailWeight T * exp (-D_u ε ℓ (1 + δ) T)) ≤
         2 * √(400 * exp 1 * π) * exp (-(z ^ 2 / (400 * exp 1))) +
           √(ℓ * V_u ε ℓ (1 + δ)) * exp (-secondBranchBarrier ε ℓ δ) *
             (2 * max 1 ((√(secondBranchGammaRate ℓ δ / 6) ^ 3)⁻¹) *
@@ -240,7 +241,7 @@ theorem eventually_secondBranch_normalized_tail_le : ∀ᶠ ε : ℝ in 𝓝[>] 
               2 * max 1 (((secondBranchLinearRate ℓ / 6) ^ 3)⁻¹) *
                 (2 / (secondBranchLinearRate ℓ / 2))) := by
   filter_upwards [eventually_secondBranch_weighted_tail_le,
-      eventually_saddleSourceGaussianVariance_secondBranch_pos] with ε htail hvariance
+      eventually_V_u_secondBranch_pos] with ε htail hvariance
   intro ℓ hℓ δ hδ z hz hk
   have hV : 0 < V_u ε ℓ (1 + δ) := hvariance ℓ hℓ δ hδ
   have hLV : 0 < ℓ * V_u ε ℓ (1 + δ) := mul_pos hℓ hV
@@ -259,7 +260,7 @@ theorem eventually_secondBranch_normalized_tail_le : ∀ᶠ ε : ℝ in 𝓝[>] 
     ring
   calc √(ℓ * V_u ε ℓ (1 + δ)) * (∫ T : ℝ in saddleGaussianTailSet
           (z / √(ℓ * V_u ε ℓ (1 + δ))),
-        saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ (1 + δ) T))
+        saddleGaussianTailWeight T * exp (-D_u ε ℓ (1 + δ) T))
       ≤ √(ℓ * V_u ε ℓ (1 + δ)) * (2 * exp (-(secondBranchRate ε ℓ δ / 4) *
             (z / √(ℓ * V_u ε ℓ (1 + δ))) ^ 2) * √(π / (secondBranchRate ε ℓ δ / 4)) +
           exp (-secondBranchBarrier ε ℓ δ) *
@@ -363,12 +364,12 @@ def secondBranchVarCoeff (ε : ℝ) : ℝ := 2 + (Bε ε + 1) ^ 2 * Qε ε
 
 theorem secondBranchVarCoeff_pos (ε : ℝ) : 0 < secondBranchVarCoeff ε := by
   unfold secondBranchVarCoeff
-  positivity [shellWeight_pos ε]
+  positivity [Qε_pos ε]
 
 theorem eventually_secondBranch_sqrtVariance_le : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 1 ≤ ℓ →
     ∀ δ : ℝ, ε / 2 ≤ δ → √(ℓ * V_u ε ℓ (1 + δ)) ≤
       √(secondBranchVarCoeff ε) * √ℓ * exp ((Bε ε + 1) / 2 * δ) := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upperSaddleVariance_bounds] with ε hε hvariance
+  filter_upwards [self_mem_nhdsWithin, eventually_V_uδ_bounds] with ε hε hvariance
   change 0 < ε at hε
   intro ℓ hℓ δ hδ
   have hℓ0 : (0 : ℝ) < ℓ := by linarith
@@ -385,7 +386,7 @@ theorem eventually_secondBranch_sqrtVariance_le : ∀ᶠ ε : ℝ in 𝓝[>] (0 
     have hfull : V_u ε ℓ (1 + δ) ≤ 1 / (2 * (2 + δ)) + 1 / (ℓ * (2 + δ) ^ 2) + V_B ε δ := by
       simpa [V_u] using (hvariance ℓ hℓ0 δ hδ).2
     have hshell : V_B ε δ ≤ (Bε ε + 1) ^ 2 * Qε ε * exp ((Bε ε + 1) * δ) := by
-      have h := (upperPositiveShellVariance_bounds hε hδ0).2
+      have h := (V_B_bounds hε hδ0).2
       rwa [show δ * (Bε ε + 1) = (Bε ε + 1) * δ from mul_comm _ _] at h
     unfold secondBranchVarCoeff
     nlinarith
@@ -409,17 +410,17 @@ theorem eventually_saddleSource_secondBranch_uniform_tail : ∀ᶠ ε : ℝ in �
     0 < κ → ∀ᶠ ℓ : ℝ in atTop, ∀ δ : ℝ, ε / 2 ≤ δ →
       √(ℓ * V_u ε ℓ (1 + δ)) * (∫ T : ℝ in saddleGaussianTailSet
           (ℓ ^ (1 / 12 : ℝ) / √(ℓ * V_u ε ℓ (1 + δ))),
-        saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ (1 + δ) T)) < κ := by
+        saddleGaussianTailWeight T * exp (-D_u ε ℓ (1 + δ) T)) < κ := by
   filter_upwards [self_mem_nhdsWithin, eventually_secondBranch_normalized_tail_le,
       eventually_secondBranch_sqrtVariance_le,
-      eventually_saddleSourceGaussianVariance_secondBranch_floor]
+      eventually_V_u_secondBranch_floor]
     with ε hε htail hsqrt hfloor
   change 0 < ε at hε
   intro κ hκ
   have hB : 0 < Bε ε := by unfold Bε; positivity
-  have hQ : 0 < Qε ε := shellWeight_pos ε
-  have ht₀ : 0 < secondBranchFreq ε := by unfold secondBranchFreq Bε; positivity
-  have hc : (0 : ℝ) < 99 / 5000 * secondBranchFreq ε ^ 2 := by positivity
+  have hQ : 0 < Qε ε := Qε_pos ε
+  have ht₀ : 0 < T₀ε ε := by unfold T₀ε Bε; positivity
+  have hc : (0 : ℝ) < 99 / 5000 * T₀ε ε ^ 2 := by positivity
   have hV₀ : 0 < saddleSourceSecondBranchVarianceFloor ε :=
     saddleSourceSecondBranchVarianceFloor_pos hε
   have hK : (0 : ℝ) < √(secondBranchVarCoeff ε) * secondBranchMomentCoeff :=
@@ -469,7 +470,7 @@ theorem eventually_saddleSource_secondBranch_uniform_tail : ∀ᶠ ε : ℝ in �
           gcongr
       _ = √(secondBranchVarCoeff ε) * secondBranchMomentCoeff * √ℓ *
             exp ((Bε ε + 1) / 2 * δ) * (2 + δ) ^ 4 *
-            exp (-(99 / 5000 * secondBranchFreq ε ^ 2) * ℓ * Qε ε * exp (Bε ε * δ)) := by
+            exp (-(99 / 5000 * T₀ε ε ^ 2) * ℓ * Qε ε * exp (Bε ε * δ)) := by
           unfold secondBranchBarrier
           ring_nf
       _ < κ / 2 := houterℓ δ hδ
@@ -587,10 +588,10 @@ theorem SaddleRangeBounds.exists_centered_tail_bound {ε : ℝ} (hε : 0 < ε)
     (hrange : SaddleRangeBounds P u₀) :
     ∃ C : ℝ, 0 < C ∧ ∀ ℓ : ℝ, 0 < ℓ → ∀ u : ℝ, -1 < u → u₀ ≤ u → ∀ v R : ℝ,
       Integrable (fun T : ℝ ↦ saddleGaussianTailWeight T *
-          exp (-saddleSourceContourDamping ε ℓ u T)) →
+          exp (-D_u ε ℓ u T)) →
         (∫ T : ℝ in saddleGaussianTailSet R, ‖centeredIntegrand ε ℓ P u v T‖) ≤
           C * ‖P (I * (u : ℂ))‖ * ∫ T : ℝ in saddleGaussianTailSet R,
-            saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ u T) := by
+            saddleGaussianTailWeight T * exp (-D_u ε ℓ u T) := by
   obtain ⟨C, hC, hpoly⟩ := hrange.weighted
   exact ⟨C, hC, fun ℓ hℓ u hu hu₀ v R hW ↦ centered_tail_integral_le
     (centeredIntegrand_integrable hε hℓ hu horder hP v) hW
@@ -672,11 +673,11 @@ theorem tendsto_gaussianNormalizedTailMajorant :
 theorem eventually_firstBranch_uniform_gaussian_tail : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ κ : ℝ, 0 < κ →
     ∀ᶠ ℓ : ℝ in atTop, ∀ u : ℝ, -1 < u → u ≤ 1 + ε / 2 → log ℓ / 4 ≤ ℓ * (1 + u) →
       √(ℓ * V_u ε ℓ u) * (∫ T : ℝ in saddleGaussianTailSet
-          (saddleSourceFirstBranchCentralRadius ε ℓ u),
+          (T_star₁ ε ℓ u),
         saddleSourceGaussianKernel ε ℓ u T) < κ := by
   filter_upwards [self_mem_nhdsWithin, eventually_eps_le_quarter,
-      eventually_upper_shortCutoff_le_shortEndpoint, eventually_upper_shortMargin_positive,
-      eventually_saddleSourceGaussianVariance_firstBranch_pos]
+      eventually_upper_a₀ε_le_Aε, eventually_upper_bε_positive,
+      eventually_V_u_firstBranch_pos]
     with ε hε hεsmall horder hmargin hvariance
   change 0 < ε at hε
   intro κ hκ
@@ -693,7 +694,7 @@ theorem eventually_firstBranch_uniform_gaussian_tail : ∀ᶠ ε : ℝ in 𝓝[>
   have hV : 0 < V_u ε ℓ u := hvariance ℓ hℓ u hulower huupper
   have hlarge : 12 ≤ ℓ * V_u ε ℓ u := by
     have h1 : ε ≤ (2 + ε / 2) * V_u ε ℓ u :=
-      (upperFirstBranch_saddleSourceGaussianVariance_scaled_lower_bound hε hεsmall hℓ hulower
+      (upperFirstBranch_V_u_scaled_lower_bound hε hεsmall hℓ hulower
         huupper horder hmargin').trans (mul_le_mul_of_nonneg_right (by linarith) hV.le)
     have h2 : 12 * (2 + ε / 2) ≤ ℓ * ε := (div_le_iff₀ hε).mp hthreshold
     nlinarith [mul_le_mul_of_nonneg_left h1 hℓ.le, hU]
@@ -705,7 +706,7 @@ theorem eventually_firstBranch_uniform_gaussian_tail : ∀ᶠ ε : ℝ in 𝓝[>
     rw [hsquare]
     exact Real.rpow_le_rpow hlognonneg hlogscale (by norm_num)
   calc √(ℓ * V_u ε ℓ u) * (∫ T : ℝ in saddleGaussianTailSet
-        (saddleSourceFirstBranchCentralRadius ε ℓ u), saddleSourceGaussianKernel ε ℓ u T)
+        (T_star₁ ε ℓ u), saddleSourceGaussianKernel ε ℓ u T)
       ≤ 4 * √(2 * π) * exp (-(((ℓ * (1 + u)) ^ (1 / 12 : ℝ)) ^ 2 / 8)) :=
         gaussianKernel_normalized_tail_le hℓ hV (Real.rpow_nonneg (by positivity) _) hlarge
     _ ≤ gaussianNormalizedTailMajorant (log ℓ / 4) := by
@@ -715,9 +716,9 @@ theorem eventually_firstBranch_uniform_gaussian_tail : ∀ᶠ ε : ℝ in 𝓝[>
 
 theorem eventually_secondBranch_uniform_gaussian_tail : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ κ : ℝ, 0 < κ →
     ∀ᶠ ℓ : ℝ in atTop, ∀ δ : ℝ, ε / 2 ≤ δ → √(ℓ * V_u ε ℓ (1 + δ)) *
-      (∫ T : ℝ in saddleGaussianTailSet (saddleSourceSecondBranchCentralRadius ε ℓ (1 + δ)),
+      (∫ T : ℝ in saddleGaussianTailSet (T_star₂ ε ℓ (1 + δ)),
         saddleSourceGaussianKernel ε ℓ (1 + δ) T) < κ := by
-  filter_upwards [self_mem_nhdsWithin, eventually_saddleSourceGaussianVariance_secondBranch_floor]
+  filter_upwards [self_mem_nhdsWithin, eventually_V_u_secondBranch_floor]
     with ε hε hfloor
   change 0 < ε at hε
   intro κ hκ
@@ -737,7 +738,7 @@ theorem eventually_secondBranch_uniform_gaussian_tail : ∀ᶠ ε : ℝ in 𝓝[
     rw [← Real.rpow_natCast (ℓ ^ (1 / 12 : ℝ)) 2, ← Real.rpow_mul hℓ.le]
     norm_num
   calc √(ℓ * V_u ε ℓ (1 + δ)) * (∫ T : ℝ in saddleGaussianTailSet
-        (saddleSourceSecondBranchCentralRadius ε ℓ (1 + δ)),
+        (T_star₂ ε ℓ (1 + δ)),
         saddleSourceGaussianKernel ε ℓ (1 + δ) T)
       ≤ 4 * √(2 * π) * exp (-((ℓ ^ (1 / 12 : ℝ)) ^ 2 / 8)) :=
         gaussianKernel_normalized_tail_le hℓ hV (Real.rpow_nonneg hℓ.le _) hlarge
@@ -757,10 +758,10 @@ theorem eventually_firstBranch_sourceL1Tail : ∀ᶠ ε : ℝ in 𝓝[>] (0 : �
     ∀ (P : ℂ → ℂ) (u₀ : ℝ), IsSaddlePolynomial ε P → SaddleRangeBounds P u₀ →
       ∀ᶠ ℓ : ℝ in atTop, ∀ u : ℝ, -1 < u → u ≤ 1 + ε / 2 → log ℓ / 4 ≤ ℓ * (1 + u) → u₀ ≤ u →
         √(ℓ * V_u ε ℓ u) * (∫ T : ℝ in saddleGaussianTailSet
-            (saddleSourceFirstBranchCentralRadius ε ℓ u),
-          ‖centeredIntegrand ε ℓ P u (vℓ ε ℓ u) T‖) < κ * ‖P (I * (u : ℂ))‖ := by
+            (T_star₁ ε ℓ u),
+          ‖centeredIntegrand ε ℓ P u (v_ℓ ε ℓ u) T‖) < κ * ‖P (I * (u : ℂ))‖ := by
   filter_upwards [self_mem_nhdsWithin, eventually_eps_le_quarter,
-      eventually_upper_shortCutoff_le_shortEndpoint, eventually_upper_shortMargin_positive,
+      eventually_upper_a₀ε_le_Aε, eventually_upper_bε_positive,
       eventually_saddleSource_firstBranch_uniform_tail]
     with ε hε hεsmall horder hmargin htail
   change 0 < ε at hε
@@ -777,7 +778,7 @@ theorem eventually_firstBranch_gaussianL1Tail : ∀ᶠ ε : ℝ in 𝓝[>] (0 : 
     ∀ (P : ℂ → ℂ) (u₀ : ℝ), SaddleRangeBounds P u₀ →
       ∀ᶠ ℓ : ℝ in atTop, ∀ u : ℝ, -1 < u → u ≤ 1 + ε / 2 → log ℓ / 4 ≤ ℓ * (1 + u) → u₀ ≤ u →
         √(ℓ * V_u ε ℓ u) * (∫ T : ℝ in saddleGaussianTailSet
-            (saddleSourceFirstBranchCentralRadius ε ℓ u),
+            (T_star₁ ε ℓ u),
           ‖gaussianIntegrand ε ℓ P u T‖) < κ * ‖P (I * (u : ℂ))‖ := by
   filter_upwards [eventually_firstBranch_uniform_gaussian_tail] with ε htail
   intro κ hκ P u₀ hrange
@@ -790,11 +791,11 @@ its Gaussian with an error smaller than the Gaussian mass `‖P(iu)‖ ∫ e^{-�
 theorem eventually_firstBranch_fullGaussianError : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ (P : ℂ → ℂ) (u₀ : ℝ), IsSaddlePolynomial ε P → SaddleRangeBounds P u₀ →
       ∀ᶠ ℓ : ℝ in atTop, ∀ u : ℝ, -1 < u → u ≤ 1 + ε / 2 → log ℓ / 4 ≤ ℓ * (1 + u) → u₀ ≤ u →
-        ‖(∫ T : ℝ, centeredIntegrand ε ℓ P u (vℓ ε ℓ u) T) -
+        ‖(∫ T : ℝ, centeredIntegrand ε ℓ P u (v_ℓ ε ℓ u) T) -
             (∫ T : ℝ, gaussianIntegrand ε ℓ P u T)‖ <
           ‖P (I * (u : ℂ))‖ * (∫ T : ℝ, saddleSourceGaussianKernel ε ℓ u T) := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
-      eventually_saddleSourceGaussianVariance_firstBranch_pos,
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
+      eventually_V_u_firstBranch_pos,
       eventually_firstBranch_centralGaussianError, eventually_firstBranch_sourceL1Tail,
       eventually_firstBranch_gaussianL1Tail]
     with ε hε horder hvariance hcentral hsource hgaussian
@@ -814,10 +815,10 @@ theorem eventually_secondBranch_sourceL1Tail : ∀ᶠ ε : ℝ in 𝓝[>] (0 : �
     ∀ (P : ℂ → ℂ) (u₀ : ℝ), IsSaddlePolynomial ε P → SaddleRangeBounds P u₀ →
       ∀ᶠ ℓ : ℝ in atTop, ∀ δ : ℝ, ε / 2 ≤ δ → u₀ ≤ 1 + δ →
         √(ℓ * V_u ε ℓ (1 + δ)) * (∫ T : ℝ in saddleGaussianTailSet
-            (saddleSourceSecondBranchCentralRadius ε ℓ (1 + δ)),
-          ‖centeredIntegrand ε ℓ P (1 + δ) (vℓ ε ℓ (1 + δ)) T‖) <
+            (T_star₂ ε ℓ (1 + δ)),
+          ‖centeredIntegrand ε ℓ P (1 + δ) (v_ℓ ε ℓ (1 + δ)) T‖) <
         κ * ‖P (I * ((1 + δ : ℝ) : ℂ))‖ := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
       eventually_saddleSource_secondBranch_weighted_integrable,
       eventually_saddleSource_secondBranch_uniform_tail]
     with ε hε horder hweight htail
@@ -834,7 +835,7 @@ theorem eventually_secondBranch_gaussianL1Tail : ∀ᶠ ε : ℝ in 𝓝[>] (0 :
     ∀ (P : ℂ → ℂ) (u₀ : ℝ), SaddleRangeBounds P u₀ →
       ∀ᶠ ℓ : ℝ in atTop, ∀ δ : ℝ, ε / 2 ≤ δ → u₀ ≤ 1 + δ →
         √(ℓ * V_u ε ℓ (1 + δ)) * (∫ T : ℝ in saddleGaussianTailSet
-            (saddleSourceSecondBranchCentralRadius ε ℓ (1 + δ)),
+            (T_star₂ ε ℓ (1 + δ)),
           ‖gaussianIntegrand ε ℓ P (1 + δ) T‖) < κ * ‖P (I * ((1 + δ : ℝ) : ℂ))‖ := by
   filter_upwards [eventually_secondBranch_uniform_gaussian_tail] with ε htail
   intro κ hκ P u₀ hrange
@@ -847,11 +848,11 @@ by its Gaussian with an error smaller than the Gaussian mass. -/
 theorem eventually_secondBranch_fullGaussianError : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ (P : ℂ → ℂ) (u₀ : ℝ), IsSaddlePolynomial ε P → SaddleRangeBounds P u₀ →
       ∀ᶠ ℓ : ℝ in atTop, ∀ δ : ℝ, ε / 2 ≤ δ → u₀ ≤ 1 + δ →
-        ‖(∫ T : ℝ, centeredIntegrand ε ℓ P (1 + δ) (vℓ ε ℓ (1 + δ)) T) -
+        ‖(∫ T : ℝ, centeredIntegrand ε ℓ P (1 + δ) (v_ℓ ε ℓ (1 + δ)) T) -
             (∫ T : ℝ, gaussianIntegrand ε ℓ P (1 + δ) T)‖ <
           ‖P (I * ((1 + δ : ℝ) : ℂ))‖ * (∫ T : ℝ, saddleSourceGaussianKernel ε ℓ (1 + δ) T) := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
-      eventually_saddleSourceGaussianVariance_secondBranch_pos,
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
+      eventually_V_u_secondBranch_pos,
       eventually_secondBranch_centralGaussianError, eventually_secondBranch_sourceL1Tail,
       eventually_secondBranch_gaussianL1Tail]
     with ε hε horder hvariance hcentral hsource hgaussian

@@ -85,7 +85,7 @@ theorem radialProfile_real {d : ℕ} (hd : 0 < d) (f : TestFunction d) (hf : IsR
 /-- The surface area `S_d = d v_d` of the unit sphere of `ℝ^d`. -/
 def sphereArea (d : ℕ) : ℝ := d * unitBallVolume d
 
-theorem radialSurfaceArea_pos {d : ℕ} (hd : 0 < d) : 0 < sphereArea d :=
+theorem sphereArea_pos {d : ℕ} (hd : 0 < d) : 0 < sphereArea d :=
   mul_pos (Nat.cast_pos.2 hd) (unitBallVolume_pos d)
 
 /-- Polar integration for radial `f` with profile `g`: `∫ f(x) |x|^{s-d} dx = S_d · M g(s)`
@@ -117,7 +117,7 @@ def X_fℝ {d : ℕ} (hd : 0 < d) (f : TestFunction d) (t : ℝ) : ℂ :=
   mellin (radialProfile hd f) ((d / 2 : ℝ) - I * t)
 
 /-- `X_f` is the Fourier transform of `v ↦ e^{-λ v} g(e^{-v})`. -/
-theorem radialMellinFrequency_eq_fourier {d : ℕ} (hd : 0 < d) (f : TestFunction d) (t : ℝ) :
+theorem X_fℝ_eq_fourier {d : ℕ} (hd : 0 < d) (f : TestFunction d) (t : ℝ) :
     X_fℝ hd f t =
       𝓕 (fun u : ℝ ↦ exp (-(d / 2) * u) • radialProfile hd f (exp (-u))) (-t / (2 * π)) := by
   unfold X_fℝ

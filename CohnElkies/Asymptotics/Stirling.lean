@@ -51,7 +51,7 @@ theorem quotientInf_nonneg (d : ℕ) (hadmissible : Nonempty (Admissible d)) :
 def packingGeometricRoot (d : ℕ) : ℝ := (unitBallVolume d / 2 ^ d) ^ (d : ℝ)⁻¹ * √d
 
 /-- `LP_d^{1/d}` splits as the geometric factor times the normalized program. -/
-theorem linearProgram_root_eq_geometric_mul_normalizedProgram
+theorem LP_root_eq_geometric_mul_normalizedProgram
     {d : ℕ} (hd : 0 < d) (hadmissible : Nonempty (Admissible d)) :
     (LP d) ^ ((d : ℝ)⁻¹) = packingGeometricRoot d * normalizedProgram d := by
   have hsqrt : √(d : ℝ) ≠ 0 := (sqrt_pos.2 (by exact_mod_cast hd)).ne'

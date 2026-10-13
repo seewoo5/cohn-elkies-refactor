@@ -6,9 +6,9 @@ import CohnElkiesForMathlib.Analysis.SpecialFunctions.ImproperIntegrals
 
 The strip Poisson kernel `P_σ(T) = sin θ / (4 (cosh (πT/2) - cos θ))`, `θ = π(1 + σ)/2`, of total
 mass `M_σ = (1 - σ)/2`, its primitive, evenness, monotonicity in `|T|` and the maximality of its
-mass on centred intervals; the conformal map `E_ℓ` of the strip `|Im z| < ℓ` onto the upper
-half-plane and the regularized holomorphic Schwarz kernel `K'_ℓ` of the strip, with its bounds,
-continuity and derivative on the two boundary half-lines.
+mass on centred intervals; the conformal map `stripConformalMap` of the strip `|Im z| < ℓ` onto
+the upper half-plane and the regularized holomorphic Schwarz kernel `K'_ℓ` of the strip, with its
+bounds, continuity and derivative on the two boundary half-lines.
 -/
 
 namespace CohnElkies
@@ -28,19 +28,19 @@ def P_σ (σ T : ℝ) : ℝ := sin (θ σ) / (4 * (cosh (π * T / 2) - cos (θ �
 /-- The total mass `M_σ = (1 - σ)/2` of the kernel `P_σ`; report (15). -/
 def M_σ (σ : ℝ) : ℝ := (1 - σ) / 2
 
-theorem stripAngle_mem_Ioo {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
+theorem θ_mem_Ioo {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
     0 < θ σ ∧ θ σ < π := by
   have hπ := pi_pos
   unfold θ
   constructor <;> nlinarith
 
-theorem stripBottomMass_pos {σ : ℝ} (hσ : σ < 1) : 0 < M_σ σ := by unfold M_σ; linarith
+theorem M_σ_pos {σ : ℝ} (hσ : σ < 1) : 0 < M_σ σ := by unfold M_σ; linarith
 
-theorem stripBottomMass_lt_one {σ : ℝ} (hσ : -1 < σ) : M_σ σ < 1 := by unfold M_σ; linarith
+theorem M_σ_lt_one {σ : ℝ} (hσ : -1 < σ) : M_σ σ < 1 := by unfold M_σ; linarith
 
-theorem stripPoissonKernel_pos {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) (T : ℝ) :
+theorem P_σ_pos {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) (T : ℝ) :
     0 < P_σ σ T := by
-  obtain ⟨hangle, hangle'⟩ := stripAngle_mem_Ioo hbelow habove
+  obtain ⟨hangle, hangle'⟩ := θ_mem_Ioo hbelow habove
   have hsin : 0 < sin (θ σ) := sin_pos_of_pos_of_lt_pi hangle hangle'
   have hcos : cos (θ σ) < 1 := by nlinarith [sin_sq_add_cos_sq (θ σ)]
   have := one_le_cosh (π * T / 2)
@@ -57,13 +57,13 @@ open scoped Interval Topology
 /-- A primitive of the strip Poisson kernel `P_σ`. -/
 def Q_σ (σ T : ℝ) : ℝ := arctan ((exp (π * T / 2) - cos (θ σ)) / sin (θ σ)) / π
 
-theorem stripPoissonKernel_neg (σ T : ℝ) : P_σ σ (-T) = P_σ σ T := by
+theorem P_σ_neg (σ T : ℝ) : P_σ σ (-T) = P_σ σ T := by
   unfold P_σ
   rw [show π * -T / 2 = -(π * T / 2) by ring, cosh_neg]
 
 theorem Q_σ_hasDerivAt {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) (T : ℝ) :
     HasDerivAt (Q_σ σ) (P_σ σ T) T := by
-  obtain ⟨hangle, hangle'⟩ := stripAngle_mem_Ioo hbelow habove
+  obtain ⟨hangle, hangle'⟩ := θ_mem_Ioo hbelow habove
   have hsin : 0 < sin (θ σ) := sin_pos_of_pos_of_lt_pi hangle hangle'
   have hexp : 0 < exp (π * T / 2) := exp_pos _
   have hderiv : HasDerivAt (fun x : ℝ ↦ (exp (π * x / 2) - cos (θ σ)) / sin (θ σ))
@@ -82,7 +82,7 @@ theorem Q_σ_hasDerivAt {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) (T : ℝ
   nlinarith
 
 theorem Q_σ_zero {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) : Q_σ σ 0 = θ σ / (2 * π) := by
-  obtain ⟨hangle, hangle'⟩ := stripAngle_mem_Ioo hbelow habove
+  obtain ⟨hangle, hangle'⟩ := θ_mem_Ioo hbelow habove
   have key : ∀ x : ℝ, 0 < x → x < π / 2 →
       arctan ((1 - cos (2 * x)) / sin (2 * x)) / π = 2 * x / (2 * π) := by
     intro x hx hx'
@@ -102,7 +102,7 @@ theorem Q_σ_zero {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) : Q_σ σ 0 = 
 
 theorem Q_σ_tendsto_atTop {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
     Tendsto (Q_σ σ) atTop (𝓝 (1 / 2 : ℝ)) := by
-  obtain ⟨hangle, hangle'⟩ := stripAngle_mem_Ioo hbelow habove
+  obtain ⟨hangle, hangle'⟩ := θ_mem_Ioo hbelow habove
   have hsin : 0 < sin (θ σ) := sin_pos_of_pos_of_lt_pi hangle hangle'
   have hscale : Tendsto (fun T : ℝ ↦ π * T / 2) atTop atTop := by
     have hmul : (fun T : ℝ ↦ π * T / 2) = fun T : ℝ ↦ T * (π / 2) := by ext T; ring
@@ -117,19 +117,19 @@ theorem Q_σ_tendsto_atTop {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
   convert! hatan.div_const π using 1
   field_simp
 
-theorem stripPoissonKernel_integrable {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
+theorem P_σ_integrable {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
     Integrable (P_σ σ) :=
-  integrable_of_even (stripPoissonKernel_neg σ)
+  integrable_of_even (P_σ_neg σ)
     (integrableOn_Ioi_deriv_of_nonneg' (fun T _ ↦ Q_σ_hasDerivAt hbelow habove T)
-      (fun T _ ↦ (stripPoissonKernel_pos hbelow habove T).le)
+      (fun T _ ↦ (P_σ_pos hbelow habove T).le)
       (Q_σ_tendsto_atTop hbelow habove))
 
-theorem integral_stripPoissonKernel {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
+theorem integral_P_σ {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
     (∫ T : ℝ, P_σ σ T) = M_σ σ := by
   have habs : ∀ T : ℝ, P_σ σ |T| = P_σ σ T := fun T ↦ by
     rcases le_total 0 T with h | h
     · rw [abs_of_nonneg h]
-    · rw [abs_of_nonpos h, stripPoissonKernel_neg]
+    · rw [abs_of_nonpos h, P_σ_neg]
   calc (∫ T : ℝ, P_σ σ T) = ∫ T : ℝ, P_σ σ |T| :=
         integral_congr_ae (.of_forall fun T ↦ (habs T).symm)
     _ = 2 * ∫ T in Ioi (0 : ℝ), P_σ σ T := integral_comp_abs
@@ -137,7 +137,7 @@ theorem integral_stripPoissonKernel {σ : ℝ} (hbelow : -1 < σ) (habove : σ <
         congr 1
         exact integral_Ioi_of_hasDerivAt_of_nonneg'
           (fun T _ ↦ Q_σ_hasDerivAt hbelow habove T)
-          (fun T _ ↦ (stripPoissonKernel_pos hbelow habove T).le)
+          (fun T _ ↦ (P_σ_pos hbelow habove T).le)
           (Q_σ_tendsto_atTop hbelow habove)
     _ = M_σ σ := by
         rw [Q_σ_zero hbelow habove]
@@ -145,9 +145,9 @@ theorem integral_stripPoissonKernel {σ : ℝ} (hbelow : -1 < σ) (habove : σ <
         field_simp
         ring
 
-theorem stripPoissonKernel_antitone_abs {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) {x y : ℝ}
+theorem P_σ_antitone_abs {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) {x y : ℝ}
     (hxy : |x| ≤ |y|) : P_σ σ y ≤ P_σ σ x := by
-  obtain ⟨hangle, hangle'⟩ := stripAngle_mem_Ioo hbelow habove
+  obtain ⟨hangle, hangle'⟩ := θ_mem_Ioo hbelow habove
   have hsin : 0 < sin (θ σ) := sin_pos_of_pos_of_lt_pi hangle hangle'
   have hcos : cos (θ σ) < 1 := by nlinarith [sin_sq_add_cos_sq (θ σ)]
   have hxcosh := one_le_cosh (π * x / 2)
@@ -174,15 +174,15 @@ theorem Q_σ_centered_antitoneOn {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1)
     fun x hx ↦ ?_
   have hxpos : 0 ≤ x := le_of_lt (by simpa using hx)
   rw [(Q_σ_centered_hasDerivAt hbelow habove r x).deriv, sub_nonpos]
-  refine stripPoissonKernel_antitone_abs hbelow habove
+  refine P_σ_antitone_abs hbelow habove
     ((sq_le_sq₀ (abs_nonneg _) (abs_nonneg _)).1 ?_)
   rw [sq_abs, sq_abs]
   nlinarith [mul_nonneg hxpos hr]
 
-theorem intervalIntegral_stripPoissonKernel {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) (a b : ℝ) :
+theorem intervalIntegral_P_σ {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) (a b : ℝ) :
     (∫ x in a..b, P_σ σ x) = Q_σ σ b - Q_σ σ a :=
   intervalIntegral.integral_eq_sub_of_hasDerivAt (fun x _ ↦ Q_σ_hasDerivAt hbelow habove x)
-    (stripPoissonKernel_integrable hbelow habove).intervalIntegrable
+    (P_σ_integrable hbelow habove).intervalIntegrable
 
 theorem Q_σ_centered_le {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) {r : ℝ} (hr : 0 ≤ r) (s : ℝ) :
     Q_σ σ (s + r) - Q_σ σ (s - r) ≤ Q_σ σ r - Q_σ σ (-r) := by
@@ -191,49 +191,51 @@ theorem Q_σ_centered_le {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) {r : �
   · simpa using hanti (mem_Ici.2 le_rfl) hs hs
   · have hneg : Q_σ σ (-s + r) - Q_σ σ (-s - r) = Q_σ σ (s + r) - Q_σ σ (s - r) := by
       have h := intervalIntegral.integral_comp_neg (f := P_σ σ) (a := s - r) (b := s + r)
-      simp_rw [stripPoissonKernel_neg] at h
-      rw [intervalIntegral_stripPoissonKernel hbelow habove,
-        intervalIntegral_stripPoissonKernel hbelow habove] at h
+      simp_rw [P_σ_neg] at h
+      rw [intervalIntegral_P_σ hbelow habove,
+        intervalIntegral_P_σ hbelow habove] at h
       convert! h.symm using 1
       ring_nf
     rw [← hneg]
     simpa using hanti (mem_Ici.2 le_rfl) (neg_nonneg.2 hs) (neg_nonneg.2 hs)
 
-theorem stripPoissonKernel_centered_interval_max {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1)
+theorem P_σ_centered_interval_max {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1)
     {r : ℝ} (hr : 0 ≤ r) (s : ℝ) :
     (∫ x in Icc (s - r) (s + r), P_σ σ x) ≤ ∫ x in Icc (-r) r, P_σ σ x := by
   rw [integral_Icc_eq_integral_Ioc, integral_Icc_eq_integral_Ioc,
     ← intervalIntegral.integral_of_le (by linarith : s - r ≤ s + r),
     ← intervalIntegral.integral_of_le (by linarith : -r ≤ r),
-    intervalIntegral_stripPoissonKernel hbelow habove,
-    intervalIntegral_stripPoissonKernel hbelow habove]
+    intervalIntegral_P_σ hbelow habove,
+    intervalIntegral_P_σ hbelow habove]
   exact Q_σ_centered_le hbelow habove hr s
 
-/-- The conformal map `E_ℓ(z, y) = exp(π(z - y + iℓ)/(2ℓ))` taking the strip `|Im z| < ℓ` onto
-the upper half-plane, with the boundary point `y` sent to `1`; report, proof of Lemma 3.2. -/
-def E_ℓ (ℓ : ℝ) (z : ℂ) (y : ℝ) : ℂ := Complex.exp (π * (z - y + I * ℓ) / (2 * ℓ))
+/-- The conformal map `z ↦ exp(π(z - y + iℓ)/(2ℓ))` taking the strip `|Im z| < ℓ` onto the upper
+half-plane, with the boundary point `y` sent to `1`; report, proof of Lemma 3.2. (The report does
+not name it; its `E_λ` is the envelope `E` of (38).) -/
+def stripConformalMap (ℓ : ℝ) (z : ℂ) (y : ℝ) : ℂ := Complex.exp (π * (z - y + I * ℓ) / (2 * ℓ))
 
-theorem E_ℓ_continuous (ℓ : ℝ) (z : ℂ) : Continuous fun y : ℝ ↦ E_ℓ ℓ z y := by
-  unfold E_ℓ; fun_prop
+theorem stripConformalMap_continuous (ℓ : ℝ) (z : ℂ) :
+    Continuous fun y : ℝ ↦ stripConformalMap ℓ z y := by
+  unfold stripConformalMap; fun_prop
 
-theorem norm_E_ℓ (ℓ : ℝ) (z : ℂ) (y : ℝ) :
-    ‖E_ℓ ℓ z y‖ = exp (π * (z.re - y) / (2 * ℓ)) := by
-  unfold E_ℓ
+theorem norm_stripConformalMap (ℓ : ℝ) (z : ℂ) (y : ℝ) :
+    ‖stripConformalMap ℓ z y‖ = exp (π * (z.re - y) / (2 * ℓ)) := by
+  unfold stripConformalMap
   rw [Complex.norm_exp, ← Complex.ofReal_ofNat (n := 2), ← Complex.ofReal_mul,
     Complex.div_ofReal_re]
   congr 1
   simp [Complex.mul_re]
 
-theorem E_ℓ_re (ℓ : ℝ) (z : ℂ) (y : ℝ) : (E_ℓ ℓ z y).re =
+theorem stripConformalMap_re (ℓ : ℝ) (z : ℂ) (y : ℝ) : (stripConformalMap ℓ z y).re =
     exp (π * (z.re - y) / (2 * ℓ)) * cos (π * (z.im + ℓ) / (2 * ℓ)) := by
-  unfold E_ℓ
+  unfold stripConformalMap
   rw [Complex.exp_re, ← Complex.ofReal_ofNat (n := 2), ← Complex.ofReal_mul,
     Complex.div_ofReal_re, Complex.div_ofReal_im]
   congr 1 <;> simp [Complex.mul_re, Complex.mul_im]
 
-theorem E_ℓ_im (ℓ : ℝ) (z : ℂ) (y : ℝ) : (E_ℓ ℓ z y).im =
+theorem stripConformalMap_im (ℓ : ℝ) (z : ℂ) (y : ℝ) : (stripConformalMap ℓ z y).im =
     exp (π * (z.re - y) / (2 * ℓ)) * sin (π * (z.im + ℓ) / (2 * ℓ)) := by
-  unfold E_ℓ
+  unfold stripConformalMap
   rw [Complex.exp_im, ← Complex.ofReal_ofNat (n := 2), ← Complex.ofReal_mul,
     Complex.div_ofReal_re, Complex.div_ofReal_im]
   congr 1 <;> simp [Complex.mul_re, Complex.mul_im]
@@ -246,19 +248,20 @@ theorem stripSchwarzAngle_mem_Ioo {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
   rw [div_lt_iff₀ (by linarith : (0 : ℝ) < 2 * ℓ)]
   nlinarith [pi_pos]
 
-theorem E_ℓ_sub_one_ne_zero {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ} (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ)
-    (y : ℝ) : E_ℓ ℓ z y - 1 ≠ 0 := by
+theorem stripConformalMap_sub_one_ne_zero {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+    (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) (y : ℝ) : stripConformalMap ℓ z y - 1 ≠ 0 := by
   obtain ⟨hangle, hangle'⟩ := stripSchwarzAngle_mem_Ioo hℓ hz
   intro hzero
   have him := congrArg Complex.im hzero
-  simp only [Complex.sub_im, Complex.one_im, sub_zero, Complex.zero_im, E_ℓ_im] at him
+  simp only [Complex.sub_im, Complex.one_im, sub_zero, Complex.zero_im, stripConformalMap_im] at him
   exact (mul_pos (exp_pos _) (sin_pos_of_pos_of_lt_pi hangle hangle')).ne' him
 
-/-- The distance from `E_ℓ` to the boundary point `1`, bounded below by the sine of the angle
-`π(Im z + ℓ)/(2ℓ)` times `max 1 ‖E_ℓ‖`. -/
-theorem norm_E_ℓ_sub_one_ge {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ} (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ)
-    (y : ℝ) : max 1 (exp (π * (z.re - y) / (2 * ℓ))) * sin (π * (z.im + ℓ) / (2 * ℓ)) ≤
-      ‖E_ℓ ℓ z y - 1‖ := by
+/-- The distance from `stripConformalMap` to the boundary point `1`, bounded below by the sine of
+the angle `π(Im z + ℓ)/(2ℓ)` times `max 1 ‖stripConformalMap‖`. -/
+theorem norm_stripConformalMap_sub_one_ge {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+    (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) (y : ℝ) :
+    max 1 (exp (π * (z.re - y) / (2 * ℓ))) * sin (π * (z.im + ℓ) / (2 * ℓ)) ≤
+      ‖stripConformalMap ℓ z y - 1‖ := by
   obtain ⟨hangle, hangle'⟩ := stripSchwarzAngle_mem_Ioo hℓ hz
   have hsin : 0 < sin (π * (z.im + ℓ) / (2 * ℓ)) := sin_pos_of_pos_of_lt_pi hangle hangle'
   have htrig := sin_sq_add_cos_sq (π * (z.im + ℓ) / (2 * ℓ))
@@ -266,7 +269,7 @@ theorem norm_E_ℓ_sub_one_ge {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ} (hz : z ∈
   refine (sq_le_sq₀ (mul_nonneg (zero_le_one.trans (le_max_left _ _)) hsin.le)
     (norm_nonneg _)).1 ?_
   rw [← Complex.normSq_eq_norm_sq, Complex.normSq_apply, Complex.sub_re, Complex.sub_im,
-    Complex.one_re, Complex.one_im, sub_zero, E_ℓ_re, E_ℓ_im]
+    Complex.one_re, Complex.one_im, sub_zero, stripConformalMap_re, stripConformalMap_im]
   rcases le_total (exp (π * (z.re - y) / (2 * ℓ))) 1 with hle | hle
   · rw [max_eq_left hle]
     nlinarith [sq_nonneg (exp (π * (z.re - y) / (2 * ℓ)) - cos (π * (z.im + ℓ) / (2 * ℓ)))]
@@ -277,35 +280,37 @@ theorem norm_E_ℓ_sub_one_ge {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ} (hz : z ∈
 /-- The regularized holomorphic strip kernel `K'_ℓ`: the Schwarz kernel of the strip corrected
 by the constant `±i/(4ℓ)`, so that it decays on both boundary halflines. -/
 def K'_ℓ (ℓ : ℝ) (z : ℂ) (y : ℝ) : ℂ :=
-  I * ((E_ℓ ℓ z y + 1) / (E_ℓ ℓ z y - 1)) / 4 / (ℓ : ℂ) +
+  I * ((stripConformalMap ℓ z y + 1) / (stripConformalMap ℓ z y - 1)) / 4 / (ℓ : ℂ) +
     (if 0 ≤ y then I else -I) / (4 * ℓ : ℂ)
 
-/-- Closed form of `K'_ℓ`: the numerator is `E_ℓ` for `y ≥ 0` and `1` for `y < 0`. -/
+/-- Closed form of `K'_ℓ`: the numerator is `stripConformalMap` for `y ≥ 0` and `1` for `y < 0`. -/
 theorem K'_ℓ_eq {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ} (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) (y : ℝ) :
     K'_ℓ ℓ z y =
-      I * (if 0 ≤ y then E_ℓ ℓ z y else 1) / (2 * (ℓ : ℂ) * (E_ℓ ℓ z y - 1)) := by
+      I * (if 0 ≤ y then stripConformalMap ℓ z y else 1) /
+        (2 * (ℓ : ℂ) * (stripConformalMap ℓ z y - 1)) := by
   have hℓc : (ℓ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hℓ.ne'
-  have hw := E_ℓ_sub_one_ne_zero hℓ hz y
+  have hw := stripConformalMap_sub_one_ne_zero hℓ hz y
   unfold K'_ℓ
   split <;> field_simp <;> ring
 
-theorem norm_stripRegularizedHolomorphicPoissonKernel_of_nonneg {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+theorem norm_K'_ℓ_of_nonneg {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) {y : ℝ} (hy : 0 ≤ y) :
     ‖K'_ℓ ℓ z y‖ ≤ exp (π * (z.re - y) / (2 * ℓ)) /
       (2 * ℓ * sin (π * (z.im + ℓ) / (2 * ℓ))) := by
   obtain ⟨hangle, hangle'⟩ := stripSchwarzAngle_mem_Ioo hℓ hz
   have hsin : 0 < sin (π * (z.im + ℓ) / (2 * ℓ)) := sin_pos_of_pos_of_lt_pi hangle hangle'
-  have hge : sin (π * (z.im + ℓ) / (2 * ℓ)) ≤ ‖E_ℓ ℓ z y - 1‖ :=
-    (le_mul_of_one_le_left hsin.le (le_max_left _ _)).trans (norm_E_ℓ_sub_one_ge hℓ hz y)
+  have hge : sin (π * (z.im + ℓ) / (2 * ℓ)) ≤ ‖stripConformalMap ℓ z y - 1‖ :=
+    (le_mul_of_one_le_left hsin.le (le_max_left _ _)).trans
+      (norm_stripConformalMap_sub_one_ge hℓ hz y)
   have hnorm : ‖K'_ℓ ℓ z y‖ =
-      exp (π * (z.re - y) / (2 * ℓ)) / (2 * ℓ * ‖E_ℓ ℓ z y - 1‖) := by
-    rw [K'_ℓ_eq hℓ hz, ite_eq_left hy, norm_div, norm_mul, norm_E_ℓ]
+      exp (π * (z.re - y) / (2 * ℓ)) / (2 * ℓ * ‖stripConformalMap ℓ z y - 1‖) := by
+    rw [K'_ℓ_eq hℓ hz, ite_eq_left hy, norm_div, norm_mul, norm_stripConformalMap]
     simp [abs_of_pos hℓ]
   rw [hnorm]
   exact div_le_div_of_nonneg_left (exp_pos _).le (by positivity)
     (mul_le_mul_of_nonneg_left hge (by positivity))
 
-theorem norm_stripRegularizedHolomorphicPoissonKernel_of_neg {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+theorem norm_K'_ℓ_of_neg {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) {y : ℝ} (hy : y < 0) :
     ‖K'_ℓ ℓ z y‖ ≤ exp (-(π * (z.re - y) / (2 * ℓ))) /
       (2 * ℓ * sin (π * (z.im + ℓ) / (2 * ℓ))) := by
@@ -313,13 +318,14 @@ theorem norm_stripRegularizedHolomorphicPoissonKernel_of_neg {ℓ : ℝ} (hℓ :
   have hsin : 0 < sin (π * (z.im + ℓ) / (2 * ℓ)) := sin_pos_of_pos_of_lt_pi hangle hangle'
   have hexp : 0 < exp (π * (z.re - y) / (2 * ℓ)) := exp_pos _
   have hge : exp (π * (z.re - y) / (2 * ℓ)) * sin (π * (z.im + ℓ) / (2 * ℓ)) ≤
-      ‖E_ℓ ℓ z y - 1‖ :=
-    (mul_le_mul_of_nonneg_right (le_max_right _ _) hsin.le).trans (norm_E_ℓ_sub_one_ge hℓ hz y)
-  have hnorm : ‖K'_ℓ ℓ z y‖ = 1 / (2 * ℓ * ‖E_ℓ ℓ z y - 1‖) := by
+      ‖stripConformalMap ℓ z y - 1‖ :=
+    (mul_le_mul_of_nonneg_right (le_max_right _ _) hsin.le).trans
+      (norm_stripConformalMap_sub_one_ge hℓ hz y)
+  have hnorm : ‖K'_ℓ ℓ z y‖ = 1 / (2 * ℓ * ‖stripConformalMap ℓ z y - 1‖) := by
     rw [K'_ℓ_eq hℓ hz, ite_eq_right (not_le.mpr hy), norm_div, norm_mul]
     simp [abs_of_pos hℓ]
   rw [hnorm, exp_neg]
-  calc 1 / (2 * ℓ * ‖E_ℓ ℓ z y - 1‖)
+  calc 1 / (2 * ℓ * ‖stripConformalMap ℓ z y - 1‖)
       ≤ 1 / (2 * ℓ * (exp (π * (z.re - y) / (2 * ℓ)) *
           sin (π * (z.im + ℓ) / (2 * ℓ)))) :=
         div_le_div_of_nonneg_left zero_le_one (by positivity)
@@ -327,68 +333,68 @@ theorem norm_stripRegularizedHolomorphicPoissonKernel_of_neg {ℓ : ℝ} (hℓ :
     _ = (exp (π * (z.re - y) / (2 * ℓ)))⁻¹ / (2 * ℓ * sin (π * (z.im + ℓ) / (2 * ℓ))) := by
         field_simp
 
-theorem stripRegularizedHolomorphicPoissonKernel_continuousOn_Ioi {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+theorem K'_ℓ_continuousOn_Ioi {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) :
     ContinuousOn (fun y : ℝ ↦ K'_ℓ ℓ z y) (Ioi (0 : ℝ)) := by
-  have hc := E_ℓ_continuous ℓ z
-  have hne : ∀ y : ℝ, 2 * (ℓ : ℂ) * (E_ℓ ℓ z y - 1) ≠ 0 := fun y ↦
+  have hc := stripConformalMap_continuous ℓ z
+  have hne : ∀ y : ℝ, 2 * (ℓ : ℂ) * (stripConformalMap ℓ z y - 1) ≠ 0 := fun y ↦
     mul_ne_zero (mul_ne_zero two_ne_zero (Complex.ofReal_ne_zero.mpr hℓ.ne'))
-      (E_ℓ_sub_one_ne_zero hℓ hz y)
+      (stripConformalMap_sub_one_ne_zero hℓ hz y)
   have hform : Continuous fun y : ℝ ↦
-      I * E_ℓ ℓ z y / (2 * (ℓ : ℂ) * (E_ℓ ℓ z y - 1)) :=
+      I * stripConformalMap ℓ z y / (2 * (ℓ : ℂ) * (stripConformalMap ℓ z y - 1)) :=
     (continuous_const.mul hc).div (continuous_const.mul (hc.sub continuous_const)) hne
   refine hform.continuousOn.congr fun y hy ↦ ?_
   rw [K'_ℓ_eq hℓ hz, ite_eq_left (mem_Ioi.mp hy).le]
 
-theorem stripRegularizedHolomorphicPoissonKernel_continuousOn_Iio {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+theorem K'_ℓ_continuousOn_Iio {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) :
     ContinuousOn (fun y : ℝ ↦ K'_ℓ ℓ z y) (Iio (0 : ℝ)) := by
-  have hc := E_ℓ_continuous ℓ z
-  have hne : ∀ y : ℝ, 2 * (ℓ : ℂ) * (E_ℓ ℓ z y - 1) ≠ 0 := fun y ↦
+  have hc := stripConformalMap_continuous ℓ z
+  have hne : ∀ y : ℝ, 2 * (ℓ : ℂ) * (stripConformalMap ℓ z y - 1) ≠ 0 := fun y ↦
     mul_ne_zero (mul_ne_zero two_ne_zero (Complex.ofReal_ne_zero.mpr hℓ.ne'))
-      (E_ℓ_sub_one_ne_zero hℓ hz y)
-  have hform : Continuous fun y : ℝ ↦ I / (2 * (ℓ : ℂ) * (E_ℓ ℓ z y - 1)) :=
+      (stripConformalMap_sub_one_ne_zero hℓ hz y)
+  have hform : Continuous fun y : ℝ ↦ I / (2 * (ℓ : ℂ) * (stripConformalMap ℓ z y - 1)) :=
     continuous_const.div (continuous_const.mul (hc.sub continuous_const)) hne
   refine hform.continuousOn.congr fun y hy ↦ ?_
   rw [K'_ℓ_eq hℓ hz, ite_eq_right (not_le.mpr (mem_Iio.mp hy)), mul_one]
 
 /-- The complex derivative of `z ↦ K'_ℓ ℓ z y`. -/
-def stripRegularizedHolomorphicPoissonKernelDeriv (ℓ : ℝ) (z : ℂ) (y : ℝ) : ℂ :=
-  -(I * (π : ℂ) * E_ℓ ℓ z y) / (4 * (ℓ : ℂ) ^ 2 * (E_ℓ ℓ z y - 1) ^ 2)
+def K'_ℓDeriv (ℓ : ℝ) (z : ℂ) (y : ℝ) : ℂ :=
+  -(I * (π : ℂ) * stripConformalMap ℓ z y) / (4 * (ℓ : ℂ) ^ 2 * (stripConformalMap ℓ z y - 1) ^ 2)
 
-theorem stripRegularizedHolomorphicPoissonKernel_hasDerivAt_deriv {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+theorem K'_ℓ_hasDerivAt_deriv {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) (y : ℝ) :
     HasDerivAt (fun w : ℂ ↦ K'_ℓ ℓ w y)
-      (stripRegularizedHolomorphicPoissonKernelDeriv ℓ z y) z := by
+      (K'_ℓDeriv ℓ z y) z := by
   have hℓc : (ℓ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hℓ.ne'
-  have hden := E_ℓ_sub_one_ne_zero hℓ hz y
-  have hexp : HasDerivAt (fun w : ℂ ↦ E_ℓ ℓ w y)
-      (E_ℓ ℓ z y * ((π : ℂ) / (2 * (ℓ : ℂ)))) z := by
+  have hden := stripConformalMap_sub_one_ne_zero hℓ hz y
+  have hexp : HasDerivAt (fun w : ℂ ↦ stripConformalMap ℓ w y)
+      (stripConformalMap ℓ z y * ((π : ℂ) / (2 * (ℓ : ℂ)))) z := by
     have haffine := ((((hasDerivAt_id z).sub_const (y : ℂ)).add_const
       (I * (ℓ : ℂ))).const_mul (π : ℂ)).div_const (2 * (ℓ : ℂ))
-    unfold E_ℓ
+    unfold stripConformalMap
     convert! haffine.cexp using 1
     all_goals simp
   have hratio := (hexp.add_const 1).div (hexp.sub_const 1) hden
   have hkernel := (((hratio.const_mul I).div_const 4).div_const (ℓ : ℂ)).add_const
     ((if 0 ≤ y then I else -I) / (4 * ℓ : ℂ))
-  unfold stripRegularizedHolomorphicPoissonKernelDeriv K'_ℓ
+  unfold K'_ℓDeriv K'_ℓ
   convert! hkernel using 1
   field_simp [hℓc, hden]
   ring
 
-theorem norm_stripRegularizedHolomorphicPoissonKernelDeriv (ℓ : ℝ) (z : ℂ) (y : ℝ) :
-    ‖stripRegularizedHolomorphicPoissonKernelDeriv ℓ z y‖ =
-      π * exp (π * (z.re - y) / (2 * ℓ)) / (4 * ℓ ^ 2 * ‖E_ℓ ℓ z y - 1‖ ^ 2) := by
-  unfold stripRegularizedHolomorphicPoissonKernelDeriv
-  rw [norm_div, norm_neg, norm_mul, norm_mul, norm_mul, norm_pow, norm_E_ℓ]
+theorem norm_K'_ℓDeriv (ℓ : ℝ) (z : ℂ) (y : ℝ) :
+    ‖K'_ℓDeriv ℓ z y‖ =
+      π * exp (π * (z.re - y) / (2 * ℓ)) / (4 * ℓ ^ 2 * ‖stripConformalMap ℓ z y - 1‖ ^ 2) := by
+  unfold K'_ℓDeriv
+  rw [norm_div, norm_neg, norm_mul, norm_mul, norm_mul, norm_pow, norm_stripConformalMap]
   simp [abs_of_pos pi_pos, sq_abs]
 
 /-- The derivative of the strip kernel decays like `e^{-π|Re z - y|/(2ℓ)}` in the boundary
 variable `y`. -/
-theorem norm_stripRegularizedHolomorphicPoissonKernelDeriv_le {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+theorem norm_K'_ℓDeriv_le {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) (y : ℝ) :
-    ‖stripRegularizedHolomorphicPoissonKernelDeriv ℓ z y‖ ≤
+    ‖K'_ℓDeriv ℓ z y‖ ≤
       π * exp (-(π * |z.re - y| / (2 * ℓ))) /
         (4 * ℓ ^ 2 * sin (π * (z.im + ℓ) / (2 * ℓ)) ^ 2) := by
   obtain ⟨hangle, hangle'⟩ := stripSchwarzAngle_mem_Ioo hℓ hz
@@ -403,29 +409,29 @@ theorem norm_stripRegularizedHolomorphicPoissonKernelDeriv_le {ℓ : ℝ} (hℓ 
       simp
     · rw [abs_of_nonneg h, max_eq_right (one_le_exp h), exp_neg, sq]
       field_simp
-  rw [norm_stripRegularizedHolomorphicPoissonKernelDeriv, habs]
-  calc π * exp (π * (z.re - y) / (2 * ℓ)) / (4 * ℓ ^ 2 * ‖E_ℓ ℓ z y - 1‖ ^ 2)
+  rw [norm_K'_ℓDeriv, habs]
+  calc π * exp (π * (z.re - y) / (2 * ℓ)) / (4 * ℓ ^ 2 * ‖stripConformalMap ℓ z y - 1‖ ^ 2)
       ≤ π * exp (π * (z.re - y) / (2 * ℓ)) / (4 * ℓ ^ 2 *
           (max 1 (exp (π * (z.re - y) / (2 * ℓ))) * sin (π * (z.im + ℓ) / (2 * ℓ))) ^ 2) :=
         div_le_div_of_nonneg_left (by positivity)
           (mul_pos (by positivity) (pow_pos (mul_pos hmax hsin) 2))
           (mul_le_mul_of_nonneg_left ((sq_le_sq₀ (mul_nonneg hmax.le hsin.le) (norm_nonneg _)).2
-            (norm_E_ℓ_sub_one_ge hℓ hz y)) (by positivity))
+            (norm_stripConformalMap_sub_one_ge hℓ hz y)) (by positivity))
     _ = π * exp (-|π * (z.re - y) / (2 * ℓ)|) /
           (4 * ℓ ^ 2 * sin (π * (z.im + ℓ) / (2 * ℓ)) ^ 2) := by
         rw [hkey, mul_pow]
         ring
 
-theorem stripRegularizedHolomorphicPoissonKernelDeriv_continuous {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+theorem K'_ℓDeriv_continuous {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) :
-    Continuous fun y : ℝ ↦ stripRegularizedHolomorphicPoissonKernelDeriv ℓ z y := by
-  have hc := E_ℓ_continuous ℓ z
-  unfold stripRegularizedHolomorphicPoissonKernelDeriv
+    Continuous fun y : ℝ ↦ K'_ℓDeriv ℓ z y := by
+  have hc := stripConformalMap_continuous ℓ z
+  unfold K'_ℓDeriv
   refine ((continuous_const.mul hc).neg.div
     (continuous_const.mul ((hc.sub continuous_const).pow 2)) fun y ↦ ?_)
   exact mul_ne_zero (mul_ne_zero (by norm_num)
     (pow_ne_zero 2 (Complex.ofReal_ne_zero.mpr hℓ.ne')))
-    (pow_ne_zero 2 (E_ℓ_sub_one_ne_zero hℓ hz y))
+    (pow_ne_zero 2 (stripConformalMap_sub_one_ne_zero hℓ hz y))
 
 /-- Exponent comparison for `w` in the unit ball around `z`: `e^{-π|Re w - y|/(2ℓ)}` is at most
 `e^{π(|Re z| + 1)/(2ℓ)} e^{-π|y|/(2ℓ)}`. -/
@@ -445,10 +451,10 @@ private theorem neg_abs_re_sub_div_le {ℓ : ℝ} (hℓ : 0 < ℓ) {z w : ℂ}
     -(π * |w.re - y| / (2 * ℓ)) = π / (2 * ℓ) * (|z.re| + 1 - |y| + |w.re - y|) from by ring]
   exact mul_nonneg (by positivity) hab
 
-theorem stripRegularizedHolomorphicPoissonKernelDeriv_local_bound {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+theorem K'_ℓDeriv_local_bound {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) :
     ∃ S ∈ 𝓝 z, ∃ C : ℝ, 0 ≤ C ∧ ∀ w ∈ S, ∀ y : ℝ,
-        ‖stripRegularizedHolomorphicPoissonKernelDeriv ℓ w y‖ ≤
+        ‖K'_ℓDeriv ℓ w y‖ ≤
           C * exp (-(π / (2 * ℓ)) * |y|) := by
   obtain ⟨hangle, hangle'⟩ := stripSchwarzAngle_mem_Ioo hℓ hz
   have hsin0 : 0 < sin (π * (z.im + ℓ) / (2 * ℓ)) := sin_pos_of_pos_of_lt_pi hangle hangle'
@@ -471,10 +477,10 @@ theorem stripRegularizedHolomorphicPoissonKernelDeriv_local_bound {ℓ : ℝ} (h
     mul_le_mul_of_nonneg_left
       ((sq_le_sq₀ (by positivity) ((by positivity : (0 : ℝ) ≤
         sin (π * (z.im + ℓ) / (2 * ℓ)) / 2).trans hwsin'.le)).2 hwsin'.le) (by positivity)
-  calc ‖stripRegularizedHolomorphicPoissonKernelDeriv ℓ w y‖
+  calc ‖K'_ℓDeriv ℓ w y‖
       ≤ π * exp (-(π * |w.re - y| / (2 * ℓ))) /
           (4 * ℓ ^ 2 * sin (π * (w.im + ℓ) / (2 * ℓ)) ^ 2) :=
-        norm_stripRegularizedHolomorphicPoissonKernelDeriv_le hℓ hwstrip y
+        norm_K'_ℓDeriv_le hℓ hwstrip y
     _ ≤ π * exp (π * (|z.re| + 1) / (2 * ℓ) + -(π / (2 * ℓ)) * |y|) /
           (4 * ℓ ^ 2 * (sin (π * (z.im + ℓ) / (2 * ℓ)) / 2) ^ 2) :=
         div_le_div₀ (by positivity) (mul_le_mul_of_nonneg_left (exp_le_exp.mpr hnum) pi_pos.le)
@@ -490,7 +496,7 @@ theorem re_cayley {σ T : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
     (I * ((Complex.exp ((π * T / 2 : ℂ) + I * (θ σ : ℂ)) + 1) /
       (Complex.exp ((π * T / 2 : ℂ) + I * (θ σ : ℂ)) - 1)) / 4).re = P_σ σ T := by
   rw [← Complex.ofReal_ofNat (n := 2), ← Complex.ofReal_mul, ← Complex.ofReal_div]
-  obtain ⟨hangle, hangle'⟩ := stripAngle_mem_Ioo hbelow habove
+  obtain ⟨hangle, hangle'⟩ := θ_mem_Ioo hbelow habove
   have hsin : 0 < sin (θ σ) := sin_pos_of_pos_of_lt_pi hangle hangle'
   have hexp : 0 < exp (π * T / 2) := exp_pos _
   have htrig := sin_sq_add_cos_sq (θ σ)
@@ -507,7 +513,7 @@ theorem re_cayley {σ T : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
   nlinarith
 
 /-- On the horizontal line `Im t = σℓ` the real part of `K'_ℓ` is the Poisson kernel (15). -/
-theorem stripRegularizedHolomorphicPoissonKernel_re {ℓ σ : ℝ} (hℓ : 0 < ℓ) (hbelow : -1 < σ)
+theorem K'_ℓ_re {ℓ σ : ℝ} (hℓ : 0 < ℓ) (hbelow : -1 < σ)
     (habove : σ < 1) (s y : ℝ) :
     (K'_ℓ ℓ ((s : ℂ) + I * (σ * ℓ : ℂ)) y).re = P_σ σ ((s - y) / ℓ) / ℓ := by
   have hℓc : (ℓ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hℓ.ne'
@@ -519,7 +525,7 @@ theorem stripRegularizedHolomorphicPoissonKernel_re {ℓ σ : ℝ} (hℓ : 0 < �
     push_cast
     field_simp
     ring
-  unfold K'_ℓ E_ℓ
+  unfold K'_ℓ stripConformalMap
   rw [harg, Complex.add_re, Complex.div_ofReal_re, re_cayley hbelow habove]
   split <;> simp [Complex.div_re]
 

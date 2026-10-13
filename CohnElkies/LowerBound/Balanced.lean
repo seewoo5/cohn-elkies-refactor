@@ -9,9 +9,10 @@ For a radial admissible `F ∈ 𝒜_d^rad` the dilation `h(x) = F(a x)` with `a 
 is balanced (`𝓕 h (0) = h (0)`); nonnegative compactly supported self-Fourier functions vanish (via
 the complex moment generating function of `h ≥ 0`), so `g = 𝓕 h - h` is a nonzero anti-self-Fourier
 witness of radius `a`. Hence the normalized cost of `F` is at least `c` whenever no
-anti-self-Fourier witness of radius `c √d` exists (`normalizedCost_ge_of_no_antiFourierWitness`),
-the reduction of the lower bound of Theorem 1.1 to Proposition 3.7 (for general `F ∈ 𝒜_d`, first
-replace `F` by its rotational average, `Admissible.radialize`, in `CohnElkies.Asymptotics.Main`).
+anti-self-Fourier witness of radius `c √d` exists
+(`normalizedCost_ge_of_no_antiSelfFourierWitness`), the reduction of the lower bound of Theorem 1.1
+to Proposition 3.7 (for general `F ∈ 𝒜_d`, first replace `F` by its rotational average,
+`Admissible.radialize`, in `CohnElkies.Asymptotics.Main`).
 -/
 
 namespace CohnElkies
@@ -178,7 +179,7 @@ theorem antiFourierPart_balanced_ne_zero {d : ℕ} (f : RadialAdmissible d) (hd 
 
 /-- The scaling step of Theorem 3.8 of the report: if no anti-self-Fourier witness of radius
 `c √d` exists, then every radial admissible function has normalized cost at least `c`. -/
-theorem normalizedCost_ge_of_no_antiFourierWitness {d : ℕ} (f : RadialAdmissible d) (hd : 0 < d)
+theorem normalizedCost_ge_of_no_antiSelfFourierWitness {d : ℕ} (f : RadialAdmissible d) (hd : 0 < d)
     (c : ℝ) (hno : IsEmpty (AntiSelfFourierWitness d (c * √d))) :
     c ≤ normalizedCost f.toAdmissible := by
   by_contra! hlt
