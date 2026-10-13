@@ -29,15 +29,16 @@ open Real
 /-! ### The conformal map and its inverse -/
 
 /-- The conformal map `t ↦ exp(π(t + iℓ)/(2ℓ))` of the strip `|Im t| < ℓ` onto the upper
-half-plane; it is `E_ℓ ℓ t 0`. -/
+half-plane; it is `stripConformalMap ℓ t 0`. -/
 def stripToHalfPlane (ℓ : ℝ) (t : ℂ) : ℂ := Complex.exp (π * (t + I * ℓ) / (2 * ℓ))
 
 /-- The inverse map `w ↦ (2ℓ/π) log w - iℓ` (principal branch of the logarithm) of the upper
 half-plane onto the strip `|Im t| < ℓ`. -/
 def halfPlaneToStrip (ℓ : ℝ) (w : ℂ) : ℂ := 2 * ℓ / π * Complex.log w - I * ℓ
 
-theorem stripToHalfPlane_eq_E_ℓ (ℓ : ℝ) (t : ℂ) : stripToHalfPlane ℓ t = E_ℓ ℓ t 0 := by
-  simp [stripToHalfPlane, E_ℓ]
+theorem stripToHalfPlane_eq_stripConformalMap (ℓ : ℝ) (t : ℂ) :
+    stripToHalfPlane ℓ t = stripConformalMap ℓ t 0 := by
+  simp [stripToHalfPlane, stripConformalMap]
 
 /-- The exponent `π(t + iℓ)/(2ℓ)` is the real multiple `π/(2ℓ)` of `t + iℓ`. -/
 theorem stripToHalfPlane_exponent (ℓ : ℝ) (t : ℂ) :
@@ -52,7 +53,7 @@ theorem stripToHalfPlane_exponent_im (ℓ : ℝ) (t : ℂ) :
 
 theorem stripToHalfPlane_im (ℓ : ℝ) (t : ℂ) :
     (stripToHalfPlane ℓ t).im = exp (π * t.re / (2 * ℓ)) * sin (π * (t.im + ℓ) / (2 * ℓ)) := by
-  rw [stripToHalfPlane_eq_E_ℓ, E_ℓ_im]
+  rw [stripToHalfPlane_eq_stripConformalMap, stripConformalMap_im]
   simp
 
 /-- The open strip `|Im t| < ℓ` is mapped into the upper half-plane. -/
@@ -238,7 +239,7 @@ theorem poissonKernelHalfPlane_stripToHalfPlane_mul {ℓ σ : ℝ} (hℓ : 0 < �
     Complex.poissonKernelHalfPlane (stripToHalfPlane ℓ ((s : ℂ) + I * (σ * ℓ : ℂ)))
         (exp (π / (2 * ℓ) * y)) * (π / (2 * ℓ) * exp (π / (2 * ℓ) * y)) =
       P_σ σ ((s - y) / ℓ) / ℓ := by
-  obtain ⟨hangle, hangle'⟩ := stripAngle_mem_Ioo hbelow habove
+  obtain ⟨hangle, hangle'⟩ := θ_mem_Ioo hbelow habove
   have hcosh : cosh (π * ((s - y) / ℓ) / 2) =
       (exp (π * s / (2 * ℓ)) / exp (π / (2 * ℓ) * y) +
         exp (π / (2 * ℓ) * y) / exp (π * s / (2 * ℓ))) / 2 := by
@@ -297,7 +298,7 @@ theorem poissonIntegralHalfPlane_halfPlaneDatum_one {ℓ σ : ℝ} (hℓ : 0 < �
     Complex.poissonIntegralHalfPlane (halfPlaneDatum ℓ fun _ ↦ 1)
         (stripToHalfPlane ℓ ((s : ℂ) + I * (σ * ℓ : ℂ))) = M_σ σ := by
   rw [poissonIntegralHalfPlane_halfPlaneDatum hℓ hbelow habove s]
-  simpa only [mul_one] using integral_stripPoissonKernel hbelow habove
+  simpa only [mul_one] using integral_P_σ hbelow habove
 
 /-- The complementary upper-edge harmonic measure has mass `(1 + σ)/2`: the Poisson integral of
 the indicator of `(-∞, 0]`, the image of the upper edge, at the image of `t₀ = s + iσℓ`. -/

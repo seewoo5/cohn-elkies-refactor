@@ -26,7 +26,7 @@ open scoped FourierTransform SchwartzMap Topology
 /-! ### The critical log profile of a radial test function (report (8)) -/
 
 /-- The critical log profile `u ↦ e^{-λu} g(e^{-u})`, `λ = d/2`, of the radial profile `g` of a
-test function `f`. -/
+test function `f`: the reflection `u ↦ Φ_g(-u)` of the report's `Φ_g(v) = e^{λv} g(e^v)` (§2.2). -/
 def radialCriticalLogProfile {d : ℕ} (hd : 0 < d) (f : TestFunction d) (u : ℝ) : ℂ :=
   exp (-((d : ℝ) / 2) * u) • radialProfile hd f (exp (-u))
 
@@ -59,12 +59,12 @@ theorem radialCriticalLogProfile_fourier_integrable {d : ℕ} (hd : 0 < d) (f : 
   simpa [Function.comp_def, G] using (Real.fourier_comp_linearIsometry
     (LinearIsometryEquiv.neg ℝ) G u).symm
 
-theorem radialMellinFrequency_eq_criticalLogFourier {d : ℕ} (hd : 0 < d) (f : TestFunction d)
+theorem X_fℝ_eq_criticalLogFourier {d : ℕ} (hd : 0 < d) (f : TestFunction d)
     (t : ℝ) : X_fℝ hd f t = (𝓕 (radialCriticalLogProfile hd f) : ℝ → ℂ) (-t / (2 * π)) :=
-  radialMellinFrequency_eq_fourier hd f t
+  X_fℝ_eq_fourier hd f t
 
 /-- Report (8): a radial test function is determined by its Mellin frequency `X_f`. -/
-theorem radialMellinFrequency_injective {d : ℕ} (hd : 0 < d) {f g : TestFunction d}
+theorem X_fℝ_injective {d : ℕ} (hd : 0 < d) {f g : TestFunction d}
     (hf : IsRadial f) (hg : IsRadial g)
     (hfrequency : ∀ t : ℝ, X_fℝ hd f t = X_fℝ hd g t) :
     f = g := by
@@ -77,8 +77,8 @@ theorem radialMellinFrequency_injective {d : ℕ} (hd : 0 < d) {f g : TestFuncti
       (𝓕 (radialCriticalLogProfile hd g) : ℝ → ℂ) := by
     funext ξ
     have h := hfrequency (-(2 * π * ξ))
-    rw [radialMellinFrequency_eq_criticalLogFourier,
-      radialMellinFrequency_eq_criticalLogFourier] at h
+    rw [X_fℝ_eq_criticalLogFourier,
+      X_fℝ_eq_criticalLogFourier] at h
     convert h using 1 <;> field_simp [Real.pi_ne_zero]
   have hlog : radialCriticalLogProfile hd f = radialCriticalLogProfile hd g := by
     rw [← hinv f, hfourier, hinv g]
@@ -135,12 +135,12 @@ theorem fourier_integrable_of_source {d : ℕ} (hd : 0 < d) {F G : ℝ → ℂ}
     congrFun (criticalLogProfile_eq_fourierInv hd hF f hf) (-u)
 
 /-- Report (40): the Mellin frequency of such a source is `t ↦ G(-t/2π)`. -/
-theorem radialMellinFrequency_of_source {d : ℕ} (hd : 0 < d) {F G : ℝ → ℂ}
+theorem X_fℝ_of_source {d : ℕ} (hd : 0 < d) {F G : ℝ → ℂ}
     (hF : ∀ r : ℝ, 0 < r → F r = (r ^ (-((d : ℝ) / 2)) : ℝ) * 𝓕 G (log r))
     (hGint : Integrable G) (hGcont : Continuous G) (f : TestFunction d)
     (hf : ∀ x : Euclidean d, f x = F ‖x‖) (t : ℝ) :
     X_fℝ hd f t = G (-t / (2 * π)) := by
-  rw [radialMellinFrequency_eq_criticalLogFourier hd f t,
+  rw [X_fℝ_eq_criticalLogFourier hd f t,
     criticalLogProfile_eq_fourierInv hd hF f hf]
   exact hGint.fourier_fourierInv_eq (fourier_integrable_of_source hd hF f hf) hGcont.continuousAt
 
@@ -154,7 +154,7 @@ theorem isRadial_of_source {d : ℕ} {F : ℝ → ℂ} {f : TestFunction d}
 theorem fourierData_continuous {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (horder : a₀ε ε ≤ Aε ε)
     {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) : Continuous (fourierData ε ℓ P) := by
   unfold fourierData
-  exact (spectrum_continuous hε hℓ horder hP.continuous).comp (by fun_prop)
+  exact (X_P_continuous hε hℓ horder hP.continuous).comp (by fun_prop)
 
 theorem fourierData_integrable {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (horder : a₀ε ε ≤ Aε ε)
     {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) : Integrable (fourierData ε ℓ P) :=
@@ -162,13 +162,13 @@ theorem fourierData_integrable {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (h
     (by simpa using fourierData_norm_moment_integrable hε hℓ horder hP 0)
 
 /-- Report (40): the Mellin frequency of a test function `x ↦ f_P(‖x‖)` is the spectrum `X_P`. -/
-theorem radialMellinFrequency_of_mellinProfile {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
+theorem X_fℝ_of_f_P {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) {c : ℝ}
-    (f : TestFunction d) (hf : ∀ x : Euclidean d, f x = mellinProfileFun ε d P c x) (t : ℝ) :
-    X_fℝ hd f t = spectrum ε ((d : ℝ) / 2) P t := by
+    (f : TestFunction d) (hf : ∀ x : Euclidean d, f x = f_PFun ε d P c x) (t : ℝ) :
+    X_fℝ hd f t = X_P ε ((d : ℝ) / 2) P t := by
   have hdim : (0 : ℝ) < (d : ℝ) / 2 := div_pos (by exact_mod_cast hd) (by norm_num)
-  rw [radialMellinFrequency_of_source hd
-    (fun r hr ↦ mellinProfile_eq_fourier ε ((d : ℝ) / 2) P c hr)
+  rw [X_fℝ_of_source hd
+    (fun r hr ↦ f_P_eq_fourier ε ((d : ℝ) / 2) P c hr)
     (fourierData_integrable hε hdim horder hP) (fourierData_continuous hε hdim horder hP) f hf t]
   unfold fourierData
   congr 1
@@ -176,51 +176,51 @@ theorem radialMellinFrequency_of_mellinProfile {ε : ℝ} (hε : 0 < ε) {d : �
 
 /-! ### The Fourier pair `f̂₋ = f₊` (report (40)) and the admissible source -/
 
-theorem isRealValued_of_mellinProfile {ε : ℝ} {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) {d : ℕ}
-    {c : ℝ} {f : TestFunction d} (hf : ∀ x : Euclidean d, f x = mellinProfileFun ε d P c x) :
+theorem isRealValued_of_f_P {ε : ℝ} {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) {d : ℕ}
+    {c : ℝ} {f : TestFunction d} (hf : ∀ x : Euclidean d, f x = f_PFun ε d P c x) :
     IsRealValued f :=
-  fun x ↦ by rw [hf x]; exact mellinProfileFun_im hP d c x
+  fun x ↦ by rw [hf x]; exact f_PFun_im hP d c x
 
-theorem isRadial_of_mellinProfile {ε : ℝ} {P : ℂ → ℂ} {d : ℕ} {c : ℝ} {f : TestFunction d}
-    (hf : ∀ x : Euclidean d, f x = mellinProfileFun ε d P c x) : IsRadial f :=
-  isRadial_of_source (F := mellinProfile ε ((d : ℝ) / 2) P c) hf
+theorem isRadial_of_f_P {ε : ℝ} {P : ℂ → ℂ} {d : ℕ} {c : ℝ} {f : TestFunction d}
+    (hf : ∀ x : Euclidean d, f x = f_PFun ε d P c x) : IsRadial f :=
+  isRadial_of_source (F := f_P ε ((d : ℝ) / 2) P c) hf
 
 theorem plusSaddle_real_of_source {ε : ℝ} {d : ℕ} {f : TestFunction d}
     (hf : ∀ x : Euclidean d, f x = fPlusFun ε d x) : IsRealValued f :=
-  isRealValued_of_mellinProfile (c := originValue ε ((d : ℝ) / 2)) (isSaddlePolynomial_PPlus ε) hf
+  isRealValued_of_f_P (c := originValue ε ((d : ℝ) / 2)) (isSaddlePolynomial_PPlus ε) hf
 
 theorem minusSaddle_real_of_source {ε : ℝ} {d : ℕ} {f : TestFunction d}
     (hf : ∀ x : Euclidean d, f x = fMinusFun ε d x) : IsRealValued f :=
-  isRealValued_of_mellinProfile (c := originValue ε ((d : ℝ) / 2)) (isSaddlePolynomial_PMinus ε)
+  isRealValued_of_f_P (c := originValue ε ((d : ℝ) / 2)) (isSaddlePolynomial_PMinus ε)
     hf
 
 /-- Report (40): `𝓕 f_P = f_Q` for test functions `f_P`, `f_Q` realizing the profiles of two
 saddle polynomials with `P(-ζ) = Q(ζ)`. -/
-theorem fourier_eq_of_mellinProfile {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
+theorem fourier_eq_of_f_P {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
     (horder : a₀ε ε ≤ Aε ε) {P Q : ℂ → ℂ} (hP : IsSaddlePolynomial ε P)
     (hQ : IsSaddlePolynomial ε Q) (hPQ : ∀ z : ℂ, P (-z) = Q z) {c c' : ℝ}
-    (f g : TestFunction d) (hf : ∀ x : Euclidean d, f x = mellinProfileFun ε d P c x)
-    (hg : ∀ x : Euclidean d, g x = mellinProfileFun ε d Q c' x) :
+    (f g : TestFunction d) (hf : ∀ x : Euclidean d, f x = f_PFun ε d P c x)
+    (hg : ∀ x : Euclidean d, g x = f_PFun ε d Q c' x) :
     (𝓕 f : TestFunction d) = g := by
-  have hrf : IsRadial f := isRadial_of_mellinProfile hf
-  refine radialMellinFrequency_injective hd (gaussianMellin_fourier_radial hrf)
-    (isRadial_of_mellinProfile hg) fun t ↦ ?_
+  have hrf : IsRadial f := isRadial_of_f_P hf
+  refine X_fℝ_injective hd (gaussianMellin_fourier_radial hrf)
+    (isRadial_of_f_P hg) fun t ↦ ?_
   calc
     X_fℝ hd (𝓕 f : TestFunction d) t = m_ℓ ((d : ℝ) / 2) t * X_fℝ hd f (-t) :=
       radialMellinMultiplier hd f hrf t
-    _ = m_ℓ ((d : ℝ) / 2) t * spectrum ε ((d : ℝ) / 2) P (-t) := by
-      rw [radialMellinFrequency_of_mellinProfile hε hd horder hP f hf]
-    _ = spectrum ε ((d : ℝ) / 2) Q t :=
-      mellinMultiplier_mul_spectrum_neg (div_pos (by exact_mod_cast hd) (by norm_num)) hPQ t
-    _ = X_fℝ hd g t := (radialMellinFrequency_of_mellinProfile hε hd horder hQ g hg t).symm
+    _ = m_ℓ ((d : ℝ) / 2) t * X_P ε ((d : ℝ) / 2) P (-t) := by
+      rw [X_fℝ_of_f_P hε hd horder hP f hf]
+    _ = X_P ε ((d : ℝ) / 2) Q t :=
+      m_ℓ_mul_X_P_neg (div_pos (by exact_mod_cast hd) (by norm_num)) hPQ t
+    _ = X_fℝ hd g t := (X_fℝ_of_f_P hε hd horder hQ g hg t).symm
 
 /-- Report (40): `f̂₋ = f₊`. -/
 theorem saddleSource_fourier_minus_eq_plus {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
     (horder : a₀ε ε ≤ Aε ε) (fminus fplus : TestFunction d)
     (hminus : ∀ x : Euclidean d, fminus x = fMinusFun ε d x)
     (hplus : ∀ x : Euclidean d, fplus x = fPlusFun ε d x) : (𝓕 fminus : TestFunction d) = fplus :=
-  fourier_eq_of_mellinProfile hε hd horder (isSaddlePolynomial_PMinus ε)
-    (isSaddlePolynomial_PPlus ε) (minusPolynomial_neg ε) (c := originValue ε ((d : ℝ) / 2))
+  fourier_eq_of_f_P hε hd horder (isSaddlePolynomial_PMinus ε)
+    (isSaddlePolynomial_PPlus ε) (PMinus_neg ε) (c := originValue ε ((d : ℝ) / 2))
     (c' := originValue ε ((d : ℝ) / 2)) fminus fplus hminus hplus
 
 /-- Report (42): the common value `f₊(0) = f₋(0) > 0` at the origin. -/
@@ -235,7 +235,7 @@ theorem saddleSource_zero_eq {ε : ℝ} {d : ℕ} (fminus fplus : TestFunction d
     (hminus : ∀ x : Euclidean d, fminus x = fMinusFun ε d x)
     (hplus : ∀ x : Euclidean d, fplus x = fPlusFun ε d x) :
     fminus (0 : Euclidean d) = fplus (0 : Euclidean d) := by
-  rw [hminus, hplus, minusSaddleFunction_zero, plusSaddleFunction_zero]
+  rw [hminus, hplus, fMinusFun_zero, fPlusFun_zero]
 
 /-- The radial admissible function `x ↦ f₋(Rx)` built from the saddle pair `(f₋, f₊)`. -/
 def saddleSourceAdmissible {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε)
@@ -299,7 +299,8 @@ theorem saddleSourceAdmissible_normalizedCost {ε : ℝ} (hε : 0 < ε) {d : ℕ
 
 /-! ### The Real.digamma asymptotics and the saddle radius `R_{ε,d}` (report (84)) -/
 
-/-- Report (83): the logarithm of the saddle radius `r(u)` in dimension `d`. -/
+/-- Report (44): the saddle log-radius `v(u)` in dimension `d`, `λ = d/2` (`v_ℓ` is the same
+function for real `λ`); the saddle radius is `e^{v(u)}`. -/
 def logRadius (ε : ℝ) (d : ℕ) (u : ℝ) : ℝ := -(log π) / 2 +
     Real.digamma (((d : ℝ) / 2) * (1 + u) / 2) / 2 +
     (∫ a in a₀ε ε..Aε ε, w_s ε a * a * sinh (u * a)) +
@@ -308,7 +309,7 @@ def logRadius (ε : ℝ) (d : ℕ) (u : ℝ) : ℝ := -(log π) / 2 +
 /-- The saddle radius `R_{ε,d} = r(1 + ε/4)` of report (84). -/
 def R_ε (ε : ℝ) (d : ℕ) : ℝ := exp (logRadius ε d (1 + ε / 4))
 
-theorem saddleSourceRadius_pos (ε : ℝ) (d : ℕ) : 0 < R_ε ε d := exp_pos _
+theorem R_ε_pos (ε : ℝ) (d : ℕ) : 0 < R_ε ε d := exp_pos _
 
 theorem saddle_exp_half_log_eq_sqrt {x : ℝ} (hx : 0 < x) : exp (log x / 2) = √x := by
   rw [← log_sqrt hx.le, exp_log (sqrt_pos.2 hx)]
@@ -317,7 +318,7 @@ theorem saddle_exp_half_log_eq_sqrt {x : ℝ} (hx : 0 < x) : exp (log x / 2) = �
 def saddleCriticalGammaArgument (ε : ℝ) (d : ℕ) : ℝ := ((d : ℝ) / 2) * (2 + ε / 4) / 2
 
 /-- Report (84): `R_{ε,d}/√d → α_ε` as `d → ∞`. -/
-theorem tendsto_saddleSourceRadius_normalized {ε : ℝ} (hε : 0 < ε) :
+theorem tendsto_R_ε_normalized {ε : ℝ} (hε : 0 < ε) :
     Tendsto (fun d : ℕ ↦ R_ε ε d / √(d : ℝ)) atTop (𝓝 (α_ε ε)) := by
   have ha : (0 : ℝ) < 2 + ε / 4 := by positivity
   have hformula : ∀ d : ℕ, 0 < d → R_ε ε d / √(d : ℝ) =

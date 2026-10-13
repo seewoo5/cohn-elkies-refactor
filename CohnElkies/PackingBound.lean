@@ -68,7 +68,7 @@ theorem sphere_packing_le_linear_program (d : ℕ) (hd : 0 < d) :
   have hfinite : SpherePackingConstant d ≠ ⊤ :=
     ne_top_of_le_ne_top ENNReal.one_ne_top
       (iSup_le fun P ↦ SpherePacking.upper_packing_density_le_one P)
-  refine (ENNReal.le_ofReal_iff_toReal_le hfinite (CohnElkies.linearProgram_nonneg d)).2 ?_
+  refine (ENNReal.le_ofReal_iff_toReal_le hfinite (CohnElkies.LP_nonneg d)).2 ?_
   have hbound : (SpherePackingConstant d).toReal / (CohnElkies.unitBallVolume d / (2 : ℝ) ^ d) ≤
       sInf (CohnElkies.quotientSet d) := by
     refine le_csInf (CohnElkies.quotientSet_nonempty d) ?_

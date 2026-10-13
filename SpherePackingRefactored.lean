@@ -6404,7 +6404,7 @@ theorem radialProfile_real {d : ℕ} (hd : 0 < d) (f : TestFunction d) (hf : IsR
 /-- The surface area `S_d = d v_d` of the unit sphere of `ℝ^d`. -/
 def sphereArea (d : ℕ) : ℝ := d * unitBallVolume d
 
-theorem radialSurfaceArea_pos {d : ℕ} (hd : 0 < d) : 0 < sphereArea d :=
+theorem sphereArea_pos {d : ℕ} (hd : 0 < d) : 0 < sphereArea d :=
   mul_pos (Nat.cast_pos.2 hd) (unitBallVolume_pos d)
 
 /-- Polar integration for radial `f` with profile `g`: `∫ f(x) |x|^{s-d} dx = S_d · M g(s)`
@@ -6436,7 +6436,7 @@ def X_fℝ {d : ℕ} (hd : 0 < d) (f : TestFunction d) (t : ℝ) : ℂ :=
   mellin (radialProfile hd f) ((d / 2 : ℝ) - I * t)
 
 /-- `X_f` is the Fourier transform of `v ↦ e^{-λ v} g(e^{-v})`. -/
-theorem radialMellinFrequency_eq_fourier {d : ℕ} (hd : 0 < d) (f : TestFunction d) (t : ℝ) :
+theorem X_fℝ_eq_fourier {d : ℕ} (hd : 0 < d) (f : TestFunction d) (t : ℝ) :
     X_fℝ hd f t =
       𝓕 (fun u : ℝ ↦ exp (-(d / 2) * u) • radialProfile hd f (exp (-u))) (-t / (2 * π)) := by
   unfold X_fℝ
@@ -6588,7 +6588,7 @@ theorem quotientInf_nonneg (d : ℕ) (hadmissible : Nonempty (Admissible d)) :
 def packingGeometricRoot (d : ℕ) : ℝ := (unitBallVolume d / 2 ^ d) ^ (d : ℝ)⁻¹ * √d
 
 /-- `LP_d^{1/d}` splits as the geometric factor times the normalized program. -/
-theorem linearProgram_root_eq_geometric_mul_normalizedProgram
+theorem LP_root_eq_geometric_mul_normalizedProgram
     {d : ℕ} (hd : 0 < d) (hadmissible : Nonempty (Admissible d)) :
     (LP d) ^ ((d : ℝ)⁻¹) = packingGeometricRoot d * normalizedProgram d := by
   have hsqrt : √(d : ℝ) ≠ 0 := (sqrt_pos.2 (by exact_mod_cast hd)).ne'
@@ -6748,7 +6748,7 @@ transform on the line `Re z = ℓ` (report (10)). -/
 def m_ℓ (ℓ t : ℝ) : ℂ :=
   Complex.exp (I * t * log π) * Complex.Gamma ((ℓ - I * t) / 2) / Complex.Gamma ((ℓ + I * t) / 2)
 
-theorem mellinMultiplier_denominator_ne_zero {ℓ : ℝ} (hℓ : 0 < ℓ) (t : ℝ) :
+theorem m_ℓ_denominator_ne_zero {ℓ : ℝ} (hℓ : 0 < ℓ) (t : ℝ) :
     Complex.Gamma ((ℓ + I * t) / 2) ≠ 0 :=
   Complex.Gamma_ne_zero_of_re_pos (by simpa using half_pos hℓ)
 
@@ -6790,7 +6790,8 @@ theorem schwartz_mul_norm_cpow_integrable {d : ℕ} (hd : 0 < d) (f : TestFuncti
 
 /-! ### The Gaussian pairing `Φ_f(a) = ∫ f(x) e^{-a|x|²} dx` -/
 
-/-- The Gaussian pairing `Φ_f(a) = ∫ f(x) e^{-a|x|²} dx` of a test function. -/
+/-- The Gaussian pairing `Φ_f(a) = ∫ f(x) e^{-a|x|²} dx` of a test function (not the report's
+log-radius profile `Φ_g` of §2.2). -/
 def gaussianPairing {d : ℕ} (f : TestFunction d) (a : ℝ) : ℂ :=
   ∫ x, f x * Complex.exp (-(a * (‖x‖ : ℂ) ^ 2))
 
@@ -6943,7 +6944,7 @@ theorem radial_fourier_mellin_strip {d : ℕ} (hd : 0 < d) (f : TestFunction d) 
     refine Complex.Gamma_ne_zero_of_re_pos ?_
     simp
     linarith
-  have hS : (sphereArea d : ℂ) ≠ 0 := Complex.ofReal_ne_zero.2 (radialSurfaceArea_pos hd).ne'
+  have hS : (sphereArea d : ℂ) ≠ 0 := Complex.ofReal_ne_zero.2 (sphereArea_pos hd).ne'
   have h := fourier_riesz_pairing hd f hs hsd
   rw [integral_radialProfile_cpow hd _ (gaussianMellin_fourier_radial hf),
     show -s = (d - s) - d by ring, integral_radialProfile_cpow hd f hf, Complex.real_smul,
@@ -7002,7 +7003,7 @@ def L1norm {d : ℕ} (g : TestFunction d) : ℝ := ∫ x : Euclidean d, ‖g x�
 theorem L1norm_nonneg {d : ℕ} (g : TestFunction d) : 0 ≤ L1norm g :=
   integral_nonneg fun _ ↦ norm_nonneg _
 
-theorem radialL1Mass_pos {d : ℕ} (g : TestFunction d) (hg : g ≠ 0) : 0 < L1norm g := by
+theorem L1norm_pos_of_ne_zero {d : ℕ} (g : TestFunction d) (hg : g ≠ 0) : 0 < L1norm g := by
   obtain ⟨x, hx⟩ := DFunLike.ne_iff.mp hg
   exact integral_pos_of_integrable_nonneg_nonzero g.continuous.norm g.integrable.norm
     (fun _ ↦ norm_nonneg _) (norm_ne_zero_iff.mpr (by simpa using hx))
@@ -7096,7 +7097,7 @@ theorem abs_logProfile {d : ℕ} (hd : 0 < d) (g : TestFunction d) (hreal : IsRe
     |φ_g hd g R v| = sphereArea d / L1norm g *
       ((R * exp v) * ((R * exp v) ^ (d - 1) * ‖radialProfile hd g (R * exp v)‖)) := by
   simp only [φ_g, norm_radialProfile_eq_abs_re hd g hreal, abs_mul, abs_pow]
-  rw [abs_of_nonneg (div_nonneg (radialSurfaceArea_pos hd).le (L1norm_nonneg g)), abs_of_pos hR,
+  rw [abs_of_nonneg (div_nonneg (sphereArea_pos hd).le (L1norm_nonneg g)), abs_of_pos hR,
     abs_of_pos (exp_pos v), ← mul_pow_sub_one hd.ne' (R * exp v)]
   ring
 
@@ -7105,7 +7106,7 @@ theorem integral_abs_logProfile {d : ℕ} (hd : 0 < d) (g : TestFunction d) (hra
     (hreal : IsRealValued g) (hnonzero : g ≠ 0) {R : ℝ} (hR : 0 < R) :
     (∫ v : ℝ, |φ_g hd g R v|) = 1 := by
   rw [integral_logProfile_weight hd g hradial hR (‖·‖) _ (abs_logProfile hd g hreal hR)]
-  exact div_self (radialL1Mass_pos g hnonzero).ne'
+  exact div_self (L1norm_pos_of_ne_zero g hnonzero).ne'
 
 /-- Report (13): the mass of `φ_g` on `(-∞, 0]` is the mass of `g` in the ball of radius `R`,
 relative to `‖g‖₁`. -/
@@ -7143,8 +7144,8 @@ theorem logProfile_nonneg_of_exterior {d : ℕ} (hd : 0 < d) (g : TestFunction d
     rw [norm_smul, norm_radialUnitDirection hd, mul_one, Real.norm_eq_abs, abs_of_pos hradius]
     exact le_mul_of_one_le_right hR.le (one_le_exp hv)
   unfold φ_g
-  exact mul_nonneg (mul_nonneg (div_pos (radialSurfaceArea_pos hd)
-    (radialL1Mass_pos g hnonzero)).le (pow_nonneg hradius.le _)) (houtside _ hpoint)
+  exact mul_nonneg (mul_nonneg (div_pos (sphereArea_pos hd)
+    (L1norm_pos_of_ne_zero g hnonzero)).le (pow_nonneg hradius.le _)) (houtside _ hpoint)
 
 /-! ### The normalized profile of a radial eigenfunction (report (13)) -/
 
@@ -7153,7 +7154,7 @@ namespace RadialEigenfunction
 variable {d : ℕ} {ς : ℤˣ}
 
 theorem L1norm_pos (g : RadialEigenfunction d ς) : 0 < L1norm g.toFun :=
-  radialL1Mass_pos g.toFun g.ne_zero
+  L1norm_pos_of_ne_zero g.toFun g.ne_zero
 
 theorem integrable_logProfile (hd : 0 < d) (g : RadialEigenfunction d ς) {R : ℝ} (hR : 0 < R) :
     Integrable (φ_g hd g.toFun R) :=
@@ -7220,7 +7221,7 @@ def Z_g {d : ℕ} (hd : 0 < d) (f : TestFunction d) (R : ℝ) (z : ℂ) : ℂ :=
 
 /-- Lemma 3.2 of the report: `Z` is holomorphic on the strip `|Im z| < d/2` and continuous on
 its closure. -/
-theorem normalizedRadialMellinStrip_diffContOnCl {d : ℕ}
+theorem Z_g_diffContOnCl {d : ℕ}
     (hd : 0 < d) (f : TestFunction d) (hf : IsRadial f)
     (hzero : f (0 : Euclidean d) = 0) (R : ℝ) :
     DiffContOnCl ℂ (Z_g hd f R) (Complex.im ⁻¹'
@@ -7270,7 +7271,7 @@ theorem norm_integral_mul_cpow_le_L1norm {d : ℕ} (hd : 0 < d) (f : TestFunctio
   rw [norm_mul]
   exact mul_le_of_le_one_right (norm_nonneg _) (hcpow ‖x‖ (norm_nonneg x))
 
-theorem normalizedRadialMellinStrip_top_norm_eq {d : ℕ}
+theorem Z_g_top_norm_eq {d : ℕ}
     (hd : 0 < d) (f : TestFunction d) (hnonzero : f ≠ 0) (R : ℝ) (y : ℝ) :
     ‖Z_g hd f R ((y : ℂ) + I * ((d : ℂ) / 2))‖ =
       sphereArea d / L1norm f * ‖mellin (radialProfile hd f) ((d : ℂ) - I * (y : ℂ))‖ := by
@@ -7282,10 +7283,10 @@ theorem normalizedRadialMellinStrip_top_norm_eq {d : ℕ}
       (log R : ℂ))).re = 0 := by
     norm_num
   rw [norm_Z_g hd f, hmellin, hphase, exp_zero, mul_one,
-    abs_of_pos (div_pos (radialSurfaceArea_pos hd) (radialL1Mass_pos f hnonzero))]
+    abs_of_pos (div_pos (sphereArea_pos hd) (L1norm_pos_of_ne_zero f hnonzero))]
 
 /-- Report (16): on the top edge `Im z = d/2` of the strip, `|Z(y + iλ)| ≤ 1`. -/
-theorem normalizedRadialMellinStrip_top_norm_le_one {d : ℕ} (hd : 0 < d) (f : TestFunction d)
+theorem Z_g_top_norm_le_one {d : ℕ} (hd : 0 < d) (f : TestFunction d)
     (hf : IsRadial f) (hnonzero : f ≠ 0)
     (R : ℝ) (y : ℝ) :
     ‖Z_g hd f R ((y : ℂ) + I * ((d : ℂ) / 2))‖ ≤ 1 := by
@@ -7293,11 +7294,11 @@ theorem normalizedRadialMellinStrip_top_norm_le_one {d : ℕ} (hd : 0 < d) (f : 
       sphereArea d • mellin (radialProfile hd f) ((d : ℂ) - I * (y : ℂ)) := by
     simpa only [show ((d : ℂ) - I * (y : ℂ)) - (d : ℂ) = -(I * (y : ℂ)) by ring] using
       integral_radialProfile_cpow hd f hf ((d : ℂ) - I * (y : ℂ))
-  rw [normalizedRadialMellinStrip_top_norm_eq hd f hnonzero, div_mul_eq_mul_div,
-    div_le_one (radialL1Mass_pos f hnonzero)]
+  rw [Z_g_top_norm_eq hd f hnonzero, div_mul_eq_mul_div,
+    div_le_one (L1norm_pos_of_ne_zero f hnonzero)]
   calc sphereArea d * ‖mellin (radialProfile hd f) ((d : ℂ) - I * (y : ℂ))‖
       = ‖sphereArea d • mellin (radialProfile hd f) ((d : ℂ) - I * (y : ℂ))‖ := by
-        rw [norm_smul, Real.norm_eq_abs, abs_of_pos (radialSurfaceArea_pos hd)]
+        rw [norm_smul, Real.norm_eq_abs, abs_of_pos (sphereArea_pos hd)]
     _ ≤ L1norm f := by
         rw [← hpolar]
         exact norm_integral_mul_cpow_le_L1norm hd f y
@@ -7447,11 +7448,11 @@ private theorem norm_Z_g_bottom {d : ℕ} (hd : 0 < d) (f : TestFunction d) (hno
       (log R : ℂ))).re = (d : ℝ) * log R := by
     norm_num
   rw [norm_Z_g hd f, hmellin, hphase,
-    abs_of_pos (div_pos (radialSurfaceArea_pos hd) (radialL1Mass_pos f hnonzero))]
+    abs_of_pos (div_pos (sphereArea_pos hd) (L1norm_pos_of_ne_zero f hnonzero))]
 
 /-- Lemma 3.2 of the report: on the bottom edge `Im z = -d/2`, `log |Z(y - iλ)| ≤ h_λ(y)`, the
 majorant (14). -/
-theorem normalizedRadialMellinStrip_bottom_norm_le_gamma {d : ℕ}
+theorem Z_g_bottom_norm_le_gamma {d : ℕ}
     (hd : 0 < d) (f : TestFunction d) (hf : IsRadial f)
     (hzero : f (0 : Euclidean d) = 0) {ς : ℤˣ}
     (hς : (𝓕 f : TestFunction d) = ((ς : ℤ) : ℂ) • f)
@@ -7463,8 +7464,8 @@ theorem normalizedRadialMellinStrip_bottom_norm_le_gamma {d : ℕ}
           Real.log ‖Complex.Gamma ((d : ℂ) / 2 + I * (y : ℂ) / 2)‖) := by
   have hdual : sphereArea d / L1norm f *
       ‖mellin (radialProfile hd f) ((d : ℂ) + I * (y : ℂ))‖ ≤ 1 := by
-    have htop := normalizedRadialMellinStrip_top_norm_le_one hd f hf hnonzero R (-y)
-    rw [normalizedRadialMellinStrip_top_norm_eq hd f hnonzero] at htop
+    have htop := Z_g_top_norm_le_one hd f hf hnonzero R (-y)
+    rw [Z_g_top_norm_eq hd f hnonzero] at htop
     simpa using htop
   have hboundary := radial_fourier_mellin_eigenfunction_boundary_norm hd f hf hzero hς y hy
   rw [show -(I * (y : ℂ)) / 2 = -I * (y : ℂ) / 2 by ring] at hboundary
@@ -7525,7 +7526,7 @@ theorem radialProfile_mellin_uniform_strip_bound {d : ℕ}
       (le_add_of_nonneg_left (Real.rpow_nonneg hr.le _))
 
 /-- Lemma 3.2 of the report: `Z` is bounded on the closed strip `|Im z| ≤ d/2`. -/
-theorem normalizedRadialMellinStrip_uniform_bound {d : ℕ}
+theorem Z_g_uniform_bound {d : ℕ}
     (hd : 0 < d) (f : TestFunction d) (hf : IsRadial f)
     (hzero : f (0 : Euclidean d) = 0) (R : ℝ) :
     ∃ C : ℝ, 0 ≤ C ∧ ∀ z : ℂ, -((d : ℝ) / 2) ≤ z.im → z.im ≤ (d : ℝ) / 2 →
@@ -7606,7 +7607,7 @@ private theorem ofReal_pow_mul_cpow_neg {R : ℝ} (hR : 0 < R) {d : ℕ} {a t : 
 
 /-- Lemma 3.6 of the report: on the horizontal line `Im z = λ - a`, `Z` is the Fourier transform
 of the weighted profile `v ↦ e^{-a v} φ(v)`. -/
-theorem normalizedRadialMellinStrip_shifted_eq_fourier {d : ℕ} (hd : 0 < d) (f : TestFunction d)
+theorem Z_g_shifted_eq_fourier {d : ℕ} (hd : 0 < d) (f : TestFunction d)
     (hreal : IsRealValued f) (R : ℝ) (hR : 0 < R) (a t : ℝ) :
     Z_g hd f R ((t : ℂ) + I * ((d : ℂ) / 2 - a)) =
       (𝓕 (fun v : ℝ ↦ (exp (-a * v) : ℂ) * (φ_g hd f R v : ℂ)) : ℝ → ℂ) (t / (2 * π)) := by
@@ -7648,7 +7649,7 @@ theorem normalizedRadialMellinStrip_shifted_eq_fourier {d : ℕ} (hd : 0 < d) (f
   exact hscale.symm.trans hfourier.symm
 
 /-- Lemma 3.6 of the report: `Z` restricted to a horizontal line of the strip is integrable. -/
-theorem normalizedRadialMellinStrip_shifted_integrable
+theorem Z_g_shifted_integrable
     {d : ℕ} (hd : 0 < d) (f : TestFunction d)
     (hreal : IsRealValued f)
     {R : ℝ} (hR : 0 < R) {a : ℝ}
@@ -7659,12 +7660,12 @@ theorem normalizedRadialMellinStrip_shifted_integrable
   have hscale : ((2 * π)⁻¹ : ℝ) ≠ 0 := inv_ne_zero (mul_ne_zero (by norm_num) pi_ne_zero)
   refine ((logProfile_weighted_fourier_integrable hd f hreal hR ha).comp_mul_right'
     hscale).congr (.of_forall fun t ↦ ?_)
-  simpa [div_eq_mul_inv] using (normalizedRadialMellinStrip_shifted_eq_fourier hd f hreal R hR
+  simpa [div_eq_mul_inv] using (Z_g_shifted_eq_fourier hd f hreal R hR
     a t).symm
 
 /-- Lemma 3.6 of the report: Fourier inversion recovers `φ` from the values of `Z` on the
 shifted line `Im z = λ - a`. -/
-theorem normalizedRadialMellinStrip_shifted_fourier_inversion
+theorem Z_g_shifted_fourier_inversion
     {d : ℕ} (hd : 0 < d) (f : TestFunction d)
     (hf : IsRadial f) (hreal : IsRealValued f)
     (hzero : f (0 : Euclidean d) = 0)
@@ -7683,7 +7684,7 @@ theorem normalizedRadialMellinStrip_shifted_fourier_inversion
       I * ((d : ℂ) / 2 - a))) =
       (𝓕 (fun u : ℝ ↦ (exp (-a * u) : ℂ) * (φ_g hd f R u : ℂ)) : ℝ → ℂ) := by
     funext ξ
-    have h := normalizedRadialMellinStrip_shifted_eq_fourier hd f hreal R hR a (2 * π * ξ)
+    have h := Z_g_shifted_eq_fourier hd f hreal R hR a (2 * π * ξ)
     rw [show 2 * π * ξ / (2 * π) = ξ by field_simp] at h
     simp only [Complex.ofReal_mul, Complex.ofReal_ofNat] at h
     exact h
@@ -7707,9 +7708,9 @@ section CohnElkies_LowerBound_PoissonKernel
 
 The strip Poisson kernel `P_σ(T) = sin θ / (4 (cosh (πT/2) - cos θ))`, `θ = π(1 + σ)/2`, of total
 mass `M_σ = (1 - σ)/2`, its primitive, evenness, monotonicity in `|T|` and the maximality of its
-mass on centred intervals; the conformal map `E_ℓ` of the strip `|Im z| < ℓ` onto the upper
-half-plane and the regularized holomorphic Schwarz kernel `K'_ℓ` of the strip, with its bounds,
-continuity and derivative on the two boundary half-lines.
+mass on centred intervals; the conformal map `stripConformalMap` of the strip `|Im z| < ℓ` onto
+the upper half-plane and the regularized holomorphic Schwarz kernel `K'_ℓ` of the strip, with its
+bounds, continuity and derivative on the two boundary half-lines.
 -/
 
 namespace CohnElkies
@@ -7729,19 +7730,19 @@ def P_σ (σ T : ℝ) : ℝ := sin (θ σ) / (4 * (cosh (π * T / 2) - cos (θ �
 /-- The total mass `M_σ = (1 - σ)/2` of the kernel `P_σ`; report (15). -/
 def M_σ (σ : ℝ) : ℝ := (1 - σ) / 2
 
-theorem stripAngle_mem_Ioo {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
+theorem θ_mem_Ioo {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
     0 < θ σ ∧ θ σ < π := by
   have hπ := pi_pos
   unfold θ
   constructor <;> nlinarith
 
-theorem stripBottomMass_pos {σ : ℝ} (hσ : σ < 1) : 0 < M_σ σ := by unfold M_σ; linarith
+theorem M_σ_pos {σ : ℝ} (hσ : σ < 1) : 0 < M_σ σ := by unfold M_σ; linarith
 
-theorem stripBottomMass_lt_one {σ : ℝ} (hσ : -1 < σ) : M_σ σ < 1 := by unfold M_σ; linarith
+theorem M_σ_lt_one {σ : ℝ} (hσ : -1 < σ) : M_σ σ < 1 := by unfold M_σ; linarith
 
-theorem stripPoissonKernel_pos {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) (T : ℝ) :
+theorem P_σ_pos {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) (T : ℝ) :
     0 < P_σ σ T := by
-  obtain ⟨hangle, hangle'⟩ := stripAngle_mem_Ioo hbelow habove
+  obtain ⟨hangle, hangle'⟩ := θ_mem_Ioo hbelow habove
   have hsin : 0 < sin (θ σ) := sin_pos_of_pos_of_lt_pi hangle hangle'
   have hcos : cos (θ σ) < 1 := by nlinarith [sin_sq_add_cos_sq (θ σ)]
   have := one_le_cosh (π * T / 2)
@@ -7758,13 +7759,13 @@ open scoped Interval Topology
 /-- A primitive of the strip Poisson kernel `P_σ`. -/
 def Q_σ (σ T : ℝ) : ℝ := arctan ((exp (π * T / 2) - cos (θ σ)) / sin (θ σ)) / π
 
-theorem stripPoissonKernel_neg (σ T : ℝ) : P_σ σ (-T) = P_σ σ T := by
+theorem P_σ_neg (σ T : ℝ) : P_σ σ (-T) = P_σ σ T := by
   unfold P_σ
   rw [show π * -T / 2 = -(π * T / 2) by ring, cosh_neg]
 
 theorem Q_σ_hasDerivAt {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) (T : ℝ) :
     HasDerivAt (Q_σ σ) (P_σ σ T) T := by
-  obtain ⟨hangle, hangle'⟩ := stripAngle_mem_Ioo hbelow habove
+  obtain ⟨hangle, hangle'⟩ := θ_mem_Ioo hbelow habove
   have hsin : 0 < sin (θ σ) := sin_pos_of_pos_of_lt_pi hangle hangle'
   have hexp : 0 < exp (π * T / 2) := exp_pos _
   have hderiv : HasDerivAt (fun x : ℝ ↦ (exp (π * x / 2) - cos (θ σ)) / sin (θ σ))
@@ -7783,7 +7784,7 @@ theorem Q_σ_hasDerivAt {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) (T : ℝ
   nlinarith
 
 theorem Q_σ_zero {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) : Q_σ σ 0 = θ σ / (2 * π) := by
-  obtain ⟨hangle, hangle'⟩ := stripAngle_mem_Ioo hbelow habove
+  obtain ⟨hangle, hangle'⟩ := θ_mem_Ioo hbelow habove
   have key : ∀ x : ℝ, 0 < x → x < π / 2 →
       arctan ((1 - cos (2 * x)) / sin (2 * x)) / π = 2 * x / (2 * π) := by
     intro x hx hx'
@@ -7803,7 +7804,7 @@ theorem Q_σ_zero {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) : Q_σ σ 0 = 
 
 theorem Q_σ_tendsto_atTop {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
     Tendsto (Q_σ σ) atTop (𝓝 (1 / 2 : ℝ)) := by
-  obtain ⟨hangle, hangle'⟩ := stripAngle_mem_Ioo hbelow habove
+  obtain ⟨hangle, hangle'⟩ := θ_mem_Ioo hbelow habove
   have hsin : 0 < sin (θ σ) := sin_pos_of_pos_of_lt_pi hangle hangle'
   have hscale : Tendsto (fun T : ℝ ↦ π * T / 2) atTop atTop := by
     have hmul : (fun T : ℝ ↦ π * T / 2) = fun T : ℝ ↦ T * (π / 2) := by ext T; ring
@@ -7818,19 +7819,19 @@ theorem Q_σ_tendsto_atTop {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
   convert! hatan.div_const π using 1
   field_simp
 
-theorem stripPoissonKernel_integrable {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
+theorem P_σ_integrable {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
     Integrable (P_σ σ) :=
-  integrable_of_even (stripPoissonKernel_neg σ)
+  integrable_of_even (P_σ_neg σ)
     (integrableOn_Ioi_deriv_of_nonneg' (fun T _ ↦ Q_σ_hasDerivAt hbelow habove T)
-      (fun T _ ↦ (stripPoissonKernel_pos hbelow habove T).le)
+      (fun T _ ↦ (P_σ_pos hbelow habove T).le)
       (Q_σ_tendsto_atTop hbelow habove))
 
-theorem integral_stripPoissonKernel {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
+theorem integral_P_σ {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
     (∫ T : ℝ, P_σ σ T) = M_σ σ := by
   have habs : ∀ T : ℝ, P_σ σ |T| = P_σ σ T := fun T ↦ by
     rcases le_total 0 T with h | h
     · rw [abs_of_nonneg h]
-    · rw [abs_of_nonpos h, stripPoissonKernel_neg]
+    · rw [abs_of_nonpos h, P_σ_neg]
   calc (∫ T : ℝ, P_σ σ T) = ∫ T : ℝ, P_σ σ |T| :=
         integral_congr_ae (.of_forall fun T ↦ (habs T).symm)
     _ = 2 * ∫ T in Ioi (0 : ℝ), P_σ σ T := integral_comp_abs
@@ -7838,7 +7839,7 @@ theorem integral_stripPoissonKernel {σ : ℝ} (hbelow : -1 < σ) (habove : σ <
         congr 1
         exact integral_Ioi_of_hasDerivAt_of_nonneg'
           (fun T _ ↦ Q_σ_hasDerivAt hbelow habove T)
-          (fun T _ ↦ (stripPoissonKernel_pos hbelow habove T).le)
+          (fun T _ ↦ (P_σ_pos hbelow habove T).le)
           (Q_σ_tendsto_atTop hbelow habove)
     _ = M_σ σ := by
         rw [Q_σ_zero hbelow habove]
@@ -7846,9 +7847,9 @@ theorem integral_stripPoissonKernel {σ : ℝ} (hbelow : -1 < σ) (habove : σ <
         field_simp
         ring
 
-theorem stripPoissonKernel_antitone_abs {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) {x y : ℝ}
+theorem P_σ_antitone_abs {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) {x y : ℝ}
     (hxy : |x| ≤ |y|) : P_σ σ y ≤ P_σ σ x := by
-  obtain ⟨hangle, hangle'⟩ := stripAngle_mem_Ioo hbelow habove
+  obtain ⟨hangle, hangle'⟩ := θ_mem_Ioo hbelow habove
   have hsin : 0 < sin (θ σ) := sin_pos_of_pos_of_lt_pi hangle hangle'
   have hcos : cos (θ σ) < 1 := by nlinarith [sin_sq_add_cos_sq (θ σ)]
   have hxcosh := one_le_cosh (π * x / 2)
@@ -7875,15 +7876,15 @@ theorem Q_σ_centered_antitoneOn {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1)
     fun x hx ↦ ?_
   have hxpos : 0 ≤ x := le_of_lt (by simpa using hx)
   rw [(Q_σ_centered_hasDerivAt hbelow habove r x).deriv, sub_nonpos]
-  refine stripPoissonKernel_antitone_abs hbelow habove
+  refine P_σ_antitone_abs hbelow habove
     ((sq_le_sq₀ (abs_nonneg _) (abs_nonneg _)).1 ?_)
   rw [sq_abs, sq_abs]
   nlinarith [mul_nonneg hxpos hr]
 
-theorem intervalIntegral_stripPoissonKernel {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) (a b : ℝ) :
+theorem intervalIntegral_P_σ {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) (a b : ℝ) :
     (∫ x in a..b, P_σ σ x) = Q_σ σ b - Q_σ σ a :=
   intervalIntegral.integral_eq_sub_of_hasDerivAt (fun x _ ↦ Q_σ_hasDerivAt hbelow habove x)
-    (stripPoissonKernel_integrable hbelow habove).intervalIntegrable
+    (P_σ_integrable hbelow habove).intervalIntegrable
 
 theorem Q_σ_centered_le {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) {r : ℝ} (hr : 0 ≤ r) (s : ℝ) :
     Q_σ σ (s + r) - Q_σ σ (s - r) ≤ Q_σ σ r - Q_σ σ (-r) := by
@@ -7892,49 +7893,51 @@ theorem Q_σ_centered_le {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) {r : �
   · simpa using hanti (mem_Ici.2 le_rfl) hs hs
   · have hneg : Q_σ σ (-s + r) - Q_σ σ (-s - r) = Q_σ σ (s + r) - Q_σ σ (s - r) := by
       have h := intervalIntegral.integral_comp_neg (f := P_σ σ) (a := s - r) (b := s + r)
-      simp_rw [stripPoissonKernel_neg] at h
-      rw [intervalIntegral_stripPoissonKernel hbelow habove,
-        intervalIntegral_stripPoissonKernel hbelow habove] at h
+      simp_rw [P_σ_neg] at h
+      rw [intervalIntegral_P_σ hbelow habove,
+        intervalIntegral_P_σ hbelow habove] at h
       convert! h.symm using 1
       ring_nf
     rw [← hneg]
     simpa using hanti (mem_Ici.2 le_rfl) (neg_nonneg.2 hs) (neg_nonneg.2 hs)
 
-theorem stripPoissonKernel_centered_interval_max {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1)
+theorem P_σ_centered_interval_max {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1)
     {r : ℝ} (hr : 0 ≤ r) (s : ℝ) :
     (∫ x in Icc (s - r) (s + r), P_σ σ x) ≤ ∫ x in Icc (-r) r, P_σ σ x := by
   rw [integral_Icc_eq_integral_Ioc, integral_Icc_eq_integral_Ioc,
     ← intervalIntegral.integral_of_le (by linarith : s - r ≤ s + r),
     ← intervalIntegral.integral_of_le (by linarith : -r ≤ r),
-    intervalIntegral_stripPoissonKernel hbelow habove,
-    intervalIntegral_stripPoissonKernel hbelow habove]
+    intervalIntegral_P_σ hbelow habove,
+    intervalIntegral_P_σ hbelow habove]
   exact Q_σ_centered_le hbelow habove hr s
 
-/-- The conformal map `E_ℓ(z, y) = exp(π(z - y + iℓ)/(2ℓ))` taking the strip `|Im z| < ℓ` onto
-the upper half-plane, with the boundary point `y` sent to `1`; report, proof of Lemma 3.2. -/
-def E_ℓ (ℓ : ℝ) (z : ℂ) (y : ℝ) : ℂ := Complex.exp (π * (z - y + I * ℓ) / (2 * ℓ))
+/-- The conformal map `z ↦ exp(π(z - y + iℓ)/(2ℓ))` taking the strip `|Im z| < ℓ` onto the upper
+half-plane, with the boundary point `y` sent to `1`; report, proof of Lemma 3.2. (The report does
+not name it; its `E_λ` is the envelope `E` of (38).) -/
+def stripConformalMap (ℓ : ℝ) (z : ℂ) (y : ℝ) : ℂ := Complex.exp (π * (z - y + I * ℓ) / (2 * ℓ))
 
-theorem E_ℓ_continuous (ℓ : ℝ) (z : ℂ) : Continuous fun y : ℝ ↦ E_ℓ ℓ z y := by
-  unfold E_ℓ; fun_prop
+theorem stripConformalMap_continuous (ℓ : ℝ) (z : ℂ) :
+    Continuous fun y : ℝ ↦ stripConformalMap ℓ z y := by
+  unfold stripConformalMap; fun_prop
 
-theorem norm_E_ℓ (ℓ : ℝ) (z : ℂ) (y : ℝ) :
-    ‖E_ℓ ℓ z y‖ = exp (π * (z.re - y) / (2 * ℓ)) := by
-  unfold E_ℓ
+theorem norm_stripConformalMap (ℓ : ℝ) (z : ℂ) (y : ℝ) :
+    ‖stripConformalMap ℓ z y‖ = exp (π * (z.re - y) / (2 * ℓ)) := by
+  unfold stripConformalMap
   rw [Complex.norm_exp, ← Complex.ofReal_ofNat (n := 2), ← Complex.ofReal_mul,
     Complex.div_ofReal_re]
   congr 1
   simp [Complex.mul_re]
 
-theorem E_ℓ_re (ℓ : ℝ) (z : ℂ) (y : ℝ) : (E_ℓ ℓ z y).re =
+theorem stripConformalMap_re (ℓ : ℝ) (z : ℂ) (y : ℝ) : (stripConformalMap ℓ z y).re =
     exp (π * (z.re - y) / (2 * ℓ)) * cos (π * (z.im + ℓ) / (2 * ℓ)) := by
-  unfold E_ℓ
+  unfold stripConformalMap
   rw [Complex.exp_re, ← Complex.ofReal_ofNat (n := 2), ← Complex.ofReal_mul,
     Complex.div_ofReal_re, Complex.div_ofReal_im]
   congr 1 <;> simp [Complex.mul_re, Complex.mul_im]
 
-theorem E_ℓ_im (ℓ : ℝ) (z : ℂ) (y : ℝ) : (E_ℓ ℓ z y).im =
+theorem stripConformalMap_im (ℓ : ℝ) (z : ℂ) (y : ℝ) : (stripConformalMap ℓ z y).im =
     exp (π * (z.re - y) / (2 * ℓ)) * sin (π * (z.im + ℓ) / (2 * ℓ)) := by
-  unfold E_ℓ
+  unfold stripConformalMap
   rw [Complex.exp_im, ← Complex.ofReal_ofNat (n := 2), ← Complex.ofReal_mul,
     Complex.div_ofReal_re, Complex.div_ofReal_im]
   congr 1 <;> simp [Complex.mul_re, Complex.mul_im]
@@ -7947,19 +7950,20 @@ theorem stripSchwarzAngle_mem_Ioo {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
   rw [div_lt_iff₀ (by linarith : (0 : ℝ) < 2 * ℓ)]
   nlinarith [pi_pos]
 
-theorem E_ℓ_sub_one_ne_zero {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ} (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ)
-    (y : ℝ) : E_ℓ ℓ z y - 1 ≠ 0 := by
+theorem stripConformalMap_sub_one_ne_zero {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+    (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) (y : ℝ) : stripConformalMap ℓ z y - 1 ≠ 0 := by
   obtain ⟨hangle, hangle'⟩ := stripSchwarzAngle_mem_Ioo hℓ hz
   intro hzero
   have him := congrArg Complex.im hzero
-  simp only [Complex.sub_im, Complex.one_im, sub_zero, Complex.zero_im, E_ℓ_im] at him
+  simp only [Complex.sub_im, Complex.one_im, sub_zero, Complex.zero_im, stripConformalMap_im] at him
   exact (mul_pos (exp_pos _) (sin_pos_of_pos_of_lt_pi hangle hangle')).ne' him
 
-/-- The distance from `E_ℓ` to the boundary point `1`, bounded below by the sine of the angle
-`π(Im z + ℓ)/(2ℓ)` times `max 1 ‖E_ℓ‖`. -/
-theorem norm_E_ℓ_sub_one_ge {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ} (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ)
-    (y : ℝ) : max 1 (exp (π * (z.re - y) / (2 * ℓ))) * sin (π * (z.im + ℓ) / (2 * ℓ)) ≤
-      ‖E_ℓ ℓ z y - 1‖ := by
+/-- The distance from `stripConformalMap` to the boundary point `1`, bounded below by the sine of
+the angle `π(Im z + ℓ)/(2ℓ)` times `max 1 ‖stripConformalMap‖`. -/
+theorem norm_stripConformalMap_sub_one_ge {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+    (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) (y : ℝ) :
+    max 1 (exp (π * (z.re - y) / (2 * ℓ))) * sin (π * (z.im + ℓ) / (2 * ℓ)) ≤
+      ‖stripConformalMap ℓ z y - 1‖ := by
   obtain ⟨hangle, hangle'⟩ := stripSchwarzAngle_mem_Ioo hℓ hz
   have hsin : 0 < sin (π * (z.im + ℓ) / (2 * ℓ)) := sin_pos_of_pos_of_lt_pi hangle hangle'
   have htrig := sin_sq_add_cos_sq (π * (z.im + ℓ) / (2 * ℓ))
@@ -7967,7 +7971,7 @@ theorem norm_E_ℓ_sub_one_ge {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ} (hz : z ∈
   refine (sq_le_sq₀ (mul_nonneg (zero_le_one.trans (le_max_left _ _)) hsin.le)
     (norm_nonneg _)).1 ?_
   rw [← Complex.normSq_eq_norm_sq, Complex.normSq_apply, Complex.sub_re, Complex.sub_im,
-    Complex.one_re, Complex.one_im, sub_zero, E_ℓ_re, E_ℓ_im]
+    Complex.one_re, Complex.one_im, sub_zero, stripConformalMap_re, stripConformalMap_im]
   rcases le_total (exp (π * (z.re - y) / (2 * ℓ))) 1 with hle | hle
   · rw [max_eq_left hle]
     nlinarith [sq_nonneg (exp (π * (z.re - y) / (2 * ℓ)) - cos (π * (z.im + ℓ) / (2 * ℓ)))]
@@ -7978,35 +7982,37 @@ theorem norm_E_ℓ_sub_one_ge {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ} (hz : z ∈
 /-- The regularized holomorphic strip kernel `K'_ℓ`: the Schwarz kernel of the strip corrected
 by the constant `±i/(4ℓ)`, so that it decays on both boundary halflines. -/
 def K'_ℓ (ℓ : ℝ) (z : ℂ) (y : ℝ) : ℂ :=
-  I * ((E_ℓ ℓ z y + 1) / (E_ℓ ℓ z y - 1)) / 4 / (ℓ : ℂ) +
+  I * ((stripConformalMap ℓ z y + 1) / (stripConformalMap ℓ z y - 1)) / 4 / (ℓ : ℂ) +
     (if 0 ≤ y then I else -I) / (4 * ℓ : ℂ)
 
-/-- Closed form of `K'_ℓ`: the numerator is `E_ℓ` for `y ≥ 0` and `1` for `y < 0`. -/
+/-- Closed form of `K'_ℓ`: the numerator is `stripConformalMap` for `y ≥ 0` and `1` for `y < 0`. -/
 theorem K'_ℓ_eq {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ} (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) (y : ℝ) :
     K'_ℓ ℓ z y =
-      I * (if 0 ≤ y then E_ℓ ℓ z y else 1) / (2 * (ℓ : ℂ) * (E_ℓ ℓ z y - 1)) := by
+      I * (if 0 ≤ y then stripConformalMap ℓ z y else 1) /
+        (2 * (ℓ : ℂ) * (stripConformalMap ℓ z y - 1)) := by
   have hℓc : (ℓ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hℓ.ne'
-  have hw := E_ℓ_sub_one_ne_zero hℓ hz y
+  have hw := stripConformalMap_sub_one_ne_zero hℓ hz y
   unfold K'_ℓ
   split <;> field_simp <;> ring
 
-theorem norm_stripRegularizedHolomorphicPoissonKernel_of_nonneg {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+theorem norm_K'_ℓ_of_nonneg {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) {y : ℝ} (hy : 0 ≤ y) :
     ‖K'_ℓ ℓ z y‖ ≤ exp (π * (z.re - y) / (2 * ℓ)) /
       (2 * ℓ * sin (π * (z.im + ℓ) / (2 * ℓ))) := by
   obtain ⟨hangle, hangle'⟩ := stripSchwarzAngle_mem_Ioo hℓ hz
   have hsin : 0 < sin (π * (z.im + ℓ) / (2 * ℓ)) := sin_pos_of_pos_of_lt_pi hangle hangle'
-  have hge : sin (π * (z.im + ℓ) / (2 * ℓ)) ≤ ‖E_ℓ ℓ z y - 1‖ :=
-    (le_mul_of_one_le_left hsin.le (le_max_left _ _)).trans (norm_E_ℓ_sub_one_ge hℓ hz y)
+  have hge : sin (π * (z.im + ℓ) / (2 * ℓ)) ≤ ‖stripConformalMap ℓ z y - 1‖ :=
+    (le_mul_of_one_le_left hsin.le (le_max_left _ _)).trans
+      (norm_stripConformalMap_sub_one_ge hℓ hz y)
   have hnorm : ‖K'_ℓ ℓ z y‖ =
-      exp (π * (z.re - y) / (2 * ℓ)) / (2 * ℓ * ‖E_ℓ ℓ z y - 1‖) := by
-    rw [K'_ℓ_eq hℓ hz, ite_eq_left hy, norm_div, norm_mul, norm_E_ℓ]
+      exp (π * (z.re - y) / (2 * ℓ)) / (2 * ℓ * ‖stripConformalMap ℓ z y - 1‖) := by
+    rw [K'_ℓ_eq hℓ hz, ite_eq_left hy, norm_div, norm_mul, norm_stripConformalMap]
     simp [abs_of_pos hℓ]
   rw [hnorm]
   exact div_le_div_of_nonneg_left (exp_pos _).le (by positivity)
     (mul_le_mul_of_nonneg_left hge (by positivity))
 
-theorem norm_stripRegularizedHolomorphicPoissonKernel_of_neg {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+theorem norm_K'_ℓ_of_neg {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) {y : ℝ} (hy : y < 0) :
     ‖K'_ℓ ℓ z y‖ ≤ exp (-(π * (z.re - y) / (2 * ℓ))) /
       (2 * ℓ * sin (π * (z.im + ℓ) / (2 * ℓ))) := by
@@ -8014,13 +8020,14 @@ theorem norm_stripRegularizedHolomorphicPoissonKernel_of_neg {ℓ : ℝ} (hℓ :
   have hsin : 0 < sin (π * (z.im + ℓ) / (2 * ℓ)) := sin_pos_of_pos_of_lt_pi hangle hangle'
   have hexp : 0 < exp (π * (z.re - y) / (2 * ℓ)) := exp_pos _
   have hge : exp (π * (z.re - y) / (2 * ℓ)) * sin (π * (z.im + ℓ) / (2 * ℓ)) ≤
-      ‖E_ℓ ℓ z y - 1‖ :=
-    (mul_le_mul_of_nonneg_right (le_max_right _ _) hsin.le).trans (norm_E_ℓ_sub_one_ge hℓ hz y)
-  have hnorm : ‖K'_ℓ ℓ z y‖ = 1 / (2 * ℓ * ‖E_ℓ ℓ z y - 1‖) := by
+      ‖stripConformalMap ℓ z y - 1‖ :=
+    (mul_le_mul_of_nonneg_right (le_max_right _ _) hsin.le).trans
+      (norm_stripConformalMap_sub_one_ge hℓ hz y)
+  have hnorm : ‖K'_ℓ ℓ z y‖ = 1 / (2 * ℓ * ‖stripConformalMap ℓ z y - 1‖) := by
     rw [K'_ℓ_eq hℓ hz, ite_eq_right (not_le.mpr hy), norm_div, norm_mul]
     simp [abs_of_pos hℓ]
   rw [hnorm, exp_neg]
-  calc 1 / (2 * ℓ * ‖E_ℓ ℓ z y - 1‖)
+  calc 1 / (2 * ℓ * ‖stripConformalMap ℓ z y - 1‖)
       ≤ 1 / (2 * ℓ * (exp (π * (z.re - y) / (2 * ℓ)) *
           sin (π * (z.im + ℓ) / (2 * ℓ)))) :=
         div_le_div_of_nonneg_left zero_le_one (by positivity)
@@ -8028,68 +8035,68 @@ theorem norm_stripRegularizedHolomorphicPoissonKernel_of_neg {ℓ : ℝ} (hℓ :
     _ = (exp (π * (z.re - y) / (2 * ℓ)))⁻¹ / (2 * ℓ * sin (π * (z.im + ℓ) / (2 * ℓ))) := by
         field_simp
 
-theorem stripRegularizedHolomorphicPoissonKernel_continuousOn_Ioi {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+theorem K'_ℓ_continuousOn_Ioi {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) :
     ContinuousOn (fun y : ℝ ↦ K'_ℓ ℓ z y) (Ioi (0 : ℝ)) := by
-  have hc := E_ℓ_continuous ℓ z
-  have hne : ∀ y : ℝ, 2 * (ℓ : ℂ) * (E_ℓ ℓ z y - 1) ≠ 0 := fun y ↦
+  have hc := stripConformalMap_continuous ℓ z
+  have hne : ∀ y : ℝ, 2 * (ℓ : ℂ) * (stripConformalMap ℓ z y - 1) ≠ 0 := fun y ↦
     mul_ne_zero (mul_ne_zero two_ne_zero (Complex.ofReal_ne_zero.mpr hℓ.ne'))
-      (E_ℓ_sub_one_ne_zero hℓ hz y)
+      (stripConformalMap_sub_one_ne_zero hℓ hz y)
   have hform : Continuous fun y : ℝ ↦
-      I * E_ℓ ℓ z y / (2 * (ℓ : ℂ) * (E_ℓ ℓ z y - 1)) :=
+      I * stripConformalMap ℓ z y / (2 * (ℓ : ℂ) * (stripConformalMap ℓ z y - 1)) :=
     (continuous_const.mul hc).div (continuous_const.mul (hc.sub continuous_const)) hne
   refine hform.continuousOn.congr fun y hy ↦ ?_
   rw [K'_ℓ_eq hℓ hz, ite_eq_left (mem_Ioi.mp hy).le]
 
-theorem stripRegularizedHolomorphicPoissonKernel_continuousOn_Iio {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+theorem K'_ℓ_continuousOn_Iio {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) :
     ContinuousOn (fun y : ℝ ↦ K'_ℓ ℓ z y) (Iio (0 : ℝ)) := by
-  have hc := E_ℓ_continuous ℓ z
-  have hne : ∀ y : ℝ, 2 * (ℓ : ℂ) * (E_ℓ ℓ z y - 1) ≠ 0 := fun y ↦
+  have hc := stripConformalMap_continuous ℓ z
+  have hne : ∀ y : ℝ, 2 * (ℓ : ℂ) * (stripConformalMap ℓ z y - 1) ≠ 0 := fun y ↦
     mul_ne_zero (mul_ne_zero two_ne_zero (Complex.ofReal_ne_zero.mpr hℓ.ne'))
-      (E_ℓ_sub_one_ne_zero hℓ hz y)
-  have hform : Continuous fun y : ℝ ↦ I / (2 * (ℓ : ℂ) * (E_ℓ ℓ z y - 1)) :=
+      (stripConformalMap_sub_one_ne_zero hℓ hz y)
+  have hform : Continuous fun y : ℝ ↦ I / (2 * (ℓ : ℂ) * (stripConformalMap ℓ z y - 1)) :=
     continuous_const.div (continuous_const.mul (hc.sub continuous_const)) hne
   refine hform.continuousOn.congr fun y hy ↦ ?_
   rw [K'_ℓ_eq hℓ hz, ite_eq_right (not_le.mpr (mem_Iio.mp hy)), mul_one]
 
 /-- The complex derivative of `z ↦ K'_ℓ ℓ z y`. -/
-def stripRegularizedHolomorphicPoissonKernelDeriv (ℓ : ℝ) (z : ℂ) (y : ℝ) : ℂ :=
-  -(I * (π : ℂ) * E_ℓ ℓ z y) / (4 * (ℓ : ℂ) ^ 2 * (E_ℓ ℓ z y - 1) ^ 2)
+def K'_ℓDeriv (ℓ : ℝ) (z : ℂ) (y : ℝ) : ℂ :=
+  -(I * (π : ℂ) * stripConformalMap ℓ z y) / (4 * (ℓ : ℂ) ^ 2 * (stripConformalMap ℓ z y - 1) ^ 2)
 
-theorem stripRegularizedHolomorphicPoissonKernel_hasDerivAt_deriv {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+theorem K'_ℓ_hasDerivAt_deriv {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) (y : ℝ) :
     HasDerivAt (fun w : ℂ ↦ K'_ℓ ℓ w y)
-      (stripRegularizedHolomorphicPoissonKernelDeriv ℓ z y) z := by
+      (K'_ℓDeriv ℓ z y) z := by
   have hℓc : (ℓ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hℓ.ne'
-  have hden := E_ℓ_sub_one_ne_zero hℓ hz y
-  have hexp : HasDerivAt (fun w : ℂ ↦ E_ℓ ℓ w y)
-      (E_ℓ ℓ z y * ((π : ℂ) / (2 * (ℓ : ℂ)))) z := by
+  have hden := stripConformalMap_sub_one_ne_zero hℓ hz y
+  have hexp : HasDerivAt (fun w : ℂ ↦ stripConformalMap ℓ w y)
+      (stripConformalMap ℓ z y * ((π : ℂ) / (2 * (ℓ : ℂ)))) z := by
     have haffine := ((((hasDerivAt_id z).sub_const (y : ℂ)).add_const
       (I * (ℓ : ℂ))).const_mul (π : ℂ)).div_const (2 * (ℓ : ℂ))
-    unfold E_ℓ
+    unfold stripConformalMap
     convert! haffine.cexp using 1
     all_goals simp
   have hratio := (hexp.add_const 1).div (hexp.sub_const 1) hden
   have hkernel := (((hratio.const_mul I).div_const 4).div_const (ℓ : ℂ)).add_const
     ((if 0 ≤ y then I else -I) / (4 * ℓ : ℂ))
-  unfold stripRegularizedHolomorphicPoissonKernelDeriv K'_ℓ
+  unfold K'_ℓDeriv K'_ℓ
   convert! hkernel using 1
   field_simp [hℓc, hden]
   ring
 
-theorem norm_stripRegularizedHolomorphicPoissonKernelDeriv (ℓ : ℝ) (z : ℂ) (y : ℝ) :
-    ‖stripRegularizedHolomorphicPoissonKernelDeriv ℓ z y‖ =
-      π * exp (π * (z.re - y) / (2 * ℓ)) / (4 * ℓ ^ 2 * ‖E_ℓ ℓ z y - 1‖ ^ 2) := by
-  unfold stripRegularizedHolomorphicPoissonKernelDeriv
-  rw [norm_div, norm_neg, norm_mul, norm_mul, norm_mul, norm_pow, norm_E_ℓ]
+theorem norm_K'_ℓDeriv (ℓ : ℝ) (z : ℂ) (y : ℝ) :
+    ‖K'_ℓDeriv ℓ z y‖ =
+      π * exp (π * (z.re - y) / (2 * ℓ)) / (4 * ℓ ^ 2 * ‖stripConformalMap ℓ z y - 1‖ ^ 2) := by
+  unfold K'_ℓDeriv
+  rw [norm_div, norm_neg, norm_mul, norm_mul, norm_mul, norm_pow, norm_stripConformalMap]
   simp [abs_of_pos pi_pos, sq_abs]
 
 /-- The derivative of the strip kernel decays like `e^{-π|Re z - y|/(2ℓ)}` in the boundary
 variable `y`. -/
-theorem norm_stripRegularizedHolomorphicPoissonKernelDeriv_le {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+theorem norm_K'_ℓDeriv_le {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) (y : ℝ) :
-    ‖stripRegularizedHolomorphicPoissonKernelDeriv ℓ z y‖ ≤
+    ‖K'_ℓDeriv ℓ z y‖ ≤
       π * exp (-(π * |z.re - y| / (2 * ℓ))) /
         (4 * ℓ ^ 2 * sin (π * (z.im + ℓ) / (2 * ℓ)) ^ 2) := by
   obtain ⟨hangle, hangle'⟩ := stripSchwarzAngle_mem_Ioo hℓ hz
@@ -8104,29 +8111,29 @@ theorem norm_stripRegularizedHolomorphicPoissonKernelDeriv_le {ℓ : ℝ} (hℓ 
       simp
     · rw [abs_of_nonneg h, max_eq_right (one_le_exp h), exp_neg, sq]
       field_simp
-  rw [norm_stripRegularizedHolomorphicPoissonKernelDeriv, habs]
-  calc π * exp (π * (z.re - y) / (2 * ℓ)) / (4 * ℓ ^ 2 * ‖E_ℓ ℓ z y - 1‖ ^ 2)
+  rw [norm_K'_ℓDeriv, habs]
+  calc π * exp (π * (z.re - y) / (2 * ℓ)) / (4 * ℓ ^ 2 * ‖stripConformalMap ℓ z y - 1‖ ^ 2)
       ≤ π * exp (π * (z.re - y) / (2 * ℓ)) / (4 * ℓ ^ 2 *
           (max 1 (exp (π * (z.re - y) / (2 * ℓ))) * sin (π * (z.im + ℓ) / (2 * ℓ))) ^ 2) :=
         div_le_div_of_nonneg_left (by positivity)
           (mul_pos (by positivity) (pow_pos (mul_pos hmax hsin) 2))
           (mul_le_mul_of_nonneg_left ((sq_le_sq₀ (mul_nonneg hmax.le hsin.le) (norm_nonneg _)).2
-            (norm_E_ℓ_sub_one_ge hℓ hz y)) (by positivity))
+            (norm_stripConformalMap_sub_one_ge hℓ hz y)) (by positivity))
     _ = π * exp (-|π * (z.re - y) / (2 * ℓ)|) /
           (4 * ℓ ^ 2 * sin (π * (z.im + ℓ) / (2 * ℓ)) ^ 2) := by
         rw [hkey, mul_pow]
         ring
 
-theorem stripRegularizedHolomorphicPoissonKernelDeriv_continuous {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+theorem K'_ℓDeriv_continuous {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) :
-    Continuous fun y : ℝ ↦ stripRegularizedHolomorphicPoissonKernelDeriv ℓ z y := by
-  have hc := E_ℓ_continuous ℓ z
-  unfold stripRegularizedHolomorphicPoissonKernelDeriv
+    Continuous fun y : ℝ ↦ K'_ℓDeriv ℓ z y := by
+  have hc := stripConformalMap_continuous ℓ z
+  unfold K'_ℓDeriv
   refine ((continuous_const.mul hc).neg.div
     (continuous_const.mul ((hc.sub continuous_const).pow 2)) fun y ↦ ?_)
   exact mul_ne_zero (mul_ne_zero (by norm_num)
     (pow_ne_zero 2 (Complex.ofReal_ne_zero.mpr hℓ.ne')))
-    (pow_ne_zero 2 (E_ℓ_sub_one_ne_zero hℓ hz y))
+    (pow_ne_zero 2 (stripConformalMap_sub_one_ne_zero hℓ hz y))
 
 /-- Exponent comparison for `w` in the unit ball around `z`: `e^{-π|Re w - y|/(2ℓ)}` is at most
 `e^{π(|Re z| + 1)/(2ℓ)} e^{-π|y|/(2ℓ)}`. -/
@@ -8146,10 +8153,10 @@ private theorem neg_abs_re_sub_div_le {ℓ : ℝ} (hℓ : 0 < ℓ) {z w : ℂ}
     -(π * |w.re - y| / (2 * ℓ)) = π / (2 * ℓ) * (|z.re| + 1 - |y| + |w.re - y|) from by ring]
   exact mul_nonneg (by positivity) hab
 
-theorem stripRegularizedHolomorphicPoissonKernelDeriv_local_bound {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+theorem K'_ℓDeriv_local_bound {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ) :
     ∃ S ∈ 𝓝 z, ∃ C : ℝ, 0 ≤ C ∧ ∀ w ∈ S, ∀ y : ℝ,
-        ‖stripRegularizedHolomorphicPoissonKernelDeriv ℓ w y‖ ≤
+        ‖K'_ℓDeriv ℓ w y‖ ≤
           C * exp (-(π / (2 * ℓ)) * |y|) := by
   obtain ⟨hangle, hangle'⟩ := stripSchwarzAngle_mem_Ioo hℓ hz
   have hsin0 : 0 < sin (π * (z.im + ℓ) / (2 * ℓ)) := sin_pos_of_pos_of_lt_pi hangle hangle'
@@ -8172,10 +8179,10 @@ theorem stripRegularizedHolomorphicPoissonKernelDeriv_local_bound {ℓ : ℝ} (h
     mul_le_mul_of_nonneg_left
       ((sq_le_sq₀ (by positivity) ((by positivity : (0 : ℝ) ≤
         sin (π * (z.im + ℓ) / (2 * ℓ)) / 2).trans hwsin'.le)).2 hwsin'.le) (by positivity)
-  calc ‖stripRegularizedHolomorphicPoissonKernelDeriv ℓ w y‖
+  calc ‖K'_ℓDeriv ℓ w y‖
       ≤ π * exp (-(π * |w.re - y| / (2 * ℓ))) /
           (4 * ℓ ^ 2 * sin (π * (w.im + ℓ) / (2 * ℓ)) ^ 2) :=
-        norm_stripRegularizedHolomorphicPoissonKernelDeriv_le hℓ hwstrip y
+        norm_K'_ℓDeriv_le hℓ hwstrip y
     _ ≤ π * exp (π * (|z.re| + 1) / (2 * ℓ) + -(π / (2 * ℓ)) * |y|) /
           (4 * ℓ ^ 2 * (sin (π * (z.im + ℓ) / (2 * ℓ)) / 2) ^ 2) :=
         div_le_div₀ (by positivity) (mul_le_mul_of_nonneg_left (exp_le_exp.mpr hnum) pi_pos.le)
@@ -8191,7 +8198,7 @@ theorem re_cayley {σ T : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
     (I * ((Complex.exp ((π * T / 2 : ℂ) + I * (θ σ : ℂ)) + 1) /
       (Complex.exp ((π * T / 2 : ℂ) + I * (θ σ : ℂ)) - 1)) / 4).re = P_σ σ T := by
   rw [← Complex.ofReal_ofNat (n := 2), ← Complex.ofReal_mul, ← Complex.ofReal_div]
-  obtain ⟨hangle, hangle'⟩ := stripAngle_mem_Ioo hbelow habove
+  obtain ⟨hangle, hangle'⟩ := θ_mem_Ioo hbelow habove
   have hsin : 0 < sin (θ σ) := sin_pos_of_pos_of_lt_pi hangle hangle'
   have hexp : 0 < exp (π * T / 2) := exp_pos _
   have htrig := sin_sq_add_cos_sq (θ σ)
@@ -8208,7 +8215,7 @@ theorem re_cayley {σ T : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
   nlinarith
 
 /-- On the horizontal line `Im t = σℓ` the real part of `K'_ℓ` is the Poisson kernel (15). -/
-theorem stripRegularizedHolomorphicPoissonKernel_re {ℓ σ : ℝ} (hℓ : 0 < ℓ) (hbelow : -1 < σ)
+theorem K'_ℓ_re {ℓ σ : ℝ} (hℓ : 0 < ℓ) (hbelow : -1 < σ)
     (habove : σ < 1) (s y : ℝ) :
     (K'_ℓ ℓ ((s : ℂ) + I * (σ * ℓ : ℂ)) y).re = P_σ σ ((s - y) / ℓ) / ℓ := by
   have hℓc : (ℓ : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hℓ.ne'
@@ -8220,7 +8227,7 @@ theorem stripRegularizedHolomorphicPoissonKernel_re {ℓ σ : ℝ} (hℓ : 0 < �
     push_cast
     field_simp
     ring
-  unfold K'_ℓ E_ℓ
+  unfold K'_ℓ stripConformalMap
   rw [harg, Complex.add_re, Complex.div_ofReal_re, re_cayley hbelow habove]
   split <;> simp [Complex.div_re]
 
@@ -8337,22 +8344,22 @@ variable {d : ℕ} {ς : ℤˣ}
 
 theorem diffContOnCl_Z_g (hd : 0 < d) (g : RadialEigenfunction d ς) (R : ℝ) :
     DiffContOnCl ℂ (Z_g hd g.toFun R) (Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2)) :=
-  normalizedRadialMellinStrip_diffContOnCl hd g.toFun g.radial g.zero R
+  Z_g_diffContOnCl hd g.toFun g.radial g.zero R
 
 /-- Report (16): `|Z(y + iλ)| ≤ 1` on the top edge of the strip. -/
 theorem norm_Z_g_top_le_one (hd : 0 < d) (g : RadialEigenfunction d ς) (R y : ℝ) :
     ‖Z_g hd g.toFun R ((y : ℂ) + I * ((d : ℂ) / 2))‖ ≤ 1 :=
-  normalizedRadialMellinStrip_top_norm_le_one hd g.toFun g.radial g.ne_zero R y
+  Z_g_top_norm_le_one hd g.toFun g.radial g.ne_zero R y
 
 theorem exists_norm_Z_g_le (hd : 0 < d) (g : RadialEigenfunction d ς) (R : ℝ) :
     ∃ C : ℝ, 0 ≤ C ∧ ∀ z : ℂ, -((d : ℝ) / 2) ≤ z.im → z.im ≤ (d : ℝ) / 2 →
       ‖Z_g hd g.toFun R z‖ ≤ C :=
-  normalizedRadialMellinStrip_uniform_bound hd g.toFun g.radial g.zero R
+  Z_g_uniform_bound hd g.toFun g.radial g.zero R
 
 theorem integrable_Z_g_shifted (hd : 0 < d) (g : RadialEigenfunction d ς) {R : ℝ} (hR : 0 < R)
     {a : ℝ} (ha : a < (d : ℝ)) :
     Integrable (fun t : ℝ ↦ Z_g hd g.toFun R ((t : ℂ) + I * ((d : ℂ) / 2 - a))) :=
-  normalizedRadialMellinStrip_shifted_integrable hd g.toFun g.real hR ha
+  Z_g_shifted_integrable hd g.toFun g.real hR ha
 
 /-- Lemmas 3.2 and 3.6 of the report combined: the mass of a radial eigenfunction `g` in the
 ball of radius `R` is controlled by the `L¹` norm of `Z` on the interior line `Im z = σλ`:
@@ -8371,7 +8378,7 @@ theorem setIntegral_ball_norm_le (hd : 0 < d) (g : RadialEigenfunction d ς) {R 
       ((s : ℂ) + I * ((d : ℂ) / 2 - ((1 - σ) * ((d : ℝ) / 2) : ℝ))))
     (fun v ↦ by
       simpa only [Complex.ofReal_mul, Complex.ofReal_ofNat] using
-        normalizedRadialMellinStrip_shifted_fourier_inversion hd g.toFun g.radial g.real g.zero
+        Z_g_shifted_fourier_inversion hd g.toFun g.radial g.real g.zero
           hR haless v)
   rwa [show (d : ℂ) / 2 - ((1 - σ) * ((d : ℝ) / 2) : ℝ) = σ * ((d : ℂ) / 2) by push_cast; ring,
     g.setIntegral_Iic_abs_logProfile hd hR, div_le_iff₀ g.L1norm_pos] at hupper
@@ -8383,7 +8390,7 @@ report (14). -/
 def h_ℓ (ℓ R y : ℝ) : ℝ := ℓ * log (π * R ^ 2) + log ‖Complex.Gamma (-I * (y : ℂ) / 2)‖ -
     log ‖Complex.Gamma ((ℓ : ℂ) + I * (y : ℂ) / 2)‖
 
-theorem lowerGammaBoundaryLog_continuousOn {ℓ : ℝ} (hℓ : 0 < ℓ) (R : ℝ) {S : Set ℝ}
+theorem h_ℓ_continuousOn {ℓ : ℝ} (hℓ : 0 < ℓ) (R : ℝ) {S : Set ℝ}
     (hS : ∀ y ∈ S, y ≠ 0) : ContinuousOn (h_ℓ ℓ R) S := by
   have key : ∀ f : ℝ → ℂ, Continuous f → (∀ y ∈ S, ∀ m : ℕ, f y ≠ -(m : ℂ)) →
       ContinuousOn (fun y : ℝ ↦ log ‖Complex.Gamma (f y)‖) S := by
@@ -8408,15 +8415,15 @@ theorem lowerGammaBoundaryLog_continuousOn {ℓ : ℝ} (hℓ : 0 < ℓ) (R : ℝ
       (key (fun y : ℝ ↦ -I * (y : ℂ) / 2) (by fun_prop) hnumPole)).sub
     (key (fun y : ℝ ↦ (ℓ : ℂ) + I * (y : ℂ) / 2) (by fun_prop) fun y _ ↦ hdenPole y)
 
-theorem lowerGammaBoundaryLog_measurable {ℓ : ℝ} (hℓ : 0 < ℓ) (R : ℝ) : Measurable (h_ℓ ℓ R) :=
+theorem h_ℓ_measurable {ℓ : ℝ} (hℓ : 0 < ℓ) (R : ℝ) : Measurable (h_ℓ ℓ R) :=
   measurable_of_continuousOn_compl_singleton (0 : ℝ)
-    (lowerGammaBoundaryLog_continuousOn hℓ R fun y hy ↦ by simpa using hy)
+    (h_ℓ_continuousOn hℓ R fun y hy ↦ by simpa using hy)
 
 /-- Lemma 3.2 of the report: `log |Z(y - iλ)| ≤ h_λ(y)` on the bottom edge of the strip. -/
 theorem RadialEigenfunction.norm_Z_g_bottom_le_exp_h_ℓ {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
     (g : RadialEigenfunction d ς) {R : ℝ} (hR : 0 < R) (y : ℝ) (hy : y ≠ 0) :
     ‖Z_g hd g.toFun R ((y : ℂ) - I * ((d : ℂ) / 2))‖ ≤ exp (h_ℓ ((d : ℝ) / 2) R y) := by
-  simpa [h_ℓ] using normalizedRadialMellinStrip_bottom_norm_le_gamma hd g.toFun g.radial g.zero
+  simpa [h_ℓ] using Z_g_bottom_norm_le_gamma hd g.toFun g.radial g.zero
     g.fourier_eq g.ne_zero R hR y hy
 
 /-- The Poisson extension `H_σ(s) = ∫ P_σ(T) h_λ(s - λT) dT` of the lower-boundary
@@ -8471,7 +8478,7 @@ theorem norm_gamma_neg_imaginary (y : ℝ) :
 
 /-- Even dimensions: the gamma recurrence (7) turns `h_n` into a Riemann sum; report, proof of
 Lemma 3.3. -/
-theorem lowerGammaBoundaryLog_integer (k : ℕ) (R : ℝ) {y : ℝ} (hy : y ≠ 0) :
+theorem h_ℓ_integer (k : ℕ) (R : ℝ) {y : ℝ} (hy : y ≠ 0) :
     h_ℓ (k : ℝ) R y = (k : ℝ) * log (π * R ^ 2) -
       ∑ j ∈ Finset.range k, log (√((j : ℝ) ^ 2 + (y / 2) ^ 2)) := by
   have hbase : ‖Complex.Gamma (I * (y : ℂ) / 2)‖ ≠ 0 :=
@@ -8492,7 +8499,7 @@ theorem lower_sqrtFactor_ge_abs_half (c y : ℝ) : |y| / 2 ≤ √(c ^ 2 + (y / 
   refine (Real.le_sqrt (by positivity) (by positivity)).2 ?_
   nlinarith [sq_nonneg c, sq_abs y]
 
-theorem lowerGammaBoundaryLog_integer_log_tail (k : ℕ) {R y : ℝ} (hR : 0 < R) (hy : y ≠ 0) :
+theorem h_ℓ_integer_log_tail (k : ℕ) {R y : ℝ} (hR : 0 < R) (hy : y ≠ 0) :
     h_ℓ (k : ℝ) R y ≤ (k : ℝ) * log (2 * π * R ^ 2 / |y|) := by
   have hyhalf : 0 < |y| / 2 := by positivity
   have hsum : (k : ℝ) * log (|y| / 2) ≤
@@ -8504,7 +8511,7 @@ theorem lowerGammaBoundaryLog_integer_log_tail (k : ℕ) {R y : ℝ} (hR : 0 < R
     rw [← Real.log_div (mul_ne_zero pi_ne_zero (pow_ne_zero 2 hR.ne')) hyhalf.ne']
     congr 1
     field_simp [abs_ne_zero.mpr hy]
-  rw [lowerGammaBoundaryLog_integer k R hy, ← hlogratio]
+  rw [h_ℓ_integer k R hy, ← hlogratio]
   nlinarith [hsum]
 
 theorem lower_abs_log_sqrtFactor_le {c y : ℝ} (hc : 0 ≤ c) (hy : 0 < y) :
@@ -8557,7 +8564,7 @@ theorem lower_exp_log_sqrtFactor_integrable {a c : ℝ} (ha : 0 < a) (hc : 0 ≤
     measurableSet_Ioi
   simp only [abs_of_pos (mem_Ioi.mp hy)]
 
-theorem lowerGammaBoundaryLog_integer_exp_integrable {a : ℝ} (ha : 0 < a) (k : ℕ) (R : ℝ) :
+theorem h_ℓ_integer_exp_integrable {a : ℝ} (ha : 0 < a) (k : ℕ) (R : ℝ) :
     Integrable (fun y : ℝ ↦ exp ((-a) * |y|) * h_ℓ (k : ℝ) R y) := by
   have hconstant : Integrable (fun y : ℝ ↦ ((k : ℝ) * log (π * R ^ 2)) * exp ((-a) * |y|)) :=
     (integrable_exp_neg_mul_abs ha).const_mul ((k : ℝ) * log (π * R ^ 2))
@@ -8570,7 +8577,7 @@ theorem lowerGammaBoundaryLog_integer_exp_integrable {a : ℝ} (ha : 0 < a) (k :
     simpa only [mul_sub, Finset.mul_sum, mul_comm] using! hconstant.sub hsum
   refine hmodel.congr ?_
   filter_upwards [Measure.ae_ne (volume : Measure ℝ) 0] with y hy
-  rw [lowerGammaBoundaryLog_integer k R hy]
+  rw [h_ℓ_integer k R hy]
 
 /-- Integrability of `K̃_λ(z, ·) h_λ` on one half-line `S`, given the kernel bound with sign `u`
 (`u = 1` on `(0, ∞)`, `u = -1` on `(-∞, 0)`). -/
@@ -8584,7 +8591,7 @@ private theorem integrableOn_K'_ℓ_mul_h_ℓ {ℓ R : ℝ} (hℓ : 0 < ℓ) {z 
     IntegrableOn (fun y : ℝ ↦ K'_ℓ ℓ z y * (h_ℓ ℓ R y : ℂ)) S := by
   have hcast : ContinuousOn (fun y : ℝ ↦ (h_ℓ ℓ R y : ℂ)) S := by
     simpa [Function.comp_def] using Complex.continuous_ofReal.comp_continuousOn
-      (lowerGammaBoundaryLog_continuousOn hℓ R hne)
+      (h_ℓ_continuousOn hℓ R hne)
   refine (hgammaabs.integrableOn.const_mul (exp (u * (π * z.re / (2 * ℓ))) /
     (2 * ℓ * sin (π * (z.im + ℓ) / (2 * ℓ))))).mono'
     ((hcont.mul hcast).aestronglyMeasurable hS) ?_
@@ -8601,7 +8608,7 @@ private theorem integrableOn_K'_ℓ_mul_h_ℓ {ℓ R : ℝ} (hℓ : 0 < ℓ) {z 
 
 /-- The regularized strip kernel times the boundary majorant is integrable on the boundary
 line; report, proof of Lemma 3.2. -/
-theorem lowerStripGammaOuter_integrable_of_exp_integrable {ℓ R : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
+theorem integrable_K'_ℓ_mul_h_ℓ_of_exp_integrable {ℓ R : ℝ} (hℓ : 0 < ℓ) {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-ℓ) ℓ)
     (hgamma : Integrable (fun y : ℝ ↦ exp (-(π / (2 * ℓ)) * |y|) * h_ℓ ℓ R y)) :
     Integrable (fun y : ℝ ↦ K'_ℓ ℓ z y * (h_ℓ ℓ R y : ℂ)) := by
@@ -8611,15 +8618,15 @@ theorem lowerStripGammaOuter_integrable_of_exp_integrable {ℓ R : ℝ} (hℓ : 
     integrableOn_Ici_iff_integrableOn_Ioi]
   exact ⟨integrableOn_K'_ℓ_mul_h_ℓ hℓ hgammaabs _ (-1) measurableSet_Iio
       (fun y hy ↦ (mem_Iio.mp hy).ne)
-      (stripRegularizedHolomorphicPoissonKernel_continuousOn_Iio hℓ hz)
+      (K'_ℓ_continuousOn_Iio hℓ hz)
       (fun y hy ↦ by
-        simpa using norm_stripRegularizedHolomorphicPoissonKernel_of_neg hℓ hz (mem_Iio.mp hy))
+        simpa using norm_K'_ℓ_of_neg hℓ hz (mem_Iio.mp hy))
       (fun y hy ↦ by rw [abs_of_neg (mem_Iio.mp hy)]; ring),
     integrableOn_K'_ℓ_mul_h_ℓ hℓ hgammaabs _ 1 measurableSet_Ioi (fun y hy ↦ (mem_Ioi.mp hy).ne')
-      (stripRegularizedHolomorphicPoissonKernel_continuousOn_Ioi hℓ hz)
+      (K'_ℓ_continuousOn_Ioi hℓ hz)
       (fun y hy ↦ by
         simpa using
-          norm_stripRegularizedHolomorphicPoissonKernel_of_nonneg hℓ hz (mem_Ioi.mp hy).le)
+          norm_K'_ℓ_of_nonneg hℓ hz (mem_Ioi.mp hy).le)
       (fun y hy ↦ by rw [abs_of_pos (mem_Ioi.mp hy)]; ring)⟩
 
 theorem norm_halfIntegerGammaFactor (j : ℕ) (y : ℝ) :
@@ -8637,7 +8644,7 @@ theorem halfIntegerGammaFactor_ne_zero (j : ℕ) (y : ℝ) :
 
 /-- Odd dimensions: the gamma identities (7) split `h_λ` into a midpoint Riemann sum and a
 boundary correction; report, proof of Lemma 3.3. -/
-theorem lowerGammaBoundaryLog_halfInteger_factorized (k : ℕ) (R : ℝ) {y : ℝ} (_hy : y ≠ 0) :
+theorem h_ℓ_halfInteger_factorized (k : ℕ) (R : ℝ) {y : ℝ} (_hy : y ≠ 0) :
     h_ℓ ((k : ℝ) + 1 / 2) R y = ((k : ℝ) + 1 / 2) * log (π * R ^ 2) -
       ∑ j ∈ Finset.range k, log (√(((j : ℝ) + 1 / 2) ^ 2 + (y / 2) ^ 2)) +
       (log ‖Complex.Gamma (I * (y : ℂ) / 2)‖ -
@@ -8671,17 +8678,17 @@ theorem natCast_div_two_cases (d : ℕ) :
   · exact Or.inl ⟨k, by push_cast; ring⟩
   · exact Or.inr ⟨k, by push_cast; ring⟩
 
-theorem lowerGammaBoundaryLog_halfInteger (k : ℕ) (R : ℝ) {y : ℝ} (hy : y ≠ 0) :
+theorem h_ℓ_halfInteger (k : ℕ) (R : ℝ) {y : ℝ} (hy : y ≠ 0) :
     h_ℓ ((k : ℝ) + 1 / 2) R y = ((k : ℝ) + 1 / 2) * log (π * R ^ 2) -
         ∑ j ∈ Finset.range k, log (√(((j : ℝ) + 1 / 2) ^ 2 + (y / 2) ^ 2)) +
         1 / 2 * log (coth (π * |y| / 2) / (|y| / 2)) := by
-  rw [lowerGammaBoundaryLog_halfInteger_factorized k R hy]
+  rw [h_ℓ_halfInteger_factorized k R hy]
   congr 1
   simpa [abs_div, mul_div_assoc] using
     Complex.log_norm_Gamma_I_mul_sub_log_norm_Gamma_one_half_add_I_mul
       (x := y / 2) (div_ne_zero hy two_ne_zero)
 
-theorem lowerGammaBoundaryLog_halfInteger_log_tail (k : ℕ) {R y : ℝ} (hR : 0 < R) (hy : y ≠ 0) :
+theorem h_ℓ_halfInteger_log_tail (k : ℕ) {R y : ℝ} (hR : 0 < R) (hy : y ≠ 0) :
     h_ℓ ((k : ℝ) + 1 / 2) R y ≤ ((k : ℝ) + 1 / 2) * log (2 * π * R ^ 2 / |y|) +
       1 / 2 * log (coth (π * |y| / 2)) := by
   have hyhalf : 0 < |y| / 2 := by positivity
@@ -8694,20 +8701,20 @@ theorem lowerGammaBoundaryLog_halfInteger_log_tail (k : ℕ) {R y : ℝ} (hR : 0
     rw [← Real.log_div (mul_ne_zero Real.pi_ne_zero (pow_ne_zero 2 hR.ne')) hyhalf.ne']
     congr 1
     field_simp [abs_ne_zero.mpr hy]
-  rw [lowerGammaBoundaryLog_halfInteger k R hy,
+  rw [h_ℓ_halfInteger k R hy,
     Real.log_div (coth_pos (by positivity)).ne' hyhalf.ne', ← hlogratio]
   linarith
 
-theorem lowerGammaBoundaryLog_dimension_log_tail {d : ℕ} (_hd : 0 < d) {R y : ℝ} (hR : 0 < R)
+theorem h_ℓ_dimension_log_tail {d : ℕ} (_hd : 0 < d) {R y : ℝ} (hR : 0 < R)
     (hy : y ≠ 0) :
     h_ℓ ((d : ℝ) / 2) R y ≤ (d : ℝ) / 2 * log (2 * π * R ^ 2 / |y|) +
       1 / 2 * log (coth (π * |y| / 2)) := by
   have hcoth : 0 ≤ log (coth (π * |y| / 2)) := log_coth_nonneg (by positivity)
   obtain ⟨k, hk⟩ | ⟨k, hk⟩ := natCast_div_two_cases d <;> rw [hk]
-  · linarith [lowerGammaBoundaryLog_integer_log_tail k hR hy]
-  · exact lowerGammaBoundaryLog_halfInteger_log_tail k hR hy
+  · linarith [h_ℓ_integer_log_tail k hR hy]
+  · exact h_ℓ_halfInteger_log_tail k hR hy
 
-theorem lowerGammaBoundaryLog_dimension_scaled_log_tail {d : ℕ} (hd : 0 < d) {c Y : ℝ}
+theorem h_ℓ_dimension_scaled_log_tail {d : ℕ} (hd : 0 < d) {c Y : ℝ}
     (hc : 0 < c) (hY : Y ≠ 0) :
     h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * Y) ≤ (d : ℝ) / 2 * log (4 * π * c ^ 2 / |Y|) +
       1 / 2 * log (coth (π * |(d : ℝ) / 2 * Y| / 2)) := by
@@ -8717,11 +8724,11 @@ theorem lowerGammaBoundaryLog_dimension_scaled_log_tail {d : ℕ} (hd : 0 < d) {
     rw [abs_mul, abs_of_pos hℓ, mul_pow, Real.sq_sqrt hdreal.le]
     field_simp [hℓ.ne', abs_ne_zero.mpr hY, hdreal.ne']
     ring
-  have htail := lowerGammaBoundaryLog_dimension_log_tail hd (mul_pos hc (Real.sqrt_pos.2 hdreal))
+  have htail := h_ℓ_dimension_log_tail hd (mul_pos hc (Real.sqrt_pos.2 hdreal))
     (mul_ne_zero hℓ.ne' hY)
   rwa [hratio] at htail
 
-theorem lowerGammaBoundaryLog_dimension_scaled_log_tail_uniform {d : ℕ} (hd : 2 ≤ d) {c Y : ℝ}
+theorem h_ℓ_dimension_scaled_log_tail_uniform {d : ℕ} (hd : 2 ≤ d) {c Y : ℝ}
     (hc : 0 < c) (hY : Y ≠ 0) :
     h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * Y) ≤ (d : ℝ) / 2 * log (4 * π * c ^ 2 / |Y|) +
       1 / 2 * log (coth (π * |Y| / 2)) := by
@@ -8732,7 +8739,7 @@ theorem lowerGammaBoundaryLog_dimension_scaled_log_tail_uniform {d : ℕ} (hd : 
     nlinarith [mul_nonneg Real.pi_pos.le (abs_nonneg Y)]
   have hcoth := antitoneOn_log_coth (by positivity : (0 : ℝ) < π * |Y| / 2)
     (by positivity : (0 : ℝ) < π * |(d : ℝ) / 2 * Y| / 2) hcompare
-  linarith [lowerGammaBoundaryLog_dimension_scaled_log_tail hdpos hc hY]
+  linarith [h_ℓ_dimension_scaled_log_tail hdpos hc hY]
 
 /-- The positive part `(log (A / |y|))⁺` is integrable for every `A > 0`. -/
 theorem lower_positiveLogRatio_integrable {A : ℝ} (hA : 0 < A) :
@@ -8780,7 +8787,7 @@ theorem lowerGammaScaledPositivePart_le {d : ℕ} (hd : 2 ≤ d) {c Y : ℝ} (hc
     mul_le_mul_of_nonneg_left (le_max_left _ _) (by positivity)
   unfold lowerGammaScaledPositivePart
   refine max_le ?_ (by positivity)
-  linarith [lowerGammaBoundaryLog_dimension_scaled_log_tail_uniform hd hc hY]
+  linarith [h_ℓ_dimension_scaled_log_tail_uniform hd hc hY]
 
 theorem lowerGammaScaledPositivePart_integrable {d : ℕ} (hd : 2 ≤ d) {c : ℝ} (hc : 0 < c) :
     Integrable (lowerGammaScaledPositivePart d c) := by
@@ -8788,7 +8795,7 @@ theorem lowerGammaScaledPositivePart_integrable {d : ℕ} (hd : 2 ≤ d) {c : �
   have hℓ : 0 < (d : ℝ) / 2 := by positivity
   refine (((lower_positiveLogRatio_integrable (by positivity : (0 : ℝ) < 4 * π * c ^ 2)).const_mul
     ((d : ℝ) / 2)).add (integrable_log_coth_pi_mul_abs_div_two.const_mul (1 / 2))).mono'
-    ((((lowerGammaBoundaryLog_measurable hℓ (c * √d)).comp
+    ((((h_ℓ_measurable hℓ (c * √d)).comp
       (by fun_prop : Measurable fun Y : ℝ ↦ (d : ℝ) / 2 * Y)).max
         measurable_const).aestronglyMeasurable) ?_
   filter_upwards [Measure.ae_ne (volume : Measure ℝ) 0] with Y hY
@@ -8813,7 +8820,7 @@ theorem lowerGammaScaledPositivePart_integral_le {d : ℕ} (hd : 2 ≤ d) {c : �
         rw [integral_add (hpositive.const_mul _) (hcoth.const_mul _), integral_const_mul,
           integral_const_mul]
 
-theorem lowerGammaBoundaryLog_dimension_scaled_nonpos_of_large {d : ℕ} (hd : 2 ≤ d) {c Y : ℝ}
+theorem h_ℓ_dimension_scaled_nonpos_of_large {d : ℕ} (hd : 2 ≤ d) {c Y : ℝ}
     (hc : 0 < c) (hlarge : max 1 (8 * π * c ^ 2) ≤ |Y|) :
     h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * Y) ≤ 0 := by
   have hyone : 1 ≤ |Y| := (le_max_left 1 _).trans hlarge
@@ -8840,7 +8847,7 @@ theorem lowerGammaBoundaryLog_dimension_scaled_nonpos_of_large {d : ℕ} (hd : 2
   have hmain : (d : ℝ) / 2 * log (4 * π * c ^ 2 / |Y|) ≤ -log 2 := by
     linarith [mul_le_mul_of_nonneg_left hlogratio (by positivity : (0 : ℝ) ≤ (d : ℝ) / 2),
       mul_nonneg (sub_nonneg.mpr hℓ) (by linarith : (0 : ℝ) ≤ log 2)]
-  linarith [lowerGammaBoundaryLog_dimension_scaled_log_tail_uniform hd hc hY]
+  linarith [h_ℓ_dimension_scaled_log_tail_uniform hd hc hY]
 
 theorem lowerGammaScaledPositivePart_support {d : ℕ} (hd : 2 ≤ d) {c : ℝ} (hc : 0 < c) :
     Function.support (lowerGammaScaledPositivePart d c) ⊆
@@ -8848,7 +8855,7 @@ theorem lowerGammaScaledPositivePart_support {d : ℕ} (hd : 2 ≤ d) {c : ℝ} 
   intro Y hY
   have hsmall : |Y| < max 1 (8 * π * c ^ 2) := by
     by_contra! hnot
-    exact hY (max_eq_right (lowerGammaBoundaryLog_dimension_scaled_nonpos_of_large hd hc hnot))
+    exact hY (max_eq_right (h_ℓ_dimension_scaled_nonpos_of_large hd hc hnot))
   exact abs_le.1 hsmall.le
 
 theorem exists_lowerGammaScaledPositivePart_uniform_bound {c : ℝ} (hc : 0 < c) :
@@ -8872,14 +8879,14 @@ theorem exists_lowerGammaScaledPositivePart_uniform_bound {c : ℝ} (hc : 0 < c)
     linarith [hbound d hd, mul_le_mul_of_nonneg_left
       (le_max_right (max 1 (8 * π * c ^ 2)) (J + 1 / 2 * K)) (by linarith : (0 : ℝ) ≤ (d : ℝ) / 2)]
 
-theorem lowerGammaBoundaryLog_dimension_neg {d : ℕ} (R : ℝ) {y : ℝ} (hy : y ≠ 0) :
+theorem h_ℓ_dimension_neg {d : ℕ} (R : ℝ) {y : ℝ} (hy : y ≠ 0) :
     h_ℓ ((d : ℝ) / 2) R (-y) = h_ℓ ((d : ℝ) / 2) R y := by
   obtain ⟨k, hk⟩ | ⟨k, hk⟩ := natCast_div_two_cases d <;> rw [hk]
-  · rw [lowerGammaBoundaryLog_integer k R (neg_ne_zero.mpr hy),
-      lowerGammaBoundaryLog_integer k R hy]
+  · rw [h_ℓ_integer k R (neg_ne_zero.mpr hy),
+      h_ℓ_integer k R hy]
     simp [div_pow]
-  · rw [lowerGammaBoundaryLog_halfInteger k R (neg_ne_zero.mpr hy),
-      lowerGammaBoundaryLog_halfInteger k R hy]
+  · rw [h_ℓ_halfInteger k R (neg_ne_zero.mpr hy),
+      h_ℓ_halfInteger k R hy]
     simp [div_pow]
 
 /-- The factors `log √(c² + (y/2)²)` of the boundary profile increase in `y > 0`. -/
@@ -8887,16 +8894,16 @@ theorem lower_log_sqrtFactor_mono (c : ℝ) {x y : ℝ} (hx : 0 < x) (hxy : x �
     log (√(c ^ 2 + (x / 2) ^ 2)) ≤ log (√(c ^ 2 + (y / 2) ^ 2)) :=
   Real.log_le_log (Real.sqrt_pos.2 (by positivity)) (Real.sqrt_le_sqrt (by nlinarith))
 
-theorem lowerGammaBoundaryLog_integer_antitoneOn (k : ℕ) (R : ℝ) :
+theorem h_ℓ_integer_antitoneOn (k : ℕ) (R : ℝ) :
     AntitoneOn (h_ℓ (k : ℝ) R) (Ioi (0 : ℝ)) := by
   intro x hx y hy hxy
   have hx' : 0 < x := hx
   have hy' : 0 < y := hy
-  rw [lowerGammaBoundaryLog_integer k R hy'.ne', lowerGammaBoundaryLog_integer k R hx'.ne']
+  rw [h_ℓ_integer k R hy'.ne', h_ℓ_integer k R hx'.ne']
   linarith [Finset.sum_le_sum fun j (_ : j ∈ Finset.range k) ↦
     lower_log_sqrtFactor_mono (j : ℝ) hx' hxy]
 
-theorem lowerGammaBoundaryLog_halfInteger_antitoneOn (k : ℕ) (R : ℝ) :
+theorem h_ℓ_halfInteger_antitoneOn (k : ℕ) (R : ℝ) :
     AntitoneOn (h_ℓ ((k : ℝ) + 1 / 2) R) (Ioi (0 : ℝ)) := by
   intro x hx y hy hxy
   have hx' : 0 < x := hx
@@ -8906,16 +8913,16 @@ theorem lowerGammaBoundaryLog_halfInteger_antitoneOn (k : ℕ) (R : ℝ) :
       (by positivity : (0 : ℝ) < π * y / 2) (by gcongr)) (half_pos hy').le).trans
       (div_le_div_of_nonneg_left (coth_pos (by positivity)).le (half_pos hx') (by linarith))
   have hcoth := Real.log_le_log (div_pos (coth_pos (by positivity)) (half_pos hy')) hratio
-  rw [lowerGammaBoundaryLog_halfInteger k R hy'.ne', lowerGammaBoundaryLog_halfInteger k R hx'.ne',
+  rw [h_ℓ_halfInteger k R hy'.ne', h_ℓ_halfInteger k R hx'.ne',
     abs_of_pos hx', abs_of_pos hy']
   linarith [Finset.sum_le_sum fun j (_ : j ∈ Finset.range k) ↦
     lower_log_sqrtFactor_mono ((j : ℝ) + 1 / 2) hx' hxy]
 
-theorem lowerGammaBoundaryLog_dimension_antitoneOn {d : ℕ} (R : ℝ) :
+theorem h_ℓ_dimension_antitoneOn {d : ℕ} (R : ℝ) :
     AntitoneOn (h_ℓ ((d : ℝ) / 2) R) (Ioi (0 : ℝ)) := by
   obtain ⟨k, hk⟩ | ⟨k, hk⟩ := natCast_div_two_cases d <;> rw [hk]
-  · exact lowerGammaBoundaryLog_integer_antitoneOn k R
-  · exact lowerGammaBoundaryLog_halfInteger_antitoneOn k R
+  · exact h_ℓ_integer_antitoneOn k R
+  · exact h_ℓ_halfInteger_antitoneOn k R
 
 /-- An even function that is antitone on `[0, ∞)` and compactly supported has intervals
 `(-r, r) ⊆ {f > t} ⊆ [-r, r]` as superlevel sets. -/
@@ -8943,7 +8950,7 @@ theorem even_antitone_superlevel_interval {f : ℝ → ℝ} {B t : ℝ} (heven :
   · exact ⟨0, le_rfl, by simp, fun x hx ↦
       absurd ⟨|x|, abs_nonneg x, by rw [habs]; exact hx⟩ hne⟩
 
-theorem lowerGammaBoundaryLog_halfInteger_exp_integrable {a : ℝ} (ha : 0 < a) (k : ℕ) (R : ℝ) :
+theorem h_ℓ_halfInteger_exp_integrable {a : ℝ} (ha : 0 < a) (k : ℕ) (R : ℝ) :
     Integrable fun y : ℝ ↦ exp ((-a) * |y|) * h_ℓ ((k : ℝ) + 1 / 2) R y := by
   have hsum : Integrable fun y : ℝ ↦ ∑ j ∈ Finset.range k,
       exp ((-a) * |y|) * log (√(((j : ℝ) + 1 / 2) ^ 2 + (y / 2) ^ 2)) :=
@@ -8955,26 +8962,26 @@ theorem lowerGammaBoundaryLog_halfInteger_exp_integrable {a : ℝ} (ha : 0 < a) 
       ((integrable_exp_neg_mul_abs_mul_log_coth_div ha).const_mul (1 / 2))
   refine hbase.congr ?_
   filter_upwards [Measure.ae_ne (volume : Measure ℝ) 0] with y hy
-  simp only [lowerGammaBoundaryLog_halfInteger k R hy, mul_add, mul_sub, Finset.mul_sum]
+  simp only [h_ℓ_halfInteger k R hy, mul_add, mul_sub, Finset.mul_sum]
   ring
 
-theorem lowerGammaBoundaryLog_dimension_exp_integrable {d : ℕ} (_hd : 0 < d) {a : ℝ} (ha : 0 < a)
+theorem h_ℓ_dimension_exp_integrable {d : ℕ} (_hd : 0 < d) {a : ℝ} (ha : 0 < a)
     (R : ℝ) : Integrable fun y : ℝ ↦ exp ((-a) * |y|) * h_ℓ ((d : ℝ) / 2) R y := by
   obtain ⟨k, hk⟩ | ⟨k, hk⟩ := natCast_div_two_cases d <;> rw [hk]
-  · exact lowerGammaBoundaryLog_integer_exp_integrable ha k R
-  · exact lowerGammaBoundaryLog_halfInteger_exp_integrable ha k R
+  · exact h_ℓ_integer_exp_integrable ha k R
+  · exact h_ℓ_halfInteger_exp_integrable ha k R
 
-theorem lowerStripGammaOuter_integrable_dimension {d : ℕ} (hd : 0 < d) {R : ℝ} {z : ℂ}
+theorem integrable_K'_ℓ_mul_h_ℓ {d : ℕ} (hd : 0 < d) {R : ℝ} {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2)) :
     Integrable fun y : ℝ ↦ K'_ℓ ((d : ℝ) / 2) z y * (h_ℓ ((d : ℝ) / 2) R y : ℂ) := by
   have hℓ : 0 < (d : ℝ) / 2 := by positivity
-  exact lowerStripGammaOuter_integrable_of_exp_integrable hℓ hz
-    (lowerGammaBoundaryLog_dimension_exp_integrable hd (by positivity) R)
+  exact integrable_K'_ℓ_mul_h_ℓ_of_exp_integrable hℓ hz
+    (h_ℓ_dimension_exp_integrable hd (by positivity) R)
 
 /-- `f_T T x = log √(x² + T²/4)`, the integrand of the Riemann sum of report Lemma 3.3. -/
 def f_T (T x : ℝ) : ℝ := log (√(x ^ 2 + T ^ 2 / 4))
 
-theorem lowerRiemannLog_monotoneOn {T : ℝ} (hT : T ≠ 0) : MonotoneOn (f_T T) (Ici (0 : ℝ)) := by
+theorem f_T_monotoneOn {T : ℝ} (hT : T ≠ 0) : MonotoneOn (f_T T) (Ici (0 : ℝ)) := by
   intro x hx y hy hxy
   have hx' : (0 : ℝ) ≤ x := hx
   have hy' : (0 : ℝ) ≤ y := hy
@@ -9017,7 +9024,7 @@ theorem lower_integer_leftRiemann_error {T : ℝ} (hT : T ≠ 0) {k : ℕ} (hk :
       (k : ℝ) * (∫ x in (0 : ℝ)..1, f_T T x) - ∑ j ∈ Finset.range k,
             f_T T ((j : ℝ) / (k : ℝ)) ≤
         f_T T 1 - f_T T 0 :=
-  monotone_leftRiemann_error (f_T T) hk ((lowerRiemannLog_monotoneOn hT).mono fun _ hx ↦ hx.1)
+  monotone_leftRiemann_error (f_T T) hk ((f_T_monotoneOn hT).mono fun _ hx ↦ hx.1)
 
 theorem monotone_midpointIntegral_error (f : ℝ → ℝ) (k : ℕ)
     (hf : MonotoneOn f (Icc (0 : ℝ) (k : ℝ))) :
@@ -9040,7 +9047,7 @@ theorem lower_halfInteger_midpointRiemann_error {T : ℝ} (hT : T ≠ 0) {ℓ : 
         ∑ j ∈ Finset.range k, f_T T (((j : ℝ) + 1 / 2) / ℓ)| ≤
       f_T T ((k : ℝ) / ℓ) - f_T T 0 := by
   have hscaled : MonotoneOn (fun x : ℝ ↦ f_T T (x / ℓ)) (Icc (0 : ℝ) (k : ℝ)) :=
-    fun x hx y hy hxy ↦ lowerRiemannLog_monotoneOn hT (div_nonneg hx.1 hℓ.le)
+    fun x hx y hy hxy ↦ f_T_monotoneOn hT (div_nonneg hx.1 hℓ.le)
       (div_nonneg hy.1 hℓ.le) (div_le_div_of_nonneg_right hxy hℓ.le)
   have hmid := monotone_midpointIntegral_error (fun x : ℝ ↦ f_T T (x / ℓ)) k hscaled
   have hscale : (∫ x in (0 : ℝ)..(k : ℝ), f_T T (x / ℓ)) =
@@ -9075,10 +9082,10 @@ theorem lowerRiemannLogPrimitive_hasDerivAt {T : ℝ} (hT : T ≠ 0) (x : ℝ) :
   nlinarith [sq_abs T]
 
 /-- The Riemann-sum integral of Lemma 3.3, evaluated by the primitive above. -/
-theorem integral_lowerRiemannLog {T : ℝ} (hT : T ≠ 0) :
+theorem integral_f_T {T : ℝ} (hT : T ≠ 0) :
     -(∫ x in (0 : ℝ)..1, f_T T x) = 1 + lowerEndpointPhase T := by
   have hmono : MonotoneOn (f_T T) ([[0, 1]] : Set ℝ) := by
-    simpa using (lowerRiemannLog_monotoneOn hT).mono fun _ hx ↦ hx.1
+    simpa using (f_T_monotoneOn hT).mono fun _ hx ↦ hx.1
   have ha : 0 < |T| / 2 := half_pos (abs_pos.mpr hT)
   have hatan : arctan (1 / (|T| / 2)) = π / 2 - arctan (|T| / 2) := by
     simpa [one_div] using Real.arctan_inv_of_pos ha
@@ -9128,15 +9135,16 @@ open Real
 /-! ### The conformal map and its inverse -/
 
 /-- The conformal map `t ↦ exp(π(t + iℓ)/(2ℓ))` of the strip `|Im t| < ℓ` onto the upper
-half-plane; it is `E_ℓ ℓ t 0`. -/
+half-plane; it is `stripConformalMap ℓ t 0`. -/
 def stripToHalfPlane (ℓ : ℝ) (t : ℂ) : ℂ := Complex.exp (π * (t + I * ℓ) / (2 * ℓ))
 
 /-- The inverse map `w ↦ (2ℓ/π) log w - iℓ` (principal branch of the logarithm) of the upper
 half-plane onto the strip `|Im t| < ℓ`. -/
 def halfPlaneToStrip (ℓ : ℝ) (w : ℂ) : ℂ := 2 * ℓ / π * Complex.log w - I * ℓ
 
-theorem stripToHalfPlane_eq_E_ℓ (ℓ : ℝ) (t : ℂ) : stripToHalfPlane ℓ t = E_ℓ ℓ t 0 := by
-  simp [stripToHalfPlane, E_ℓ]
+theorem stripToHalfPlane_eq_stripConformalMap (ℓ : ℝ) (t : ℂ) :
+    stripToHalfPlane ℓ t = stripConformalMap ℓ t 0 := by
+  simp [stripToHalfPlane, stripConformalMap]
 
 /-- The exponent `π(t + iℓ)/(2ℓ)` is the real multiple `π/(2ℓ)` of `t + iℓ`. -/
 theorem stripToHalfPlane_exponent (ℓ : ℝ) (t : ℂ) :
@@ -9151,7 +9159,7 @@ theorem stripToHalfPlane_exponent_im (ℓ : ℝ) (t : ℂ) :
 
 theorem stripToHalfPlane_im (ℓ : ℝ) (t : ℂ) :
     (stripToHalfPlane ℓ t).im = exp (π * t.re / (2 * ℓ)) * sin (π * (t.im + ℓ) / (2 * ℓ)) := by
-  rw [stripToHalfPlane_eq_E_ℓ, E_ℓ_im]
+  rw [stripToHalfPlane_eq_stripConformalMap, stripConformalMap_im]
   simp
 
 /-- The open strip `|Im t| < ℓ` is mapped into the upper half-plane. -/
@@ -9337,7 +9345,7 @@ theorem poissonKernelHalfPlane_stripToHalfPlane_mul {ℓ σ : ℝ} (hℓ : 0 < �
     Complex.poissonKernelHalfPlane (stripToHalfPlane ℓ ((s : ℂ) + I * (σ * ℓ : ℂ)))
         (exp (π / (2 * ℓ) * y)) * (π / (2 * ℓ) * exp (π / (2 * ℓ) * y)) =
       P_σ σ ((s - y) / ℓ) / ℓ := by
-  obtain ⟨hangle, hangle'⟩ := stripAngle_mem_Ioo hbelow habove
+  obtain ⟨hangle, hangle'⟩ := θ_mem_Ioo hbelow habove
   have hcosh : cosh (π * ((s - y) / ℓ) / 2) =
       (exp (π * s / (2 * ℓ)) / exp (π / (2 * ℓ) * y) +
         exp (π / (2 * ℓ) * y) / exp (π * s / (2 * ℓ))) / 2 := by
@@ -9396,7 +9404,7 @@ theorem poissonIntegralHalfPlane_halfPlaneDatum_one {ℓ σ : ℝ} (hℓ : 0 < �
     Complex.poissonIntegralHalfPlane (halfPlaneDatum ℓ fun _ ↦ 1)
         (stripToHalfPlane ℓ ((s : ℂ) + I * (σ * ℓ : ℂ))) = M_σ σ := by
   rw [poissonIntegralHalfPlane_halfPlaneDatum hℓ hbelow habove s]
-  simpa only [mul_one] using integral_stripPoissonKernel hbelow habove
+  simpa only [mul_one] using integral_P_σ hbelow habove
 
 /-- The complementary upper-edge harmonic measure has mass `(1 + σ)/2`: the Poisson integral of
 the indicator of `(-∞, 0]`, the image of the upper edge, at the image of `t₀ = s + iσℓ`. -/
@@ -9509,7 +9517,7 @@ theorem tendsto_h_ℓ_atTop {ℓ : ℝ} (hℓ : 0 < ℓ) (R : ℝ) :
   ring
 
 /-- The capped majorant `h_{λ,D}` is continuous: near `y = 0` the cap wins since `h_λ → +∞`. -/
-theorem lowerGammaBoundaryCapped_continuous {ℓ : ℝ} (hℓ : 0 < ℓ) (R D : ℝ) :
+theorem h_ℓD_continuous {ℓ : ℝ} (hℓ : 0 < ℓ) (R D : ℝ) :
     Continuous (h_ℓD ℓ R D) := by
   rw [continuous_iff_continuousAt]
   intro y
@@ -9521,7 +9529,7 @@ theorem lowerGammaBoundaryCapped_continuous {ℓ : ℝ} (hℓ : 0 < ℓ) (R D : 
     · simp [h_ℓD]
     · simp [h_ℓD, hx0, min_eq_right (hx hx0)]
   · have hmin : ContinuousAt (fun x : ℝ ↦ min (h_ℓ ℓ R x) D) y :=
-      ((lowerGammaBoundaryLog_continuousOn hℓ R (S := {(0 : ℝ)}ᶜ) fun _ hx ↦ hx).continuousAt
+      ((h_ℓ_continuousOn hℓ R (S := {(0 : ℝ)}ᶜ) fun _ hx ↦ hx).continuousAt
         (isClosed_singleton.isOpen_compl.mem_nhds hy)).min continuousAt_const
     refine hmin.congr_of_eventuallyEq ?_
     filter_upwards [eventually_ne_nhds hy] with x hx
@@ -9535,7 +9543,7 @@ theorem integrable_exp_mul_h_ℓD {ℓ a : ℝ} (hℓ : 0 < ℓ) (ha : 0 < a) (R
     simpa [abs_mul, abs_of_pos (exp_pos _)] using hgamma.norm
   refine (habs.add ((integrable_exp_neg_mul_abs ha).const_mul |D|)).mono'
     (((by fun_prop : Continuous fun y : ℝ ↦ exp (-a * |y|)).mul
-      (lowerGammaBoundaryCapped_continuous hℓ R D)).aestronglyMeasurable) ?_
+      (h_ℓD_continuous hℓ R D)).aestronglyMeasurable) ?_
   filter_upwards [Measure.ae_ne (volume : Measure ℝ) 0] with y hy
   have hcap : |h_ℓD ℓ R D y| ≤ |h_ℓ ℓ R y| + |D| := by
     rw [h_ℓD, ite_eq_right hy]
@@ -9568,15 +9576,15 @@ theorem integrable_K'_ℓ_mul {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ} (hz : z ∈
   rw [← integrableOn_univ, ← @Iio_union_Ici ℝ _ 0, integrableOn_union,
     integrableOn_Ici_iff_integrableOn_Ioi]
   refine ⟨main (Iio 0) measurableSet_Iio
-      (stripRegularizedHolomorphicPoissonKernel_continuousOn_Iio hℓ hz)
+      (K'_ℓ_continuousOn_Iio hℓ hz)
       (exp (-(π / (2 * ℓ)) * z.re) / (2 * ℓ * sin (π * (z.im + ℓ) / (2 * ℓ)))) fun y hy ↦ ?_,
     main (Ioi 0) measurableSet_Ioi
-      (stripRegularizedHolomorphicPoissonKernel_continuousOn_Ioi hℓ hz)
+      (K'_ℓ_continuousOn_Ioi hℓ hz)
       (exp (π / (2 * ℓ) * z.re) / (2 * ℓ * sin (π * (z.im + ℓ) / (2 * ℓ)))) fun y hy ↦ ?_⟩
-  · refine (norm_stripRegularizedHolomorphicPoissonKernel_of_neg hℓ hz hy).trans_eq ?_
+  · refine (norm_K'_ℓ_of_neg hℓ hz hy).trans_eq ?_
     rw [abs_of_neg hy, div_mul_eq_mul_div, ← exp_add,
       show -(π / (2 * ℓ)) * z.re + -(π / (2 * ℓ)) * -y = -(π * (z.re - y) / (2 * ℓ)) by ring]
-  · refine (norm_stripRegularizedHolomorphicPoissonKernel_of_nonneg hℓ hz hy.le).trans_eq ?_
+  · refine (norm_K'_ℓ_of_nonneg hℓ hz hy.le).trans_eq ?_
     rw [abs_of_pos hy, div_mul_eq_mul_div, ← exp_add,
       show π / (2 * ℓ) * z.re + -(π / (2 * ℓ)) * y = π * (z.re - y) / (2 * ℓ) by ring]
 
@@ -9588,7 +9596,7 @@ theorem differentiableAt_W_b {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ} (hz : z ∈ 
     (b : ℝ → ℝ) (hb : Continuous b)
     (hboundary : Integrable fun y : ℝ ↦ exp (-(π / (2 * ℓ)) * |y|) * b y) :
     DifferentiableAt ℂ (W_b ℓ b) z := by
-  obtain ⟨S, hS, C, _, hderiv⟩ := stripRegularizedHolomorphicPoissonKernelDeriv_local_bound hℓ hz
+  obtain ⟨S, hS, C, _, hderiv⟩ := K'_ℓDeriv_local_bound hℓ hz
   have hstrip : Complex.im ⁻¹' Ioo (-ℓ) ℓ ∈ 𝓝 z :=
     (isOpen_Ioo.preimage Complex.continuous_im).mem_nhds hz
   have habs : Integrable fun y : ℝ ↦ exp (-(π / (2 * ℓ)) * |y|) * |b y| := by
@@ -9598,7 +9606,7 @@ theorem differentiableAt_W_b {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ} (hz : z ∈ 
     filter_upwards [hstrip] with w hw
     exact (integrable_K'_ℓ_mul hℓ hw b hb hboundary).aestronglyMeasurable
   have hbound : ∀ᵐ y : ℝ, ∀ w ∈ S ∩ Complex.im ⁻¹' Ioo (-ℓ) ℓ,
-      ‖stripRegularizedHolomorphicPoissonKernelDeriv ℓ w y * (b y : ℂ)‖ ≤
+      ‖K'_ℓDeriv ℓ w y * (b y : ℂ)‖ ≤
         C * (exp (-(π / (2 * ℓ)) * |y|) * |b y|) := .of_forall fun y w hw ↦ by
     rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, ← mul_assoc]
     gcongr
@@ -9607,25 +9615,25 @@ theorem differentiableAt_W_b {ℓ : ℝ} (hℓ : 0 < ℓ) {z : ℂ} (hz : z ∈ 
   refine HasDerivAt.differentiableAt (hasDerivAt_integral_of_dominated_loc_of_deriv_le
     (F := fun w : ℂ ↦ fun y : ℝ ↦ K'_ℓ ℓ w y * (b y : ℂ))
     (F' := fun w : ℂ ↦ fun y : ℝ ↦
-      stripRegularizedHolomorphicPoissonKernelDeriv ℓ w y * (b y : ℂ))
+      K'_ℓDeriv ℓ w y * (b y : ℂ))
     (bound := fun y : ℝ ↦ C * (exp (-(π / (2 * ℓ)) * |y|) * |b y|))
     (inter_mem hS hstrip) hmeas (integrable_K'_ℓ_mul hℓ hz b hb hboundary)
-    (((stripRegularizedHolomorphicPoissonKernelDeriv_continuous hℓ hz).measurable.mul
+    (((K'_ℓDeriv_continuous hℓ hz).measurable.mul
       (Complex.continuous_ofReal.comp hb).measurable).aestronglyMeasurable)
     hbound (habs.const_mul C) (.of_forall fun y w hw ↦
-      (stripRegularizedHolomorphicPoissonKernel_hasDerivAt_deriv hℓ hw.2 y).mul_const _)).2
+      (K'_ℓ_hasDerivAt_deriv hℓ hw.2 y).mul_const _)).2
 
 theorem integrable_exp_mul_h_ℓD_dim {d : ℕ} (hd : 0 < d) {a : ℝ} (ha : 0 < a) (R D : ℝ) :
     Integrable fun y : ℝ ↦ exp (-a * |y|) * h_ℓD ((d : ℝ) / 2) R D y :=
   integrable_exp_mul_h_ℓD (half_pos (Nat.cast_pos.mpr hd)) ha R D
-    (lowerGammaBoundaryLog_dimension_exp_integrable hd ha R)
+    (h_ℓ_dimension_exp_integrable hd ha R)
 
 /-- The integrand of `W[h_{λ,D}]` is integrable in dimension `d`. -/
-theorem lowerStripCappedGammaOuter_integrable_dimension {d : ℕ} (hd : 0 < d) {R D : ℝ} {z : ℂ}
+theorem integrable_K'_ℓ_mul_h_ℓD {d : ℕ} (hd : 0 < d) {R D : ℝ} {z : ℂ}
     (hz : z ∈ Complex.im ⁻¹' Ioo (-((d : ℝ) / 2)) ((d : ℝ) / 2)) :
     Integrable fun y : ℝ ↦ K'_ℓ ((d : ℝ) / 2) z y * (h_ℓD ((d : ℝ) / 2) R D y : ℂ) := by
   have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
-  exact integrable_K'_ℓ_mul hℓ hz _ (lowerGammaBoundaryCapped_continuous hℓ R D)
+  exact integrable_K'_ℓ_mul hℓ hz _ (h_ℓD_continuous hℓ R D)
     (integrable_exp_mul_h_ℓD_dim hd (div_pos pi_pos (by linarith)) R D)
 
 /-- On the horizontal line `Im z = σλ` the real part of `W[b]` is the Poisson integral of `b`. -/
@@ -9638,10 +9646,10 @@ theorem W_b_re {ℓ σ : ℝ} (hℓ : 0 < ℓ) (hσbelow : -1 < σ) (hσabove : 
   change (K'_ℓ ℓ ((s : ℂ) + I * (σ * ℓ : ℂ)) y * (b y : ℂ)).re =
     P_σ σ ((s - y) / ℓ) / ℓ * b y
   rw [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im, mul_zero, sub_zero,
-    stripRegularizedHolomorphicPoissonKernel_re hℓ hσbelow hσabove]
+    K'_ℓ_re hℓ hσbelow hσabove]
 
 /-- As `σ → -1` the strip Poisson kernel vanishes away from `T = 0`. -/
-theorem stripPoissonKernel_tendsto_zero_bottom_of_ne {T : ℝ} (hT : T ≠ 0) :
+theorem P_σ_tendsto_zero_bottom_of_ne {T : ℝ} (hT : T ≠ 0) :
     Tendsto (fun σ : ℝ ↦ P_σ σ T) (𝓝 (-1 : ℝ)) (𝓝 (0 : ℝ)) := by
   have hcosh : 1 < cosh (π * T / 2) :=
     one_lt_cosh.mpr (div_ne_zero (mul_ne_zero pi_ne_zero hT) two_ne_zero)
@@ -9658,10 +9666,10 @@ theorem stripPoissonKernel_tendsto_zero_bottom_of_ne {T : ℝ} (hT : T ≠ 0) :
 
 /-- Comparison with the central kernel: any `c > 0` with `c cosh(πT/2) ≤ cosh(πT/2) - cos θ_σ`
 gives `P_σ(T) ≤ P_0(T)/c`. -/
-theorem stripPoissonKernel_le_center_of_mul_cosh_le {σ c T : ℝ} (hbelow : -1 < σ) (habove : σ < 1)
+theorem P_σ_le_center_of_mul_cosh_le {σ c T : ℝ} (hbelow : -1 < σ) (habove : σ < 1)
     (hc : 0 < c) (hcompare : c * cosh (π * T / 2) ≤ cosh (π * T / 2) - cos (θ σ)) :
     P_σ σ T ≤ 1 / c * P_σ 0 T := by
-  have hangle := stripAngle_mem_Ioo hbelow habove
+  have hangle := θ_mem_Ioo hbelow habove
   have hsin : 0 < sin (θ σ) := sin_pos_of_pos_of_lt_pi hangle.1 hangle.2
   have hcosh : 0 < cosh (π * T / 2) := cosh_pos _
   have hcA : 0 < 4 * (c * cosh (π * T / 2)) := by positivity
@@ -9675,13 +9683,13 @@ theorem stripPoissonKernel_le_center_of_mul_cosh_le {σ c T : ℝ} (hbelow : -1 
       field_simp
 
 /-- `cos θ_σ < 1` for `-1 < σ < 1`. -/
-theorem cos_stripAngle_lt_one {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) : cos (θ σ) < 1 := by
-  have hangle := stripAngle_mem_Ioo hbelow habove
+theorem cos_θ_lt_one {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) : cos (θ σ) < 1 := by
+  have hangle := θ_mem_Ioo hbelow habove
   simpa using cos_lt_cos_of_nonneg_of_le_pi le_rfl hangle.2.le hangle.1
 
 /-- Away from `T = 0` the kernels `P_σ` with `-1 < σ ≤ 0` are dominated by the central kernel
 with a constant depending only on the gap `δ ≤ |T|`. -/
-theorem stripPoissonKernel_le_center_of_lower_of_abs_ge {σ δ T : ℝ}
+theorem P_σ_le_center_of_lower_of_abs_ge {σ δ T : ℝ}
     (hbelow : -1 < σ) (hnonpos : σ ≤ 0) (hδ : 0 < δ) (hT : δ ≤ |T|) :
     P_σ σ T ≤ 1 / (1 - (cosh (π * δ / 2))⁻¹) * P_σ 0 T := by
   have hC : 1 < cosh (π * δ / 2) :=
@@ -9693,24 +9701,24 @@ theorem stripPoissonKernel_le_center_of_lower_of_abs_ge {σ δ T : ℝ}
     gcongr
   have hratio : 1 ≤ cosh (π * T / 2) / cosh (π * δ / 2) :=
     (one_le_div (by linarith)).mpr hCA
-  refine stripPoissonKernel_le_center_of_mul_cosh_le hbelow (by linarith)
+  refine P_σ_le_center_of_mul_cosh_le hbelow (by linarith)
     (by linarith [(inv_lt_one₀ (by linarith : (0 : ℝ) < cosh (π * δ / 2))).mpr hC]) ?_
   rw [sub_mul, one_mul, inv_mul_eq_div]
   linarith [cos_le_one (θ σ)]
 
 /-- For `-1 < σ ≤ 0` the kernel `P_σ` is dominated by the central kernel `P_0`. -/
-theorem stripPoissonKernel_le_center_of_lower {σ : ℝ} (hbelow : -1 < σ) (hnonpos : σ ≤ 0)
+theorem P_σ_le_center_of_lower {σ : ℝ} (hbelow : -1 < σ) (hnonpos : σ ≤ 0)
     (T : ℝ) : P_σ σ T ≤ 1 / (1 - cos (θ σ)) * P_σ 0 T := by
   have habove : σ < 1 := by linarith
   have hcos : 0 ≤ cos (θ σ) := by
     refine cos_nonneg_of_mem_Icc ⟨?_, ?_⟩ <;> unfold θ <;>
       nlinarith [pi_pos, mul_nonpos_of_nonneg_of_nonpos pi_pos.le hnonpos]
-  refine stripPoissonKernel_le_center_of_mul_cosh_le hbelow habove
-    (by linarith [cos_stripAngle_lt_one hbelow habove]) ?_
+  refine P_σ_le_center_of_mul_cosh_le hbelow habove
+    (by linarith [cos_θ_lt_one hbelow habove]) ?_
   nlinarith [mul_nonneg hcos (sub_nonneg.mpr (one_le_cosh (π * T / 2)))]
 
 /-- Integrability against the central kernel transfers to every `P_σ` with `-1 < σ ≤ 0`. -/
-theorem stripPoissonKernel_lower_product_integrable {σ : ℝ} (hbelow : -1 < σ) (hnonpos : σ ≤ 0)
+theorem P_σ_lower_product_integrable {σ : ℝ} (hbelow : -1 < σ) (hnonpos : σ ≤ 0)
     {g : ℝ → ℝ} (hg : Continuous g) (hbase : Integrable fun T : ℝ ↦ P_σ 0 T * g T) :
     Integrable fun T : ℝ ↦ P_σ σ T * g T := by
   have habove : σ < 1 := by linarith
@@ -9718,14 +9726,14 @@ theorem stripPoissonKernel_lower_product_integrable {σ : ℝ} (hbelow : -1 < σ
     (by unfold P_σ θ; fun_prop : Measurable fun T : ℝ ↦ P_σ σ T).mul hg.measurable
   refine (hbase.norm.const_mul (1 / (1 - cos (θ σ)))).mono' hmeas.aestronglyMeasurable
     (.of_forall fun T ↦ ?_)
-  have hpos := stripPoissonKernel_pos hbelow habove T
-  have hcenter := stripPoissonKernel_pos (by norm_num : (-1 : ℝ) < 0) (by norm_num : (0 : ℝ) < 1) T
+  have hpos := P_σ_pos hbelow habove T
+  have hcenter := P_σ_pos (by norm_num : (-1 : ℝ) < 0) (by norm_num : (0 : ℝ) < 1) T
   calc
     ‖P_σ σ T * g T‖ = P_σ σ T * ‖g T‖ := by
       rw [norm_mul, Real.norm_eq_abs, abs_of_pos hpos]
     _ ≤ 1 / (1 - cos (θ σ)) * P_σ 0 T * ‖g T‖ := by
       gcongr
-      exact stripPoissonKernel_le_center_of_lower hbelow hnonpos T
+      exact P_σ_le_center_of_lower hbelow hnonpos T
     _ = 1 / (1 - cos (θ σ)) * ‖P_σ 0 T * g T‖ := by
       rw [norm_mul, Real.norm_of_nonneg hcenter.le]
       ring
@@ -9801,7 +9809,7 @@ theorem exists_abs_h_ℓ_le_natCast (k : ℕ) (R : ℝ) :
   refine ⟨|(k : ℝ) * Real.log (π * R ^ 2)| + (∑ j ∈ Finset.range k, (j : ℝ)) + k,
     by positivity, fun x hx ↦ ?_⟩
   have hx0 : (0 : ℝ) ≤ x := by linarith
-  rw [lowerGammaBoundaryLog_integer k R (show (0 : ℝ) < x by linarith).ne']
+  rw [h_ℓ_integer k R (show (0 : ℝ) < x by linarith).ne']
   have hsum := abs_sum_log_sqrtFactor_le (k := k) (c := fun j : ℕ ↦ (j : ℝ))
     (fun j ↦ Nat.cast_nonneg j) hx
   have habs := abs_sub ((k : ℝ) * Real.log (π * R ^ 2))
@@ -9825,7 +9833,7 @@ theorem exists_abs_h_ℓ_le_natCast_add_half (k : ℕ) (R : ℝ) :
       (π * x + |Real.log π| + x) / 2 := by
     rw [abs_mul, abs_of_nonneg (by norm_num : (0 : ℝ) ≤ 1 / 2)]
     linarith [Real.abs_log_coth_div_le (show 0 < x / 2 by linarith), abs_log_half_le_half hx]
-  rw [lowerGammaBoundaryLog_halfInteger k R hx0.ne', abs_of_pos hx0,
+  rw [h_ℓ_halfInteger k R hx0.ne', abs_of_pos hx0,
     show π * x / 2 = π * (x / 2) by ring]
   have hmain := abs_sub (((k : ℝ) + 1 / 2) * Real.log (π * R ^ 2))
     (∑ j ∈ Finset.range k, Real.log (√(((j : ℝ) + 1 / 2) ^ 2 + (x / 2) ^ 2)))
@@ -9839,7 +9847,7 @@ theorem exists_abs_h_ℓ_le_natCast_add_half (k : ℕ) (R : ℝ) :
 theorem h_ℓ_eq_abs {d : ℕ} (R : ℝ) {y : ℝ} (hy : y ≠ 0) :
     h_ℓ ((d : ℝ) / 2) R y = h_ℓ ((d : ℝ) / 2) R |y| := by
   rcases abs_choice y with h | h <;> rw [h]
-  exact (lowerGammaBoundaryLog_dimension_neg R hy).symm
+  exact (h_ℓ_dimension_neg R hy).symm
 
 /-- Report Lemma 3.2: away from the pole the boundary profile `h_{d/2}` is linearly bounded. -/
 theorem exists_abs_h_ℓ_le (d : ℕ) (R : ℝ) :
@@ -9862,7 +9870,7 @@ theorem exists_abs_h_ℓD_le {d : ℕ} (hd : 0 < d) (R D : ℝ) :
   have hℓ : 0 < (d : ℝ) / 2 := half_pos (Nat.cast_pos.mpr hd)
   obtain ⟨A₀, hA₀, htail⟩ := exists_abs_h_ℓ_le d R
   obtain ⟨K, hK⟩ := (isCompact_Icc : IsCompact (Icc (-2 : ℝ) 2)).exists_bound_of_continuousOn
-    (lowerGammaBoundaryCapped_continuous hℓ R D).continuousOn
+    (h_ℓD_continuous hℓ R D).continuousOn
   obtain ⟨A, hA, hKA, hDA, hA₀A⟩ : ∃ A : ℝ, 0 ≤ A ∧ K ≤ A ∧ |D| ≤ A ∧ A₀ ≤ A :=
     ⟨max 0 (max K (max |D| A₀)), le_max_left _ _, (le_max_left _ _).trans (le_max_right _ _),
       (le_max_left _ _).trans ((le_max_right _ _).trans (le_max_right _ _)),
@@ -9994,7 +10002,7 @@ theorem norm_Z_g_le_exp_integral_of_cap {d : ℕ} {ς : ℤˣ} (hd : 0 < d)
   obtain ⟨K, -, hK⟩ := g.exists_norm_Z_g_le hd R
   rw [hcast] at hcap ⊢
   exact norm_le_exp_integral_P_σ_of_strip hℓ (g.diffContOnCl_Z_g hd R)
-    (fun z hz ↦ hK z hz.1.le hz.2.le) (lowerGammaBoundaryCapped_continuous hℓ R D) hbound hcap
+    (fun z hz ↦ hK z hz.1.le hz.2.le) (h_ℓD_continuous hℓ R D) hbound hcap
     (fun y ↦ by rw [← hcast]; exact g.norm_Z_g_top_le_one hd R y) hbelow habove s
 
 /-- Report Lemma 3.2: for every large enough cap `D`, the normalized Mellin transform of a
@@ -10090,7 +10098,7 @@ theorem tendsto_stripNormalizedPoissonKernel (T : ℝ) :
 
 theorem stripNormalizedPoissonKernel_integrable {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
     Integrable (stripNormalizedPoissonKernel σ) :=
-  (stripPoissonKernel_integrable hbelow habove).div_const _
+  (P_σ_integrable hbelow habove).div_const _
 
 /-- The `σ`-uniform exponential majorant `(π/2) e^{-π|T|/2}` of `P_σ / M_σ`. -/
 def stripPoissonExponentialMajorant (T : ℝ) : ℝ := π / 2 * exp (-(π / 2) * |T|)
@@ -10361,11 +10369,12 @@ theorem tendsto_integral_stripNormalizedPoissonKernel_mul (f : ℝ → ℝ)
       abs_of_nonneg hb.1]
     exact mul_le_mul_of_nonneg_right hb.2 (norm_nonneg _)
 
-/-- `J_σ`, the expectation of the endpoint phase against `P_σ / M_σ`; report Lemma 3.3. -/
+/-- The expectation of the endpoint phase against `P_σ / M_σ`. Since the endpoint phase is
+`-1 - ∫₀¹ f_T(x) dx`, this is `J_σ - 1` for the `J_σ` of report Lemma 3.3. -/
 def lowerPoissonEndpointExpectation (σ : ℝ) : ℝ :=
   ∫ T : ℝ, stripNormalizedPoissonKernel σ T * lowerEndpointPhase T
 
-/-- The limit of `J_σ` as `σ ↑ 1`; report Lemma 3.4. -/
+/-- The limit of `J_σ - 1` as `σ ↑ 1` (`lowerPoissonEndpointExpectation`); report Lemma 3.4. -/
 def limitingPoissonEndpointExpectation : ℝ :=
   ∫ T : ℝ, limitingStripPoissonDensity T * lowerEndpointPhase T
 
@@ -10825,7 +10834,7 @@ at `s = 0`, hence the majorant of the strip function is controlled by its value 
 the rescaled Gamma boundary function is compared with its Riemann sum, and the central bound is
 split into a core and a logarithmic tail. The upshot is an integrable majorant of `|Z|` on the
 line `Im z = -σ d/2` with total mass at most `1/2 + o(1)`, uniformly for large `d`
-(`exists_lowerStripPoissonMajorant_integrable_majorant`, `norm_Z_g_le_exp_H_σ`).
+(`exists_H_σ_integrable_majorant`, `norm_Z_g_le_exp_H_σ`).
 -/
 
 namespace CohnElkies
@@ -10837,7 +10846,7 @@ noncomputable section
 open Filter MeasureTheory Metric Real Set
 open scoped ENNReal Interval Topology
 
-theorem measurable_stripPoissonKernel_sub (σ s : ℝ) : Measurable fun x : ℝ ↦ P_σ σ (s - x) := by
+theorem measurable_P_σ_sub (σ s : ℝ) : Measurable fun x : ℝ ↦ P_σ σ (s - x) := by
   unfold P_σ θ
   fun_prop
 
@@ -10855,8 +10864,8 @@ theorem stripPoissonWeightedMeasure_centered_interval_max {σ : ℝ} (hbelow : -
     unfold stripPoissonWeightedMeasure
     rw [withDensity_apply _ measurableSet_Icc]
     exact (ofReal_integral_eq_lintegral_ofReal
-      ((stripPoissonKernel_integrable hbelow habove).comp_sub_left t).integrableOn
-      (Eventually.of_forall fun x ↦ (stripPoissonKernel_pos hbelow habove (t - x)).le)).symm
+      ((P_σ_integrable hbelow habove).comp_sub_left t).integrableOn
+      (Eventually.of_forall fun x ↦ (P_σ_pos hbelow habove (t - x)).le)).symm
   have hshift : (∫ x in Icc (-r) r, P_σ σ (s - x)) = ∫ x in Icc (s - r) (s + r), P_σ σ x := by
     rw [integral_Icc_eq_integral_Ioc, integral_Icc_eq_integral_Ioc,
       ← intervalIntegral.integral_of_le (by linarith : -r ≤ r),
@@ -10865,38 +10874,38 @@ theorem stripPoissonWeightedMeasure_centered_interval_max {σ : ℝ} (hbelow : -
     congr 1
     ring
   have hcentre : (∫ x in Icc (-r) r, P_σ σ (0 - x)) = ∫ x in Icc (-r) r, P_σ σ x :=
-    setIntegral_congr_fun measurableSet_Icc fun x _ ↦ by rw [zero_sub, stripPoissonKernel_neg]
+    setIntegral_congr_fun measurableSet_Icc fun x _ ↦ by rw [zero_sub, P_σ_neg]
   rw [happly, happly, hshift, hcentre]
-  exact ENNReal.ofReal_le_ofReal (stripPoissonKernel_centered_interval_max hbelow habove hr s)
+  exact ENNReal.ofReal_le_ofReal (P_σ_centered_interval_max hbelow habove hr s)
 
-theorem stripPoissonKernel_weighted_product_integrable {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1)
+theorem P_σ_weighted_product_integrable {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1)
     {f : ℝ → ℝ} (hf : Integrable f) (s : ℝ) : Integrable fun x : ℝ ↦ P_σ σ (s - x) * f x := by
   refine (hf.norm.const_mul (P_σ σ 0)).mono'
-    ((measurable_stripPoissonKernel_sub σ s).aestronglyMeasurable.mul hf.aestronglyMeasurable) ?_
+    ((measurable_P_σ_sub σ s).aestronglyMeasurable.mul hf.aestronglyMeasurable) ?_
   filter_upwards with x
-  rw [norm_mul, Real.norm_eq_abs, abs_of_pos (stripPoissonKernel_pos hbelow habove (s - x))]
+  rw [norm_mul, Real.norm_eq_abs, abs_of_pos (P_σ_pos hbelow habove (s - x))]
   exact mul_le_mul_of_nonneg_right
-    (stripPoissonKernel_antitone_abs hbelow habove (x := 0) (y := s - x) (by simp)) (norm_nonneg _)
+    (P_σ_antitone_abs hbelow habove (x := 0) (y := s - x) (by simp)) (norm_nonneg _)
 
 theorem stripPoissonWeightedMeasure_integrable {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1)
     {f : ℝ → ℝ} (hf : Integrable f) (s : ℝ) :
     Integrable f (stripPoissonWeightedMeasure σ s) := by
   change Integrable f (volume.withDensity fun x : ℝ ↦ ((P_σ σ (s - x)).toNNReal : ℝ≥0∞))
   refine (integrable_withDensity_iff_integrable_smul
-    (measurable_stripPoissonKernel_sub σ s).real_toNNReal).2
-      ((stripPoissonKernel_weighted_product_integrable hbelow habove hf s).congr ?_)
+    (measurable_P_σ_sub σ s).real_toNNReal).2
+      ((P_σ_weighted_product_integrable hbelow habove hf s).congr ?_)
   filter_upwards with x
-  simp [NNReal.smul_def, Real.coe_toNNReal _ (stripPoissonKernel_pos hbelow habove (s - x)).le]
+  simp [NNReal.smul_def, Real.coe_toNNReal _ (P_σ_pos hbelow habove (s - x)).le]
 
 theorem stripPoissonWeightedMeasure_integral {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1)
     (f : ℝ → ℝ) (s : ℝ) :
     (∫ x : ℝ, f x ∂stripPoissonWeightedMeasure σ s) = ∫ x : ℝ, P_σ σ (s - x) * f x := by
   unfold stripPoissonWeightedMeasure
   rw [integral_withDensity_eq_integral_toReal_smul
-    (measurable_stripPoissonKernel_sub σ s).ennreal_ofReal
+    (measurable_P_σ_sub σ s).ennreal_ofReal
     (Eventually.of_forall fun _ ↦ ENNReal.ofReal_lt_top)]
   refine integral_congr_ae (Eventually.of_forall fun x ↦ ?_)
-  simp only [ENNReal.toReal_ofReal (stripPoissonKernel_pos hbelow habove (s - x)).le, smul_eq_mul]
+  simp only [ENNReal.toReal_ofReal (P_σ_pos hbelow habove (s - x)).le, smul_eq_mul]
 
 /-- An even, nonnegative, compactly supported weight that is antitone on `[0, ∞)` has its
 Poisson convolution maximal at the centre. -/
@@ -10931,10 +10940,10 @@ theorem even_antitone_poisson_convolution_max {σ : ℝ} (hbelow : -1 < σ) (hab
     stripPoissonWeightedMeasure_integral hbelow habove,
     stripPoissonWeightedMeasure_integral hbelow habove] at hlin
   refine (ENNReal.ofReal_le_ofReal_iff (integral_nonneg fun x ↦ ?_)).mp hlin
-  exact mul_nonneg (stripPoissonKernel_pos hbelow habove (0 - x)).le (hfnonneg x)
+  exact mul_nonneg (P_σ_pos hbelow habove (0 - x)).le (hfnonneg x)
 
 /-- Report Lemma 3.5: far from the origin the scaled boundary majorant is below any level. -/
-theorem lowerGammaBoundaryLog_dimension_scaled_le_neg_of_large {d : ℕ} (hd : 2 ≤ d) {c Y n : ℝ}
+theorem h_ℓ_dimension_scaled_le_neg_of_large {d : ℕ} (hd : 2 ≤ d) {c Y n : ℝ}
     (hc : 0 < c) (hn : 0 ≤ n) (hlarge : max 1 (8 * π * c ^ 2 * exp n) ≤ |Y|) :
     h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * Y) ≤ -n := by
   have hyone : 1 ≤ |Y| := (le_max_left 1 _).trans hlarge
@@ -10962,7 +10971,7 @@ theorem lowerGammaBoundaryLog_dimension_scaled_le_neg_of_large {d : ℕ} (hd : 2
   have hmain : (d : ℝ) / 2 * log (4 * π * c ^ 2 / |Y|) ≤ -log 2 - n := by
     linarith [mul_le_mul_of_nonneg_left hlogratio (by positivity : (0 : ℝ) ≤ (d : ℝ) / 2),
       mul_nonneg (sub_nonneg.mpr hℓ) (by linarith : (0 : ℝ) ≤ log 2 + n)]
-  linarith [lowerGammaBoundaryLog_dimension_scaled_log_tail_uniform hd hc hY,
+  linarith [h_ℓ_dimension_scaled_log_tail_uniform hd hc hY,
     log_coth_pi_mul_abs_div_two_le_one hyone]
 
 /-- The scaled capped majorant, shifted up by `n` and clipped at `0`: an even, nonnegative,
@@ -10972,7 +10981,7 @@ def lowerGammaScaledCappedClipped (d : ℕ) (c D n Y : ℝ) : ℝ :=
 
 theorem lowerGammaScaledCappedClipped_continuous {d : ℕ} (hd : 0 < d) (c D n : ℝ) :
     Continuous (lowerGammaScaledCappedClipped d c D n) :=
-  (((lowerGammaBoundaryCapped_continuous (half_pos (Nat.cast_pos.mpr hd)) (c * √d) D).comp
+  (((h_ℓD_continuous (half_pos (Nat.cast_pos.mpr hd)) (c * √d) D).comp
     (continuous_const.mul continuous_id)).add continuous_const).max continuous_const
 
 theorem lowerGammaScaledCappedClipped_neg (d : ℕ) (c D n Y : ℝ) :
@@ -10980,7 +10989,7 @@ theorem lowerGammaScaledCappedClipped_neg (d : ℕ) (c D n Y : ℝ) :
   have hcap (y : ℝ) : h_ℓD ((d : ℝ) / 2) (c * √d) D (-y) = h_ℓD ((d : ℝ) / 2) (c * √d) D y := by
     rcases eq_or_ne y 0 with rfl | hy
     · simp
-    · simp [h_ℓD, hy, lowerGammaBoundaryLog_dimension_neg (c * √d) hy]
+    · simp [h_ℓD, hy, h_ℓ_dimension_neg (c * √d) hy]
   unfold lowerGammaScaledCappedClipped
   rw [show (d : ℝ) / 2 * -Y = -((d : ℝ) / 2 * Y) by ring, hcap]
 
@@ -10996,7 +11005,7 @@ theorem lowerGammaScaledCappedClipped_antitoneOn (d : ℕ) (c D n : ℝ) :
       · exact min_le_right _ _
     · have hypos : 0 < y := hxpos.trans_le hxy
       simp only [h_ℓD, ite_eq_right hxpos.ne', ite_eq_right hypos.ne']
-      exact min_le_min (lowerGammaBoundaryLog_dimension_antitoneOn _ (mem_Ioi.mpr hxpos)
+      exact min_le_min (h_ℓ_dimension_antitoneOn _ (mem_Ioi.mpr hxpos)
         (mem_Ioi.mpr hypos) hxy) le_rfl
   intro x hx y hy hxy
   simp only [mem_Ici] at hx hy
@@ -11021,7 +11030,7 @@ theorem lowerGammaScaledCappedClipped_support {d : ℕ} (hd : 2 ≤ d) {c D n : 
     rw [h_ℓD, ite_eq_right harg]
     exact max_eq_right (by
       linarith [min_le_left (h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * Y)) D,
-        lowerGammaBoundaryLog_dimension_scaled_le_neg_of_large hd hc hn hlarge])
+        h_ℓ_dimension_scaled_le_neg_of_large hd hc hn hlarge])
   exact ⟨(neg_lt_of_abs_lt hsmall).le, (lt_of_abs_lt hsmall).le⟩
 
 theorem lowerGammaScaledCappedClipped_poisson_convolution_max {d : ℕ} (hd : 2 ≤ d) {c D n σ : ℝ}
@@ -11054,7 +11063,7 @@ theorem scaled_poisson_product_integrable {d : ℕ} (hd : 0 < d) {σ s : ℝ} {g
   refine (((houter _ hz).re.comp_mul_left' hℓ.ne').const_mul ((d : ℝ) / 2)).congr ?_
   filter_upwards with Y
   rw [RCLike.re_to_complex, Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im, mul_zero,
-    sub_zero, stripRegularizedHolomorphicPoissonKernel_re hℓ hbelow habove,
+    sub_zero, K'_ℓ_re hℓ hbelow habove,
     show ((d : ℝ) / 2 * s - (d : ℝ) / 2 * Y) / ((d : ℝ) / 2) = s - Y by field_simp]
   field_simp
 
@@ -11062,13 +11071,13 @@ theorem lowerGammaScaledCapped_poisson_product_integrable {d : ℕ} (hd : 0 < d)
     (hbelow : -1 < σ) (habove : σ < 1) (s : ℝ) :
     Integrable fun Y : ℝ ↦ P_σ σ (s - Y) * h_ℓD ((d : ℝ) / 2) R D ((d : ℝ) / 2 * Y) :=
   scaled_poisson_product_integrable hd hbelow habove fun _ hz ↦
-    lowerStripCappedGammaOuter_integrable_dimension hd hz
+    integrable_K'_ℓ_mul_h_ℓD hd hz
 
 theorem lowerGammaScaled_poisson_product_integrable {d : ℕ} (hd : 0 < d) {R σ : ℝ}
     (hbelow : -1 < σ) (habove : σ < 1) (s : ℝ) :
     Integrable fun Y : ℝ ↦ P_σ σ (s - Y) * h_ℓ ((d : ℝ) / 2) R ((d : ℝ) / 2 * Y) :=
   scaled_poisson_product_integrable hd hbelow habove fun _ hz ↦
-    lowerStripGammaOuter_integrable_dimension hd hz
+    integrable_K'_ℓ_mul_h_ℓ hd hz
 
 /-- The scaled capped majorant clipped from below at `-n`. -/
 def lowerGammaScaledCappedLowerClip (d : ℕ) (c D n Y : ℝ) : ℝ :=
@@ -11085,13 +11094,13 @@ theorem lowerGammaScaledCappedLowerClip_poisson_integrable {d : ℕ} (hd : 0 < d
     Integrable fun Y : ℝ ↦ P_σ σ (s - Y) * lowerGammaScaledCappedLowerClip d c D n Y := by
   have hmax := (lowerGammaScaledCapped_poisson_product_integrable hd (R := c * √d) (D := D)
     hbelow habove s).sup
-      (((stripPoissonKernel_integrable hbelow habove).comp_sub_left s).const_mul (-n))
+      (((P_σ_integrable hbelow habove).comp_sub_left s).const_mul (-n))
   refine hmax.congr ?_
   filter_upwards with Y
   change max (P_σ σ (s - Y) * h_ℓD ((d : ℝ) / 2) (c * √d) D ((d : ℝ) / 2 * Y))
       (-n * P_σ σ (s - Y)) = P_σ σ (s - Y) * lowerGammaScaledCappedLowerClip d c D n Y
   unfold lowerGammaScaledCappedLowerClip
-  rw [mul_max_of_nonneg _ _ (stripPoissonKernel_pos hbelow habove (s - Y)).le]
+  rw [mul_max_of_nonneg _ _ (P_σ_pos hbelow habove (s - Y)).le]
   ring_nf
 
 theorem lowerGammaScaledCappedClipped_integral_eq {d : ℕ} (hd : 0 < d) {c D n σ : ℝ}
@@ -11100,13 +11109,13 @@ theorem lowerGammaScaledCappedClipped_integral_eq {d : ℕ} (hd : 0 < d) {c D n 
       (∫ Y : ℝ, P_σ σ (s - Y) * lowerGammaScaledCappedLowerClip d c D n Y) + n * M_σ σ := by
   have hclip := lowerGammaScaledCappedLowerClip_poisson_integrable hd (c := c) (D := D) (n := n)
     hbelow habove s
-  have hkernel := ((stripPoissonKernel_integrable hbelow habove).comp_sub_left s).const_mul n
+  have hkernel := ((P_σ_integrable hbelow habove).comp_sub_left s).const_mul n
   rw [show (fun Y : ℝ ↦ P_σ σ (s - Y) * lowerGammaScaledCappedClipped d c D n Y) =
         fun Y : ℝ ↦ P_σ σ (s - Y) * lowerGammaScaledCappedLowerClip d c D n Y +
           n * P_σ σ (s - Y) from
       funext fun Y ↦ by rw [lowerGammaScaledCappedClipped_eq_lowerClip_add]; ring,
     integral_add hclip hkernel, integral_const_mul, integral_sub_left_eq_self (P_σ σ) volume s,
-    integral_stripPoissonKernel hbelow habove]
+    integral_P_σ hbelow habove]
 
 theorem lowerGammaScaledCappedLowerClip_poisson_convolution_max {d : ℕ} (hd : 2 ≤ d) {c D n σ : ℝ}
     (hc : 0 < c) (hn : 0 ≤ n) (hbelow : -1 < σ) (habove : σ < 1) (s : ℝ) :
@@ -11201,7 +11210,7 @@ theorem lowerGammaScaled_poisson_convolution_max {d : ℕ} (hd : 2 ≤ d) {c σ 
       lowerGammaScaledCapped_poisson_convolution_max (D := (n : ℝ)) hd hc hbelow habove s)
 
 /-- `H_σ` as a Poisson convolution in the rescaled variable `Y = T / λ`. -/
-theorem lowerStripPoissonMajorant_scaled_convolution {ℓ : ℝ} (hℓ : 0 < ℓ) (R σ s : ℝ) :
+theorem H_σ_scaled_convolution {ℓ : ℝ} (hℓ : 0 < ℓ) (R σ s : ℝ) :
     H_σ ℓ R σ s = ∫ Y : ℝ, P_σ σ (s / ℓ - Y) * h_ℓ ℓ R (ℓ * Y) := by
   rw [← integral_sub_left_eq_self (fun Y : ℝ ↦ P_σ σ (s / ℓ - Y) * h_ℓ ℓ R (ℓ * Y)) volume (s / ℓ)]
   unfold H_σ
@@ -11212,15 +11221,15 @@ theorem lowerStripPoissonMajorant_scaled_convolution {ℓ : ℝ} (hℓ : 0 < ℓ
   field_simp
 
 /-- Report Lemma 3.3: `H_σ(s) ≤ H_σ(0)`. -/
-theorem lowerStripPoissonMajorant_dimension_centered_max {d : ℕ} (hd : 2 ≤ d) {c σ : ℝ}
+theorem H_σ_dimension_centered_max {d : ℕ} (hd : 2 ≤ d) {c σ : ℝ}
     (hc : 0 < c) (hbelow : -1 < σ) (habove : σ < 1) (s : ℝ) :
     H_σ ((d : ℝ) / 2) (c * √d) σ s ≤ H_σ ((d : ℝ) / 2) (c * √d) σ 0 := by
   have hℓ : 0 < (d : ℝ) / 2 := by positivity
-  rw [lowerStripPoissonMajorant_scaled_convolution hℓ (c * √d) σ s,
-    lowerStripPoissonMajorant_scaled_convolution hℓ (c * √d) σ 0, zero_div]
+  rw [H_σ_scaled_convolution hℓ (c * √d) σ s,
+    H_σ_scaled_convolution hℓ (c * √d) σ 0, zero_div]
   exact lowerGammaScaled_poisson_convolution_max hd hc hbelow habove (s / ((d : ℝ) / 2))
 
-theorem lowerRiemannLog_zero (T : ℝ) : f_T T 0 = log (|T| / 2) := by
+theorem f_T_zero (T : ℝ) : f_T T 0 = log (|T| / 2) := by
   unfold f_T
   rw [show (0 : ℝ) ^ 2 + T ^ 2 / 4 = (T / 2) ^ 2 by ring, Real.sqrt_sq_eq_abs, abs_div]
   norm_num
@@ -11234,18 +11243,18 @@ theorem log_sqrt_scaled {ℓ T : ℝ} (hℓ : 0 < ℓ) (hT : T ≠ 0) (j : ℝ) 
     Real.log_mul hℓ.ne' (Real.sqrt_pos.mpr hrad).ne']
   rfl
 
-theorem lowerGammaBoundaryLog_integer_scaled {k : ℕ} (hk : 0 < k) {R T : ℝ} (hR : 0 < R)
+theorem h_ℓ_integer_scaled {k : ℕ} (hk : 0 < k) {R T : ℝ} (hR : 0 < R)
     (hT : T ≠ 0) :
     h_ℓ (k : ℝ) R ((k : ℝ) * T) =
       (k : ℝ) * log (π * R ^ 2 / (k : ℝ)) - ∑ j ∈ Finset.range k, f_T T ((j : ℝ) / (k : ℝ)) := by
   have hk' : 0 < (k : ℝ) := Nat.cast_pos.mpr hk
-  rw [lowerGammaBoundaryLog_integer k R (mul_ne_zero hk'.ne' hT)]
+  rw [h_ℓ_integer k R (mul_ne_zero hk'.ne' hT)]
   simp_rw [log_sqrt_scaled hk' hT]
   rw [Finset.sum_add_distrib, show (∑ _j ∈ Finset.range k, log (k : ℝ)) = (k : ℝ) * log k by simp,
     Real.log_div (by positivity) hk'.ne']
   ring
 
-theorem lowerGammaBoundaryLog_halfInteger_scaled (k : ℕ) {ℓ R T : ℝ} (hℓeq : ℓ = (k : ℝ) + 1 / 2)
+theorem h_ℓ_halfInteger_scaled (k : ℕ) {ℓ R T : ℝ} (hℓeq : ℓ = (k : ℝ) + 1 / 2)
     (hR : 0 < R) (hT : T ≠ 0) :
     h_ℓ ℓ R (ℓ * T) = ℓ * log (π * R ^ 2 / ℓ) -
         ∑ j ∈ Finset.range k, f_T T (((j : ℝ) + 1 / 2) / ℓ) +
@@ -11253,7 +11262,7 @@ theorem lowerGammaBoundaryLog_halfInteger_scaled (k : ℕ) {ℓ R T : ℝ} (hℓ
   have hℓ : 0 < ℓ := by rw [hℓeq]; positivity
   have ht : 0 < |T| / 2 := by positivity
   have hcoth : 0 < coth (π * ℓ * |T| / 2) := coth_pos (by positivity)
-  have hraw := lowerGammaBoundaryLog_halfInteger k R (mul_ne_zero hℓ.ne' hT)
+  have hraw := h_ℓ_halfInteger k R (mul_ne_zero hℓ.ne' hT)
   rw [← hℓeq] at hraw
   rw [hraw]
   simp_rw [log_sqrt_scaled hℓ hT]
@@ -11264,7 +11273,7 @@ theorem lowerGammaBoundaryLog_halfInteger_scaled (k : ℕ) {ℓ R T : ℝ} (hℓ
     Real.log_div (by positivity) hℓ.ne', hℓeq]
   ring
 
-theorem lowerRiemannLog_continuous {T : ℝ} (hT : T ≠ 0) : Continuous (f_T T) := by
+theorem f_T_continuous {T : ℝ} (hT : T ≠ 0) : Continuous (f_T T) := by
   have hrad (x : ℝ) : 0 < x ^ 2 + T ^ 2 / 4 := by positivity
   unfold f_T
   exact (by fun_prop : Continuous fun x : ℝ ↦ √(x ^ 2 + T ^ 2 / 4)).log fun x ↦
@@ -11274,18 +11283,18 @@ theorem lowerRiemannLog_continuous {T : ℝ} (hT : T ≠ 0) : Continuous (f_T T)
 def lowerRiemannErrorMajorant (T : ℝ) : ℝ :=
   3 * |f_T T 0| + 2 * |f_T T 1| + 1 / 2 * log (coth (π * |T| / 2))
 
-theorem lowerGammaBoundaryLog_integer_riemann_le {k : ℕ} (hk : 0 < k) {R T : ℝ} (hR : 0 < R)
+theorem h_ℓ_integer_riemann_le {k : ℕ} (hk : 0 < k) {R T : ℝ} (hR : 0 < R)
     (hT : T ≠ 0) :
     h_ℓ (k : ℝ) R ((k : ℝ) * T) ≤
       (k : ℝ) * (log (π * R ^ 2 / (k : ℝ)) + 1 + lowerEndpointPhase T) +
         lowerRiemannErrorMajorant T := by
-  rw [lowerGammaBoundaryLog_integer_scaled hk hR hT]
+  rw [h_ℓ_integer_scaled hk hR hT]
   unfold lowerRiemannErrorMajorant
-  nlinarith [(lower_integer_leftRiemann_error hT hk).2, integral_lowerRiemannLog hT,
+  nlinarith [(lower_integer_leftRiemann_error hT hk).2, integral_f_T hT,
     log_coth_nonneg (show 0 < π * |T| / 2 by positivity), le_abs_self (f_T T 1),
     neg_le_abs (f_T T 0), abs_nonneg (f_T T 0), abs_nonneg (f_T T 1)]
 
-theorem lowerRiemannLog_halfInteger_tail_integral_le (k : ℕ) {ℓ T : ℝ}
+theorem f_T_halfInteger_tail_integral_le (k : ℕ) {ℓ T : ℝ}
     (hℓeq : ℓ = (k : ℝ) + 1 / 2) (hT : T ≠ 0) :
     ℓ * (∫ x in ((k : ℝ) / ℓ)..1, f_T T x) ≤ 1 / 2 * f_T T 1 := by
   have hℓ : 0 < ℓ := by rw [hℓeq]; positivity
@@ -11295,9 +11304,9 @@ theorem lowerRiemannLog_halfInteger_tail_integral_le (k : ℕ) {ℓ T : ℝ}
     linarith
   have hmono : (∫ x in ((k : ℝ) / ℓ)..1, f_T T x) ≤ ∫ _x in ((k : ℝ) / ℓ)..1, f_T T 1 :=
     intervalIntegral.integral_mono_on hratio_le
-      ((lowerRiemannLog_continuous hT).intervalIntegrable (μ := volume) _ _)
+      ((f_T_continuous hT).intervalIntegrable (μ := volume) _ _)
       intervalIntegrable_const
-      fun x hx ↦ lowerRiemannLog_monotoneOn hT (mem_Ici.mpr (hratio_nonneg.trans hx.1))
+      fun x hx ↦ f_T_monotoneOn hT (mem_Ici.mpr (hratio_nonneg.trans hx.1))
         (mem_Ici.mpr zero_le_one) hx.2
   rw [intervalIntegral.integral_const, smul_eq_mul] at hmono
   have hfactor : ℓ * (1 - (k : ℝ) / ℓ) = 1 / 2 := by
@@ -11308,7 +11317,7 @@ theorem lowerRiemannLog_halfInteger_tail_integral_le (k : ℕ) {ℓ T : ℝ}
         mul_le_mul_of_nonneg_left hmono hℓ.le
     _ = 1 / 2 * f_T T 1 := by rw [← mul_assoc, hfactor]
 
-theorem lowerGammaBoundaryLog_halfInteger_riemann_le (k : ℕ) {ℓ R T : ℝ}
+theorem h_ℓ_halfInteger_riemann_le (k : ℕ) {ℓ R T : ℝ}
     (hℓeq : ℓ = (k : ℝ) + 1 / 2) (hℓone : 1 ≤ ℓ) (hR : 0 < R) (hT : T ≠ 0) :
     h_ℓ ℓ R (ℓ * T) ≤
       ℓ * (log (π * R ^ 2 / ℓ) + 1 + lowerEndpointPhase T) + lowerRiemannErrorMajorant T := by
@@ -11317,48 +11326,48 @@ theorem lowerGammaBoundaryLog_halfInteger_riemann_le (k : ℕ) {ℓ R T : ℝ}
   have hratio_le : (k : ℝ) / ℓ ≤ 1 := by
     rw [div_le_one hℓ, hℓeq]
     linarith
-  have hcont := lowerRiemannLog_continuous hT
+  have hcont := f_T_continuous hT
   have hsplit := intervalIntegral.integral_add_adjacent_intervals
     (hcont.intervalIntegrable (μ := volume) 0 ((k : ℝ) / ℓ))
     (hcont.intervalIntegrable (μ := volume) ((k : ℝ) / ℓ) 1)
   have hmidupper := (le_abs_self _).trans (lower_halfInteger_midpointRiemann_error hT hℓ k)
-  have htail := lowerRiemannLog_halfInteger_tail_integral_le k hℓeq hT
+  have htail := f_T_halfInteger_tail_integral_le k hℓeq hT
   have hsumupper : -(∑ j ∈ Finset.range k, f_T T (((j : ℝ) + 1 / 2) / ℓ)) ≤
       -ℓ * (∫ x in (0 : ℝ)..1, f_T T x) + (f_T T ((k : ℝ) / ℓ) - f_T T 0) +
         1 / 2 * f_T T 1 := by
     nlinarith
-  have hqk : f_T T ((k : ℝ) / ℓ) ≤ f_T T 1 := lowerRiemannLog_monotoneOn hT
+  have hqk : f_T T ((k : ℝ) / ℓ) ≤ f_T T 1 := f_T_monotoneOn hT
     (mem_Ici.mpr hratio_nonneg) (mem_Ici.mpr zero_le_one) hratio_le
   have hcoth := antitoneOn_log_coth (mem_Ioi.mpr (by positivity : 0 < π * |T| / 2))
     (mem_Ioi.mpr (by positivity : 0 < π * ℓ * |T| / 2))
     (by nlinarith [mul_nonneg (sub_nonneg.mpr hℓone) (mul_nonneg Real.pi_pos.le (abs_nonneg T))])
-  have hphase := integral_lowerRiemannLog hT
-  rw [lowerGammaBoundaryLog_halfInteger_scaled k hℓeq hR hT, ← lowerRiemannLog_zero T]
+  have hphase := integral_f_T hT
+  rw [h_ℓ_halfInteger_scaled k hℓeq hR hT, ← f_T_zero T]
   unfold lowerRiemannErrorMajorant
   nlinarith [le_abs_self (f_T T 1), neg_le_abs (f_T T 0), abs_nonneg (f_T T 0),
     abs_nonneg (f_T T 1)]
 
-theorem lowerGammaBoundaryLog_dimension_riemann_le {d : ℕ} (hd : 2 ≤ d) {R T : ℝ} (hR : 0 < R)
+theorem h_ℓ_dimension_riemann_le {d : ℕ} (hd : 2 ≤ d) {R T : ℝ} (hR : 0 < R)
     (hT : T ≠ 0) :
     h_ℓ ((d : ℝ) / 2) R ((d : ℝ) / 2 * T) ≤
       (d : ℝ) / 2 * (log (π * R ^ 2 / ((d : ℝ) / 2)) + 1 + lowerEndpointPhase T) +
         lowerRiemannErrorMajorant T := by
   rcases d.even_or_odd with ⟨k, rfl⟩ | ⟨k, rfl⟩
   · rw [show ((k + k : ℕ) : ℝ) / 2 = (k : ℝ) by push_cast; ring]
-    exact lowerGammaBoundaryLog_integer_riemann_le (by omega) hR hT
+    exact h_ℓ_integer_riemann_le (by omega) hR hT
   · rw [show ((2 * k + 1 : ℕ) : ℝ) / 2 = (k : ℝ) + 1 / 2 by push_cast; ring]
-    refine lowerGammaBoundaryLog_halfInteger_riemann_le k rfl ?_ hR hT
+    refine h_ℓ_halfInteger_riemann_le k rfl ?_ hR hT
     have hk : (1 : ℝ) ≤ (k : ℝ) := by exact_mod_cast (by omega : 1 ≤ k)
     linarith
 
 /-- Report Lemma 3.3 at the critical radius `R = c√d`. -/
-theorem lowerGammaBoundaryLog_dimension_scaled_riemann_le {d : ℕ} (hd : 2 ≤ d) {c T : ℝ}
+theorem h_ℓ_dimension_scaled_riemann_le {d : ℕ} (hd : 2 ≤ d) {c T : ℝ}
     (hc : 0 < c) (hT : T ≠ 0) :
     h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * T) ≤
       (d : ℝ) / 2 * (log (2 * π * exp 1 * c ^ 2) + lowerEndpointPhase T) +
         lowerRiemannErrorMajorant T := by
   have hdreal : (0 : ℝ) < d := Nat.cast_pos.mpr (by omega)
-  have h := lowerGammaBoundaryLog_dimension_riemann_le hd (mul_pos hc (Real.sqrt_pos.mpr hdreal)) hT
+  have h := h_ℓ_dimension_riemann_le hd (mul_pos hc (Real.sqrt_pos.mpr hdreal)) hT
   have hratio : π * (c * √d) ^ 2 / ((d : ℝ) / 2) = 2 * π * c ^ 2 := by
     rw [mul_pow, Real.sq_sqrt hdreal.le]
     field_simp [hdreal.ne']
@@ -11367,15 +11376,15 @@ theorem lowerGammaBoundaryLog_dimension_scaled_riemann_le {d : ℕ} (hd : 2 ≤ 
     Real.log_mul (by positivity) (Real.exp_ne_zero 1), Real.log_exp]
   linarith
 
-theorem stripPoissonKernel_le_mass_mul_exponential {σ : ℝ} (hzero : 0 ≤ σ) (habove : σ < 1)
+theorem P_σ_le_mass_mul_exponential {σ : ℝ} (hzero : 0 ≤ σ) (habove : σ < 1)
     (T : ℝ) : P_σ σ T ≤ M_σ σ * stripPoissonExponentialMajorant T := by
   have h := (stripNormalizedPoissonExtension_le_majorant hzero habove.le T).2
   rw [← stripNormalizedPoissonKernel_eq_extension (by linarith : (-1 : ℝ) < σ) habove] at h
   unfold stripNormalizedPoissonKernel at h
-  rw [div_le_iff₀ (stripBottomMass_pos habove)] at h
+  rw [div_le_iff₀ (M_σ_pos habove)] at h
   linarith
 
-theorem stripPoissonKernel_abs_moment_integrable {σ : ℝ} (hzero : 0 ≤ σ) (habove : σ < 1) :
+theorem P_σ_abs_moment_integrable {σ : ℝ} (hzero : 0 ≤ σ) (habove : σ < 1) :
     Integrable fun T : ℝ ↦ P_σ σ T * |T| := by
   have hbelow : (-1 : ℝ) < σ := by linarith
   have hexp : Integrable fun T : ℝ ↦ stripPoissonExponentialMajorant T * |T| := by
@@ -11385,32 +11394,32 @@ theorem stripPoissonKernel_abs_moment_integrable {σ : ℝ} (hzero : 0 ≤ σ) (
     simp [stripPoissonExponentialMajorant]
     ring
   refine (hexp.const_mul (M_σ σ)).mono'
-    ((stripPoissonKernel_integrable hbelow habove).aestronglyMeasurable.mul
+    ((P_σ_integrable hbelow habove).aestronglyMeasurable.mul
       (by fun_prop : Measurable fun T : ℝ ↦ |T|).aestronglyMeasurable) ?_
   filter_upwards with T
-  rw [Real.norm_eq_abs, abs_mul, abs_of_pos (stripPoissonKernel_pos hbelow habove T), abs_abs]
+  rw [Real.norm_eq_abs, abs_mul, abs_of_pos (P_σ_pos hbelow habove T), abs_abs]
   calc P_σ σ T * |T| ≤ M_σ σ * stripPoissonExponentialMajorant T * |T| :=
-        mul_le_mul_of_nonneg_right (stripPoissonKernel_le_mass_mul_exponential hzero habove T)
+        mul_le_mul_of_nonneg_right (P_σ_le_mass_mul_exponential hzero habove T)
           (abs_nonneg T)
     _ = M_σ σ * (stripPoissonExponentialMajorant T * |T|) := by ring
 
-theorem stripPoissonKernel_mul_lowerRiemannLog_zero_integrable {σ : ℝ} (hbelow : -1 < σ)
+theorem P_σ_mul_f_T_zero_integrable {σ : ℝ} (hbelow : -1 < σ)
     (habove : σ < 1) : Integrable fun T : ℝ ↦ P_σ σ T * f_T T 0 := by
   have hgamma : Integrable fun T : ℝ ↦ P_σ σ T * h_ℓ 1 1 T := by
     refine (lowerGammaScaled_poisson_product_integrable (d := 2) (by norm_num) (R := (1 : ℝ))
       hbelow habove 0).congr ?_
     filter_upwards with T
-    norm_num [stripPoissonKernel_neg]
-  refine (((stripPoissonKernel_integrable hbelow habove).const_mul (log π)).sub hgamma).congr ?_
+    norm_num [P_σ_neg]
+  refine (((P_σ_integrable hbelow habove).const_mul (log π)).sub hgamma).congr ?_
   filter_upwards [Measure.ae_ne (volume : Measure ℝ) 0] with T hT
   have hidentity : h_ℓ 1 1 T = log π - f_T T 0 := by
-    simpa using lowerGammaBoundaryLog_integer_scaled (k := 1) (by norm_num) (R := (1 : ℝ))
+    simpa using h_ℓ_integer_scaled (k := 1) (by norm_num) (R := (1 : ℝ))
       (by norm_num) hT
   change log π * P_σ σ T - P_σ σ T * h_ℓ 1 1 T = P_σ σ T * f_T T 0
   rw [hidentity]
   ring
 
-theorem lowerRiemannLog_one_nonneg_le (T : ℝ) : 0 ≤ f_T T 1 ∧ f_T T 1 ≤ |T| / 2 := by
+theorem f_T_one_nonneg_le (T : ℝ) : 0 ≤ f_T T 1 ∧ f_T T 1 ≤ |T| / 2 := by
   have hrad : (0 : ℝ) < 1 + T ^ 2 / 4 := by positivity
   unfold f_T
   rw [one_pow]
@@ -11431,35 +11440,35 @@ theorem tendsto_natCast_half_atTop : Tendsto (fun d : ℕ ↦ (d : ℝ) / 2) atT
   ext d
   ring
 
-theorem stripPoissonKernel_mul_abs_lowerRiemannLog_one_integrable {σ : ℝ} (hzero : 0 ≤ σ)
+theorem P_σ_mul_abs_f_T_one_integrable {σ : ℝ} (hzero : 0 ≤ σ)
     (habove : σ < 1) : Integrable fun T : ℝ ↦ P_σ σ T * |f_T T 1| := by
   have hbelow : (-1 : ℝ) < σ := by linarith
   have hcont : Continuous fun T : ℝ ↦ f_T T 1 := by
     have hrad (T : ℝ) : (0 : ℝ) < 1 + T ^ 2 / 4 := by positivity
     simpa [f_T] using (by fun_prop : Continuous fun T : ℝ ↦ √(1 + T ^ 2 / 4)).log
       fun T ↦ (Real.sqrt_pos.mpr (hrad T)).ne'
-  refine ((stripPoissonKernel_abs_moment_integrable hzero habove).const_mul (1 / 2)).mono'
-    ((stripPoissonKernel_integrable hbelow habove).aestronglyMeasurable.mul
+  refine ((P_σ_abs_moment_integrable hzero habove).const_mul (1 / 2)).mono'
+    ((P_σ_integrable hbelow habove).aestronglyMeasurable.mul
       hcont.abs.aestronglyMeasurable) ?_
   filter_upwards with T
-  have hq := lowerRiemannLog_one_nonneg_le T
-  rw [Real.norm_eq_abs, abs_mul, abs_of_pos (stripPoissonKernel_pos hbelow habove T), abs_abs,
+  have hq := f_T_one_nonneg_le T
+  rw [Real.norm_eq_abs, abs_mul, abs_of_pos (P_σ_pos hbelow habove T), abs_abs,
     abs_of_nonneg hq.1]
-  nlinarith [mul_nonneg (stripPoissonKernel_pos hbelow habove T).le (sub_nonneg.mpr hq.2)]
+  nlinarith [mul_nonneg (P_σ_pos hbelow habove T).le (sub_nonneg.mpr hq.2)]
 
 theorem lowerRiemannErrorMajorant_poisson_integrable {σ : ℝ} (hzero : 0 ≤ σ) (habove : σ < 1) :
     Integrable fun T : ℝ ↦ P_σ σ T * lowerRiemannErrorMajorant T := by
   have hbelow : (-1 : ℝ) < σ := by linarith
   have hlog : Integrable fun T : ℝ ↦ P_σ σ T * |f_T T 0| := by
-    refine (stripPoissonKernel_mul_lowerRiemannLog_zero_integrable hbelow habove).abs.congr ?_
+    refine (P_σ_mul_f_T_zero_integrable hbelow habove).abs.congr ?_
     filter_upwards with T
-    rw [abs_mul, abs_of_pos (stripPoissonKernel_pos hbelow habove T)]
+    rw [abs_mul, abs_of_pos (P_σ_pos hbelow habove T)]
   have hcoth : Integrable fun T : ℝ ↦ P_σ σ T * log (coth (π * |T| / 2)) := by
-    refine (stripPoissonKernel_weighted_product_integrable hbelow habove
+    refine (P_σ_weighted_product_integrable hbelow habove
       integrable_log_coth_pi_mul_abs_div_two 0).congr ?_
     filter_upwards with T
-    rw [zero_sub, stripPoissonKernel_neg]
-  refine ((hlog.const_mul 3).add (((stripPoissonKernel_mul_abs_lowerRiemannLog_one_integrable
+    rw [zero_sub, P_σ_neg]
+  refine ((hlog.const_mul 3).add (((P_σ_mul_abs_f_T_one_integrable
     hzero habove).const_mul 2).add (hcoth.const_mul (1 / 2)))).congr ?_
   filter_upwards with T
   change 3 * (P_σ σ T * |f_T T 0|) + (2 * (P_σ σ T * |f_T T 1|) +
@@ -11467,23 +11476,23 @@ theorem lowerRiemannErrorMajorant_poisson_integrable {σ : ℝ} (hzero : 0 ≤ �
   unfold lowerRiemannErrorMajorant
   ring
 
-theorem stripPoissonKernel_mul_lowerEndpointPhase_integrable {σ : ℝ} (hzero : 0 ≤ σ)
+theorem P_σ_mul_lowerEndpointPhase_integrable {σ : ℝ} (hzero : 0 ≤ σ)
     (habove : σ < 1) : Integrable fun T : ℝ ↦ P_σ σ T * lowerEndpointPhase T := by
   have hbelow : (-1 : ℝ) < σ := by linarith
   refine (stripPoissonExponentialMajorant_mul_lowerEndpointPhase_integrable.const_mul
-    (M_σ σ)).mono' ((stripPoissonKernel_integrable hbelow habove).aestronglyMeasurable.mul
+    (M_σ σ)).mono' ((P_σ_integrable hbelow habove).aestronglyMeasurable.mul
       lowerEndpointPhase_continuous.aestronglyMeasurable) ?_
   filter_upwards with T
-  rw [norm_mul, Real.norm_eq_abs, abs_of_pos (stripPoissonKernel_pos hbelow habove T)]
+  rw [norm_mul, Real.norm_eq_abs, abs_of_pos (P_σ_pos hbelow habove T)]
   calc P_σ σ T * ‖lowerEndpointPhase T‖ ≤
         M_σ σ * stripPoissonExponentialMajorant T * ‖lowerEndpointPhase T‖ :=
-        mul_le_mul_of_nonneg_right (stripPoissonKernel_le_mass_mul_exponential hzero habove T)
+        mul_le_mul_of_nonneg_right (P_σ_le_mass_mul_exponential hzero habove T)
           (norm_nonneg _)
     _ = M_σ σ * (stripPoissonExponentialMajorant T * ‖lowerEndpointPhase T‖) := by ring
 
-theorem integral_stripPoissonKernel_mul_lowerEndpointPhase {σ : ℝ} (habove : σ < 1) :
+theorem integral_P_σ_mul_lowerEndpointPhase {σ : ℝ} (habove : σ < 1) :
     (∫ T : ℝ, P_σ σ T * lowerEndpointPhase T) = M_σ σ * lowerPoissonEndpointExpectation σ := by
-  have hmass : M_σ σ ≠ 0 := (stripBottomMass_pos habove).ne'
+  have hmass : M_σ σ ≠ 0 := (M_σ_pos habove).ne'
   unfold lowerPoissonEndpointExpectation stripNormalizedPoissonKernel
   rw [← integral_const_mul]
   refine integral_congr_ae ?_
@@ -11495,7 +11504,7 @@ def lowerRiemannPoissonError (σ : ℝ) : ℝ := ∫ T : ℝ, P_σ σ T * lowerR
 
 /-- Report Lemma 3.3 at the centre: `H_σ(0)` is at most `(d/2) M_σ (log(2πe c²) + J_σ)` plus the
 Poisson average of the Riemann error. -/
-theorem lowerStripPoissonMajorant_dimension_central_bound {d : ℕ} (hd : 2 ≤ d) {c σ : ℝ}
+theorem H_σ_dimension_central_bound {d : ℕ} (hd : 2 ≤ d) {c σ : ℝ}
     (hc : 0 < c) (hzero : 0 ≤ σ) (habove : σ < 1) :
     H_σ ((d : ℝ) / 2) (c * √d) σ 0 ≤
       (d : ℝ) / 2 * M_σ σ * (log (2 * π * exp 1 * c ^ 2) + lowerPoissonEndpointExpectation σ) +
@@ -11503,11 +11512,11 @@ theorem lowerStripPoissonMajorant_dimension_central_bound {d : ℕ} (hd : 2 ≤ 
   have hbelow : (-1 : ℝ) < σ := by linarith
   have hℓ : 0 < (d : ℝ) / 2 := by positivity
   have hleft : Integrable fun T : ℝ ↦ P_σ σ T * h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * T) := by
-    simpa only [zero_sub, stripPoissonKernel_neg] using
+    simpa only [zero_sub, P_σ_neg] using
       lowerGammaScaled_poisson_product_integrable (by omega) (R := c * √d) hbelow habove 0
-  have hk := (stripPoissonKernel_integrable hbelow habove).const_mul
+  have hk := (P_σ_integrable hbelow habove).const_mul
     ((d : ℝ) / 2 * log (2 * π * exp 1 * c ^ 2))
-  have hq := (stripPoissonKernel_mul_lowerEndpointPhase_integrable hzero habove).const_mul
+  have hq := (P_σ_mul_lowerEndpointPhase_integrable hzero habove).const_mul
     ((d : ℝ) / 2)
   have hE := lowerRiemannErrorMajorant_poisson_integrable hzero habove
   have hkq : Integrable fun T : ℝ ↦ (d : ℝ) / 2 * log (2 * π * exp 1 * c ^ 2) * P_σ σ T +
@@ -11521,25 +11530,25 @@ theorem lowerStripPoissonMajorant_dimension_central_bound {d : ℕ} (hd : 2 ≤ 
       lowerEndpointPhase T) + lowerRiemannErrorMajorant T) := by
     rw [hsplit]
     exact hkq.add hE
-  rw [lowerStripPoissonMajorant_scaled_convolution hℓ (c * √d) σ 0]
-  simp only [zero_div, zero_sub, stripPoissonKernel_neg]
+  rw [H_σ_scaled_convolution hℓ (c * √d) σ 0]
+  simp only [zero_div, zero_sub, P_σ_neg]
   calc (∫ T : ℝ, P_σ σ T * h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * T))
       ≤ ∫ T : ℝ, P_σ σ T * ((d : ℝ) / 2 * (log (2 * π * exp 1 * c ^ 2) + lowerEndpointPhase T) +
           lowerRiemannErrorMajorant T) := by
         refine integral_mono_ae hleft hright ?_
         filter_upwards [Measure.ae_ne (volume : Measure ℝ) 0] with T hT
-        exact mul_le_mul_of_nonneg_left (lowerGammaBoundaryLog_dimension_scaled_riemann_le hd hc hT)
-          (stripPoissonKernel_pos hbelow habove T).le
+        exact mul_le_mul_of_nonneg_left (h_ℓ_dimension_scaled_riemann_le hd hc hT)
+          (P_σ_pos hbelow habove T).le
     _ = (d : ℝ) / 2 * M_σ σ * (log (2 * π * exp 1 * c ^ 2) +
           lowerPoissonEndpointExpectation σ) + lowerRiemannPoissonError σ := by
         rw [hsplit, integral_add hkq hE, integral_add hk hq, integral_const_mul,
-          integral_const_mul, integral_stripPoissonKernel hbelow habove,
-          integral_stripPoissonKernel_mul_lowerEndpointPhase habove]
+          integral_const_mul, integral_P_σ hbelow habove,
+          integral_P_σ_mul_lowerEndpointPhase habove]
         unfold lowerRiemannPoissonError
         ring
 
 /-- Report Lemma 3.5: for a subcritical radius the majorant is uniformly negative of order `d`. -/
-theorem exists_lowerStripPoissonMajorant_uniform_negative {c : ℝ} (hc : 0 < c) (hsharp : c < π⁻¹) :
+theorem exists_H_σ_uniform_negative {c : ℝ} (hc : 0 < c) (hsharp : c < π⁻¹) :
     ∃ σ γ : ℝ, 0 < σ ∧ σ < 1 ∧ 0 < γ ∧ ∀ᶠ d : ℕ in atTop, ∀ s : ℝ,
       H_σ ((d : ℝ) / 2) (c * √d) σ s ≤ -γ * ((d : ℝ) / 2) := by
   have hpositive : ∀ᶠ σ : ℝ in 𝓝[<] (1 : ℝ), 0 < σ :=
@@ -11548,7 +11557,7 @@ theorem exists_lowerStripPoissonMajorant_uniform_negative {c : ℝ} (hc : 0 < c)
   obtain ⟨σ, hσpos, hσless, hσneg⟩ := (hpositive.and (hless.and
     (eventually_lowerPoissonEndpointSharpCoefficient_neg hc hsharp))).exists
   set A : ℝ := log (2 * π * exp 1 * c ^ 2) + lowerPoissonEndpointExpectation σ with hA
-  have hmass := stripBottomMass_pos hσless
+  have hmass := M_σ_pos hσless
   have hγ : 0 < -(M_σ σ * A) / 2 := by nlinarith [mul_neg_of_pos_of_neg hmass hσneg]
   refine ⟨σ, -(M_σ σ * A) / 2, hσpos, hσless, hγ, ?_⟩
   have hγscale : Tendsto (fun d : ℕ ↦ -(M_σ σ * A) / 2 * ((d : ℝ) / 2)) atTop atTop := by
@@ -11556,11 +11565,11 @@ theorem exists_lowerStripPoissonMajorant_uniform_negative {c : ℝ} (hc : 0 < c)
   filter_upwards [eventually_ge_atTop 2, hγscale.eventually
     (Ici_mem_atTop (lowerRiemannPoissonError σ))] with d hd hderr
   intro s
-  have hcentre := lowerStripPoissonMajorant_dimension_centered_max hd hc (by linarith) hσless s
-  have hbound := lowerStripPoissonMajorant_dimension_central_bound hd hc hσpos.le hσless
+  have hcentre := H_σ_dimension_centered_max hd hc (by linarith) hσless s
+  have hbound := H_σ_dimension_central_bound hd hc hσpos.le hσless
   nlinarith
 
-theorem lowerGammaBoundaryLog_dimension_scaled_log_tail_simple {d : ℕ} (hd : 2 ≤ d) {c Y : ℝ}
+theorem h_ℓ_dimension_scaled_log_tail_simple {d : ℕ} (hd : 2 ≤ d) {c Y : ℝ}
     (hc : 0 < c) (hY : 1 ≤ |Y|) :
     h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * Y) ≤
       (d : ℝ) / 2 * log (4 * π * exp 1 * c ^ 2 / |Y|) := by
@@ -11572,7 +11581,7 @@ theorem lowerGammaBoundaryLog_dimension_scaled_log_tail_simple {d : ℕ} (hd : 2
   rw [show 4 * π * exp 1 * c ^ 2 / |Y| = 4 * π * c ^ 2 / |Y| * exp 1 by
       field_simp [abs_ne_zero.mpr hyzero],
     Real.log_mul (by positivity) (Real.exp_ne_zero 1), Real.log_exp]
-  nlinarith [lowerGammaBoundaryLog_dimension_scaled_log_tail_uniform hd hc hyzero,
+  nlinarith [h_ℓ_dimension_scaled_log_tail_uniform hd hc hyzero,
     log_coth_pi_mul_abs_div_two_le_one hY]
 
 /-- The Poisson mass `∫_{-1}^{1} P_σ` of the core interval. -/
@@ -11583,13 +11592,13 @@ theorem stripPoissonCoreMass_pos {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1)
   have hconst : IntegrableOn (fun _T : ℝ ↦ P_σ σ 1) (Icc (-1 : ℝ) 1) :=
     (continuous_const : Continuous fun _T : ℝ ↦ P_σ σ 1).integrableOn_Icc
   have hcompare : (∫ _T in Icc (-1 : ℝ) 1, P_σ σ 1) ≤ ∫ T in Icc (-1 : ℝ) 1, P_σ σ T := by
-    refine setIntegral_mono_on hconst (stripPoissonKernel_integrable hbelow habove).integrableOn
-      measurableSet_Icc fun T hT ↦ stripPoissonKernel_antitone_abs hbelow habove ?_
+    refine setIntegral_mono_on hconst (P_σ_integrable hbelow habove).integrableOn
+      measurableSet_Icc fun T hT ↦ P_σ_antitone_abs hbelow habove ?_
     rw [abs_of_pos (by norm_num : (0 : ℝ) < 1)]
     exact abs_le.mpr hT
   rw [show (∫ _T in Icc (-1 : ℝ) 1, P_σ σ 1) = 2 * P_σ σ 1 by norm_num] at hcompare
   unfold stripPoissonCoreMass
-  nlinarith [stripPoissonKernel_pos hbelow habove 1]
+  nlinarith [P_σ_pos hbelow habove 1]
 
 /-- Outside the support radius `C` of the positive part, its Poisson convolution decays
 exponentially in the distance to the centre. -/
@@ -11600,18 +11609,18 @@ theorem lowerGammaScaledPositivePart_poisson_exponential_tail {d : ℕ} (hd : 2 
     (∫ Y : ℝ, P_σ σ (S - Y) * lowerGammaScaledPositivePart d c Y) ≤
       M_σ σ * (π / 2) * exp (-(π / 2) * (S - C)) * (C * ((d : ℝ) / 2)) := by
   have hbelow : (-1 : ℝ) < σ := by linarith
-  have hmassσ := stripBottomMass_pos hσone
+  have hmassσ := M_σ_pos hσone
   have hp := lowerGammaScaledPositivePart_integrable hd hc
   calc (∫ Y : ℝ, P_σ σ (S - Y) * lowerGammaScaledPositivePart d c Y)
       ≤ ∫ Y : ℝ, M_σ σ * (π / 2) * exp (-(π / 2) * (S - C)) *
           lowerGammaScaledPositivePart d c Y := by
-        refine integral_mono_ae (stripPoissonKernel_weighted_product_integrable hbelow hσone hp S)
+        refine integral_mono_ae (P_σ_weighted_product_integrable hbelow hσone hp S)
           (hp.const_mul _) ?_
         filter_upwards with Y
         rcases eq_or_ne (lowerGammaScaledPositivePart d c Y) 0 with hzero | hzero
         · simp [hzero]
         · refine mul_le_mul_of_nonneg_right ?_ (le_max_right _ _)
-          refine (stripPoissonKernel_le_mass_mul_exponential hσ hσone (S - Y)).trans ?_
+          refine (P_σ_le_mass_mul_exponential hσ hσone (S - Y)).trans ?_
           unfold stripPoissonExponentialMajorant
           rw [← mul_assoc]
           refine mul_le_mul_of_nonneg_left (Real.exp_le_exp.mpr ?_) (by positivity)
@@ -11622,7 +11631,7 @@ theorem lowerGammaScaledPositivePart_poisson_exponential_tail {d : ℕ} (hd : 2 
     _ ≤ M_σ σ * (π / 2) * exp (-(π / 2) * (S - C)) * (C * ((d : ℝ) / 2)) :=
         mul_le_mul_of_nonneg_left hmass (by positivity)
 
-private theorem integral_stripPoissonKernel_mul_indicator (σ a : ℝ) :
+private theorem integral_P_σ_mul_indicator (σ a : ℝ) :
     (∫ T : ℝ, P_σ σ T * (Icc (-1 : ℝ) 1).indicator (fun _ : ℝ ↦ a) T) =
       a * stripPoissonCoreMass σ := by
   rw [show (fun T : ℝ ↦ P_σ σ T * (Icc (-1 : ℝ) 1).indicator (fun _ : ℝ ↦ a) T) =
@@ -11633,13 +11642,13 @@ private theorem integral_stripPoissonKernel_mul_indicator (σ a : ℝ) :
 
 /-- Pointwise, the Poisson integrand of `H_σ(λS)` is below the core term on `[-1, 1]` plus the
 positive part. -/
-private theorem stripPoissonKernel_mul_h_ℓ_le_core_add_positivePart {d : ℕ} (hd : 2 ≤ d)
+private theorem P_σ_mul_h_ℓ_le_core_add_positivePart {d : ℕ} (hd : 2 ≤ d)
     {c σ S : ℝ} (hc : 0 < c) (hσ : 0 ≤ σ) (hσone : σ < 1) (hS : 2 ≤ S) (T : ℝ) :
     P_σ σ T * h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * (S - T)) ≤
       P_σ σ T * (Icc (-1 : ℝ) 1).indicator
           (fun _ : ℝ ↦ (d : ℝ) / 2 * log (8 * π * exp 1 * c ^ 2 / S)) T +
         P_σ σ T * lowerGammaScaledPositivePart d c (S - T) := by
-  have hkernel := (stripPoissonKernel_pos (by linarith) hσone T).le
+  have hkernel := (P_σ_pos (by linarith) hσone T).le
   have hle : h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * (S - T)) ≤
       lowerGammaScaledPositivePart d c (S - T) := le_max_left _ _
   have hnonneg : (0 : ℝ) ≤ lowerGammaScaledPositivePart d c (S - T) := le_max_right _ _
@@ -11650,7 +11659,7 @@ private theorem stripPoissonKernel_mul_h_ℓ_le_core_add_positivePart {d : ℕ} 
     have hdiff : (0 : ℝ) < S - T := by linarith [hT.2]
     have hnear : h_ℓ ((d : ℝ) / 2) (c * √d) ((d : ℝ) / 2 * (S - T)) ≤
         (d : ℝ) / 2 * log (8 * π * exp 1 * c ^ 2 / S) := by
-      refine (lowerGammaBoundaryLog_dimension_scaled_log_tail_simple hd hc (by
+      refine (h_ℓ_dimension_scaled_log_tail_simple hd hc (by
         rw [abs_of_pos hdiff]; linarith [hT.2])).trans ?_
       refine mul_le_mul_of_nonneg_left (Real.log_le_log (by positivity) ?_) hℓ.le
       rw [div_le_div_iff₀ (abs_pos.mpr hdiff.ne') hSpos, abs_of_pos hdiff]
@@ -11662,7 +11671,7 @@ private theorem stripPoissonKernel_mul_h_ℓ_le_core_add_positivePart {d : ℕ} 
 
 /-- Report Lemma 3.6: splitting `H_σ(λS)` into the logarithmic core term and the positive-part
 tail. -/
-theorem lowerStripPoissonMajorant_core_tail_split {d : ℕ} (hd : 2 ≤ d) {c σ S : ℝ} (hc : 0 < c)
+theorem H_σ_core_tail_split {d : ℕ} (hd : 2 ≤ d) {c σ S : ℝ} (hc : 0 < c)
     (hσ : 0 ≤ σ) (hσone : σ < 1) (hS : 2 ≤ S) :
     H_σ ((d : ℝ) / 2) (c * √d) σ ((d : ℝ) / 2 * S) ≤
       (d : ℝ) / 2 * log (8 * π * exp 1 * c ^ 2 / S) * stripPoissonCoreMass σ +
@@ -11675,13 +11684,13 @@ theorem lowerStripPoissonMajorant_core_tail_split {d : ℕ} (hd : 2 ≤ d) {c σ
     filter_upwards with T
     rw [show S - (S - T) = T by ring]
   have hp : Integrable fun T : ℝ ↦ P_σ σ T * lowerGammaScaledPositivePart d c (S - T) := by
-    refine ((stripPoissonKernel_weighted_product_integrable hbelow hσone
+    refine ((P_σ_weighted_product_integrable hbelow hσone
       (lowerGammaScaledPositivePart_integrable hd hc) S).comp_sub_left S).congr ?_
     filter_upwards with T
     rw [show S - (S - T) = T by ring]
   have hcore : Integrable fun T : ℝ ↦ P_σ σ T * (Icc (-1 : ℝ) 1).indicator
       (fun _ : ℝ ↦ (d : ℝ) / 2 * log (8 * π * exp 1 * c ^ 2 / S)) T := by
-    refine (((stripPoissonKernel_integrable hbelow hσone).const_mul
+    refine (((P_σ_integrable hbelow hσone).const_mul
       ((d : ℝ) / 2 * log (8 * π * exp 1 * c ^ 2 / S))).indicator (s := Icc (-1 : ℝ) 1)
       measurableSet_Icc).congr ?_
     filter_upwards with T
@@ -11699,11 +11708,11 @@ theorem lowerStripPoissonMajorant_core_tail_split {d : ℕ} (hd : 2 ≤ d) {c σ
     refine integral_congr_ae ?_
     filter_upwards with T
     rw [show (d : ℝ) / 2 * S - (d : ℝ) / 2 * T = (d : ℝ) / 2 * (S - T) by ring]
-  rw [hrep, ← integral_stripPoissonKernel_mul_indicator σ _, ← hpval, ← integral_add hcore hp]
+  rw [hrep, ← integral_P_σ_mul_indicator σ _, ← hpval, ← integral_add hcore hp]
   exact integral_mono_ae hb (hcore.add hp)
-    (Eventually.of_forall (stripPoissonKernel_mul_h_ℓ_le_core_add_positivePart hd hc hσ hσone hS))
+    (Eventually.of_forall (P_σ_mul_h_ℓ_le_core_add_positivePart hd hc hσ hσone hS))
 
-theorem lowerStripPoissonMajorant_dimension_neg {d : ℕ} (hd : 0 < d) (R σ s : ℝ) :
+theorem H_σ_dimension_neg {d : ℕ} (hd : 0 < d) (R σ s : ℝ) :
     H_σ ((d : ℝ) / 2) R σ (-s) = H_σ ((d : ℝ) / 2) R σ s := by
   have hℓ : 0 < (d : ℝ) / 2 := by positivity
   unfold H_σ
@@ -11712,8 +11721,8 @@ theorem lowerStripPoissonMajorant_dimension_neg {d : ℕ} (hd : 0 < d) (R σ s :
   refine integral_congr_ae ?_
   filter_upwards [Measure.ae_ne (volume : Measure ℝ) (-s / ((d : ℝ) / 2))] with T hT
   have hy : s + (d : ℝ) / 2 * T ≠ 0 := fun hzero ↦ hT ((eq_div_iff hℓ.ne').2 (by linarith))
-  rw [stripPoissonKernel_neg, show -s - (d : ℝ) / 2 * T = -(s + (d : ℝ) / 2 * T) by ring,
-    lowerGammaBoundaryLog_dimension_neg R hy,
+  rw [P_σ_neg, show -s - (d : ℝ) / 2 * T = -(s + (d : ℝ) / 2 * T) by ring,
+    h_ℓ_dimension_neg R hy,
     show s - (d : ℝ) / 2 * -T = s + (d : ℝ) / 2 * T by ring]
 
 private theorem tendsto_mul_exp_neg_sub_atTop (a C : ℝ) :
@@ -11727,7 +11736,7 @@ private theorem tendsto_mul_exp_neg_sub_atTop (a C : ℝ) :
   rw [mul_assoc, ← Real.exp_add, show π / 2 * C + -(S * (π / 2)) = -(π / 2) * (S - C) by ring]
 
 /-- Report Lemma 3.6: a logarithmically decreasing bound for `H_σ` far from the centre. -/
-theorem exists_lowerStripPoissonMajorant_positive_logarithmic_tail {c σ : ℝ} (hc : 0 < c)
+theorem exists_H_σ_positive_logarithmic_tail {c σ : ℝ} (hc : 0 < c)
     (hσ : 0 ≤ σ) (hσone : σ < 1) :
     ∃ A B κ : ℝ, 0 < A ∧ 0 < B ∧ 0 < κ ∧ ∀ d : ℕ, 2 ≤ d → ∀ S : ℝ, B ≤ S →
       H_σ ((d : ℝ) / 2) (c * √d) σ ((d : ℝ) / 2 * S) ≤ -κ * ((d : ℝ) / 2) * log (S / A) := by
@@ -11735,7 +11744,7 @@ theorem exists_lowerStripPoissonMajorant_positive_logarithmic_tail {c σ : ℝ} 
   obtain ⟨C, hC, huniform⟩ := exists_lowerGammaScaledPositivePart_uniform_bound hc
   have hA : (0 : ℝ) < 8 * π * exp 1 * c ^ 2 := by positivity
   have hm : 0 < stripPoissonCoreMass σ := stripPoissonCoreMass_pos hbelow hσone
-  have hmassσ := stripBottomMass_pos hσone
+  have hmassσ := M_σ_pos hσone
   have hdecay := tendsto_mul_exp_neg_sub_atTop (M_σ σ * (π / 2) * C) C
   obtain ⟨B₀, hB₀⟩ := eventually_atTop.1 ((hdecay.eventually (Iio_mem_nhds
     (by positivity : 0 < stripPoissonCoreMass σ / 4))).and
@@ -11759,26 +11768,26 @@ theorem exists_lowerStripPoissonMajorant_positive_logarithmic_tail {c σ : ℝ} 
   have hflip : log (8 * π * exp 1 * c ^ 2 / S) = -log (S / (8 * π * exp 1 * c ^ 2)) := by
     rw [Real.log_div hA.ne' hSpos.ne', Real.log_div hSpos.ne' hA.ne']
     ring
-  refine (lowerStripPoissonMajorant_core_tail_split hd hc hσ hσone hStwo).trans ?_
+  refine (H_σ_core_tail_split hd hc hσ hσone hStwo).trans ?_
   rw [hflip]
   nlinarith [mul_nonneg hℓ.le (show (0 : ℝ) ≤ stripPoissonCoreMass σ *
     log (S / (8 * π * exp 1 * c ^ 2)) / 2 - M_σ σ * (π / 2) * C * exp (-(π / 2) * (S - C)) by
       nlinarith [mul_nonneg hm.le (show (0 : ℝ) ≤ log (S / (8 * π * exp 1 * c ^ 2)) - 1 / 2 by
         linarith)])]
 
-theorem exists_lowerStripPoissonMajorant_logarithmic_tail {c σ : ℝ} (hc : 0 < c) (hσ : 0 ≤ σ)
+theorem exists_H_σ_logarithmic_tail {c σ : ℝ} (hc : 0 < c) (hσ : 0 ≤ σ)
     (hσone : σ < 1) :
     ∃ A B κ : ℝ, 0 < A ∧ 0 < B ∧ 0 < κ ∧ ∀ d : ℕ, 2 ≤ d → ∀ S : ℝ, B ≤ |S| →
       H_σ ((d : ℝ) / 2) (c * √d) σ ((d : ℝ) / 2 * S) ≤ -κ * ((d : ℝ) / 2) * log (|S| / A) := by
   obtain ⟨A, B, κ, hA, hB, hκ, htail⟩ :=
-    exists_lowerStripPoissonMajorant_positive_logarithmic_tail hc hσ hσone
+    exists_H_σ_positive_logarithmic_tail hc hσ hσone
   refine ⟨A, B, κ, hA, hB, hκ, fun d hd S hS ↦ ?_⟩
   rcases le_or_gt 0 S with hnonneg | hnegative
   · rw [abs_of_nonneg hnonneg] at hS ⊢
     exact htail d hd S hS
   · rw [abs_of_neg hnegative] at hS ⊢
     rw [show (d : ℝ) / 2 * S = -((d : ℝ) / 2 * -S) by ring,
-      lowerStripPoissonMajorant_dimension_neg (by omega) (c * √d) σ ((d : ℝ) / 2 * -S)]
+      H_σ_dimension_neg (by omega) (c * √d) σ ((d : ℝ) / 2 * -S)]
     exact htail d hd (-S) hS
 
 theorem inverseQuadraticAbs_integrable : Integrable fun S : ℝ ↦ 1 / (1 + |S|) ^ 2 := by
@@ -11789,15 +11798,15 @@ theorem inverseQuadraticAbs_integrable : Integrable fun S : ℝ ↦ 1 / (1 + |S|
 
 /-- Report Lemma 3.6: a Cauchy-type integrable majorant for `exp H_σ`, uniform in the
 dimension. -/
-theorem exists_lowerStripPoissonMajorant_integrable_majorant {c : ℝ} (hc : 0 < c)
+theorem exists_H_σ_integrable_majorant {c : ℝ} (hc : 0 < c)
     (hsharp : c < π⁻¹) :
     ∃ σ γ C : ℝ, 0 < σ ∧ σ < 1 ∧ 0 < γ ∧ 0 < C ∧ ∀ᶠ d : ℕ in atTop, ∀ S : ℝ,
       exp (H_σ ((d : ℝ) / 2) (c * √d) σ ((d : ℝ) / 2 * S)) ≤
         C * exp (-γ * ((d : ℝ) / 2)) / (1 + |S|) ^ 2 := by
   obtain ⟨σ, γ₀, hσpos, hσone, hγ₀, hcentral⟩ :=
-    exists_lowerStripPoissonMajorant_uniform_negative hc hsharp
+    exists_H_σ_uniform_negative hc hsharp
   obtain ⟨A, B, κ, hA, hB, hκ, htail⟩ :=
-    exists_lowerStripPoissonMajorant_logarithmic_tail hc hσpos.le hσone
+    exists_H_σ_logarithmic_tail hc hσpos.le hσone
   obtain ⟨T, hT, hTA, hTB⟩ : ∃ T : ℝ, 1 ≤ T ∧ A ≤ T ∧ B ≤ T :=
     ⟨max B (max A 1), (le_max_right A 1).trans (le_max_right B _),
       (le_max_left A 1).trans (le_max_right B _), le_max_left B _⟩
@@ -11899,7 +11908,7 @@ theorem lowerStripCappedPoisson_tendsto {d : ℕ} (hd : 0 < d) {R σ : ℝ} (hσ
   have h := lowerGammaScaledCapped_poisson_tendsto (c := R / √(d : ℝ)) hd hσbelow hσabove
     (s / ((d : ℝ) / 2))
   rw [div_mul_cancel₀ R hsqrt.ne'] at h
-  rw [lowerStripPoissonMajorant_scaled_convolution hℓ R σ s]
+  rw [H_σ_scaled_convolution hℓ R σ s]
   refine Tendsto.congr (fun n ↦ ?_) h
   rw [← integral_sub_left_eq_self (fun Y : ℝ ↦ P_σ σ (s / ((d : ℝ) / 2) - Y) *
     h_ℓD ((d : ℝ) / 2) R (n : ℝ) ((d : ℝ) / 2 * Y)) volume (s / ((d : ℝ) / 2))]
@@ -11963,7 +11972,7 @@ theorem exists_interior_mass_bound {c : ℝ} (hc : 0 < c) (hcπ : c < π⁻¹) :
       ∫ x in Metric.ball (0 : Euclidean d) (c * √d), ‖g.toFun x‖ ≤
         C * exp (-γ * d) * ∫ x, ‖g.toFun x‖ := by
   obtain ⟨σ, γ, C, hσpos, hσone, hγ, hC, hmajor⟩ :=
-    exists_lowerStripPoissonMajorant_integrable_majorant hc hcπ
+    exists_H_σ_integrable_majorant hc hcπ
   have hσbelow : (-1 : ℝ) < σ := by linarith
   have hσ' : (0 : ℝ) < 1 - σ := sub_pos.mpr hσone
   have hM := lowerInverseQuadraticMass_pos
@@ -12033,9 +12042,10 @@ For a radial admissible `F ∈ 𝒜_d^rad` the dilation `h(x) = F(a x)` with `a 
 is balanced (`𝓕 h (0) = h (0)`); nonnegative compactly supported self-Fourier functions vanish (via
 the complex moment generating function of `h ≥ 0`), so `g = 𝓕 h - h` is a nonzero anti-self-Fourier
 witness of radius `a`. Hence the normalized cost of `F` is at least `c` whenever no
-anti-self-Fourier witness of radius `c √d` exists (`normalizedCost_ge_of_no_antiFourierWitness`),
-the reduction of the lower bound of Theorem 1.1 to Proposition 3.7 (for general `F ∈ 𝒜_d`, first
-replace `F` by its rotational average, `Admissible.radialize`, in `CohnElkies.Asymptotics.Main`).
+anti-self-Fourier witness of radius `c √d` exists
+(`normalizedCost_ge_of_no_antiSelfFourierWitness`), the reduction of the lower bound of Theorem 1.1
+to Proposition 3.7 (for general `F ∈ 𝒜_d`, first replace `F` by its rotational average,
+`Admissible.radialize`, in `CohnElkies.Asymptotics.Main`).
 -/
 
 namespace CohnElkies
@@ -12202,7 +12212,7 @@ theorem antiFourierPart_balanced_ne_zero {d : ℕ} (f : RadialAdmissible d) (hd 
 
 /-- The scaling step of Theorem 3.8 of the report: if no anti-self-Fourier witness of radius
 `c √d` exists, then every radial admissible function has normalized cost at least `c`. -/
-theorem normalizedCost_ge_of_no_antiFourierWitness {d : ℕ} (f : RadialAdmissible d) (hd : 0 < d)
+theorem normalizedCost_ge_of_no_antiSelfFourierWitness {d : ℕ} (f : RadialAdmissible d) (hd : 0 < d)
     (c : ℝ) (hno : IsEmpty (AntiSelfFourierWitness d (c * √d))) :
     c ≤ normalizedCost f.toAdmissible := by
   by_contra! hlt
@@ -12275,33 +12285,33 @@ def PPlus (ε : ℝ) (z : ℂ) : ℂ := 1 + z ^ 2 + β ε + I * z * (1 + z ^ 2)
 /-- The polynomial `P₋(ζ) = 1 + ζ² + β - iζ(1 + ζ²)` of the report. -/
 def PMinus (ε : ℝ) (z : ℂ) : ℂ := 1 + z ^ 2 + β ε - I * z * (1 + z ^ 2)
 
-theorem shellWeight_pos (ε : ℝ) : 0 < Qε ε := exp_pos _
+theorem Qε_pos (ε : ℝ) : 0 < Qε ε := exp_pos _
 
-theorem beta_pos {ε : ℝ} (hε : 0 < ε) : 0 < β ε := div_pos hε (by norm_num)
+theorem β_pos {ε : ℝ} (hε : 0 < ε) : 0 < β ε := div_pos hε (by norm_num)
 
 /-- `P₊(iu) = β + (1 - u)² (1 + u)` is real. -/
-theorem plusPolynomial_imaginary (ε u : ℝ) :
+theorem PPlus_imaginary (ε u : ℝ) :
     PPlus ε (I * u) = β ε + (1 - u) ^ 2 * (1 + u) := by
   -- `simp` closes the imaginary-part goal, so the `<;>` (not `;`) is needed here; the
   -- `linter.unnecessarySeqFocus` suggestion does not apply.
   apply Complex.ext <;> simp [PPlus, pow_two] <;> ring
 
 /-- `P₋(iu) = β + (1 - u) (1 + u)²` is real. -/
-theorem minusPolynomial_imaginary (ε u : ℝ) :
+theorem PMinus_imaginary (ε u : ℝ) :
     PMinus ε (I * u) = β ε + (1 - u) * (1 + u) ^ 2 := by
   -- `simp` closes the imaginary-part goal, so the `<;>` (not `;`) is needed here; the
   -- `linter.unnecessarySeqFocus` suggestion does not apply.
   apply Complex.ext <;> simp [PMinus, pow_two] <;> ring
 
-theorem plusPolynomial_imaginary_re_pos {ε u : ℝ} (hε : 0 < ε) (hu : -1 < u) :
+theorem PPlus_imaginary_re_pos {ε u : ℝ} (hε : 0 < ε) (hu : -1 < u) :
     0 < (PPlus ε (I * u)).re := by
-  rw [plusPolynomial_imaginary]
+  rw [PPlus_imaginary]
   norm_cast
-  exact add_pos_of_pos_of_nonneg (beta_pos hε) (mul_nonneg (sq_nonneg _) (by linarith))
+  exact add_pos_of_pos_of_nonneg (β_pos hε) (mul_nonneg (sq_nonneg _) (by linarith))
 
-theorem minusPolynomial_imaginary_re_neg {ε u : ℝ} (hε : 0 < ε) (hu : 1 + ε / 4 ≤ u) :
+theorem PMinus_imaginary_re_neg {ε u : ℝ} (hε : 0 < ε) (hu : 1 + ε / 4 ≤ u) :
     (PMinus ε (I * u)).re < 0 := by
-  rw [minusPolynomial_imaginary]
+  rw [PMinus_imaginary]
   norm_cast
   rw [β]
   have hs : 4 ≤ (1 + u) ^ 2 := by nlinarith [sq_nonneg (u - 1)]
@@ -12545,7 +12555,7 @@ theorem cosh_ratio_upper {a δ : ℝ} (ha : 0 ≤ a) (hδ : 0 ≤ δ) :
 /-- The positive shell density `w_B(a) = Q_ε / cosh a` of report (35), carried on `[B, B+1]`. -/
 def w_B (ε a : ℝ) : ℝ := Qε ε / cosh a
 
-theorem positiveShellDensity_continuous (ε : ℝ) : Continuous (w_B ε) :=
+theorem w_B_continuous (ε : ℝ) : Continuous (w_B ε) :=
   continuous_const.div Real.continuous_cosh fun a ↦ (cosh_pos a).ne'
 
 /-- Damping `D_B(T)` produced by the positive shell on the contour of height `1 + δ`. -/
@@ -12553,10 +12563,10 @@ def D_B (ε ℓ δ T : ℝ) : ℝ :=
   ℓ * ∫ a in Bε ε..Bε ε + 1, w_B ε a * cosh ((1 + δ) * a) * (1 - cos (a * T))
 
 /-- Report (60): `D_B(T) ≥ c λ Q e^{δB} min(T², 1)`. -/
-theorem positiveShellDamping_lower_bound {ε ℓ δ T : ℝ} (hε : 0 < ε) (hℓ : 0 ≤ ℓ) (hδ : 0 ≤ δ) :
+theorem D_B_lower_bound {ε ℓ δ T : ℝ} (hε : 0 < ε) (hℓ : 0 ≤ ℓ) (hδ : 0 ≤ δ) :
     ℓ / 50 * Qε ε * exp (δ * Bε ε) * min (T ^ 2) 1 ≤ D_B ε ℓ δ T := by
   have hB : 0 ≤ Bε ε := by unfold Bε; positivity
-  have hQ : 0 < Qε ε := shellWeight_pos ε
+  have hQ : 0 < Qε ε := Qε_pos ε
   set C : ℝ := Qε ε * exp (δ * Bε ε) / 2 with hC
   have hosc : Continuous fun a : ℝ ↦ 1 - cos (a * T) := by fun_prop
   have hpoint : ∀ a ∈ Icc (Bε ε) (Bε ε + 1),
@@ -12574,7 +12584,7 @@ theorem positiveShellDamping_lower_bound {ε ℓ δ T : ℝ} (hε : 0 < ε) (h�
     (continuous_const.mul hosc).intervalIntegrable _ _
   have hint₂ : IntervalIntegrable (fun a : ℝ ↦ w_B ε a * cosh ((1 + δ) * a) *
       (1 - cos (a * T))) volume (Bε ε) (Bε ε + 1) :=
-    (((positiveShellDensity_continuous ε).mul (by fun_prop)).mul hosc).intervalIntegrable _ _
+    (((w_B_continuous ε).mul (by fun_prop)).mul hosc).intervalIntegrable _ _
   have hmono := intervalIntegral.integral_mono_on (μ := volume) (by linarith : Bε ε ≤ Bε ε + 1)
     hint₁ hint₂ hpoint
   rw [intervalIntegral.integral_const_mul] at hmono
@@ -12596,11 +12606,11 @@ theorem positiveShellRadiusContribution_bounds {ε : ℝ} (hε : 0 < ε) :
     0 ≤ positiveShellRadiusContribution ε ∧
       positiveShellRadiusContribution ε ≤ (Bε ε + 1) * Qε ε * exp (ε / 4 * (Bε ε + 1)) := by
   have hB : 0 ≤ Bε ε := by unfold Bε; positivity
-  have hQ : 0 < Qε ε := shellWeight_pos ε
+  have hQ : 0 < Qε ε := Qε_pos ε
   have hδ : (0 : ℝ) ≤ ε / 4 := by positivity
   have hw (a : ℝ) : 0 ≤ w_B ε a := (div_pos hQ (cosh_pos a)).le
   have hcont : Continuous fun a : ℝ ↦ w_B ε a * a * sinh ((1 + ε / 4) * a) :=
-    ((positiveShellDensity_continuous ε).mul continuous_id).mul (by fun_prop)
+    ((w_B_continuous ε).mul continuous_id).mul (by fun_prop)
   unfold positiveShellRadiusContribution
   refine ⟨intervalIntegral.integral_nonneg (by linarith) fun a ha ↦
     mul_nonneg (mul_nonneg (hw a) (hB.trans ha.1))
@@ -12627,7 +12637,7 @@ theorem positiveShellRadiusContribution_bounds {ε : ℝ} (hε : 0 < ε) :
 on `[a₀, A]`. -/
 def w_s (ε a : ℝ) : ℝ := -(bε ε a * exp (-2 * a) / (2 * a ^ 2 * cosh a))
 
-theorem shortShellDensity_intervalIntegrable {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) :
+theorem w_s_intervalIntegrable {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) :
     IntervalIntegrable (w_s ε) volume (a₀ε ε) (Aε ε) := by
   have hn : Continuous fun a : ℝ ↦ bε ε a * exp (-2 * a) := by unfold bε; fun_prop
   have hd : Continuous fun a : ℝ ↦ 2 * a ^ 2 * cosh a := by fun_prop
@@ -12657,12 +12667,12 @@ def h_ε (ε : ℝ) (z : ℂ) : ℂ :=
   (∫ a in a₀ε ε..Aε ε, (w_s ε a : ℂ) * (Complex.cos ((a : ℂ) * z) - 1)) +
   ∫ a in Bε ε..Bε ε + 1, (w_B ε a : ℂ) * (Complex.cos ((a : ℂ) * z) - 1)
 
-theorem mellinShellPhase_neg (ε : ℝ) (z : ℂ) : h_ε ε (-z) = h_ε ε z := by
+theorem h_ε_neg (ε : ℝ) (z : ℂ) : h_ε ε (-z) = h_ε ε z := by
   unfold h_ε
   congr 1 <;> exact intervalIntegral.integral_congr fun a _ ↦ by simp
 
-/-- `h_ε` restricted to the real axis. -/
-def realOscillatoryShellPhase (ε t : ℝ) : ℝ :=
+/-- `h_ε` restricted to the real axis: `h_εℝ ε t = h_ε(t) = ∫ w(a)(cos(at) - 1) da`. -/
+def h_εℝ (ε t : ℝ) : ℝ :=
   (∫ a in a₀ε ε..Aε ε, w_s ε a * (cos (a * t) - 1)) +
   ∫ a in Bε ε..Bε ε + 1, w_B ε a * (cos (a * t) - 1)
 
@@ -12679,16 +12689,16 @@ theorem intervalIntegral_ofReal_shell {w g : ℝ → ℝ} {a b : ℝ} {z : ℂ}
   rw [← intervalIntegral.integral_ofReal]
   exact intervalIntegral.integral_congr fun x _ ↦ by rw [hg]; push_cast; ring
 
-theorem mellinShellPhase_ofReal (ε t : ℝ) :
-    h_ε ε (t : ℂ) = (realOscillatoryShellPhase ε t : ℂ) := by
+theorem h_ε_ofReal (ε t : ℝ) :
+    h_ε ε (t : ℂ) = (h_εℝ ε t : ℂ) := by
   have hg (x : ℝ) : Complex.cos ((x : ℂ) * (t : ℂ)) = (cos (x * t) : ℂ) := by
     rw [← Complex.ofReal_mul, ← Complex.ofReal_cos]
-  unfold h_ε realOscillatoryShellPhase
+  unfold h_ε h_εℝ
   rw [intervalIntegral_ofReal_shell hg, intervalIntegral_ofReal_shell hg]
   push_cast
   ring
 
-theorem mellinShellPhase_imaginary (ε u : ℝ) : h_ε ε (I * (u : ℂ)) = (h_εI ε u : ℂ) := by
+theorem h_ε_imaginary (ε u : ℝ) : h_ε ε (I * (u : ℂ)) = (h_εI ε u : ℂ) := by
   have hg (x : ℝ) : Complex.cos ((x : ℂ) * (I * (u : ℂ))) = (cosh (x * u) : ℂ) := by
     rw [show (x : ℂ) * (I * (u : ℂ)) = (x : ℂ) * (u : ℂ) * I by ring, ← Complex.ofReal_mul,
       Complex.cos_mul_I, ← Complex.ofReal_cosh]
@@ -12697,7 +12707,7 @@ theorem mellinShellPhase_imaginary (ε u : ℝ) : h_ε ε (I * (u : ℂ)) = (h_�
   push_cast
   ring
 
-theorem realHyperbolicShellPhase_neg (ε u : ℝ) : h_εI ε (-u) = h_εI ε u := by
+theorem h_εI_neg (ε u : ℝ) : h_εI ε (-u) = h_εI ε u := by
   unfold h_εI
   congr 1 <;> exact intervalIntegral.integral_congr fun a _ ↦ by simp
 
@@ -12734,7 +12744,7 @@ theorem shellIntegral_differentiable (w : ℝ → ℝ) (hw : Continuous w) {a b 
     ⟨Metric.ball_subset_closedBall hz, hx⟩
   exact hC (Set.mem_image_of_mem (fun q : ℂ × ℝ ↦ ‖F' q.1 q.2‖) hpair)
 
-theorem mellinShellPhase_differentiable {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) :
+theorem h_ε_differentiable {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) :
     Differentiable ℂ (h_ε ε) := by
   have heq : (fun z : ℂ ↦ ∫ a in a₀ε ε..Aε ε, (w_s ε a : ℂ) * (Complex.cos ((a : ℂ) * z) - 1)) =
       fun z : ℂ ↦ ∫ a in a₀ε ε..Aε ε,
@@ -12747,11 +12757,11 @@ theorem mellinShellPhase_differentiable {ε : ℝ} (hε : 0 < ε) (horder : a₀
     rw [heq]
     exact shellIntegral_differentiable _ (shortShellDensityExt_continuous hε) horder
   exact hshort.add
-    (shellIntegral_differentiable _ (positiveShellDensity_continuous ε) (by linarith))
+    (shellIntegral_differentiable _ (w_B_continuous ε) (by linarith))
 
-theorem mellinShellPhase_analyticOnNhd {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) :
+theorem h_ε_analyticOnNhd {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) :
     AnalyticOnNhd ℂ (h_ε ε) Set.univ :=
-  Complex.analyticOnNhd_univ_iff_differentiable.mpr (mellinShellPhase_differentiable hε horder)
+  Complex.analyticOnNhd_univ_iff_differentiable.mpr (h_ε_differentiable hε horder)
 
 /-- Total variation `∫ |w_s| + ∫ |w_B|` of the two shells. -/
 def saddleShellTotalVariation (ε : ℝ) : ℝ :=
@@ -12772,18 +12782,18 @@ theorem abs_integral_cos_sub_one_le {w : ℝ → ℝ} {a b : ℝ} (hab : a ≤ b
   rw [abs_mul]
   nlinarith [abs_nonneg (w x)]
 
-theorem abs_realOscillatoryShellPhase_le {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) (t : ℝ) :
-    |realOscillatoryShellPhase ε t| ≤ 2 * saddleShellTotalVariation ε := by
-  unfold realOscillatoryShellPhase saddleShellTotalVariation
-  linarith [abs_integral_cos_sub_one_le horder (shortShellDensity_intervalIntegrable hε horder) t,
+theorem abs_h_εℝ_le {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) (t : ℝ) :
+    |h_εℝ ε t| ≤ 2 * saddleShellTotalVariation ε := by
+  unfold h_εℝ saddleShellTotalVariation
+  linarith [abs_integral_cos_sub_one_le horder (w_s_intervalIntegrable hε horder) t,
     abs_integral_cos_sub_one_le (by linarith : Bε ε ≤ Bε ε + 1)
-      ((positiveShellDensity_continuous ε).intervalIntegrable _ _) t,
+      ((w_B_continuous ε).intervalIntegrable _ _) t,
     abs_add_le (∫ a in a₀ε ε..Aε ε, w_s ε a * (cos (a * t) - 1))
       (∫ a in Bε ε..Bε ε + 1, w_B ε a * (cos (a * t) - 1))]
 
-theorem mellinShellPhase_real_conj (ε t : ℝ) :
+theorem h_ε_real_conj (ε t : ℝ) :
     starRingEnd ℂ (h_ε ε (t : ℂ)) = h_ε ε (t : ℂ) := by
-  rw [mellinShellPhase_ofReal]
+  rw [h_ε_ofReal]
   exact Complex.conj_ofReal _
 
 /-- The perturbed Gamma envelope `E_λ(t) = π^{it/2} Γ((λ - it)/2) e^{λ h_ε(t/λ)}`, report (38). -/
@@ -12809,24 +12819,25 @@ theorem E_continuous {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (horder : a�
     simpa [Function.comp_def] using (Complex.continuousAt_Gamma _ hpoles).comp_of_eq harg rfl
   have hphase : Continuous fun t : ℝ ↦ Complex.exp ((ℓ : ℂ) * h_ε ε ((t : ℂ) / (ℓ : ℂ))) :=
     Complex.continuous_exp.comp (continuous_const.mul
-      ((mellinShellPhase_differentiable hε horder).continuous.comp (by fun_prop)))
+      ((h_ε_differentiable hε horder).continuous.comp (by fun_prop)))
   exact (((by fun_prop) : Continuous fun t : ℝ ↦
     Complex.exp (I * (t : ℂ) * (log π : ℂ) / 2)).mul hgamma).mul hphase
 
-/-- The spectrum `X_P(t) = E_λ(t) P(t/λ)` of a polynomial factor `P` (report (38)); `XPlus` and
-`XMinus` are the cases `P = P₊, P₋`. -/
-def spectrum (ε ℓ : ℝ) (P : ℂ → ℂ) (t : ℝ) : ℂ := E ε ℓ t * P ((t : ℂ) / (ℓ : ℂ))
+/-- The prescribed Mellin data `X_{f_P}(t) = E_λ(t) P(t/λ)` of report (38) on the critical line, for
+a polynomial factor `P` (the report's `X_{f_j}`, `j ∈ {-, 0, +}`); `XPlus`, `XMinus` and `XZero` are
+the cases `P = P₊, P₋, P₀`. -/
+def X_P (ε ℓ : ℝ) (P : ℂ → ℂ) (t : ℝ) : ℂ := E ε ℓ t * P ((t : ℂ) / (ℓ : ℂ))
 
-theorem spectrum_continuous {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (horder : a₀ε ε ≤ Aε ε)
-    {P : ℂ → ℂ} (hP : Continuous P) : Continuous (spectrum ε ℓ P) :=
+theorem X_P_continuous {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (horder : a₀ε ε ≤ Aε ε)
+    {P : ℂ → ℂ} (hP : Continuous P) : Continuous (X_P ε ℓ P) :=
   (E_continuous hε hℓ horder).mul (hP.comp (by fun_prop))
 
 /-- The common value `f_±(0) = 2π^{λ/2} e^{λ h_ε(i)} β` at the origin, report (42). -/
 def originValue (ε ℓ : ℝ) : ℝ := 2 * π ^ (ℓ / 2) * exp (ℓ * h_εI ε 1) * β ε
 
-theorem saddleOriginValue_pos {ε : ℝ} (hε : 0 < ε) (ℓ : ℝ) : 0 < originValue ε ℓ := by
+theorem originValue_pos {ε : ℝ} (hε : 0 < ε) (ℓ : ℝ) : 0 < originValue ε ℓ := by
   unfold originValue
-  positivity [beta_pos hε, Real.pi_pos]
+  positivity [β_pos hε, Real.pi_pos]
 
 /-- `E_λ` in the Mellin coordinate `z = λ - it`. -/
 def mellinEnvelope (ε ℓ : ℝ) (z : ℂ) : ℂ :=
@@ -12850,13 +12861,14 @@ def saddleRegularMellinFactor (ε ℓ : ℝ) (z : ℂ) : ℂ :=
 def regularMellinFactor (ε ℓ : ℝ) (P : ℂ → ℂ) (z : ℂ) : ℂ :=
   saddleRegularMellinFactor ε ℓ z * P (I * (z - (ℓ : ℂ)) / (ℓ : ℂ))
 
-/-- The Mellin data `M_P(z) = E_λ(i(z - λ)) P(i(z - λ)/λ)` for a polynomial factor `P`;
-`MPlus` and `MMinus` are the cases `P = P₊, P₋`. -/
-def mellinData (ε ℓ : ℝ) (P : ℂ → ℂ) (z : ℂ) : ℂ :=
+/-- The Mellin data `M_P(z) = E_λ(i(z - λ)) P(i(z - λ)/λ)` for a polynomial factor `P`, i.e. `X_P`
+in the Mellin variable `z = λ - it`: the Mellin transform `M_{f_P}` of the profile `f_P`
+(report (8), (38)); `MPlus` and `MMinus` are the cases `P = P₊, P₋`. -/
+def M_P (ε ℓ : ℝ) (P : ℂ → ℂ) (z : ℂ) : ℂ :=
   mellinEnvelope ε ℓ z * P (I * (z - (ℓ : ℂ)) / (ℓ : ℂ))
 
 /-- The pole-free factor of `M₊`; definitionally `regularMellinFactor ε ℓ (PPlus ε)`. -/
-def plusSaddleRegularMellinFactor (ε ℓ : ℝ) (z : ℂ) : ℂ := regularMellinFactor ε ℓ (PPlus ε) z
+def regularMellinFactorPlus (ε ℓ : ℝ) (z : ℂ) : ℂ := regularMellinFactor ε ℓ (PPlus ε) z
 
 /-! ### The polynomial factors `P₊`, `P₋` -/
 
@@ -12864,23 +12876,23 @@ theorem differentiable_PPlus (ε : ℝ) : Differentiable ℂ (PPlus ε) := by un
 
 theorem differentiable_PMinus (ε : ℝ) : Differentiable ℂ (PMinus ε) := by unfold PMinus; fun_prop
 
-theorem minusPolynomial_neg (ε : ℝ) (z : ℂ) : PMinus ε (-z) = PPlus ε z := by
+theorem PMinus_neg (ε : ℝ) (z : ℂ) : PMinus ε (-z) = PPlus ε z := by
   unfold PMinus PPlus
   ring
 
-theorem plusPolynomial_conj (ε : ℝ) (z : ℂ) :
+theorem PPlus_conj (ε : ℝ) (z : ℂ) :
     starRingEnd ℂ (PPlus ε z) = PMinus ε (starRingEnd ℂ z) := by
   unfold PPlus PMinus
   simp only [map_add, map_mul, map_pow, map_one, Complex.conj_ofReal, Complex.conj_I]
   ring
 
-theorem minusPolynomial_conj (ε : ℝ) (z : ℂ) :
+theorem PMinus_conj (ε : ℝ) (z : ℂ) :
     starRingEnd ℂ (PMinus ε z) = PPlus ε (starRingEnd ℂ z) := by
   unfold PMinus PPlus
   simp only [map_add, map_sub, map_mul, map_pow, map_one, Complex.conj_ofReal, Complex.conj_I]
   ring
 
-theorem norm_plusPolynomial_le (ε : ℝ) (z : ℂ) :
+theorem norm_PPlus_le (ε : ℝ) (z : ℂ) :
     ‖PPlus ε z‖ ≤ (1 + |β ε|) * (1 + ‖z‖) ^ 3 := by
   have h0 : (0 : ℝ) ≤ ‖z‖ := norm_nonneg z
   have hcube : (1 : ℝ) ≤ (1 + ‖z‖) ^ 3 := one_le_pow₀ (by linarith)
@@ -12897,10 +12909,10 @@ theorem norm_plusPolynomial_le (ε : ℝ) (z : ℂ) :
       gcongr
   nlinarith [mul_le_mul_of_nonneg_left hcube (abs_nonneg (β ε))]
 
-theorem norm_minusPolynomial_le (ε : ℝ) (z : ℂ) :
+theorem norm_PMinus_le (ε : ℝ) (z : ℂ) :
     ‖PMinus ε z‖ ≤ (1 + |β ε|) * (1 + ‖z‖) ^ 3 := by
-  rw [← Complex.conj_conj z, ← plusPolynomial_conj, RCLike.norm_conj]
-  simpa using norm_plusPolynomial_le ε (starRingEnd ℂ z)
+  rw [← Complex.conj_conj z, ← PPlus_conj, RCLike.norm_conj]
+  simpa using norm_PPlus_le ε (starRingEnd ℂ z)
 
 /-- The properties of the polynomial factors `P₊`, `P₋`, `P₀` used throughout §4 of the report:
 entire, of cubic growth `‖P ζ‖ ≤ (1 + |β|)(1 + ‖ζ‖)³`, and with the conjugation symmetry
@@ -12912,13 +12924,13 @@ structure IsSaddlePolynomial (ε : ℝ) (P : ℂ → ℂ) : Prop where
 
 theorem isSaddlePolynomial_PPlus (ε : ℝ) : IsSaddlePolynomial ε (PPlus ε) where
   differentiable := differentiable_PPlus ε
-  norm_le := norm_plusPolynomial_le ε
-  conj_eq z := by rw [plusPolynomial_conj, ← minusPolynomial_neg, neg_neg]
+  norm_le := norm_PPlus_le ε
+  conj_eq z := by rw [PPlus_conj, ← PMinus_neg, neg_neg]
 
 theorem isSaddlePolynomial_PMinus (ε : ℝ) : IsSaddlePolynomial ε (PMinus ε) where
   differentiable := differentiable_PMinus ε
-  norm_le := norm_minusPolynomial_le ε
-  conj_eq z := by rw [minusPolynomial_conj, minusPolynomial_neg]
+  norm_le := norm_PMinus_le ε
+  conj_eq z := by rw [PMinus_conj, PMinus_neg]
 
 theorem IsSaddlePolynomial.continuous {ε : ℝ} {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) :
     Continuous P :=
@@ -12931,14 +12943,14 @@ theorem IsSaddlePolynomial.im_imaginary {ε : ℝ} {P : ℂ → ℂ} (hP : IsSad
   rw [map_mul, Complex.conj_I, Complex.conj_ofReal, neg_mul, neg_neg] at h
   exact Complex.conj_eq_iff_im.mp h
 
-theorem mellinData_eq_gamma_mul_regular (ε ℓ : ℝ) (P : ℂ → ℂ) (z : ℂ) :
-    mellinData ε ℓ P z = Complex.Gamma (z / 2) * regularMellinFactor ε ℓ P z := by
-  unfold mellinData mellinEnvelope regularMellinFactor saddleRegularMellinFactor
+theorem M_P_eq_gamma_mul_regular (ε ℓ : ℝ) (P : ℂ → ℂ) (z : ℂ) :
+    M_P ε ℓ P z = Complex.Gamma (z / 2) * regularMellinFactor ε ℓ P z := by
+  unfold M_P mellinEnvelope regularMellinFactor saddleRegularMellinFactor
   ring
 
-theorem mellinData_eq (ε ℓ : ℝ) (P : ℂ → ℂ) :
-    mellinData ε ℓ P = fun z ↦ Complex.Gamma (z / 2) * regularMellinFactor ε ℓ P z :=
-  funext (mellinData_eq_gamma_mul_regular ε ℓ P)
+theorem M_P_eq (ε ℓ : ℝ) (P : ℂ → ℂ) :
+    M_P ε ℓ P = fun z ↦ Complex.Gamma (z / 2) * regularMellinFactor ε ℓ P z :=
+  funext (M_P_eq_gamma_mul_regular ε ℓ P)
 
 theorem saddleRegularMellinFactor_differentiable {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
     (ℓ : ℝ) : Differentiable ℂ (saddleRegularMellinFactor ε ℓ) := by
@@ -12946,7 +12958,7 @@ theorem saddleRegularMellinFactor_differentiable {ε : ℝ} (hε : 0 < ε) (hord
   have hphase : Differentiable ℂ fun z : ℂ ↦
       Complex.exp ((ℓ : ℂ) * h_ε ε (I * (z - (ℓ : ℂ)) / (ℓ : ℂ))) :=
     Complex.differentiable_exp.comp
-      (((mellinShellPhase_differentiable hε horder).comp harg).const_mul (ℓ : ℂ))
+      (((h_ε_differentiable hε horder).comp harg).const_mul (ℓ : ℂ))
   exact ((by fun_prop) : Differentiable ℂ fun z : ℂ ↦
     Complex.exp (((ℓ : ℂ) - z) * (log π : ℂ) / 2)).mul hphase
 
@@ -12959,9 +12971,9 @@ theorem regularMellinFactor_differentiable {ε : ℝ} (hε : 0 < ε) (horder : a
   unfold regularMellinFactor
   exact (saddleRegularMellinFactor_differentiable hε horder ℓ).mul (hP.comp (by fun_prop))
 
-theorem mellinData_meromorphic {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) (ℓ : ℝ)
-    {P : ℂ → ℂ} (hP : Differentiable ℂ P) : Meromorphic (mellinData ε ℓ P) := by
-  rw [mellinData_eq]
+theorem M_P_meromorphic {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) (ℓ : ℝ)
+    {P : ℂ → ℂ} (hP : Differentiable ℂ P) : Meromorphic (M_P ε ℓ P) := by
+  rw [M_P_eq]
   exact Complex.meromorphic_Gamma_div_two.mul (meromorphicOn_univ.mp
     (Complex.analyticOnNhd_univ_iff_differentiable.mpr
       (regularMellinFactor_differentiable hε horder ℓ hP)).meromorphicOn)
@@ -12980,18 +12992,18 @@ theorem saddleMellinGamma_differentiableAt_of_not_pole {z : ℂ}
   (Complex.differentiableAt_Gamma (z / 2) fun n hn ↦
     hz n (by linear_combination 2 * hn)).comp z (by fun_prop)
 
-theorem mellinData_differentiableOn_rightHalfPlane {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
+theorem M_P_differentiableOn_rightHalfPlane {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
     (ℓ : ℝ) {P : ℂ → ℂ} (hP : Differentiable ℂ P) :
-    DifferentiableOn ℂ (mellinData ε ℓ P) {z : ℂ | 0 < z.re} := by
+    DifferentiableOn ℂ (M_P ε ℓ P) {z : ℂ | 0 < z.re} := by
   have hgamma : DifferentiableOn ℂ (fun z : ℂ ↦ Complex.Gamma (z / 2)) {z : ℂ | 0 < z.re} :=
     fun z hz ↦ (saddleMellinGamma_differentiableAt_of_re_pos hz).differentiableWithinAt
-  rw [mellinData_eq]
+  rw [M_P_eq]
   exact hgamma.mul (regularMellinFactor_differentiable hε horder ℓ hP).differentiableOn
 
-theorem mellinData_differentiableAt_of_not_pole {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
+theorem M_P_differentiableAt_of_not_pole {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
     (ℓ : ℝ) {P : ℂ → ℂ} (hP : Differentiable ℂ P) {z : ℂ}
-    (hz : ∀ n : ℕ, z ≠ -(2 * n : ℂ)) : DifferentiableAt ℂ (mellinData ε ℓ P) z := by
-  rw [mellinData_eq]
+    (hz : ∀ n : ℕ, z ≠ -(2 * n : ℂ)) : DifferentiableAt ℂ (M_P ε ℓ P) z := by
+  rw [M_P_eq]
   exact (saddleMellinGamma_differentiableAt_of_not_pole hz).mul
     (regularMellinFactor_differentiable hε horder ℓ hP z)
 
@@ -13008,17 +13020,17 @@ theorem shellArgument_neg_even {ℓ : ℝ} (hℓ : 0 < ℓ) (n : ℕ) :
   ring
 
 /-- `h_ε(-i) = h_ε(i)` is real, report (42). -/
-theorem mellinShellPhase_neg_I (ε : ℝ) : h_ε ε (-I) = (h_εI ε 1 : ℂ) := by
-  rw [mellinShellPhase_neg]
-  simpa using mellinShellPhase_imaginary ε 1
+theorem h_ε_neg_I (ε : ℝ) : h_ε ε (-I) = (h_εI ε 1 : ℂ) := by
+  rw [h_ε_neg]
+  simpa using h_ε_imaginary ε 1
 
 /-- `P₊(-i) = β`, report (42). -/
-theorem plusPolynomial_neg_I (ε : ℝ) : PPlus ε (-I) = (β ε : ℂ) := by
-  simpa using plusPolynomial_imaginary ε (-1)
+theorem PPlus_neg_I (ε : ℝ) : PPlus ε (-I) = (β ε : ℂ) := by
+  simpa using PPlus_imaginary ε (-1)
 
 /-- `P₋(-i) = β`, report (42). -/
-theorem minusPolynomial_neg_I (ε : ℝ) : PMinus ε (-I) = (β ε : ℂ) := by
-  simpa using minusPolynomial_imaginary ε (-1)
+theorem PMinus_neg_I (ε : ℝ) : PMinus ε (-I) = (β ε : ℂ) := by
+  simpa using PMinus_imaginary ε (-1)
 
 theorem saddleRegularMellinFactor_zero {ε ℓ : ℝ} (hℓ : 0 < ℓ) :
     saddleRegularMellinFactor ε ℓ 0 = ((π ^ (ℓ / 2) * exp (ℓ * h_εI ε 1) : ℝ) : ℂ) := by
@@ -13028,7 +13040,7 @@ theorem saddleRegularMellinFactor_zero {ε ℓ : ℝ} (hℓ : 0 < ℓ) :
     push_cast
     ring
   unfold saddleRegularMellinFactor
-  rw [shellArgument_zero hℓ, hpi, mellinShellPhase_neg_I, ← Complex.ofReal_mul,
+  rw [shellArgument_zero hℓ, hpi, h_ε_neg_I, ← Complex.ofReal_mul,
     ← Complex.ofReal_exp, ← Complex.ofReal_mul]
 
 /-- Report (41): the regular factor at the `n`-th pole `z = -2n`. -/
@@ -13042,15 +13054,15 @@ theorem saddleRegularMellinFactor_neg_even {ε ℓ : ℝ} (hℓ : 0 < ℓ) (n : 
     push_cast
     ring
   unfold saddleRegularMellinFactor
-  rw [hpi, shellArgument_neg_even hℓ n, mellinShellPhase_imaginary,
-    realHyperbolicShellPhase_neg, ← Complex.ofReal_mul, ← Complex.ofReal_exp,
+  rw [hpi, shellArgument_neg_even hℓ n, h_ε_imaginary,
+    h_εI_neg, ← Complex.ofReal_mul, ← Complex.ofReal_exp,
     ← Complex.ofReal_mul]
 
-theorem plusSaddleRegularMellinFactor_neg_even {ε ℓ : ℝ} (hℓ : 0 < ℓ) (n : ℕ) :
-    plusSaddleRegularMellinFactor ε ℓ (-(2 * n : ℂ)) =
+theorem regularMellinFactorPlus_neg_even {ε ℓ : ℝ} (hℓ : 0 < ℓ) (n : ℕ) :
+    regularMellinFactorPlus ε ℓ (-(2 * n : ℂ)) =
       ((π ^ (ℓ / 2 + (n : ℝ)) * exp (ℓ * h_εI ε (1 + 2 * (n : ℝ) / ℓ)) : ℝ) : ℂ) *
         PPlus ε (I * ((-(1 + 2 * (n : ℝ) / ℓ) : ℝ) : ℂ)) := by
-  unfold plusSaddleRegularMellinFactor regularMellinFactor
+  unfold regularMellinFactorPlus regularMellinFactor
   rw [saddleRegularMellinFactor_neg_even hℓ n, shellArgument_neg_even hℓ n]
 
 /-- Report (42): twice the regular factor at `z = 0` is `2π^{λ/2} e^{λ h_ε(i)} P(-i)`. -/
@@ -13169,8 +13181,8 @@ def nthPoleRegularPart (ε ℓ : ℝ) (P : ℂ → ℂ) (n : ℕ) : ℂ → ℂ 
   dslope (nthPoleNumerator ε ℓ P n) (-(2 * n : ℂ))
 
 /-- The residues `Res_{z = -2n} M₊`; definitionally `poleResidue ε ℓ (PPlus ε) n`. -/
-def plusSaddlePoleResidue (ε ℓ : ℝ) (n : ℕ) : ℂ := (2 : ℂ) * (-1 : ℂ) ^ n / (n.factorial : ℂ) *
-    plusSaddleRegularMellinFactor ε ℓ (-(2 * n : ℂ))
+def poleResiduePlus (ε ℓ : ℝ) (n : ℕ) : ℂ := (2 : ℂ) * (-1 : ℂ) ^ n / (n.factorial : ℂ) *
+    regularMellinFactorPlus ε ℓ (-(2 * n : ℂ))
 
 /-- Report (42): the residue at `z = 0` is `2π^{λ/2} e^{λ h_ε(i)} P(-i)`, the value `f_P(0)`. -/
 theorem poleResidue_zero {ε ℓ : ℝ} (hℓ : 0 < ℓ) (P : ℂ → ℂ) :
@@ -13180,14 +13192,14 @@ theorem poleResidue_zero {ε ℓ : ℝ} (hℓ : 0 < ℓ) (P : ℂ → ℂ) :
 /-- Report (42): `f₊(0) = 2π^{λ/2} e^{λ h_ε(i)} β`. -/
 theorem poleResidue_PPlus_zero {ε ℓ : ℝ} (hℓ : 0 < ℓ) :
     poleResidue ε ℓ (PPlus ε) 0 = (originValue ε ℓ : ℂ) := by
-  rw [poleResidue_zero hℓ, plusPolynomial_neg_I, originValue]
+  rw [poleResidue_zero hℓ, PPlus_neg_I, originValue]
   push_cast
   ring
 
 /-- Report (42): `f₋(0) = 2π^{λ/2} e^{λ h_ε(i)} β`. -/
 theorem poleResidue_PMinus_zero {ε ℓ : ℝ} (hℓ : 0 < ℓ) :
     poleResidue ε ℓ (PMinus ε) 0 = (originValue ε ℓ : ℂ) := by
-  rw [poleResidue_zero hℓ, minusPolynomial_neg_I, originValue]
+  rw [poleResidue_zero hℓ, PMinus_neg_I, originValue]
   push_cast
   ring
 
@@ -13204,18 +13216,18 @@ theorem nthPoleNumerator_at_pole (ε ℓ : ℝ) (P : ℂ → ℂ) (n : ℕ) :
   unfold nthPoleNumerator poleResidue
   rw [gammaPoleNumerator_at_pole]
 
-theorem mellinData_eq_nthPoleNumerator_div (ε ℓ : ℝ) (P : ℂ → ℂ) {n : ℕ} {z : ℂ}
+theorem M_P_eq_nthPoleNumerator_div (ε ℓ : ℝ) (P : ℂ → ℂ) {n : ℕ} {z : ℂ}
     (hstrip : z ∈ saddlePoleStrip n) (hpole : z ≠ -(2 * n : ℂ)) :
-    mellinData ε ℓ P z = nthPoleNumerator ε ℓ P n z / (z + (2 * n : ℂ)) := by
-  rw [mellinData_eq_gamma_mul_regular, Gamma_half_eq_gammaPoleNumerator_div hstrip hpole,
+    M_P ε ℓ P z = nthPoleNumerator ε ℓ P n z / (z + (2 * n : ℂ)) := by
+  rw [M_P_eq_gamma_mul_regular, Gamma_half_eq_gammaPoleNumerator_div hstrip hpole,
     nthPoleNumerator]
   ring
 
 /-- Report (41): near the pole `z = -2n` the Mellin data is `residue/(z + 2n)` plus a regular
 part. -/
-theorem mellinData_nthPole_decomposition (ε ℓ : ℝ) (P : ℂ → ℂ) {n : ℕ} {z : ℂ}
+theorem M_P_nthPole_decomposition (ε ℓ : ℝ) (P : ℂ → ℂ) {n : ℕ} {z : ℂ}
     (hstrip : z ∈ saddlePoleStrip n) (hpole : z ≠ -(2 * n : ℂ)) :
-    mellinData ε ℓ P z =
+    M_P ε ℓ P z =
       poleResidue ε ℓ P n / (z + (2 * n : ℂ)) + nthPoleRegularPart ε ℓ P n z := by
   have hcoord : z + (2 * n : ℂ) ≠ 0 := fun h ↦ hpole (by linear_combination h)
   have hslope : (z + (2 * n : ℂ)) * nthPoleRegularPart ε ℓ P n z =
@@ -13223,7 +13235,7 @@ theorem mellinData_nthPole_decomposition (ε ℓ : ℝ) (P : ℂ → ℂ) {n : �
     have hbase := sub_smul_dslope (nthPoleNumerator ε ℓ P n) (-(2 * n : ℂ)) z
     rw [nthPoleNumerator_at_pole] at hbase
     simpa only [nthPoleRegularPart, sub_neg_eq_add, smul_eq_mul] using hbase
-  rw [mellinData_eq_nthPoleNumerator_div ε ℓ P hstrip hpole,
+  rw [M_P_eq_nthPoleNumerator_div ε ℓ P hstrip hpole,
     show nthPoleNumerator ε ℓ P n z =
       poleResidue ε ℓ P n + (z + (2 * n : ℂ)) * nthPoleRegularPart ε ℓ P n z by
       rw [hslope]; ring]
@@ -13259,7 +13271,7 @@ section CohnElkies_UpperBound_MellinProfile
 
 The inverse Mellin kernel `r^{-z}`, the Gaussian pole representatives and the subtraction of
 finitely many poles, the profile `f_P(r) = (1/2π) ∫ M_P(λ - it) r^{-λ + it} dt` on the critical
-line (`mellinProfile`), the pair `f₊`, `f₋` (`fPlus`, `fMinus`), polynomial bounds on the Gamma
+line (`f_P`), the pair `f₊`, `f₋` (`fPlus`, `fMinus`), polynomial bounds on the Gamma
 factor and the shell phase on shifted lines and horizontal strips, the integrability of the
 weighted data, the rectangular contour shift, and the Fourier representation of the profiles:
 `f_P` is the Fourier transform of an explicit `L¹` function, is real valued, and its Mellin data
@@ -13324,14 +13336,14 @@ structure IsPoleDatum (M : ℂ → ℂ) (ρ : ℕ → ℂ) : Prop where
 
 /-- Lemma 4.3: the Mellin data `M_P` of an entire polynomial factor `P` is a pole datum with
 residues `poleResidue ε ℓ P`. -/
-theorem isPoleDatum_mellinData {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) (ℓ : ℝ)
+theorem isPoleDatum_M_P {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) (ℓ : ℝ)
     {P : ℂ → ℂ} (hP : Differentiable ℂ P) :
-    IsPoleDatum (mellinData ε ℓ P) (poleResidue ε ℓ P) where
-  meromorphic := mellinData_meromorphic hε horder ℓ hP
-  differentiableAt _ hz := mellinData_differentiableAt_of_not_pole hε horder ℓ hP hz
+    IsPoleDatum (M_P ε ℓ P) (poleResidue ε ℓ P) where
+  meromorphic := M_P_meromorphic hε horder ℓ hP
+  differentiableAt _ hz := M_P_differentiableAt_of_not_pole hε horder ℓ hP hz
   decomposition n := ⟨nthPoleRegularPart ε ℓ P n,
     nthPoleRegularPart_differentiableOn hε horder ℓ hP n,
-    fun _ hz hne ↦ mellinData_nthPole_decomposition ε ℓ P hz hne⟩
+    fun _ hz hne ↦ M_P_nthPole_decomposition ε ℓ P hz hne⟩
 
 /-- The Mellin datum `M` with the polar parts of its first `N + 1` poles subtracted. -/
 def finitePoleSubtraction (M : ℂ → ℂ) (ρ : ℕ → ℂ) (N : ℕ) (z : ℂ) : ℂ :=
@@ -13494,41 +13506,41 @@ theorem mellinEnvelope_vertical (ε ℓ t : ℝ) :
     show (ℓ : ℂ) - ((ℓ : ℂ) - I * (t : ℂ)) = I * (t : ℂ) by ring]
 
 /-- On the critical line `z = λ - it` the Mellin data is the spectrum: `M_P(λ - it) = X_P(t)`. -/
-theorem mellinData_vertical (ε ℓ : ℝ) (P : ℂ → ℂ) (t : ℝ) :
-    mellinData ε ℓ P ((ℓ : ℂ) - I * (t : ℂ)) = spectrum ε ℓ P t := by
-  unfold mellinData spectrum
+theorem M_P_vertical (ε ℓ : ℝ) (P : ℂ → ℂ) (t : ℝ) :
+    M_P ε ℓ P ((ℓ : ℂ) - I * (t : ℂ)) = X_P ε ℓ P t := by
+  unfold M_P X_P
   rw [mellinEnvelope_vertical, mellinShellArgument_vertical]
 
 /-- The radial profile `f_P` of a Mellin datum `M_P`: its inverse Mellin transform for `r ≠ 0`,
 with the prescribed real value `c` at the origin. The profiles `f₊`, `f₋`, `f₀` of the report
 are the cases `P = P₊, P₋, P₀` (with `c = f_P(0)` given by `poleResidue_zero`). -/
-def mellinProfile (ε ℓ : ℝ) (P : ℂ → ℂ) (c r : ℝ) : ℂ :=
-  if r = 0 then (c : ℂ) else mellinInv ℓ (mellinData ε ℓ P) r
+def f_P (ε ℓ : ℝ) (P : ℂ → ℂ) (c r : ℝ) : ℂ :=
+  if r = 0 then (c : ℂ) else mellinInv ℓ (M_P ε ℓ P) r
 
 /-- The radial function `x ↦ f_P(‖x‖)` on `ℝ ^ d`. -/
-def mellinProfileFun (ε : ℝ) (d : ℕ) (P : ℂ → ℂ) (c : ℝ) (x : Euclidean d) : ℂ :=
-  mellinProfile ε (d / 2 : ℝ) P c ‖x‖
+def f_PFun (ε : ℝ) (d : ℕ) (P : ℂ → ℂ) (c : ℝ) (x : Euclidean d) : ℂ :=
+  f_P ε (d / 2 : ℝ) P c ‖x‖
 
-theorem mellinProfile_zero (ε ℓ : ℝ) (P : ℂ → ℂ) (c : ℝ) : mellinProfile ε ℓ P c 0 = c := by
-  simp [mellinProfile]
+theorem f_P_zero (ε ℓ : ℝ) (P : ℂ → ℂ) (c : ℝ) : f_P ε ℓ P c 0 = c := by
+  simp [f_P]
 
-theorem mellinProfile_of_ne_zero (ε ℓ : ℝ) (P : ℂ → ℂ) (c : ℝ) {r : ℝ} (hr : r ≠ 0) :
-    mellinProfile ε ℓ P c r = mellinInv ℓ (mellinData ε ℓ P) r := by
-  simp [mellinProfile, hr]
+theorem f_P_of_ne_zero (ε ℓ : ℝ) (P : ℂ → ℂ) (c : ℝ) {r : ℝ} (hr : r ≠ 0) :
+    f_P ε ℓ P c r = mellinInv ℓ (M_P ε ℓ P) r := by
+  simp [f_P, hr]
 
-theorem mellinProfileFun_radial (ε : ℝ) (d : ℕ) (P : ℂ → ℂ) (c : ℝ) :
-    IsRadial (mellinProfileFun ε d P c) := fun _ _ hxy ↦ by simp only [mellinProfileFun, hxy]
+theorem f_PFun_radial (ε : ℝ) (d : ℕ) (P : ℂ → ℂ) (c : ℝ) :
+    IsRadial (f_PFun ε d P c) := fun _ _ hxy ↦ by simp only [f_PFun, hxy]
 
-@[simp] theorem mellinProfileFun_zero (ε : ℝ) (d : ℕ) (P : ℂ → ℂ) (c : ℝ) :
-    mellinProfileFun ε d P c (0 : Euclidean d) = c := by
-  simp [mellinProfileFun, mellinProfile]
+@[simp] theorem f_PFun_zero (ε : ℝ) (d : ℕ) (P : ℂ → ℂ) (c : ℝ) :
+    f_PFun ε d P c (0 : Euclidean d) = c := by
+  simp [f_PFun, f_P]
 
 /-- The radial profile `f₊` of the report, the inverse Mellin transform of `M₊`; definitionally
-`mellinProfile ε ℓ (PPlus ε) (originValue ε ℓ)`. -/
+`f_P ε ℓ (PPlus ε) (originValue ε ℓ)`. -/
 def fPlus (ε ℓ r : ℝ) : ℂ := if r = 0 then (originValue ε ℓ : ℂ) else mellinInv ℓ (MPlus ε ℓ) r
 
 /-- The radial profile `f₋` of the report, the inverse Mellin transform of `M₋`; definitionally
-`mellinProfile ε ℓ (PMinus ε) (originValue ε ℓ)`. -/
+`f_P ε ℓ (PMinus ε) (originValue ε ℓ)`. -/
 def fMinus (ε ℓ r : ℝ) : ℂ := if r = 0 then (originValue ε ℓ : ℂ) else mellinInv ℓ (MMinus ε ℓ) r
 
 /-- The radial function `x ↦ f₊(‖x‖)` on `ℝ ^ d`. -/
@@ -13537,28 +13549,28 @@ def fPlusFun (ε : ℝ) (d : ℕ) (x : Euclidean d) : ℂ := fPlus ε (d / 2 : �
 /-- The radial function `x ↦ f₋(‖x‖)` on `ℝ ^ d`. -/
 def fMinusFun (ε : ℝ) (d : ℕ) (x : Euclidean d) : ℂ := fMinus ε (d / 2 : ℝ) ‖x‖
 
-@[simp] theorem plusSaddleFunction_zero (ε : ℝ) (d : ℕ) :
+@[simp] theorem fPlusFun_zero (ε : ℝ) (d : ℕ) :
     fPlusFun ε d (0 : Euclidean d) = (originValue ε (d / 2 : ℝ) : ℂ) := by simp [fPlusFun, fPlus]
 
-@[simp] theorem minusSaddleFunction_zero (ε : ℝ) (d : ℕ) :
+@[simp] theorem fMinusFun_zero (ε : ℝ) (d : ℕ) :
     fMinusFun ε d (0 : Euclidean d) = (originValue ε (d / 2 : ℝ) : ℂ) := by simp [fMinusFun, fMinus]
 
 theorem saddleFunction_zero_pos {ε : ℝ} (hε : 0 < ε) (d : ℕ) :
     0 < (fPlusFun ε d (0 : Euclidean d)).re ∧ 0 < (fMinusFun ε d (0 : Euclidean d)).re :=
-  ⟨by simpa using saddleOriginValue_pos hε (d / 2 : ℝ),
-    by simpa using saddleOriginValue_pos hε (d / 2 : ℝ)⟩
+  ⟨by simpa using originValue_pos hε (d / 2 : ℝ),
+    by simpa using originValue_pos hε (d / 2 : ℝ)⟩
 
-theorem fPlus_eq_mellinProfile (ε ℓ : ℝ) :
-    fPlus ε ℓ = mellinProfile ε ℓ (PPlus ε) (originValue ε ℓ) := rfl
+theorem fPlus_eq_f_P (ε ℓ : ℝ) :
+    fPlus ε ℓ = f_P ε ℓ (PPlus ε) (originValue ε ℓ) := rfl
 
-theorem fMinus_eq_mellinProfile (ε ℓ : ℝ) :
-    fMinus ε ℓ = mellinProfile ε ℓ (PMinus ε) (originValue ε ℓ) := rfl
+theorem fMinus_eq_f_P (ε ℓ : ℝ) :
+    fMinus ε ℓ = f_P ε ℓ (PMinus ε) (originValue ε ℓ) := rfl
 
-theorem fPlusFun_eq_mellinProfileFun (ε : ℝ) (d : ℕ) :
-    fPlusFun ε d = mellinProfileFun ε d (PPlus ε) (originValue ε (d / 2 : ℝ)) := rfl
+theorem fPlusFun_eq_f_PFun (ε : ℝ) (d : ℕ) :
+    fPlusFun ε d = f_PFun ε d (PPlus ε) (originValue ε (d / 2 : ℝ)) := rfl
 
-theorem fMinusFun_eq_mellinProfileFun (ε : ℝ) (d : ℕ) :
-    fMinusFun ε d = mellinProfileFun ε d (PMinus ε) (originValue ε (d / 2 : ℝ)) := rfl
+theorem fMinusFun_eq_f_PFun (ε : ℝ) (d : ℕ) :
+    fMinusFun ε d = f_PFun ε d (PMinus ε) (originValue ε (d / 2 : ℝ)) := rfl
 
 /-! ### Gamma factors on vertical and horizontal lines -/
 
@@ -13628,9 +13640,9 @@ theorem horizontalShellVariation_mono {ε : ℝ} (hε : 0 < ε) (horder : a₀ε
     {H K : ℝ} (hH : 0 ≤ H) (hHK : H ≤ K) :
     horizontalShellVariation ε H ≤ horizontalShellVariation ε K :=
   add_le_add
-    (integral_abs_mul_cosh_mono horder (shortShellDensity_intervalIntegrable hε horder) hH hHK)
+    (integral_abs_mul_cosh_mono horder (w_s_intervalIntegrable hε horder) hH hHK)
     (integral_abs_mul_cosh_mono (by linarith)
-      ((positiveShellDensity_continuous ε).intervalIntegrable _ _) hH hHK)
+      ((w_B_continuous ε).intervalIntegrable _ _) hH hHK)
 
 theorem norm_integral_shellPhase_le {w : ℝ → ℝ} {p q H : ℝ} (hpq : p ≤ q) (hp : 0 ≤ p)
     (hw : IntervalIntegrable w volume p q) {z : ℂ} (hz : |z.im| ≤ H) :
@@ -13652,16 +13664,16 @@ theorem norm_integral_shellPhase_le {w : ℝ → ℝ} {p q H : ℝ} (hpq : p ≤
           abs_mul, abs_of_nonneg ha0, abs_of_nonneg hH]
         exact mul_le_mul_of_nonneg_left hz ha0
 
-theorem norm_mellinShellPhase_le {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
+theorem norm_h_ε_le {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
     {z : ℂ} {H : ℝ} (hstrip : |z.im| ≤ H) : ‖h_ε ε z‖ ≤ horizontalShellVariation ε H := by
   have hcutoff : 0 < a₀ε ε := by unfold a₀ε; positivity
   have hlocation : 0 < Bε ε := by unfold Bε; positivity
   unfold h_ε horizontalShellVariation
   refine (norm_add_le _ _).trans (add_le_add
     (norm_integral_shellPhase_le horder hcutoff.le
-      (shortShellDensity_intervalIntegrable hε horder) hstrip)
+      (w_s_intervalIntegrable hε horder) hstrip)
     (norm_integral_shellPhase_le (by linarith) hlocation.le
-      ((positiveShellDensity_continuous ε).intervalIntegrable _ _) hstrip))
+      ((w_B_continuous ε).intervalIntegrable _ _) hstrip))
 
 /-! ### Polynomial bounds on the shifted lines `Re z = a` -/
 
@@ -13697,7 +13709,7 @@ theorem norm_shellExponential_shiftedLine_le {ε ℓ : ℝ} (hε : 0 < ε) (hℓ
     _ = ℓ * ‖h_ε ε (I * (((a : ℂ) + (t : ℂ) * I) - (ℓ : ℂ)) / (ℓ : ℂ))‖ := by
         rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hℓ]
     _ ≤ ℓ * horizontalShellVariation ε |(a - ℓ) / ℓ| :=
-        mul_le_mul_of_nonneg_left (norm_mellinShellPhase_le hε horder him.le) hℓ.le
+        mul_le_mul_of_nonneg_left (norm_h_ε_le hε horder him.le) hℓ.le
 
 theorem mellinShellArgument_shiftedLine_le {ℓ : ℝ} (hℓ : 0 < ℓ) (a : ℝ) {t : ℝ} (ht : 1 ≤ |t|) :
     1 + ‖I * (((a : ℂ) + (t : ℂ) * I) - (ℓ : ℂ)) / (ℓ : ℂ)‖ ≤
@@ -13734,11 +13746,11 @@ theorem saddleShiftedLineMajorant_nonneg {ε ℓ a : ℝ} (hℓ : 0 < ℓ) (k m 
 
 /-- Lemma 4.3: on the line `Re z = a` the Mellin datum `M_P` decays faster than any polynomial,
 with the explicit majorant `saddleShiftedLineMajorant`. -/
-theorem mellinData_shiftedLine_polynomial_bound {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem M_P_shiftedLine_polynomial_bound {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : ∀ z : ℂ, ‖P z‖ ≤ (1 + |β ε|) * (1 + ‖z‖) ^ 3)
     (a : ℝ) {t : ℝ} (ht : 1 ≤ |t|) (k m : ℕ) (hshift : 0 < a / 2 + (k : ℝ)) :
-    |t| ^ m * ‖mellinData ε ℓ P ((a : ℂ) + (t : ℂ) * I)‖ ≤ saddleShiftedLineMajorant ε ℓ a k m := by
-  unfold mellinData
+    |t| ^ m * ‖M_P ε ℓ P ((a : ℂ) + (t : ℂ) * I)‖ ≤ saddleShiftedLineMajorant ε ℓ a k m := by
+  unfold M_P
   have hC : (0 : ℝ) ≤ (1 + |β ε|) * (1 + ℓ⁻¹ + |(a - ℓ) / ℓ|) ^ 3 := by positivity
   have hG : (0 : ℝ) ≤ (2 : ℝ) ^ (k + (m + 3)) * Gamma (a / 2 + (k + (m + 3) : ℝ)) := by
     positivity [Real.Gamma_pos_of_pos (gammaShift_pos m hshift)]
@@ -13863,20 +13875,20 @@ theorem exists_horizontalStrip_polynomial_bound {ε ℓ : ℝ} (hε : 0 < ε) (h
     (horizontalStripHeight_bound hℓ ha) k m hshifta)).trans (hC (Set.mem_image_of_mem _ ha))
 
 /-- Lemma 4.3: uniform polynomial decay of `M_P` on horizontal strips. -/
-theorem mellinData_horizontalStrip_polynomial_bound {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem M_P_horizontalStrip_polynomial_bound {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) {A B : ℝ} (hAB : A ≤ B)
     (m : ℕ) :
     ∃ C : ℝ, 0 ≤ C ∧ ∀ a ∈ Set.Icc A B, ∀ t : ℝ, 1 ≤ |t| →
-      |t| ^ m * ‖mellinData ε ℓ P ((a : ℂ) + (t : ℂ) * I)‖ ≤ C :=
+      |t| ^ m * ‖M_P ε ℓ P ((a : ℂ) + (t : ℂ) * I)‖ ≤ C :=
   exists_horizontalStrip_polynomial_bound hε hℓ horder
     (fun a _ ht k m hs ↦
-      mellinData_shiftedLine_polynomial_bound hε hℓ horder hP.norm_le a ht k m hs) hAB m
+      M_P_shiftedLine_polynomial_bound hε hℓ horder hP.norm_le a ht k m hs) hAB m
 
 /-! ### The envelope `E` on the critical line -/
 
-theorem saddleEnvelope_conj (ε ℓ t : ℝ) : starRingEnd ℂ (E ε ℓ t) = E ε ℓ (-t) := by
+theorem E_conj (ε ℓ t : ℝ) : starRingEnd ℂ (E ε ℓ t) = E ε ℓ (-t) := by
   have hphase : starRingEnd ℂ (h_ε ε ((t : ℂ) / (ℓ : ℂ))) = h_ε ε (-((t : ℂ) / (ℓ : ℂ))) := by
-    rw [← Complex.ofReal_div, mellinShellPhase_real_conj, mellinShellPhase_neg]
+    rw [← Complex.ofReal_div, h_ε_real_conj, h_ε_neg]
   unfold E
   simp only [map_mul, ← Complex.exp_conj, ← Complex.Gamma_conj, map_div₀, map_sub,
     Complex.conj_ofReal, Complex.conj_I, map_ofNat, Complex.ofReal_neg, neg_div]
@@ -13886,19 +13898,19 @@ theorem saddleEnvelope_conj (ε ℓ t : ℝ) : starRingEnd ℂ (E ε ℓ t) = E 
 theorem norm_shellExponential_le {ε ℓ : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) (t : ℝ) :
     ‖Complex.exp ((ℓ : ℂ) * h_ε ε ((t : ℂ) / (ℓ : ℂ)))‖ ≤
       exp (2 * |ℓ| * saddleShellTotalVariation ε) := by
-  rw [← Complex.ofReal_div, mellinShellPhase_ofReal, Complex.norm_exp]
+  rw [← Complex.ofReal_div, h_ε_ofReal, Complex.norm_exp]
   simp only [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im, mul_zero, sub_zero]
   refine Real.exp_le_exp.mpr ?_
-  calc ℓ * realOscillatoryShellPhase ε (t / ℓ)
-      ≤ |ℓ| * |realOscillatoryShellPhase ε (t / ℓ)| := by
+  calc ℓ * h_εℝ ε (t / ℓ)
+      ≤ |ℓ| * |h_εℝ ε (t / ℓ)| := by
         rw [← abs_mul]
         exact le_abs_self _
     _ ≤ |ℓ| * (2 * saddleShellTotalVariation ε) := by
         gcongr
-        exact abs_realOscillatoryShellPhase_le hε horder (t / ℓ)
+        exact abs_h_εℝ_le hε horder (t / ℓ)
     _ = 2 * |ℓ| * saddleShellTotalVariation ε := by ring
 
-theorem saddleEnvelope_vertical_polynomial_bound {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem E_vertical_polynomial_bound {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) (t : ℝ) (k : ℕ) :
     |t| ^ k * ‖E ε ℓ t‖ ≤
       (2 : ℝ) ^ k * Gamma (ℓ / 2 + k) * exp (2 * |ℓ| * saddleShellTotalVariation ε) := by
@@ -13989,19 +14001,19 @@ theorem shiftedLine_moment_integrable {M : ℂ → ℂ} {ε ℓ a : ℝ} (hℓ :
     (hdiff _ (saddleShiftedLine_ne_pole hpole t)).continuousAt.comp_of_eq hline rfl
 
 /-- Lemma 4.3: every moment of `M_P` is integrable on a pole-free vertical line. -/
-theorem mellinData_shiftedLine_moment_integrable {ε ℓ a : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem M_P_shiftedLine_moment_integrable {ε ℓ a : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P)
     (hpole : ∀ n : ℕ, a ≠ -(2 * n : ℝ)) (j : ℕ) :
-    Integrable fun t : ℝ ↦ (t : ℂ) ^ j * mellinData ε ℓ P ((a : ℂ) + (t : ℂ) * I) :=
+    Integrable fun t : ℝ ↦ (t : ℂ) ^ j * M_P ε ℓ P ((a : ℂ) + (t : ℂ) * I) :=
   shiftedLine_moment_integrable hℓ
-    (fun _ hz ↦ mellinData_differentiableAt_of_not_pole hε horder ℓ hP.differentiable hz)
-    (fun ht k m hs ↦ mellinData_shiftedLine_polynomial_bound hε hℓ horder hP.norm_le a ht k m hs)
+    (fun _ hz ↦ M_P_differentiableAt_of_not_pole hε horder ℓ hP.differentiable hz)
+    (fun ht k m hs ↦ M_P_shiftedLine_polynomial_bound hε hℓ horder hP.norm_le a ht k m hs)
     hpole j
 
-theorem plusSaddleMellinData_shiftedLine_moment_integrable {ε ℓ a : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem MPlus_shiftedLine_moment_integrable {ε ℓ a : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) (hpole : ∀ n : ℕ, a ≠ -(2 * n : ℝ)) (j : ℕ) :
     Integrable fun t : ℝ ↦ (t : ℂ) ^ j * MPlus ε ℓ ((a : ℂ) + (t : ℂ) * I) :=
-  mellinData_shiftedLine_moment_integrable hε hℓ horder (isSaddlePolynomial_PPlus ε) hpole j
+  M_P_shiftedLine_moment_integrable hε hℓ horder (isSaddlePolynomial_PPlus ε) hpole j
 
 /-! ### The inverse Mellin weight `r ^ (-z)` -/
 
@@ -14020,13 +14032,13 @@ theorem integrable_inversePower_mul {a r : ℝ} (hr : 0 < r) {G : ℝ → ℂ} (
     (hweight.aestronglyMeasurable.mul hG.aestronglyMeasurable) (.of_forall fun t ↦ ?_)
   rw [norm_mul, saddleMellinInversePower_shiftedLine_norm hr]
 
-theorem mellinData_shiftedLine_weighted_integrable {ε ℓ a r : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem M_P_shiftedLine_weighted_integrable {ε ℓ a r : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P)
     (hpole : ∀ n : ℕ, a ≠ -(2 * n : ℝ)) (hr : 0 < r) :
     Integrable fun t : ℝ ↦ saddleMellinInversePower r ((a : ℂ) + (t : ℂ) * I) *
-      mellinData ε ℓ P ((a : ℂ) + (t : ℂ) * I) :=
+      M_P ε ℓ P ((a : ℂ) + (t : ℂ) * I) :=
   integrable_inversePower_mul hr
-    (by simpa using mellinData_shiftedLine_moment_integrable hε hℓ horder hP hpole 0)
+    (by simpa using M_P_shiftedLine_moment_integrable hε hℓ horder hP hpole 0)
 
 /-! ### The Gaussian pole representatives on a vertical line -/
 
@@ -14112,16 +14124,16 @@ theorem saddleHorizontalIntegral_tendsto_zero {F : ℂ → ℂ} {A B C : ℝ} (h
   rw [habs, Complex.ofReal_mul] at htail
   exact (le_div_iff₀ hTpos).2 (by linarith)
 
-theorem mellinData_weighted_horizontalIntegral_tendsto_zero {ε ℓ r : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem M_P_weighted_horizontalIntegral_tendsto_zero {ε ℓ r : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (hr : 0 < r) {A B : ℝ}
     (hAB : A ≤ B) (s : ℝ) (hs : |s| = 1) :
     Tendsto (fun T : ℝ ↦ ∫ a in A..B,
         saddleMellinInversePower r ((a : ℂ) + (s * T : ℂ) * I) *
-          mellinData ε ℓ P ((a : ℂ) + (s * T : ℂ) * I)) atTop (𝓝 0) := by
+          M_P ε ℓ P ((a : ℂ) + (s * T : ℂ) * I)) atTop (𝓝 0) := by
   obtain ⟨C, -, hbound⟩ := weighted_horizontalStrip_bound hr hAB
-    (mellinData_horizontalStrip_polynomial_bound hε hℓ horder hP hAB 1)
+    (M_P_horizontalStrip_polynomial_bound hε hℓ horder hP hAB 1)
   exact saddleHorizontalIntegral_tendsto_zero
-    (F := fun z ↦ saddleMellinInversePower r z * mellinData ε ℓ P z) hAB (by simpa using hbound)
+    (F := fun z ↦ saddleMellinInversePower r z * M_P ε ℓ P z) hAB (by simpa using hbound)
     s hs
 
 /-- On a horizontal strip the weighted Gaussian representative decays like `1 / |t|`. -/
@@ -14331,30 +14343,30 @@ theorem rapidContourIntegrand_isRapid {M : ℂ → ℂ} {ρ : ℕ → ℂ} (hM :
 
 /-- Lemma 4.3 for the Mellin data `M_P`: the vertical integrals of its contour integrand over two
 pole-free lines of the half-plane `Re z > -2 (N + 1)` agree. -/
-theorem mellinData_rapidContourIntegrand_vertical_integral_eq {ε ℓ r A B : ℝ} (hε : 0 < ε)
+theorem M_P_rapidContourIntegrand_vertical_integral_eq {ε ℓ r A B : ℝ} (hε : 0 < ε)
     (hℓ : 0 < ℓ) (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (hr : 0 < r)
     (N : ℕ) (hhalf : -(2 * ((N : ℝ) + 1)) < A) (hAB : A ≤ B)
     (hApole : ∀ n : ℕ, A ≠ -(2 * n : ℝ)) (hBpole : ∀ n : ℕ, B ≠ -(2 * n : ℝ)) :
-    (∫ t : ℝ, rapidContourIntegrand (mellinData ε ℓ P) (poleResidue ε ℓ P) N r
+    (∫ t : ℝ, rapidContourIntegrand (M_P ε ℓ P) (poleResidue ε ℓ P) N r
         ((B : ℂ) + (t : ℂ) * I)) =
-      ∫ t : ℝ, rapidContourIntegrand (mellinData ε ℓ P) (poleResidue ε ℓ P) N r
+      ∫ t : ℝ, rapidContourIntegrand (M_P ε ℓ P) (poleResidue ε ℓ P) N r
         ((A : ℂ) + (t : ℂ) * I) :=
-  have hM := isPoleDatum_mellinData hε horder ℓ hP.differentiable
+  have hM := isPoleDatum_M_P hε horder ℓ hP.differentiable
   contourIntegrand_vertical_integral_eq hr hhalf hAB hApole hBpole
-    (by simpa using mellinData_shiftedLine_moment_integrable hε hℓ horder hP hApole 0)
-    (by simpa using mellinData_shiftedLine_moment_integrable hε hℓ horder hP hBpole 0)
-    (mellinData_horizontalStrip_polynomial_bound hε hℓ horder hP hAB 1)
+    (by simpa using M_P_shiftedLine_moment_integrable hε hℓ horder hP hApole 0)
+    (by simpa using M_P_shiftedLine_moment_integrable hε hℓ horder hP hBpole 0)
+    (M_P_horizontalStrip_polynomial_bound hε hℓ horder hP hAB 1)
     (rapidContourIntegrand_isRapid hM N r) (rapidContourIntegrand_boundary_rectangle hM N hr)
 
 /-! ### The spectrum on the critical line and its Fourier transform -/
 
 /-- Lemma 4.3: all moments `|t| ^ k ‖X_P(t)‖` of a spectrum `X_P(t) = E_λ(t) P(t/λ)` are
 integrable. -/
-theorem spectrum_norm_moment_integrable {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem X_P_norm_moment_integrable {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (k : ℕ) :
-    Integrable fun t : ℝ ↦ |t| ^ k * ‖spectrum ε ℓ P t‖ := by
+    Integrable fun t : ℝ ↦ |t| ^ k * ‖X_P ε ℓ P t‖ := by
   have hdecay : ∀ j : ℕ, ∃ C : ℝ, 0 ≤ C ∧ ∀ t : ℝ, 1 ≤ |t| →
-      |t| ^ j * ‖spectrum ε ℓ P t‖ ≤ C := fun j ↦ by
+      |t| ^ j * ‖X_P ε ℓ P t‖ ≤ C := fun j ↦ by
     refine ⟨(1 + |β ε|) * (1 + ℓ⁻¹) ^ 3 * ((2 : ℝ) ^ (j + 3) * Gamma (ℓ / 2 + (j + 3)) *
       exp (2 * |ℓ| * saddleShellTotalVariation ε)), ?_, fun t ht ↦ ?_⟩
     · have hpos : 0 < Gamma (ℓ / 2 + ((j : ℝ) + 3)) := Real.Gamma_pos_of_pos (by positivity)
@@ -14370,17 +14382,17 @@ theorem spectrum_norm_moment_integrable {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 
               field_simp [hℓ.ne']
               nlinarith
           _ = (1 + |β ε|) * (1 + ℓ⁻¹) ^ 3 * |t| ^ 3 := by ring
-      unfold spectrum
+      unfold X_P
       calc |t| ^ j * ‖E ε ℓ t * P ((t : ℂ) / (ℓ : ℂ))‖
           = |t| ^ j * ‖E ε ℓ t‖ * ‖P ((t : ℂ) / (ℓ : ℂ))‖ := by rw [norm_mul]; ring
         _ ≤ |t| ^ j * ‖E ε ℓ t‖ * ((1 + |β ε|) * (1 + ℓ⁻¹) ^ 3 * |t| ^ 3) := by gcongr
         _ = (1 + |β ε|) * (1 + ℓ⁻¹) ^ 3 * (|t| ^ (j + 3) * ‖E ε ℓ t‖) := by rw [pow_add]; ring
         _ ≤ _ := by
             simpa only [Nat.cast_add, Nat.cast_ofNat] using mul_le_mul_of_nonneg_left
-              (saddleEnvelope_vertical_polynomial_bound hε hℓ horder t (j + 3))
+              (E_vertical_polynomial_bound hε hℓ horder t (j + 3))
               (by positivity : (0 : ℝ) ≤ (1 + |β ε|) * (1 + ℓ⁻¹) ^ 3)
   simpa [norm_mul, norm_pow, Complex.norm_real, Real.norm_eq_abs] using
-    (integrable_of_continuous_polynomial_decay (spectrum_continuous hε hℓ horder hP.continuous)
+    (integrable_of_continuous_polynomial_decay (X_P_continuous hε hℓ horder hP.continuous)
       hdecay k).norm
 
 /-- If all moments of a continuous `F` are integrable, so are all moments of `y ↦ F(-2πy)`. -/
@@ -14402,13 +14414,13 @@ theorem integrable_norm_moment_comp_neg_two_pi {F : ℝ → ℂ} (hF : Continuou
   simpa [neg_mul, mul_assoc] using key
 
 /-- The Fourier data `y ↦ X_P(-2πy)` of report (40). -/
-def fourierData (ε ℓ : ℝ) (P : ℂ → ℂ) (y : ℝ) : ℂ := spectrum ε ℓ P (-(2 * π * y))
+def fourierData (ε ℓ : ℝ) (P : ℂ → ℂ) (y : ℝ) : ℂ := X_P ε ℓ P (-(2 * π * y))
 
 theorem fourierData_norm_moment_integrable {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (k : ℕ) :
     Integrable fun y : ℝ ↦ ‖y‖ ^ k * ‖fourierData ε ℓ P y‖ :=
-  integrable_norm_moment_comp_neg_two_pi (spectrum_continuous hε hℓ horder hP.continuous)
-    (fun j ↦ spectrum_norm_moment_integrable hε hℓ horder hP j) k
+  integrable_norm_moment_comp_neg_two_pi (X_P_continuous hε hℓ horder hP.continuous)
+    (fun j ↦ X_P_norm_moment_integrable hε hℓ horder hP j) k
 
 /-! ### The profiles `f_±` as Fourier transforms -/
 
@@ -14421,14 +14433,14 @@ theorem mellinInv_eq_fourier (σ : ℝ) (F : ℂ → ℂ) {r : ℝ} (hr : 0 < r)
   simpa using (Complex.ofReal_cpow hr.le (-σ)).symm
 
 /-- Report (40): `f_P(r) = r^{-λ} 𝓕(X_P(-2π ·))(log r)` for `r > 0`. -/
-theorem mellinProfile_eq_fourier (ε ℓ : ℝ) (P : ℂ → ℂ) (c : ℝ) {r : ℝ} (hr : 0 < r) :
-    mellinProfile ε ℓ P c r = (r ^ (-ℓ) : ℝ) * (𝓕 (fourierData ε ℓ P)) (log r) := by
-  have hline : (fun y : ℝ ↦ mellinData ε ℓ P ((ℓ : ℂ) + 2 * (π : ℂ) * (y : ℂ) * I)) =
+theorem f_P_eq_fourier (ε ℓ : ℝ) (P : ℂ → ℂ) (c : ℝ) {r : ℝ} (hr : 0 < r) :
+    f_P ε ℓ P c r = (r ^ (-ℓ) : ℝ) * (𝓕 (fourierData ε ℓ P)) (log r) := by
+  have hline : (fun y : ℝ ↦ M_P ε ℓ P ((ℓ : ℂ) + 2 * (π : ℂ) * (y : ℂ) * I)) =
       fourierData ε ℓ P := funext fun y ↦ by
     rw [show ((ℓ : ℂ) + 2 * (π : ℂ) * (y : ℂ) * I) = (ℓ : ℂ) - I * ((-(2 * π * y) : ℝ) : ℂ) by
       push_cast; ring]
-    exact mellinData_vertical ε ℓ P _
-  rw [mellinProfile_of_ne_zero ε ℓ P c hr.ne', mellinInv_eq_fourier ℓ (mellinData ε ℓ P) hr,
+    exact M_P_vertical ε ℓ P _
+  rw [f_P_of_ne_zero ε ℓ P c hr.ne', mellinInv_eq_fourier ℓ (M_P ε ℓ P) hr,
     hline]
 
 /-- A profile of the shape `r ↦ r ^ (-λ) · G (log r)` with `G` smooth is smooth on `(0, ∞)`. -/
@@ -14450,25 +14462,25 @@ theorem contDiffOn_comp_norm {d : ℕ} {f : ℝ → ℂ} (hf : ContDiffOn ℝ �
   simpa only [Function.comp_def] using hf.comp hnorm fun x hx ↦ norm_pos_iff.2 hx
 
 /-- Lemma 4.3: `x ↦ f_P(‖x‖)` is smooth away from the origin. -/
-theorem mellinProfileFun_contDiffOn {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
+theorem f_PFun_contDiffOn {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (c : ℝ) :
-    ContDiffOn ℝ ∞ (mellinProfileFun ε d P c) ({0}ᶜ : Set (Euclidean d)) :=
+    ContDiffOn ℝ ∞ (f_PFun ε d P c) ({0}ᶜ : Set (Euclidean d)) :=
   contDiffOn_comp_norm (contDiffOn_profile
     (Real.contDiff_fourier (N := ⊤) fun n _ ↦ fourierData_norm_moment_integrable hε
       (div_pos (by exact_mod_cast hd) two_pos) horder hP n)
-    fun r hr ↦ mellinProfile_eq_fourier ε _ P c hr)
+    fun r hr ↦ f_P_eq_fourier ε _ P c hr)
 
 /-! ### Real-valuedness of the profiles -/
 
 /-- Conjugate symmetry of the spectrum of a saddle polynomial: `conj X_P(t) = X_P(-t)`. -/
-theorem spectrum_conj {ε : ℝ} {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (ℓ t : ℝ) :
-    starRingEnd ℂ (spectrum ε ℓ P t) = spectrum ε ℓ P (-t) := by
-  unfold spectrum
-  rw [map_mul, saddleEnvelope_conj, hP.conj_eq, map_div₀, Complex.conj_ofReal,
+theorem X_P_conj {ε : ℝ} {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (ℓ t : ℝ) :
+    starRingEnd ℂ (X_P ε ℓ P t) = X_P ε ℓ P (-t) := by
+  unfold X_P
+  rw [map_mul, E_conj, hP.conj_eq, map_div₀, Complex.conj_ofReal,
     Complex.conj_ofReal, Complex.ofReal_neg, neg_div]
 
 /-- Conjugate symmetry of a Mellin datum on the critical line, from that of its spectrum. -/
-theorem mellinData_conj_vertical {ℓ : ℝ} {M : ℂ → ℂ} {X : ℝ → ℂ}
+theorem M_P_conj_vertical {ℓ : ℝ} {M : ℂ → ℂ} {X : ℝ → ℂ}
     (hvert : ∀ t : ℝ, M ((ℓ : ℂ) - I * (t : ℂ)) = X t)
     (hconj : ∀ t : ℝ, starRingEnd ℂ (X t) = X (-t)) (t : ℝ) :
     starRingEnd ℂ (M ((ℓ : ℂ) + (t : ℂ) * I)) = M ((ℓ : ℂ) + (-t : ℂ) * I) := by
@@ -14511,44 +14523,44 @@ theorem mellinInv_real_of_hermitian (σ : ℝ) (F : ℂ → ℂ)
   simp only [Complex.real_smul, map_mul, Complex.conj_ofReal, hint]
 
 /-- Lemma 4.3: the profile `f_P` of a saddle polynomial is real on `[0, ∞)`. -/
-theorem mellinProfile_im {ε : ℝ} {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (ℓ c : ℝ) {r : ℝ}
-    (hr : 0 ≤ r) : (mellinProfile ε ℓ P c r).im = 0 := by
-  unfold mellinProfile
+theorem f_P_im {ε : ℝ} {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (ℓ c : ℝ) {r : ℝ}
+    (hr : 0 ≤ r) : (f_P ε ℓ P c r).im = 0 := by
+  unfold f_P
   split_ifs with h
   · simp
   · exact mellinInv_real_of_hermitian _ _
-      (mellinData_conj_vertical (mellinData_vertical ε ℓ P) (spectrum_conj hP ℓ)) (hr.lt_of_ne' h)
+      (M_P_conj_vertical (M_P_vertical ε ℓ P) (X_P_conj hP ℓ)) (hr.lt_of_ne' h)
 
 /-- Lemma 4.3: `x ↦ f_P(‖x‖)` is real valued. -/
-theorem mellinProfileFun_im {ε : ℝ} {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (d : ℕ) (c : ℝ) :
-    IsRealValued (mellinProfileFun ε d P c) := fun x ↦ mellinProfile_im hP _ c (norm_nonneg x)
+theorem f_PFun_im {ε : ℝ} {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (d : ℕ) (c : ℝ) :
+    IsRealValued (f_PFun ε d P c) := fun x ↦ f_P_im hP _ c (norm_nonneg x)
 
 /-! ### The multiplier identity -/
 
 /-- The multiplier identity `m_λ(t) E_λ(-t) = E_λ(t)` for the envelope. -/
-theorem mellinMultiplier_mul_E_neg {ε ℓ : ℝ} (hℓ : 0 < ℓ) (t : ℝ) :
+theorem m_ℓ_mul_E_neg {ε ℓ : ℝ} (hℓ : 0 < ℓ) (t : ℝ) :
     m_ℓ ℓ t * E ε ℓ (-t) = E ε ℓ t := by
   have hphase : Complex.exp (I * (t : ℂ) * (log π : ℂ)) *
       Complex.exp (I * (-t : ℂ) * (log π : ℂ) / 2) =
         Complex.exp (I * (t : ℂ) * (log π : ℂ) / 2) := by
     rw [← Complex.exp_add]; congr 1; ring
   unfold m_ℓ E
-  rw [Complex.ofReal_neg, neg_div, mellinShellPhase_neg,
+  rw [Complex.ofReal_neg, neg_div, h_ε_neg,
     show ((ℓ : ℂ) - I * (-t : ℂ)) / 2 = ((ℓ : ℂ) + I * (t : ℂ)) / 2 by ring]
   calc _ = Complex.exp (I * (t : ℂ) * (log π : ℂ)) *
         Complex.exp (I * (-t : ℂ) * (log π : ℂ) / 2) *
         Complex.Gamma (((ℓ : ℂ) - I * (t : ℂ)) / 2) *
         Complex.exp ((ℓ : ℂ) * h_ε ε ((t : ℂ) / (ℓ : ℂ))) := by
-          field_simp [mellinMultiplier_denominator_ne_zero hℓ t]
+          field_simp [m_ℓ_denominator_ne_zero hℓ t]
     _ = _ := by rw [hphase]
 
 /-- The multiplier identity `m_λ(t) X_P(-t) = X_Q(t)` of report (40) whenever `P(-ζ) = Q(ζ)`;
 the cases `(P, Q) = (P₋, P₊)` and `(P₀, P₀)` give `f̂₋ = f₊` and `f̂₀ = f₀`. -/
-theorem mellinMultiplier_mul_spectrum_neg {ε ℓ : ℝ} (hℓ : 0 < ℓ) {P Q : ℂ → ℂ}
+theorem m_ℓ_mul_X_P_neg {ε ℓ : ℝ} (hℓ : 0 < ℓ) {P Q : ℂ → ℂ}
     (hPQ : ∀ z : ℂ, P (-z) = Q z) (t : ℝ) :
-    m_ℓ ℓ t * spectrum ε ℓ P (-t) = spectrum ε ℓ Q t := by
-  unfold spectrum
-  rw [Complex.ofReal_neg, neg_div, hPQ, ← mul_assoc, mellinMultiplier_mul_E_neg hℓ]
+    m_ℓ ℓ t * X_P ε ℓ P (-t) = X_P ε ℓ Q t := by
+  unfold X_P
+  rw [Complex.ofReal_neg, neg_div, hPQ, ← mul_assoc, m_ℓ_mul_E_neg hℓ]
 
 end
 
@@ -14566,7 +14578,7 @@ section CohnElkies_UpperBound_Residues
 Principal values across a pole, the Gaussian-weighted correction terms, and the expansion of
 `f_P(r)` as the sum of the residues `r^{2n} poleResidue n` at the poles `z = -2n`, `n ≤ N`, plus the
 remainder integral along the Taylor contour `Re z = -(2N + 1)`
-(`mellinProfile_eq_residue_sum_add_remainder`, `plusSaddleProfile_eq_residue_sum_add_remainder`).
+(`f_P_eq_residue_sum_add_remainder`, `fPlus_eq_residue_sum_add_remainder`).
 -/
 
 namespace CohnElkies
@@ -15001,47 +15013,47 @@ theorem mellinInv_eq_normalized (M : ℂ → ℂ) (σ r : ℝ) :
   ring
 
 /-- `f_P(r)`, `r > 0`, as the normalized vertical integral of `r^{-z} M_P(z)` over `Re z = λ`. -/
-theorem mellinProfile_eq_normalized_vertical_integral {ε ℓ r : ℝ} (P : ℂ → ℂ) (c : ℝ)
+theorem f_P_eq_normalized_vertical_integral {ε ℓ r : ℝ} (P : ℂ → ℂ) (c : ℝ)
     (hr : 0 < r) :
-    mellinProfile ε ℓ P c r = (2 * π : ℂ)⁻¹ * (∫ t : ℝ, saddleMellinInversePower r
-        ((ℓ : ℂ) + t * I) * mellinData ε ℓ P ((ℓ : ℂ) + t * I)) := by
-  rw [mellinProfile_of_ne_zero ε ℓ P c hr.ne', mellinInv_eq_normalized]
+    f_P ε ℓ P c r = (2 * π : ℂ)⁻¹ * (∫ t : ℝ, saddleMellinInversePower r
+        ((ℓ : ℂ) + t * I) * M_P ε ℓ P ((ℓ : ℂ) + t * I)) := by
+  rw [f_P_of_ne_zero ε ℓ P c hr.ne', mellinInv_eq_normalized]
 
 /-- The remainder of report (78): the inverse Mellin integral of `M_P` over the Taylor contour. -/
 def taylorRemainder (ε ℓ : ℝ) (P : ℂ → ℂ) (N : ℕ) (r : ℝ) : ℂ := (2 * π : ℂ)⁻¹ *
     (∫ t : ℝ, saddleMellinInversePower r ((saddleTaylorContour N : ℂ) + (t : ℂ) * I) *
-        mellinData ε ℓ P ((saddleTaylorContour N : ℂ) + (t : ℂ) * I))
+        M_P ε ℓ P ((saddleTaylorContour N : ℂ) + (t : ℂ) * I))
 
 /-- The remainder of report (78) for `f₊`; definitionally `taylorRemainder ε ℓ (PPlus ε) N r`. -/
-def plusSaddleTaylorRemainder (ε ℓ : ℝ) (N : ℕ) (r : ℝ) : ℂ := (2 * π : ℂ)⁻¹ *
+def taylorRemainderPlus (ε ℓ : ℝ) (N : ℕ) (r : ℝ) : ℂ := (2 * π : ℂ)⁻¹ *
     (∫ t : ℝ, saddleMellinInversePower r ((saddleTaylorContour N : ℂ) + (t : ℂ) * I) *
         MPlus ε ℓ ((saddleTaylorContour N : ℂ) + (t : ℂ) * I))
 
 /-- Report (78): `f_P(r) = ∑_{n ≤ N} Res_n r ^ (2n) + remainder`. -/
-theorem mellinProfile_eq_residue_sum_add_remainder {ε ℓ r : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem f_P_eq_residue_sum_add_remainder {ε ℓ r : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (c : ℝ) (hr : 0 < r)
     (N : ℕ) :
-    mellinProfile ε ℓ P c r = (∑ n ∈ Finset.range (N + 1), poleResidue ε ℓ P n *
+    f_P ε ℓ P c r = (∑ n ∈ Finset.range (N + 1), poleResidue ε ℓ P n *
         (r ^ (2 * n) : ℂ)) + taylorRemainder ε ℓ P N r := by
-  rw [mellinProfile_eq_normalized_vertical_integral P c hr, taylorRemainder]
-  exact normalized_eq_residue_sum_add_remainder hℓ hr (M := mellinData ε ℓ P)
-    (G := rapidPoleRegularPart (mellinData ε ℓ P) (poleResidue ε ℓ P) N) (poleResidue ε ℓ P) N
-    (mellinData_shiftedLine_weighted_integrable hε hℓ horder hP (saddleTaylorContour_ne_pole N)
+  rw [f_P_eq_normalized_vertical_integral P c hr, taylorRemainder]
+  exact normalized_eq_residue_sum_add_remainder hℓ hr (M := M_P ε ℓ P)
+    (G := rapidPoleRegularPart (M_P ε ℓ P) (poleResidue ε ℓ P) N) (poleResidue ε ℓ P) N
+    (M_P_shiftedLine_weighted_integrable hε hℓ horder hP (saddleTaylorContour_ne_pole N)
       hr)
-    (mellinData_shiftedLine_weighted_integrable hε hℓ horder hP (saddlePositiveContour_ne_pole hℓ)
+    (M_P_shiftedLine_weighted_integrable hε hℓ horder hP (saddlePositiveContour_ne_pole hℓ)
       hr)
     (fun _ hz hpole ↦ rapidPoleRegularPart_eq_of_not_pole
-      (isPoleDatum_mellinData hε horder ℓ hP.differentiable) hz hpole)
-    (mellinData_rapidContourIntegrand_vertical_integral_eq hε hℓ horder hP hr N
+      (isPoleDatum_M_P hε horder ℓ hP.differentiable) hz hpole)
+    (M_P_rapidContourIntegrand_vertical_integral_eq hε hℓ horder hP hr N
       (saddleTaylorContour_mem_halfPlane N) (saddleTaylorContour_le hℓ N)
       (saddleTaylorContour_ne_pole N) (saddlePositiveContour_ne_pole hℓ))
 
 /-- Report (78): `f₊(r) = ∑_{n ≤ N} Res_n r ^ (2n) + remainder`. -/
-theorem plusSaddleProfile_eq_residue_sum_add_remainder {ε ℓ r : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem fPlus_eq_residue_sum_add_remainder {ε ℓ r : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) (hr : 0 < r) (N : ℕ) :
-    fPlus ε ℓ r = (∑ n ∈ Finset.range (N + 1), plusSaddlePoleResidue ε ℓ n *
-        (r ^ (2 * n) : ℂ)) + plusSaddleTaylorRemainder ε ℓ N r :=
-  mellinProfile_eq_residue_sum_add_remainder hε hℓ horder (isSaddlePolynomial_PPlus ε)
+    fPlus ε ℓ r = (∑ n ∈ Finset.range (N + 1), poleResiduePlus ε ℓ n *
+        (r ^ (2 * n) : ℂ)) + taylorRemainderPlus ε ℓ N r :=
+  f_P_eq_residue_sum_add_remainder hε hℓ horder (isSaddlePolynomial_PPlus ε)
     (originValue ε ℓ) hr N
 
 /-- On the line `Re z = a` the weight `r ^ (-z)` has constant modulus `r ^ (-a)`. -/
@@ -15075,7 +15087,7 @@ section CohnElkies_UpperBound_WallisRadius
 The normalized radius `α_ε = exp (-(log π)/2 + ∫ shell contributions)` of the saddle-point
 construction and its limit as `ε → 0⁺`: the positive-shell contribution tends to zero, the
 short-shell contribution tends to the Laplace integral of report (33), which equals `log (π/2)`
-by the Wallis product, so that `α_ε → 1/π` (`tendsto_limitingSaddleRadius`).
+by the Wallis product, so that `α_ε → 1/π` (`tendsto_α_ε`).
 -/
 
 namespace CohnElkies
@@ -15177,7 +15189,7 @@ theorem tendsto_shortShellRadiusIntegrand {a : ℝ} (ha : 0 < a) :
   simpa [hvalue] using
     (hc.continuousAt (x := (0 : ℝ))).tendsto.mono_left (nhdsWithin_le_nhds (s := Set.Ioi (0 : ℝ)))
 
-theorem shortMargin_abs_le_exp {ε a : ℝ} (hε0 : 0 ≤ ε) (hε1 : ε ≤ 1) (ha : 0 ≤ a) :
+theorem bε_abs_le_exp {ε a : ℝ} (hε0 : 0 ≤ ε) (hε1 : ε ≤ 1) (ha : 0 ≤ a) :
     |bε ε a| ≤ 11 * exp a := by
   calc |bε ε a| = |1 - 2 * ε * (1 + a)| := rfl
     _ ≤ |(1 : ℝ)| + |2 * ε * (1 + a)| := abs_sub _ _
@@ -15222,7 +15234,7 @@ theorem shortShellRadiusIntegrand_abs_le {ε a : ℝ} (hε0 : 0 ≤ ε) (hε1 : 
   calc |bε ε a| * exp (-2 * a) * (sinh ((1 + ε / 4) * a) / cosh a) / (2 * a)
       ≤ (11 * exp a) * exp (-2 * a) * ((5 / 4 : ℝ) * a * exp (a / 4)) / (2 * a) := by
         gcongr
-        · exact shortMargin_abs_le_exp hε0 hε1 ha.le
+        · exact bε_abs_le_exp hε0 hε1 ha.le
         · exact shortShellHyperbolicRatio_le hε0 hε1 ha.le
     _ = (55 / 8 : ℝ) * exp (-(3 / 4 : ℝ) * a) := by
         rw [show -(3 / 4 : ℝ) * a = a + -2 * a + a / 4 by ring, Real.exp_add, Real.exp_add]
@@ -15245,13 +15257,13 @@ theorem shortShellRadiusIntegrand_measurable (ε : ℝ) :
   unfold shortShellRadiusIntegrand w_s bε
   fun_prop
 
-theorem tendsto_shortCutoff : Tendsto a₀ε (𝓝[>] (0 : ℝ)) (𝓝 0) := by
+theorem tendsto_a₀ε : Tendsto a₀ε (𝓝[>] (0 : ℝ)) (𝓝 0) := by
   have ht : Tendsto (fun ε : ℝ ↦ ε) (𝓝[>] (0 : ℝ)) (𝓝 0) :=
     tendsto_id.mono_left (nhdsWithin_le_nhds (s := Set.Ioi (0 : ℝ)))
   change Tendsto (fun ε : ℝ ↦ ε ^ 2) (𝓝[>] (0 : ℝ)) (𝓝 0)
   simpa using ht.pow 2
 
-theorem tendsto_shortEndpoint : Tendsto Aε (𝓝[>] (0 : ℝ)) atTop := by
+theorem tendsto_Aε : Tendsto Aε (𝓝[>] (0 : ℝ)) atTop := by
   have ht : Tendsto (fun ε : ℝ ↦ log ε⁻¹) (𝓝[>] (0 : ℝ)) atTop :=
     Real.tendsto_log_atTop.comp tendsto_inv_nhdsGT_zero
   change Tendsto (fun ε : ℝ ↦ log (1 / ε)) (𝓝[>] (0 : ℝ)) atTop
@@ -15268,8 +15280,8 @@ theorem tendsto_supportedShortShellRadiusIntegrand {a : ℝ} (ha : 0 < a) :
     Tendsto (fun ε : ℝ ↦ supportedShortShellRadiusIntegrand ε a) (𝓝[>] (0 : ℝ))
       (𝓝 (wallisRadiusIntegrand a)) := by
   refine (tendsto_shortShellRadiusIntegrand ha).congr' ?_
-  filter_upwards [tendsto_shortCutoff.eventually (Iio_mem_nhds ha),
-    tendsto_shortEndpoint.eventually_ge_atTop a] with ε hlower hupper
+  filter_upwards [tendsto_a₀ε.eventually (Iio_mem_nhds ha),
+    tendsto_Aε.eventually_ge_atTop a] with ε hlower hupper
   simp [supportedShortShellRadiusIntegrand,
     Set.indicator_of_mem (show a ∈ Set.Ioc (a₀ε ε) (Aε ε) from ⟨hlower, hupper⟩)]
 
@@ -15306,8 +15318,8 @@ theorem tendsto_shortShellRadiusContribution :
       (𝓝 (∫ a in Set.Ioi (0 : ℝ), wallisRadiusIntegrand a)) := by
   refine tendsto_supportedShortShellRadiusIntegral.congr' ?_
   filter_upwards [self_mem_nhdsWithin,
-    tendsto_shortCutoff.eventually (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1)),
-    tendsto_shortEndpoint.eventually_ge_atTop (1 : ℝ)] with ε hε hcutoff hendpoint
+    tendsto_a₀ε.eventually (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1)),
+    tendsto_Aε.eventually_ge_atTop (1 : ℝ)] with ε hε hcutoff hendpoint
   exact (shortShellRadiusContribution_eq_supported hε (hcutoff.le.trans hendpoint)).symm
 
 theorem wallisRadiusIntegrand_eq_laplace (a : ℝ) :
@@ -15339,7 +15351,7 @@ def α_ε (ε : ℝ) : ℝ :=
   √((2 + ε / 4) / (4 * π)) *
     exp (shortShellRadiusContribution ε + positiveShellRadiusContribution ε)
 
-theorem tendsto_limitingSaddleRadius_wallisIntegral : Tendsto α_ε (𝓝[>] (0 : ℝ))
+theorem tendsto_α_ε_wallisIntegral : Tendsto α_ε (𝓝[>] (0 : ℝ))
     (𝓝 (√(1 / (2 * π)) * exp (∫ a in Set.Ioi (0 : ℝ), wallisRadiusIntegrand a))) := by
   have hε : Tendsto (fun ε : ℝ ↦ ε) (𝓝[>] (0 : ℝ)) (𝓝 0) :=
     tendsto_id.mono_left (nhdsWithin_le_nhds (s := Set.Ioi (0 : ℝ)))
@@ -15369,9 +15381,9 @@ theorem saddleRadius_wallis_constant :
   nlinarith
 
 /-- Report (32)–(33): the saddle radius tends to the critical radius `1 / π` as `ε → 0⁺`. -/
-theorem tendsto_limitingSaddleRadius : Tendsto α_ε (𝓝[>] (0 : ℝ)) (𝓝 criticalRadius) := by
+theorem tendsto_α_ε : Tendsto α_ε (𝓝[>] (0 : ℝ)) (𝓝 criticalRadius) := by
   simpa only [integral_wallisRadiusIntegrand, saddleRadius_wallis_constant] using
-    tendsto_limitingSaddleRadius_wallisIntegral
+    tendsto_α_ε_wallisIntegral
 
 end
 
@@ -15425,53 +15437,53 @@ theorem norm_imaginary_cubic_growth {P : ℂ → ℂ} {u b c : ℝ} (hb : 0 < b)
     nlinarith [hbig h]
 
 /-- Lemma 4.2: `β ≤ ‖P₊(iu)‖` for `u ≥ -1`. -/
-theorem plusPolynomial_imaginary_norm_ge_beta {ε u : ℝ} (hε : 0 < ε) (hu : -1 ≤ u) :
+theorem PPlus_imaginary_norm_ge_β {ε u : ℝ} (hε : 0 < ε) (hu : -1 ≤ u) :
     β ε ≤ ‖PPlus ε (I * u)‖ := by
-  have hb := beta_pos hε
+  have hb := β_pos hε
   have hterm : 0 ≤ (1 - u) ^ 2 * (1 + u) := mul_nonneg (sq_nonneg _) (by linarith)
   have hnorm : ‖PPlus ε (I * u)‖ = |β ε + (1 - u) ^ 2 * (1 + u)| := by
-    rw [plusPolynomial_imaginary]; norm_cast
+    rw [PPlus_imaginary]; norm_cast
   rw [hnorm, abs_of_pos (by linarith : 0 < β ε + (1 - u) ^ 2 * (1 + u))]
   linarith
 
 /-- Lemma 4.2: `3β ≤ ‖P₋(iu)‖` for `u ≥ 1 + ε/4`. -/
-theorem minusPolynomial_imaginary_norm_ge_three_beta {ε u : ℝ} (hε : 0 < ε)
+theorem PMinus_imaginary_norm_ge_three_β {ε u : ℝ} (hε : 0 < ε)
     (hu : 1 + ε / 4 ≤ u) : 3 * β ε ≤ ‖PMinus ε (I * u)‖ := by
-  have hb := beta_pos hε
+  have hb := β_pos hε
   have hbeta : β ε ≤ u - 1 := by unfold β; linarith
   have hsq : 0 ≤ (u - 1) * ((1 + u) ^ 2 - 4) :=
     mul_nonneg (by linarith) (by nlinarith [sq_nonneg (u - 1)])
   have hnorm : ‖PMinus ε (I * u)‖ = |β ε + (1 - u) * (1 + u) ^ 2| := by
-    rw [minusPolynomial_imaginary]; norm_cast
+    rw [PMinus_imaginary]; norm_cast
   rw [hnorm, abs_of_neg (by nlinarith : β ε + (1 - u) * (1 + u) ^ 2 < 0)]
   nlinarith
 
-theorem plusPolynomial_imaginary_cubic_growth_le {ε u : ℝ} (hε : 0 < ε) (hu : -1 ≤ u) :
+theorem PPlus_imaginary_cubic_growth_le {ε u : ℝ} (hε : 0 < ε) (hu : -1 ≤ u) :
     (1 + |u|) ^ 3 ≤ (27 / β ε + 9) * ‖PPlus ε (I * u)‖ := by
-  have hb := beta_pos hε
+  have hb := β_pos hε
   refine norm_imaginary_cubic_growth (P := PPlus ε) hb (by norm_num) hu
-    (plusPolynomial_imaginary_norm_ge_beta hε hu) fun h ↦ ?_
+    (PPlus_imaginary_norm_ge_β hε hu) fun h ↦ ?_
   have hterm : 0 ≤ (1 - u) ^ 2 * (1 + u) := mul_nonneg (sq_nonneg _) (by linarith)
   have hnorm : ‖PPlus ε (I * u)‖ = |β ε + (1 - u) ^ 2 * (1 + u)| := by
-    rw [plusPolynomial_imaginary]; norm_cast
+    rw [PPlus_imaginary]; norm_cast
   rw [hnorm, abs_of_pos (by linarith : 0 < β ε + (1 - u) ^ 2 * (1 + u))]
   nlinarith [mul_nonneg (mul_nonneg (by linarith : (0 : ℝ) ≤ 1 + u)
     (by linarith : (0 : ℝ) ≤ 4 * u - 2)) (by linarith : (0 : ℝ) ≤ 2 * u - 4)]
 
-theorem minusPolynomial_imaginary_cubic_growth_le {ε u : ℝ} (hε : 0 < ε) (hu : 1 + ε / 4 ≤ u) :
+theorem PMinus_imaginary_cubic_growth_le {ε u : ℝ} (hε : 0 < ε) (hu : 1 + ε / 4 ≤ u) :
     (1 + |u|) ^ 3 ≤ (9 / β ε + 6) * ‖PMinus ε (I * u)‖ := by
-  have hb := beta_pos hε
+  have hb := β_pos hε
   have hbeta : β ε ≤ u - 1 := by unfold β; linarith
   have hbig : 2 < u → (1 + u) ^ 3 ≤ 6 * ‖PMinus ε (I * u)‖ := fun h ↦ by
     have hsq : 0 ≤ (u - 1) * ((1 + u) ^ 2 - 4) := mul_nonneg (by linarith) (by nlinarith)
     have hnorm : ‖PMinus ε (I * u)‖ = |β ε + (1 - u) * (1 + u) ^ 2| := by
-      rw [minusPolynomial_imaginary]; norm_cast
+      rw [PMinus_imaginary]; norm_cast
     rw [hnorm, abs_of_neg (by nlinarith : β ε + (1 - u) * (1 + u) ^ 2 < 0)]
     nlinarith [mul_nonneg (by nlinarith : (0 : ℝ) ≤ (1 + u) ^ 2 - 9)
       (by linarith : (0 : ℝ) ≤ 5 * u - 7)]
   have key := norm_imaginary_cubic_growth (P := PMinus ε) (b := 3 * β ε) (by linarith)
     (by norm_num : (0 : ℝ) ≤ 6) (by linarith)
-    (minusPolynomial_imaginary_norm_ge_three_beta hε hu) hbig
+    (PMinus_imaginary_norm_ge_three_β hε hu) hbig
   rwa [show (27 : ℝ) / (3 * β ε) = 9 / β ε from
     (div_eq_div_iff (mul_ne_zero three_ne_zero hb.ne') hb.ne').2 (by ring)] at key
 
@@ -15500,24 +15512,24 @@ theorem norm_div_norm_imaginary_le {P : ℂ → ℂ} {M c u : ℝ} (hM : 0 ≤ M
     _ = 4 * M * c * (1 + |T| ^ 3) * ‖P (I * u)‖ := by ring
 
 /-- Lemma 4.4 for `P₊`: `‖P₊(T + iu)‖ / ‖P₊(iu)‖ ≪ 1 + |T|³`, uniformly in `u ≥ -1`. -/
-theorem exists_plusPolynomial_uniform_norm_ratio {ε : ℝ} (hε : 0 < ε) :
+theorem exists_PPlus_uniform_norm_ratio {ε : ℝ} (hε : 0 < ε) :
     ∃ C : ℝ, 0 < C ∧ ∀ u : ℝ, -1 ≤ u → ∀ T : ℝ,
       ‖PPlus ε ((T : ℂ) + I * u)‖ / ‖PPlus ε (I * u)‖ ≤ C * (1 + |T| ^ 3) := by
-  have hb := beta_pos hε
+  have hb := β_pos hε
   exact ⟨4 * (1 + β ε) * (27 / β ε + 9), by positivity, fun u hu T ↦
     norm_div_norm_imaginary_le (P := PPlus ε) (M := 1 + β ε) (c := 27 / β ε + 9) (by positivity)
-      (fun z ↦ by simpa [abs_of_pos hb] using norm_plusPolynomial_le ε z)
-      (plusPolynomial_imaginary_cubic_growth_le hε hu) T⟩
+      (fun z ↦ by simpa [abs_of_pos hb] using norm_PPlus_le ε z)
+      (PPlus_imaginary_cubic_growth_le hε hu) T⟩
 
 /-- Lemma 4.4 for `P₋`: `‖P₋(T + iu)‖ / ‖P₋(iu)‖ ≪ 1 + |T|³`, uniformly in `u ≥ 1 + ε/4`. -/
-theorem exists_minusPolynomial_uniform_norm_ratio {ε : ℝ} (hε : 0 < ε) :
+theorem exists_PMinus_uniform_norm_ratio {ε : ℝ} (hε : 0 < ε) :
     ∃ C : ℝ, 0 < C ∧ ∀ u : ℝ, 1 + ε / 4 ≤ u → ∀ T : ℝ,
       ‖PMinus ε ((T : ℂ) + I * u)‖ / ‖PMinus ε (I * u)‖ ≤ C * (1 + |T| ^ 3) := by
-  have hb := beta_pos hε
+  have hb := β_pos hε
   exact ⟨4 * (1 + β ε) * (9 / β ε + 6), by positivity, fun u hu T ↦
     norm_div_norm_imaginary_le (P := PMinus ε) (M := 1 + β ε) (c := 9 / β ε + 6) (by positivity)
-      (fun z ↦ by simpa [abs_of_pos hb] using norm_minusPolynomial_le ε z)
-      (minusPolynomial_imaginary_cubic_growth_le hε hu) T⟩
+      (fun z ↦ by simpa [abs_of_pos hb] using norm_PMinus_le ε z)
+      (PMinus_imaginary_cubic_growth_le hε hu) T⟩
 
 /-- Bounds for the linear and quadratic Taylor coefficients of `P₊` (`σ = I`) and `P₋`
 (`σ = -I`) at a point `z`. -/
@@ -15578,28 +15590,28 @@ theorem norm_sub_div_norm_imaginary_le {P : ℂ → ℂ} {A B C : ℂ} {c u : �
     _ = 9 * c * (|T| + |T| ^ 3) * ‖P (I * u)‖ := by ring
 
 /-- Lemma 4.5 for `P₊`: `‖P₊(T + iu) - P₊(iu)‖ / ‖P₊(iu)‖ ≪ |T| + |T|³`. -/
-theorem exists_plusPolynomial_uniform_difference_ratio {ε : ℝ} (hε : 0 < ε) :
+theorem exists_PPlus_uniform_difference_ratio {ε : ℝ} (hε : 0 < ε) :
     ∃ C : ℝ, 0 < C ∧ ∀ u : ℝ, -1 ≤ u → ∀ T : ℝ,
       ‖PPlus ε ((T : ℂ) + I * u) - PPlus ε (I * u)‖ / ‖PPlus ε (I * u)‖ ≤
         C * (|T| + |T| ^ 3) := by
-  have hb := beta_pos hε
+  have hb := β_pos hε
   refine ⟨9 * (27 / β ε + 9), by positivity, fun u hu T ↦ ?_⟩
   obtain ⟨hA, hB⟩ := norm_translation_coeffs (σ := I) (z := I * (u : ℂ)) (by simp)
   rw [show ‖I * (u : ℂ)‖ = |u| by simp] at hA hB
   exact norm_sub_div_norm_imaginary_le (P := PPlus ε) (C := I) hA hB (by simp)
-    (fun T ↦ by unfold PPlus; ring) (plusPolynomial_imaginary_cubic_growth_le hε hu) T
+    (fun T ↦ by unfold PPlus; ring) (PPlus_imaginary_cubic_growth_le hε hu) T
 
 /-- Lemma 4.5 for `P₋`: `‖P₋(T + iu) - P₋(iu)‖ / ‖P₋(iu)‖ ≪ |T| + |T|³`. -/
-theorem exists_minusPolynomial_uniform_difference_ratio {ε : ℝ} (hε : 0 < ε) :
+theorem exists_PMinus_uniform_difference_ratio {ε : ℝ} (hε : 0 < ε) :
     ∃ C : ℝ, 0 < C ∧ ∀ u : ℝ, 1 + ε / 4 ≤ u → ∀ T : ℝ,
       ‖PMinus ε ((T : ℂ) + I * u) - PMinus ε (I * u)‖ / ‖PMinus ε (I * u)‖ ≤
         C * (|T| + |T| ^ 3) := by
-  have hb := beta_pos hε
+  have hb := β_pos hε
   refine ⟨9 * (9 / β ε + 6), by positivity, fun u hu T ↦ ?_⟩
   obtain ⟨hA, hB⟩ := norm_translation_coeffs (σ := -I) (z := I * (u : ℂ)) (by simp)
   rw [show ‖I * (u : ℂ)‖ = |u| by simp] at hA hB
   exact norm_sub_div_norm_imaginary_le (P := PMinus ε) (C := -I) hA hB (by simp)
-    (fun T ↦ by unfold PMinus; ring) (minusPolynomial_imaginary_cubic_growth_le hε hu) T
+    (fun T ↦ by unfold PMinus; ring) (PMinus_imaginary_cubic_growth_le hε hu) T
 
 /-! ### The Gamma factors at the negative half-integers -/
 
@@ -15624,7 +15636,7 @@ theorem upperNegativeHalfGammaArgument_succ_add_one (N : ℕ) (s : ℝ) :
 /-! ### Domination of the short shell by the positive shell (Lemma 4.6) -/
 
 /-- `ε (1 + A_ε) → 0` as `ε ↓ 0`, where `A_ε = log (1/ε)`. -/
-theorem tendsto_mul_one_add_shortEndpoint :
+theorem tendsto_mul_one_add_Aε :
     Tendsto (fun ε : ℝ ↦ ε * (1 + Aε ε)) (𝓝[>] (0 : ℝ)) (𝓝 0) := by
   have hlog := tendsto_log_mul_rpow_nhdsGT_zero (by norm_num : (0 : ℝ) < 1)
   simp only [Real.rpow_one] at hlog
@@ -15643,10 +15655,10 @@ theorem tendsto_mul_one_add_shortEndpoint :
   · norm_num
 
 /-- Lemma 4.6: the short-shell margin `b_ε(a)` stays above `1/2` on `[a₀, A]` for small `ε`. -/
-theorem eventually_upper_shortMargin_positive : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_upper_bε_positive : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ a ∈ Set.Icc (a₀ε ε) (Aε ε), (1 / 2 : ℝ) ≤ bε ε a := by
   filter_upwards [self_mem_nhdsWithin,
-    (tendsto_mul_one_add_shortEndpoint.const_mul (2 : ℝ)).eventually
+    (tendsto_mul_one_add_Aε.const_mul (2 : ℝ)).eventually
       (Iio_mem_nhds (by norm_num : (2 : ℝ) * 0 < 1 / 2))] with ε hε hbound a ha
   change 0 < ε at hε
   change 2 * (ε * (1 + Aε ε)) < 1 / 2 at hbound
@@ -15654,12 +15666,12 @@ theorem eventually_upper_shortMargin_positive : ∀ᶠ ε : ℝ in 𝓝[>] (0 : 
   nlinarith [mul_le_mul_of_nonneg_left (show 1 + a ≤ 1 + Aε ε by linarith [ha.2]) hε.le]
 
 /-- For small `ε` the positive shell `[B, B + 1]` lies beyond the short-shell endpoint `A`. -/
-theorem eventually_upper_shellLocation_gt_shortEndpoint : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_upper_Bε_gt_Aε : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     Aε ε + 1 < Bε ε := by
   have hid : Tendsto (fun ε : ℝ ↦ ε) (𝓝[>] (0 : ℝ)) (𝓝 0) :=
     tendsto_id.mono_left nhdsWithin_le_nhds
   have hpow : Tendsto (fun ε : ℝ ↦ ε ^ 2 * (ε * (1 + Aε ε))) (𝓝[>] (0 : ℝ)) (𝓝 0) := by
-    simpa using (hid.pow 2).mul tendsto_mul_one_add_shortEndpoint
+    simpa using (hid.pow 2).mul tendsto_mul_one_add_Aε
   filter_upwards [self_mem_nhdsWithin,
     hpow.eventually (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1))] with ε hε hbound
   change 0 < ε at hε
@@ -15667,12 +15679,13 @@ theorem eventually_upper_shellLocation_gt_shortEndpoint : ∀ᶠ ε : ℝ in �
   have hinv : ε ^ 3 * Bε ε = 1 := by unfold Bε; field_simp
   nlinarith [pow_pos hε 3]
 
-/-- The size `A_ε + a₀_ε⁻¹` of the short shell. -/
-def upperShellShortCoefficient (ε : ℝ) : ℝ := Aε ε + (a₀ε ε)⁻¹
+/-- The constant `C₀ = A + a₀⁻¹` of report §4.2, the size of the negative shell. -/
+def C₀ε (ε : ℝ) : ℝ := Aε ε + (a₀ε ε)⁻¹
 
-/-- The ratio of report (61) comparing the short shell with the positive shell. -/
+/-- The ratio of report (61) comparing the negative shell with the positive shell: `5000 ρ_ε`, where
+`ρ_ε = C₀ Q⁻¹ e^{-ε(B - A)/2}` is the separation error of report §4.3. -/
 def upperShellMarginRatio (ε : ℝ) : ℝ :=
-  5000 * upperShellShortCoefficient ε * Real.exp (ε / 2 * Aε ε) /
+  5000 * C₀ε ε * Real.exp (ε / 2 * Aε ε) /
     (Qε ε * Real.exp (ε / 2 * Bε ε))
 
 theorem tendsto_upperShellMarginRatio : Tendsto upperShellMarginRatio (𝓝[>] (0 : ℝ)) (𝓝 0) := by
@@ -15724,38 +15737,38 @@ theorem tendsto_upperShellMarginRatio : Tendsto upperShellMarginRatio (𝓝[>] (
     congr 1
     field_simp
     ring
-  unfold upperShellMarginRatio upperShellShortCoefficient
+  unfold upperShellMarginRatio C₀ε
   rw [hA, hB, hQ, show (a₀ε x⁻¹)⁻¹ = x ^ 2 by simp [a₀ε], eq_div_iff (by positivity), hsplit]
   ring
 
 /-- Lemma 4.6: for small `ε` the short shell carries at most `1/5000` of the positive shell. -/
 theorem eventually_upper_shell_parameter_margin : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
-    upperShellShortCoefficient ε * Real.exp ((ε / 2) * Aε ε) ≤
+    C₀ε ε * Real.exp ((ε / 2) * Aε ε) ≤
       (1 / 5000 : ℝ) * Qε ε * Real.exp ((ε / 2) * Bε ε) := by
   filter_upwards [tendsto_upperShellMarginRatio.eventually
     (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1))] with ε hε
   unfold upperShellMarginRatio at hε
   have hden : 0 < Qε ε * Real.exp (ε / 2 * Bε ε) :=
-    mul_pos (shellWeight_pos ε) (Real.exp_pos _)
+    mul_pos (Qε_pos ε) (Real.exp_pos _)
   nlinarith [(div_lt_one hden).mp hε]
 
 /-! ### The short-shell damping `D_s` (report (59)) -/
 
 /-- The short-shell cutoff `a₀ = ε²` is positive. -/
-theorem shortCutoff_pos {ε : ℝ} (hε : 0 < ε) : 0 < a₀ε ε := by unfold a₀ε; positivity
+theorem a₀ε_pos {ε : ℝ} (hε : 0 < ε) : 0 < a₀ε ε := by unfold a₀ε; positivity
 
 /-- The short-shell density `w_s ε` is continuous on the short shell `[a₀, A]`. -/
-theorem continuousOn_shortShellDensity {ε : ℝ} (hε : 0 < ε) :
+theorem continuousOn_w_s {ε : ℝ} (hε : 0 < ε) :
     ContinuousOn (w_s ε) (Set.Icc (a₀ε ε) (Aε ε)) := by
   have hn : Continuous fun a : ℝ ↦ bε ε a * Real.exp (-2 * a) := by unfold bε; fun_prop
   have hd : Continuous fun a : ℝ ↦ 2 * a ^ 2 * Real.cosh a := by fun_prop
   unfold w_s
   exact (hn.continuousOn.div hd.continuousOn fun a ha ↦ by
-    have : 0 < a := (shortCutoff_pos hε).trans_le ha.1
+    have : 0 < a := (a₀ε_pos hε).trans_le ha.1
     positivity).neg
 
 /-- `w_s ε a ≤ 0` wherever the short-shell margin `b_ε(a)` is nonnegative. -/
-theorem neg_shortShellDensity_nonneg {ε a : ℝ} (ha : 0 < a) (hb : 0 ≤ bε ε a) :
+theorem neg_w_s_nonneg {ε a : ℝ} (ha : 0 < a) (hb : 0 ≤ bε ε a) :
     0 ≤ -w_s ε a := by
   unfold w_s
   simpa using div_nonneg (mul_nonneg hb (Real.exp_pos _).le)
@@ -15787,7 +15800,7 @@ theorem upper_shortShell_oscillation_div_sq_le {a : ℝ} (ha : 0 < a) (T : ℝ) 
   · calc (1 - Real.cos (a * T)) / (2 * a ^ 2) ≤ 2 / (2 * a ^ 2) := by gcongr
       _ = (a ^ 2)⁻¹ := by field_simp
 
-theorem upper_shortShellDensity_damping_le {ε δ a A : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ)
+theorem upper_w_s_damping_le {ε δ a A : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ)
     (ha : 0 < a) (haA : a ≤ A) (hmargin : 0 ≤ bε ε a) (T : ℝ) :
     (-w_s ε a) * Real.cosh ((1 + δ) * a) * (1 - Real.cos (a * T)) ≤
       Real.exp (δ * A) * min (T ^ 2) 1 * (1 + (a ^ 2)⁻¹) := by
@@ -15831,16 +15844,16 @@ theorem upper_intervalIntegral_one_add_inv_sq {a b : ℝ} (ha : 0 < a) (hab : a 
   ring
 
 /-- Report (59): the short shell contributes at most `λ (A + a₀⁻¹) e^{δA} min(T², 1)`. -/
-theorem upperShortShellDamping_global_bound {ε ℓ δ T : ℝ} (hε : 0 < ε) (hℓ : 0 ≤ ℓ) (hδ : 0 ≤ δ)
+theorem D_s_global_bound {ε ℓ δ T : ℝ} (hε : 0 < ε) (hℓ : 0 ≤ ℓ) (hδ : 0 ≤ δ)
     (horder : a₀ε ε ≤ Aε ε) (hmargin : ∀ a ∈ Set.Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) :
-    D_s ε ℓ δ T ≤ ℓ * upperShellShortCoefficient ε * Real.exp (δ * Aε ε) * min (T ^ 2) 1 := by
-  have ha₀ := shortCutoff_pos hε
+    D_s ε ℓ δ T ≤ ℓ * C₀ε ε * Real.exp (δ * Aε ε) * min (T ^ 2) 1 := by
+  have ha₀ := a₀ε_pos hε
   have hA : 0 < Aε ε := ha₀.trans_le horder
   have hK : (0 : ℝ) ≤ Real.exp (δ * Aε ε) * min (T ^ 2) 1 :=
     mul_nonneg (Real.exp_pos _).le (le_min (sq_nonneg T) (by norm_num))
   have hleft : ContinuousOn (fun a : ℝ ↦ (-w_s ε a) * Real.cosh ((1 + δ) * a) *
       (1 - Real.cos (a * T))) (Set.Icc (a₀ε ε) (Aε ε)) :=
-    ((continuousOn_shortShellDensity hε).neg.mul (by fun_prop : Continuous fun a : ℝ ↦
+    ((continuousOn_w_s hε).neg.mul (by fun_prop : Continuous fun a : ℝ ↦
       Real.cosh ((1 + δ) * a)).continuousOn).mul
       (by fun_prop : Continuous fun a : ℝ ↦ 1 - Real.cos (a * T)).continuousOn
   have hright : ContinuousOn (fun a : ℝ ↦ Real.exp (δ * Aε ε) * min (T ^ 2) 1 *
@@ -15849,13 +15862,13 @@ theorem upperShortShellDamping_global_bound {ε ℓ δ T : ℝ} (hε : 0 < ε) (
       ((continuous_id.pow 2).continuousOn.inv₀ fun a ha ↦ (pow_pos (ha₀.trans_le ha.1) 2).ne'))
   have hmono := intervalIntegral.integral_mono_on (μ := volume) horder
     (hleft.intervalIntegrable_of_Icc horder) (hright.intervalIntegrable_of_Icc horder)
-    fun a ha ↦ upper_shortShellDensity_damping_le hε hδ (ha₀.trans_le ha.1) ha.2 (hmargin a ha) T
+    fun a ha ↦ upper_w_s_damping_le hε hδ (ha₀.trans_le ha.1) ha.2 (hmargin a ha) T
   rw [intervalIntegral.integral_const_mul,
     upper_intervalIntegral_one_add_inv_sq ha₀ horder] at hmono
   have hcoefficient : Aε ε - a₀ε ε + (a₀ε ε)⁻¹ - (Aε ε)⁻¹ ≤ Aε ε + (a₀ε ε)⁻¹ := by
     have := (inv_pos.mpr hA).le
     linarith
-  unfold D_s upperShellShortCoefficient
+  unfold D_s C₀ε
   calc ℓ * ∫ a in a₀ε ε..Aε ε, (-w_s ε a) * Real.cosh ((1 + δ) * a) * (1 - Real.cos (a * T))
       ≤ ℓ * (Real.exp (δ * Aε ε) * min (T ^ 2) 1 *
         (Aε ε - a₀ε ε + (a₀ε ε)⁻¹ - (Aε ε)⁻¹)) := mul_le_mul_of_nonneg_left hmono hℓ
@@ -15863,25 +15876,25 @@ theorem upperShortShellDamping_global_bound {ε ℓ δ T : ℝ} (hε : 0 < ε) (
     _ = ℓ * (Aε ε + (a₀ε ε)⁻¹) * Real.exp (δ * Aε ε) * min (T ^ 2) 1 := by ring
 
 /-- For small `ε` the short shell `[a₀, A]` is nonempty. -/
-theorem eventually_upper_shortCutoff_le_shortEndpoint : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_upper_a₀ε_le_Aε : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     a₀ε ε ≤ Aε ε := by
-  filter_upwards [tendsto_shortCutoff.eventually (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1)),
-    tendsto_shortEndpoint.eventually_ge_atTop (1 : ℝ)] with ε hl hu
+  filter_upwards [tendsto_a₀ε.eventually (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1)),
+    tendsto_Aε.eventually_ge_atTop (1 : ℝ)] with ε hl hu
   linarith
 
 /-- Propagation of the margin of Lemma 4.6 from `δ = ε/2` to any larger `δ`. -/
 theorem upper_shell_parameter_margin_propagate {ε δ : ℝ} (hδ : ε / 2 ≤ δ)
     (hseparation : Aε ε ≤ Bε ε)
-    (hmargin : upperShellShortCoefficient ε * Real.exp ((ε / 2) * Aε ε) ≤
+    (hmargin : C₀ε ε * Real.exp ((ε / 2) * Aε ε) ≤
         (1 / 5000 : ℝ) * Qε ε * Real.exp ((ε / 2) * Bε ε)) :
-    upperShellShortCoefficient ε * Real.exp (δ * Aε ε) ≤ (1 / 5000 : ℝ) * Qε ε *
+    C₀ε ε * Real.exp (δ * Aε ε) ≤ (1 / 5000 : ℝ) * Qε ε *
         Real.exp (δ * Bε ε) := by
   have hexp : Real.exp ((δ - ε / 2) * Aε ε) ≤ Real.exp ((δ - ε / 2) * Bε ε) :=
     Real.exp_le_exp.mpr (mul_le_mul_of_nonneg_left hseparation (by linarith))
   have hfactor : (0 : ℝ) ≤ (1 / 5000 : ℝ) * Qε ε * Real.exp ((ε / 2) * Bε ε) :=
-    mul_nonneg (mul_nonneg (by norm_num) (shellWeight_pos ε).le) (Real.exp_pos _).le
-  calc upperShellShortCoefficient ε * Real.exp (δ * Aε ε)
-      = upperShellShortCoefficient ε * Real.exp ((ε / 2) * Aε ε) *
+    mul_nonneg (mul_nonneg (by norm_num) (Qε_pos ε).le) (Real.exp_pos _).le
+  calc C₀ε ε * Real.exp (δ * Aε ε)
+      = C₀ε ε * Real.exp ((ε / 2) * Aε ε) *
         Real.exp ((δ - ε / 2) * Aε ε) := by
         rw [mul_assoc, ← Real.exp_add]
         congr 2
@@ -15898,21 +15911,21 @@ theorem upper_shell_parameter_margin_propagate {ε δ : ℝ} (hδ : ε / 2 ≤ �
 /-- Report (61): the short-shell damping is at most `1/100` of the positive-shell damping. -/
 theorem eventually_upper_shortShell_domination : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 0 ≤ ℓ →
     ∀ δ : ℝ, ε / 2 ≤ δ → ∀ T : ℝ, D_s ε ℓ δ T ≤ (1 / 100 : ℝ) * D_B ε ℓ δ T := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
-      eventually_upper_shortMargin_positive,
-      eventually_upper_shellLocation_gt_shortEndpoint,
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
+      eventually_upper_bε_positive,
+      eventually_upper_Bε_gt_Aε,
       eventually_upper_shell_parameter_margin]
     with ε hε horder hshortmargin hseparation hmargin
   change 0 < ε at hε
   intro ℓ hℓ δ hδ T
   have hδnonneg : 0 ≤ δ := by nlinarith
-  have hshort := upperShortShellDamping_global_bound (T := T) hε hℓ hδnonneg horder
+  have hshort := D_s_global_bound (T := T) hε hℓ hδnonneg horder
     fun a ha ↦ by linarith [hshortmargin a ha]
   have hpropagate := upper_shell_parameter_margin_propagate hδ (by linarith) hmargin
-  have hpositive := positiveShellDamping_lower_bound (ε := ε) (ℓ := ℓ) (δ := δ) (T := T)
+  have hpositive := D_B_lower_bound (ε := ε) (ℓ := ℓ) (δ := δ) (T := T)
       hε hℓ hδnonneg
   have hfreq : (0 : ℝ) ≤ min (T ^ 2) 1 := le_min (sq_nonneg T) (by norm_num)
-  calc D_s ε ℓ δ T ≤ ℓ * upperShellShortCoefficient ε * Real.exp (δ * Aε ε) * min (T ^ 2) 1 :=
+  calc D_s ε ℓ δ T ≤ ℓ * C₀ε ε * Real.exp (δ * Aε ε) * min (T ^ 2) 1 :=
         hshort
     _ ≤ ℓ * ((1 / 5000 : ℝ) * Qε ε * Real.exp (δ * Bε ε)) * min (T ^ 2) 1 := by
         convert! mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left hpropagate hℓ)
@@ -15926,14 +15939,14 @@ theorem eventually_upper_shortShell_domination : ∀ᶠ ε : ℝ in 𝓝[>] (0 :
 def V_B (ε δ : ℝ) : ℝ := ∫ a in Bε ε..Bε ε + 1, w_B ε a * a ^ 2 * Real.cosh ((1 + δ) * a)
 
 /-- Report (45): two-sided bounds for the positive-shell variance `V_B`. -/
-theorem upperPositiveShellVariance_bounds {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ) :
+theorem V_B_bounds {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ) :
     (1 / 2 : ℝ) * (Bε ε) ^ 2 * Qε ε * Real.exp (δ * Bε ε) ≤ V_B ε δ ∧
       V_B ε δ ≤ (Bε ε + 1) ^ 2 * Qε ε * Real.exp (δ * (Bε ε + 1)) := by
   have hB : (0 : ℝ) ≤ Bε ε := by unfold Bε; positivity
-  have hQ : 0 < Qε ε := shellWeight_pos ε
+  have hQ : 0 < Qε ε := Qε_pos ε
   have horder : Bε ε ≤ Bε ε + 1 := by linarith
   have hcont : Continuous fun a : ℝ ↦ w_B ε a * a ^ 2 * Real.cosh ((1 + δ) * a) := by
-    have hdensity := positiveShellDensity_continuous ε
+    have hdensity := w_B_continuous ε
     fun_prop
   have hlopoint : ∀ a ∈ Set.Icc (Bε ε) (Bε ε + 1),
       (1 / 2 : ℝ) * (Bε ε) ^ 2 * Qε ε * Real.exp (δ * Bε ε) ≤
@@ -15971,7 +15984,7 @@ theorem upperPositiveShellVariance_bounds {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 
 /-- Variance `V_s` carried by the short shell on the contour of height `1 + δ`. -/
 def V_s (ε δ : ℝ) : ℝ := ∫ a in a₀ε ε..Aε ε, (-w_s ε a) * a ^ 2 * Real.cosh ((1 + δ) * a)
 
-theorem upper_shortShellDensity_variance_le {ε δ a A : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ)
+theorem upper_w_s_variance_le {ε δ a A : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ)
     (ha : 0 < a) (haA : a ≤ A) :
     (-w_s ε a) * a ^ 2 * Real.cosh ((1 + δ) * a) ≤ (1 / 2 : ℝ) * Real.exp (δ * A) := by
   have hmargin : bε ε a ≤ 1 := by
@@ -15988,20 +16001,20 @@ theorem upper_shortShellDensity_variance_le {ε δ a A : ℝ} (hε : 0 < ε) (h�
     _ = (1 / 2 : ℝ) * Real.exp (δ * A) := by ring
 
 /-- Report (45): the short-shell variance is at most `(A + a₀⁻¹) e^{δA} / 2`. -/
-theorem upperShortShellVariance_global_bound {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ)
+theorem V_s_global_bound {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ)
     (horder : a₀ε ε ≤ Aε ε) :
-    V_s ε δ ≤ (1 / 2 : ℝ) * upperShellShortCoefficient ε * Real.exp (δ * Aε ε) := by
-  have ha₀ := shortCutoff_pos hε
+    V_s ε δ ≤ (1 / 2 : ℝ) * C₀ε ε * Real.exp (δ * Aε ε) := by
+  have ha₀ := a₀ε_pos hε
   have hK : (0 : ℝ) ≤ (1 / 2 : ℝ) * Real.exp (δ * Aε ε) := by positivity
   have hleft : ContinuousOn (fun a : ℝ ↦ (-w_s ε a) * a ^ 2 * Real.cosh ((1 + δ) * a))
       (Set.Icc (a₀ε ε) (Aε ε)) :=
-    ((continuousOn_shortShellDensity hε).neg.mul (continuous_id.pow 2).continuousOn).mul
+    ((continuousOn_w_s hε).neg.mul (continuous_id.pow 2).continuousOn).mul
       (by fun_prop : Continuous fun a : ℝ ↦ Real.cosh ((1 + δ) * a)).continuousOn
   have hmono := intervalIntegral.integral_mono_on (μ := volume) horder
     (hleft.intervalIntegrable_of_Icc horder) intervalIntegrable_const
-    fun a ha ↦ upper_shortShellDensity_variance_le hε hδ (ha₀.trans_le ha.1) ha.2
+    fun a ha ↦ upper_w_s_variance_le hε hδ (ha₀.trans_le ha.1) ha.2
   rw [intervalIntegral.integral_const, smul_eq_mul] at hmono
-  unfold V_s upperShellShortCoefficient
+  unfold V_s C₀ε
   calc (∫ a in a₀ε ε..Aε ε, (-w_s ε a) * a ^ 2 * Real.cosh ((1 + δ) * a))
       ≤ (Aε ε - a₀ε ε) * ((1 / 2 : ℝ) * Real.exp (δ * Aε ε)) := hmono
     _ ≤ (Aε ε + (a₀ε ε)⁻¹) * ((1 / 2 : ℝ) * Real.exp (δ * Aε ε)) :=
@@ -16017,11 +16030,11 @@ open scoped Topology
 /-! ### The net shell variance and third moment (report (46)) -/
 
 /-- The short-shell variance is nonnegative when the margin `b_ε` is. -/
-theorem upperShortShellVariance_nonneg {ε δ : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
+theorem V_s_nonneg {ε δ : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
     (hmargin : ∀ a ∈ Set.Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) : 0 ≤ V_s ε δ := by
   unfold V_s
   exact intervalIntegral.integral_nonneg horder fun a ha ↦ mul_nonneg (mul_nonneg
-    (neg_shortShellDensity_nonneg ((shortCutoff_pos hε).trans_le ha.1) (hmargin a ha))
+    (neg_w_s_nonneg ((a₀ε_pos hε).trans_le ha.1) (hmargin a ha))
     (sq_nonneg a)) (Real.cosh_pos _).le
 
 /-- The short-shell variance is at most `1/100` of the positive-shell variance. -/
@@ -16030,8 +16043,8 @@ theorem eventually_upper_shortShellVariance_domination : ∀ᶠ ε : ℝ in 𝓝
   have hsmall : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ε < 1 :=
     (tendsto_id.mono_left (nhdsWithin_le_nhds (s := Set.Ioi (0 : ℝ)))).eventually
       (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1))
-  filter_upwards [self_mem_nhdsWithin, hsmall, eventually_upper_shortCutoff_le_shortEndpoint,
-      eventually_upper_shellLocation_gt_shortEndpoint, eventually_upper_shell_parameter_margin]
+  filter_upwards [self_mem_nhdsWithin, hsmall, eventually_upper_a₀ε_le_Aε,
+      eventually_upper_Bε_gt_Aε, eventually_upper_shell_parameter_margin]
     with ε hε hεone horder hseparation hmargin
   change 0 < ε at hε
   change ε < 1 at hεone
@@ -16045,16 +16058,16 @@ theorem eventually_upper_shortShellVariance_domination : ∀ᶠ ε : ℝ in 𝓝
   have hBsq : 1 ≤ (Bε ε) ^ 2 := by nlinarith
   have hpropagate := upper_shell_parameter_margin_propagate hδ (by linarith) hmargin
   have hqexp : (0 : ℝ) ≤ Qε ε * Real.exp (δ * Bε ε) :=
-    mul_nonneg (shellWeight_pos ε).le (Real.exp_pos _).le
-  calc V_s ε δ ≤ (1 / 2 : ℝ) * upperShellShortCoefficient ε * Real.exp (δ * Aε ε) :=
-        upperShortShellVariance_global_bound hε hδnonneg horder
+    mul_nonneg (Qε_pos ε).le (Real.exp_pos _).le
+  calc V_s ε δ ≤ (1 / 2 : ℝ) * C₀ε ε * Real.exp (δ * Aε ε) :=
+        V_s_global_bound hε hδnonneg horder
     _ ≤ (1 / 2 : ℝ) * ((1 / 5000 : ℝ) * Qε ε * Real.exp (δ * Bε ε)) := by
         convert! mul_le_mul_of_nonneg_left hpropagate (by norm_num : (0 : ℝ) ≤ 1 / 2) using 1
         ring
     _ ≤ (1 / 100 : ℝ) * ((1 / 2 : ℝ) * (Bε ε) ^ 2 * Qε ε * Real.exp (δ * Bε ε)) := by
         nlinarith [mul_le_mul_of_nonneg_right hBsq hqexp]
     _ ≤ (1 / 100 : ℝ) * V_B ε δ :=
-        mul_le_mul_of_nonneg_left (upperPositiveShellVariance_bounds hε hδnonneg).1 (by norm_num)
+        mul_le_mul_of_nonneg_left (V_B_bounds hε hδnonneg).1 (by norm_num)
 
 /-- The net shell variance `V_B - V_s` of report (46). -/
 def upperNetShellVariance (ε δ : ℝ) : ℝ := V_B ε δ - V_s ε δ
@@ -16062,12 +16075,12 @@ def upperNetShellVariance (ε δ : ℝ) : ℝ := V_B ε δ - V_s ε δ
 /-- Report (46): the net shell variance is between `99/100` and `1` times `V_B`. -/
 theorem eventually_upper_netShellVariance_bounds : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ δ : ℝ, ε / 2 ≤ δ →
     (99 / 100 : ℝ) * V_B ε δ ≤ upperNetShellVariance ε δ ∧ upperNetShellVariance ε δ ≤ V_B ε δ := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
-      eventually_upper_shortMargin_positive, eventually_upper_shortShellVariance_domination]
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
+      eventually_upper_bε_positive, eventually_upper_shortShellVariance_domination]
     with ε hε horder hmargin hdom
   change 0 < ε at hε
   intro δ hδ
-  have hnonneg := upperShortShellVariance_nonneg (δ := δ) hε horder
+  have hnonneg := V_s_nonneg (δ := δ) hε horder
     fun a ha ↦ by linarith [hmargin a ha]
   have hupper := hdom δ hδ
   unfold upperNetShellVariance
@@ -16103,8 +16116,8 @@ theorem upperPositiveShellThirdMoment_le {ε δ : ℝ} :
     upperPositiveShellThirdMoment ε δ ≤ (Bε ε + 1) * V_B ε δ := by
   unfold upperPositiveShellThirdMoment V_B
   exact intervalIntegral_thirdMoment_le (w := w_B ε) (by linarith)
-    (fun a _ ↦ div_nonneg (shellWeight_pos ε).le (Real.cosh_pos a).le)
-    (positiveShellDensity_continuous ε).continuousOn
+    (fun a _ ↦ div_nonneg (Qε_pos ε).le (Real.cosh_pos a).le)
+    (w_B_continuous ε).continuousOn
 
 /-- Third moment carried by the short shell on the contour of height `1 + δ`. -/
 def upperShortShellThirdMoment (ε δ : ℝ) : ℝ :=
@@ -16116,17 +16129,17 @@ theorem upperShortShellThirdMoment_le {ε δ : ℝ} (hε : 0 < ε) (horder : a�
     upperShortShellThirdMoment ε δ ≤ Aε ε * V_s ε δ := by
   unfold upperShortShellThirdMoment V_s
   exact intervalIntegral_thirdMoment_le (w := fun a ↦ -w_s ε a) horder
-    (fun a ha ↦ neg_shortShellDensity_nonneg ((shortCutoff_pos hε).trans_le ha.1) (hmargin a ha))
-    (continuousOn_shortShellDensity hε).neg
+    (fun a ha ↦ neg_w_s_nonneg ((a₀ε_pos hε).trans_le ha.1) (hmargin a ha))
+    (continuousOn_w_s hε).neg
 
 theorem eventually_upper_shortShellThirdMoment_domination : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ δ : ℝ, ε / 2 ≤ δ → upperShortShellThirdMoment ε δ ≤ (Aε ε / 100) * V_B ε δ := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
-      eventually_upper_shortMargin_positive, eventually_upper_shortShellVariance_domination]
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
+      eventually_upper_bε_positive, eventually_upper_shortShellVariance_domination]
     with ε hε horder hmargin hdom
   change 0 < ε at hε
   intro δ hδ
-  have hA : (0 : ℝ) ≤ Aε ε := ((shortCutoff_pos hε).trans_le horder).le
+  have hA : (0 : ℝ) ≤ Aε ε := ((a₀ε_pos hε).trans_le horder).le
   calc upperShortShellThirdMoment ε δ ≤ Aε ε * V_s ε δ :=
         upperShortShellThirdMoment_le (δ := δ) hε horder fun a ha ↦ by linarith [hmargin a ha]
     _ ≤ Aε ε * ((1 / 100 : ℝ) * V_B ε δ) := mul_le_mul_of_nonneg_left (hdom δ hδ) hA
@@ -16300,20 +16313,20 @@ theorem upperGammaMoment_bounds {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η) (
           ring
 
 /-- Report (48): `1/(2η) ≤ V_γ ≤ 1/(2η) + 1/(λη²)`. -/
-theorem upperGammaVariance_bounds {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η) :
+theorem V_γ_bounds {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η) :
     1 / (2 * η) ≤ V_γ ℓ η ∧ V_γ ℓ η ≤ 1 / (2 * η) + 1 / (ℓ * η ^ 2) := by
   simpa [V_γ, Nat.factorial] using upperGammaMoment_bounds hℓ hη 0
 
 /-- Report (48): `1/(2η²) ≤ M₃_γ ≤ 1/(2η²) + 2/(λη³)`. -/
-theorem upperGammaThirdMoment_bounds {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η) :
+theorem M₃_γ_bounds {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η) :
     1 / (2 * η ^ 2) ≤ M₃_γ ℓ η ∧ M₃_γ ℓ η ≤ 1 / (2 * η ^ 2) + 2 / (ℓ * η ^ 3) := by
   simpa [M₃_γ, Nat.factorial] using upperGammaMoment_bounds hℓ hη 1
 
 /-! ### The small-radius expansion of `f₊` (report Lemma 4.4) -/
 
-theorem plusPolynomial_negative_imaginary_residue (ε s : ℝ) :
+theorem PPlus_negative_imaginary_residue (ε s : ℝ) :
     PPlus ε (I * ((-(1 + s) : ℝ) : ℂ)) = ((β ε - s * (2 + s) ^ 2 : ℝ) : ℂ) := by
-  rw [plusPolynomial_imaginary]
+  rw [PPlus_imaginary]
   push_cast
   ring
 
@@ -16329,21 +16342,21 @@ def A_ℓn (ε ℓ : ℝ) (n : ℕ) : ℝ :=
   Real.exp (ℓ * (h_εI ε (1 + 2 * (n : ℝ) / ℓ) - h_εI ε 1) - 2 * (n : ℝ) * h₁' ε) *
     ((β ε - (2 * (n : ℝ) / ℓ) * (2 + 2 * (n : ℝ) / ℓ) ^ 2) / β ε)
 
-theorem plusSaddlePoleResidue_explicit_real {ε ℓ : ℝ} (hℓ : 0 < ℓ) (n : ℕ) :
-    plusSaddlePoleResidue ε ℓ n = ((2 * (-1 : ℝ) ^ n / (n.factorial : ℝ) *
+theorem poleResiduePlus_explicit_real {ε ℓ : ℝ} (hℓ : 0 < ℓ) (n : ℕ) :
+    poleResiduePlus ε ℓ n = ((2 * (-1 : ℝ) ^ n / (n.factorial : ℝ) *
         (π ^ (ℓ / 2 + (n : ℝ)) * Real.exp (ℓ * h_εI ε (1 + 2 * (n : ℝ) / ℓ))) *
         (β ε - (2 * (n : ℝ) / ℓ) * (2 + 2 * (n : ℝ) / ℓ) ^ 2) : ℝ) : ℂ) := by
-  unfold plusSaddlePoleResidue
-  rw [plusSaddleRegularMellinFactor_neg_even hℓ n, plusPolynomial_negative_imaginary_residue]
+  unfold poleResiduePlus
+  rw [regularMellinFactorPlus_neg_even hℓ n, PPlus_negative_imaginary_residue]
   push_cast
   ring
 
 /-- The small-radius variable `y_r` is nonnegative. -/
-theorem saddleSmallRadiusVariable_nonneg (ε r : ℝ) : 0 ≤ y_r ε r := by
+theorem y_r_nonneg (ε r : ℝ) : 0 ≤ y_r ε r := by
   unfold y_r
   positivity
 
-theorem saddleSmallRadiusVariable_neg_pow (ε r : ℝ) (n : ℕ) : (-y_r ε r) ^ n =
+theorem y_r_neg_pow (ε r : ℝ) (n : ℕ) : (-y_r ε r) ^ n =
       (-1 : ℝ) ^ n * π ^ n * Real.exp (2 * h₁' ε) ^ n * r ^ (2 * n) := by
   rw [show -y_r ε r = -1 * π * Real.exp (2 * h₁' ε) * r ^ 2 by unfold y_r; ring]
   ring
@@ -16356,34 +16369,34 @@ theorem saddleSmallRadiusPhase_pole_factorization (ε ℓ : ℝ) (n : ℕ) :
       (ℓ * (h_εI ε (1 + 2 * (n : ℝ) / ℓ) - h_εI ε 1) - 2 * (n : ℝ) * h₁' ε) by ring,
     Real.exp_add, Real.exp_add, Real.exp_nat_mul]
 
-theorem plusSaddlePoleResidue_mul_pow_eq_smallCoefficient {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem poleResiduePlus_mul_pow_eq_smallCoefficient {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (n : ℕ) (r : ℝ) :
-    plusSaddlePoleResidue ε ℓ n * (r ^ (2 * n) : ℂ) = ((originValue ε ℓ *
+    poleResiduePlus ε ℓ n * (r ^ (2 * n) : ℂ) = ((originValue ε ℓ *
         ((-y_r ε r) ^ n / (n.factorial : ℝ)) * A_ℓn ε ℓ n : ℝ) : ℂ) := by
   have hfac : (n.factorial : ℝ) ≠ 0 := by exact_mod_cast Nat.factorial_ne_zero n
-  rw [plusSaddlePoleResidue_explicit_real hℓ n, ← Complex.ofReal_pow, ← Complex.ofReal_mul]
+  rw [poleResiduePlus_explicit_real hℓ n, ← Complex.ofReal_pow, ← Complex.ofReal_mul]
   refine congrArg Complex.ofReal ?_
   unfold originValue A_ℓn
   rw [Real.rpow_add_natCast Real.pi_ne_zero (ℓ / 2) n,
-    saddleSmallRadiusPhase_pole_factorization ε ℓ n, saddleSmallRadiusVariable_neg_pow ε r n]
-  field_simp [(beta_pos hε).ne', hfac]
+    saddleSmallRadiusPhase_pole_factorization ε ℓ n, y_r_neg_pow ε r n]
+  field_simp [(β_pos hε).ne', hfac]
 
 /-- Report Lemma 4.4: the small-radius residue expansion of `f₊ / f₊(0)`. -/
-theorem plusSaddleProfile_div_origin_eq_small_radius_residue_series {ε ℓ r : ℝ} (hε : 0 < ε)
+theorem fPlus_div_origin_eq_small_radius_residue_series {ε ℓ r : ℝ} (hε : 0 < ε)
     (hℓ : 0 < ℓ) (horder : a₀ε ε ≤ Aε ε) (hr : 0 < r) (N : ℕ) :
     fPlus ε ℓ r / (originValue ε ℓ : ℂ) = ((∑ n ∈ Finset.range (N + 1),
         (-y_r ε r) ^ n / (n.factorial : ℝ) * A_ℓn ε ℓ n : ℝ) : ℂ) +
-      plusSaddleTaylorRemainder ε ℓ N r / (originValue ε ℓ : ℂ) := by
-  have hzero : (originValue ε ℓ : ℂ) ≠ 0 := by exact_mod_cast (saddleOriginValue_pos hε ℓ).ne'
+      taylorRemainderPlus ε ℓ N r / (originValue ε ℓ : ℂ) := by
+  have hzero : (originValue ε ℓ : ℂ) ≠ 0 := by exact_mod_cast (originValue_pos hε ℓ).ne'
   have hseries : fPlus ε ℓ r = (originValue ε ℓ : ℂ) * ((∑ n ∈ Finset.range (N + 1),
         (-y_r ε r) ^ n / (n.factorial : ℝ) * A_ℓn ε ℓ n : ℝ) : ℂ) +
-      plusSaddleTaylorRemainder ε ℓ N r := by
-    rw [plusSaddleProfile_eq_residue_sum_add_remainder hε hℓ horder hr N]
+      taylorRemainderPlus ε ℓ N r := by
+    rw [fPlus_eq_residue_sum_add_remainder hε hℓ horder hr N]
     congr 1
     push_cast
     rw [Finset.mul_sum]
     refine Finset.sum_congr rfl fun n _ ↦ ?_
-    have hterm := plusSaddlePoleResidue_mul_pow_eq_smallCoefficient hε hℓ n r
+    have hterm := poleResiduePlus_mul_pow_eq_smallCoefficient hε hℓ n r
     push_cast at hterm
     simpa only [mul_assoc] using hterm
   rw [hseries]
@@ -16392,17 +16405,17 @@ theorem plusSaddleProfile_div_origin_eq_small_radius_residue_series {ε ℓ r : 
 /-! ### The shell phase on the imaginary axis -/
 
 /-- The shell phase `h_ε` restricted to the imaginary axis is smooth. -/
-theorem realHyperbolicShellPhase_contDiff {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
+theorem h_εI_contDiff {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
     (n : WithTop ℕ∞) : ContDiff ℝ n (h_εI ε) := by
   have hcomplex : ContDiff ℝ n (h_ε ε) :=
-    ((mellinShellPhase_analyticOnNhd hε horder).restrictScalars (𝕜 := ℝ)).contDiff
+    ((h_ε_analyticOnNhd hε horder).restrictScalars (𝕜 := ℝ)).contDiff
   have harg : ContDiff ℝ n fun u : ℝ ↦ I * (u : ℂ) :=
     contDiff_const.mul Complex.ofRealCLM.contDiff
   have hphase : ContDiff ℝ n fun u : ℝ ↦ h_ε ε (I * (u : ℂ)) := by
     simpa only [Function.comp_apply] using! hcomplex.comp harg
   have hre : ContDiff ℝ n fun u : ℝ ↦ (h_ε ε (I * (u : ℂ))).re := by
     simpa only [Function.comp_apply] using! Complex.reCLM.contDiff.comp hphase
-  simpa only [mellinShellPhase_imaginary, Complex.ofReal_re] using! hre
+  simpa only [h_ε_imaginary, Complex.ofReal_re] using! hre
 
 theorem realHyperbolicShellInterval_hasDerivAt (w : ℝ → ℝ) (hw : Continuous w)
     {a b : ℝ} (hab : a ≤ b) (u : ℝ) :
@@ -16442,11 +16455,11 @@ theorem realHyperbolicShellInterval_hasDerivAt (w : ℝ → ℝ) (hw : Continuou
     (Eventually.of_forall fun x v _ ↦ hderiv x v)).2
 
 /-- Derivative of the shell phase on the imaginary axis, by differentiation under `∫`. -/
-theorem realHyperbolicShellPhase_hasDerivAt {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
+theorem h_εI_hasDerivAt {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
     (u : ℝ) :
     HasDerivAt (h_εI ε) ((∫ a in a₀ε ε..Aε ε, w_s ε a * a * Real.sinh (a * u)) +
       (∫ a in Bε ε..Bε ε + 1, w_B ε a * a * Real.sinh (a * u))) u := by
-  have hmax (a : ℝ) : 0 < max a (a₀ε ε) := (shortCutoff_pos hε).trans_le (le_max_right _ _)
+  have hmax (a : ℝ) : 0 < max a (a₀ε ε) := (a₀ε_pos hε).trans_le (le_max_right _ _)
   have hw : Continuous fun a : ℝ ↦ w_s ε (max a (a₀ε ε)) := by
     have hn : Continuous fun a : ℝ ↦ bε ε (max a (a₀ε ε)) * Real.exp (-2 * max a (a₀ε ε)) := by
       unfold bε
@@ -16473,18 +16486,18 @@ theorem realHyperbolicShellPhase_hasDerivAt {ε : ℝ} (hε : 0 < ε) (horder : 
     rw [hfun, hderivfun]
     exact realHyperbolicShellInterval_hasDerivAt _ hw horder u
   exact hshort.add (realHyperbolicShellInterval_hasDerivAt (w_B ε)
-    (positiveShellDensity_continuous ε) (by linarith) u)
+    (w_B_continuous ε) (by linarith) u)
 
 /-- Report Lemma 4.4: a quadratic Taylor remainder for the shell phase on `[1, 2]`. -/
-theorem exists_realHyperbolicShellPhase_quadratic_remainder {ε : ℝ} (hε : 0 < ε)
+theorem exists_h_εI_quadratic_remainder {ε : ℝ} (hε : 0 < ε)
     (horder : a₀ε ε ≤ Aε ε) :
     ∃ C : ℝ, 0 ≤ C ∧ ∀ x ∈ Set.Icc (1 : ℝ) 2,
       |h_εI ε x - h_εI ε 1 - (x - 1) * h₁' ε| ≤ C * (x - 1) ^ 2 := by
   obtain ⟨C, hC⟩ := exists_taylor_mean_remainder_bound (f := h_εI ε) (n := 1)
     (by norm_num : (1 : ℝ) ≤ 2)
-    (realHyperbolicShellPhase_contDiff hε horder (2 : WithTop ℕ∞)).contDiffOn
+    (h_εI_contDiff hε horder (2 : WithTop ℕ∞)).contDiffOn
   have hwithin : derivWithin (h_εI ε) (Set.Icc (1 : ℝ) 2) 1 = h₁' ε :=
-    ((realHyperbolicShellPhase_hasDerivAt hε horder 1).hasDerivWithinAt.derivWithin
+    ((h_εI_hasDerivAt hε horder 1).hasDerivWithinAt.derivWithin
       ((uniqueDiffOn_Icc (by norm_num : (1 : ℝ) < 2)) 1 (by constructor <;> norm_num))).trans
       (by simp [h₁'])
   refine ⟨max C 0, le_max_right _ _, fun x hx ↦ ?_⟩
@@ -16503,7 +16516,7 @@ theorem exists_plusSaddleSmallRadiusPhase_error {ε : ℝ} (hε : 0 < ε)
     ∃ C : ℝ, 0 ≤ C ∧ ∀ (ℓ : ℝ), 0 < ℓ → ∀ n : ℕ, 2 * (n : ℝ) ≤ ℓ →
       |ℓ * (h_εI ε (1 + 2 * (n : ℝ) / ℓ) - h_εI ε 1) - 2 * (n : ℝ) * h₁' ε| ≤
         C * (n : ℝ) ^ 2 / ℓ := by
-  obtain ⟨C, hCnonneg, hC⟩ := exists_realHyperbolicShellPhase_quadratic_remainder hε horder
+  obtain ⟨C, hCnonneg, hC⟩ := exists_h_εI_quadratic_remainder hε horder
   refine ⟨4 * C, by positivity, fun ℓ hℓ n hn ↦ ?_⟩
   set x : ℝ := 1 + 2 * (n : ℝ) / ℓ with hxdef
   have hratio : (0 : ℝ) ≤ 2 * (n : ℝ) / ℓ := by positivity
@@ -16525,7 +16538,7 @@ theorem plusSaddleSmallRadiusPolynomial_error {ε ℓ : ℝ} (hε : 0 < ε) (h�
     (n : ℕ) (hn : 2 * (n : ℝ) ≤ ℓ) :
     |((β ε - (2 * (n : ℝ) / ℓ) * (2 + 2 * (n : ℝ) / ℓ) ^ 2) / β ε) - 1| ≤
       (18 / β ε) * ((n : ℝ) / ℓ) := by
-  have hb : 0 < β ε := beta_pos hε
+  have hb : 0 < β ε := β_pos hε
   set s : ℝ := 2 * (n : ℝ) / ℓ with hsdef
   have hs : (0 : ℝ) ≤ s := by rw [hsdef]; positivity
   have hsone : s ≤ 1 := by rw [hsdef]; exact (div_le_iff₀ hℓ).mpr (by simpa using hn)
@@ -16555,13 +16568,13 @@ theorem abs_exp_sub_one_le_abs_mul_exp_abs (t : ℝ) :
     rw [abs_of_nonpos (sub_nonpos.mpr hexp), abs_of_nonpos ht]
     nlinarith [mul_nonneg hnegt (sub_nonneg.mpr hexpneg), Real.add_one_le_exp t]
 
-theorem plusSaddleSmallRadiusCoefficient_error_of_phase {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem A_ℓn_error_of_phase {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (n : ℕ) (hn : 2 * (n : ℝ) ≤ ℓ) {C : ℝ} (hC : 0 ≤ C)
     (hphase : |ℓ * (h_εI ε (1 + 2 * (n : ℝ) / ℓ) - h_εI ε 1) - 2 * (n : ℝ) * h₁' ε| ≤
         C * (n : ℝ) ^ 2 / ℓ) :
     |A_ℓn ε ℓ n - 1| ≤
       (C * (n : ℝ) ^ 2 / ℓ + (18 / β ε) * ((n : ℝ) / ℓ)) * Real.exp (C * (n : ℝ) ^ 2 / ℓ) := by
-  have hb : 0 < β ε := beta_pos hε
+  have hb : 0 < β ε := β_pos hε
   set E : ℝ := ℓ * (h_εI ε (1 + 2 * (n : ℝ) / ℓ) - h_εI ε 1) - 2 * (n : ℝ) * h₁' ε
   set q : ℝ := C * (n : ℝ) ^ 2 / ℓ with hqdef
   set k : ℝ := 18 / β ε * ((n : ℝ) / ℓ) with hkdef
@@ -16586,11 +16599,11 @@ theorem plusSaddleSmallRadiusCoefficient_error_of_phase {ε ℓ : ℝ} (hε : 0 
     _ = (q + k) * Real.exp q := by ring
 
 /-- Report Lemma 4.4: `A_{λ,n} = 1 + O((n + n²)/λ)` for `2n ≤ λ`. -/
-theorem exists_plusSaddleSmallRadiusCoefficient_error {ε : ℝ} (hε : 0 < ε)
+theorem exists_A_ℓn_error {ε : ℝ} (hε : 0 < ε)
     (horder : a₀ε ε ≤ Aε ε) :
     ∃ C : ℝ, 0 ≤ C ∧ ∀ (ℓ : ℝ), 0 < ℓ → ∀ n : ℕ, 2 * (n : ℝ) ≤ ℓ →
       |A_ℓn ε ℓ n - 1| ≤ (C * ((n : ℝ) + (n : ℝ) ^ 2) / ℓ) * Real.exp (C * (n : ℝ) ^ 2 / ℓ) := by
-  have hb : 0 < β ε := beta_pos hε
+  have hb : 0 < β ε := β_pos hε
   obtain ⟨C, hC, hphase⟩ := exists_plusSaddleSmallRadiusPhase_error hε horder
   have hK : (0 : ℝ) ≤ 18 / β ε := by positivity
   refine ⟨C + 18 / β ε, by positivity, fun ℓ hℓ n hn ↦ ?_⟩
@@ -16604,7 +16617,7 @@ theorem exists_plusSaddleSmallRadiusCoefficient_error {ε : ℝ} (hε : 0 < ε)
   have hq : C * (n : ℝ) ^ 2 / ℓ ≤ (C + 18 / β ε) * (n : ℝ) ^ 2 / ℓ := by
     gcongr
     exact le_add_of_nonneg_right hK
-  exact (plusSaddleSmallRadiusCoefficient_error_of_phase hε hℓ n hn hC
+  exact (A_ℓn_error_of_phase hε hℓ n hn hC
     (hphase ℓ hℓ n hn)).trans (mul_le_mul hpoly (Real.exp_le_exp.mpr hq) (Real.exp_pos _).le
       (by positivity))
 
@@ -16728,7 +16741,7 @@ theorem exists_plusSaddleSmallRadius_relativeFiniteResidue_error {ε : ℝ} (hε
             exp (-y)| ≤
           (C / ℓ) * exp (C * (N : ℝ) ^ 2 / ℓ) * (2 * y + y ^ 2) * exp (2 * y) +
             2 * exp y * (y ^ (N + 1) / ((N + 1).factorial : ℝ)) := by
-  obtain ⟨C, hC, hcoeff⟩ := exists_plusSaddleSmallRadiusCoefficient_error hε horder
+  obtain ⟨C, hC, hcoeff⟩ := exists_A_ℓn_error hε horder
   refine ⟨C, hC, fun ℓ hℓ N hN y hy hyratio ↦ ?_⟩
   set K : ℝ := C / ℓ * exp (C * (N : ℝ) ^ 2 / ℓ) with hK
   have hKnonneg : 0 ≤ K := by rw [hK]; positivity
@@ -16807,7 +16820,7 @@ open scoped Topology
 
 /-! ### The gamma damping `D_γ` and the saddle moments of report (45)–(48) -/
 
-theorem upperGammaMeasureDensity_pos {ℓ η a : ℝ} (hℓ : 0 < ℓ) (ha : 0 < a) : 0 < μ_ℓ ℓ η a := by
+theorem μ_ℓ_pos {ℓ η a : ℝ} (hℓ : 0 < ℓ) (ha : 0 < a) : 0 < μ_ℓ ℓ η a := by
   have hx : 0 < 2 * a / ℓ := by positivity
   unfold μ_ℓ
   exact div_pos (exp_pos _) (mul_pos ha (sub_pos.2 (exp_lt_one_iff.2 (by linarith))))
@@ -16834,7 +16847,7 @@ theorem upperGammaDampingIntegrand_integrable {ℓ η : ℝ} (hℓ : 0 < ℓ) (h
   refine ((upperGammaVarianceDensity_integrable hℓ hη).const_mul (T ^ 2 / 2)).mono'
     hmeas.aestronglyMeasurable ?_
   filter_upwards [ae_restrict_mem measurableSet_Ioi] with a ha
-  have hdensity := (upperGammaMeasureDensity_pos (η := η) hℓ ha).le
+  have hdensity := (μ_ℓ_pos (η := η) hℓ ha).le
   have hcos : 0 ≤ 1 - cos (a * T) := sub_nonneg.2 (cos_le_one _)
   have hquad : 1 - cos (a * T) ≤ (a * T) ^ 2 / 2 := by
     nlinarith [Real.one_sub_sq_div_two_le_cos (x := a * T)]
@@ -16845,10 +16858,10 @@ theorem upperGammaDampingIntegrand_integrable {ℓ η : ℝ} (hℓ : 0 < ℓ) (h
       mul_le_mul_of_nonneg_right hquad hdensity
     _ = T ^ 2 / 2 * (a ^ 2 * μ_ℓ ℓ η a) := by ring
 
-theorem upperGammaDamping_nonneg {ℓ η : ℝ} (hℓ : 0 < ℓ) (T : ℝ) : 0 ≤ D_γ ℓ η T := by
+theorem D_γ_nonneg {ℓ η : ℝ} (hℓ : 0 < ℓ) (T : ℝ) : 0 ≤ D_γ ℓ η T := by
   unfold D_γ
   refine setIntegral_nonneg measurableSet_Ioi fun a ha ↦ ?_
-  exact mul_nonneg (sub_nonneg.2 (cos_le_one _)) (upperGammaMeasureDensity_pos (η := η) hℓ ha).le
+  exact mul_nonneg (sub_nonneg.2 (cos_le_one _)) (μ_ℓ_pos (η := η) hℓ ha).le
 
 /-- On the window `0 < a ≤ min (η⁻¹, |T|⁻¹)` the gamma integrand is at least `λT²/(8e)`. -/
 theorem upperGammaDampingIntegrand_lower_on_window {ℓ η T a : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η)
@@ -16878,10 +16891,10 @@ theorem upperGammaDampingIntegrand_lower_on_window {ℓ η T a : ℝ} (hℓ : 0 
     _ = (a * T) ^ 2 / 4 * μ_ℓ ℓ η a := by ring
     _ ≤ (1 - cos (a * T)) * μ_ℓ ℓ η a :=
       mul_le_mul_of_nonneg_right (upper_one_sub_cos_quadratic_lower hTa)
-        (upperGammaMeasureDensity_pos (η := η) hℓ ha).le
+        (μ_ℓ_pos (η := η) hℓ ha).le
 
 /-- Report (45): `λ/(8e) · min (T²/η, |T|) ≤ D_γ(T)`. -/
-theorem upperGammaDamping_lower_bound {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η) (T : ℝ) :
+theorem D_γ_lower_bound {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η) (T : ℝ) :
     ℓ / (8 * exp 1) * min (T ^ 2 / η) |T| ≤ D_γ ℓ η T := by
   rcases eq_or_ne T 0 with rfl | hT
   · simp [D_γ, upperGammaDampingIntegrand]
@@ -16898,7 +16911,7 @@ theorem upperGammaDamping_lower_bound {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 <
   have hnonneg : 0 ≤ᵐ[volume.restrict (Ioi (0 : ℝ))] upperGammaDampingIntegrand ℓ η T := by
     filter_upwards [ae_restrict_mem measurableSet_Ioi] with a ha
     exact mul_nonneg (sub_nonneg.2 (cos_le_one _))
-      (upperGammaMeasureDensity_pos (η := η) hℓ ha).le
+      (μ_ℓ_pos (η := η) hℓ ha).le
   have hrestrict := setIntegral_mono_set hfull hnonneg
     (Filter.Eventually.of_forall fun a ha ↦ hsubset ha)
   have hconstint : (∫ _a : ℝ in Ioc (0 : ℝ) q, c) = q * c := by
@@ -16922,46 +16935,49 @@ theorem upperGammaDamping_lower_bound {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 <
     _ ≤ ∫ a : ℝ in Ioi 0, upperGammaDampingIntegrand ℓ η T a := hrestrict
     _ = D_γ ℓ η T := rfl
 
-/-- The total damping `D_u = D_γ + D_B - D_s` of report (47). -/
-def D_u (ε ℓ δ T : ℝ) : ℝ := D_γ ℓ (2 + δ) T + D_B ε ℓ δ T - D_s ε ℓ δ T
+/-- The total damping `D_u = D_γ - D_s + D_B` of report (47) on the contour `u = 1 + δ`, as a
+function of `δ = u - 1` (the variable of the shell quantities `D_s`, `D_B`); `D_u` is the same
+quantity as a function of `u`. -/
+def D_uδ (ε ℓ δ T : ℝ) : ℝ := D_γ ℓ (2 + δ) T + D_B ε ℓ δ T - D_s ε ℓ δ T
 
-/-- The saddle variance `V_γ + (V_B - V_s)` of report (48). -/
-def upperSaddleVariance (ε ℓ δ : ℝ) : ℝ := V_γ ℓ (2 + δ) + upperNetShellVariance ε δ
+/-- The saddle variance `V(u) = V_γ - V_s + V_B` of report (44), (49) on the contour `u = 1 + δ`,
+as a function of `δ = u - 1`; `V_u` is the same quantity as a function of `u`. -/
+def V_uδ (ε ℓ δ : ℝ) : ℝ := V_γ ℓ (2 + δ) + upperNetShellVariance ε δ
 
 /-- The saddle third moment `M₃_γ + (M₃_B - M₃_s)` of report (48). -/
 def M₃ (ε ℓ δ : ℝ) : ℝ := M₃_γ ℓ (2 + δ) + upperNetShellThirdMoment ε δ
 
-theorem eventually_upperSaddleDamping_gamma_add_shell :
+theorem eventually_D_uδ_gamma_add_shell :
     ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 0 < ℓ → ∀ δ : ℝ, ε / 2 ≤ δ → ∀ T : ℝ,
-      D_γ ℓ (2 + δ) T + 99 / 100 * D_B ε ℓ δ T ≤ D_u ε ℓ δ T := by
+      D_γ ℓ (2 + δ) T + 99 / 100 * D_B ε ℓ δ T ≤ D_uδ ε ℓ δ T := by
   filter_upwards [eventually_upper_shortShell_domination] with ε hdom ℓ hℓ δ hδ T
-  unfold D_u
+  unfold D_uδ
   linarith [hdom ℓ hℓ.le δ hδ T]
 
-theorem eventually_upperSaddleVariance_bounds :
+theorem eventually_V_uδ_bounds :
     ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 0 < ℓ → ∀ δ : ℝ, ε / 2 ≤ δ →
-      1 / (2 * (2 + δ)) + 99 / 100 * V_B ε δ ≤ upperSaddleVariance ε ℓ δ ∧
-        upperSaddleVariance ε ℓ δ ≤ (1 / (2 * (2 + δ)) + 1 / (ℓ * (2 + δ) ^ 2)) + V_B ε δ := by
+      1 / (2 * (2 + δ)) + 99 / 100 * V_B ε δ ≤ V_uδ ε ℓ δ ∧
+        V_uδ ε ℓ δ ≤ (1 / (2 * (2 + δ)) + 1 / (ℓ * (2 + δ) ^ 2)) + V_B ε δ := by
   filter_upwards [self_mem_nhdsWithin, eventually_upper_netShellVariance_bounds]
     with ε hε hnet ℓ hℓ δ hδ
   change 0 < ε at hε
-  obtain ⟨hγlow, hγhigh⟩ := upperGammaVariance_bounds hℓ (show (0 : ℝ) < 2 + δ by nlinarith)
+  obtain ⟨hγlow, hγhigh⟩ := V_γ_bounds hℓ (show (0 : ℝ) < 2 + δ by nlinarith)
   obtain ⟨hslow, hshigh⟩ := hnet δ hδ
   exact ⟨add_le_add hγlow hslow, add_le_add hγhigh hshigh⟩
 
-theorem upperPositiveShellVariance_pos {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ) : 0 < V_B ε δ := by
+theorem V_B_pos {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ) : 0 < V_B ε δ := by
   have hB : 0 < Bε ε := by unfold Bε; positivity
-  refine lt_of_lt_of_le ?_ (upperPositiveShellVariance_bounds hε hδ).1
-  exact mul_pos (mul_pos (mul_pos (by norm_num) (sq_pos_of_pos hB)) (shellWeight_pos ε))
+  refine lt_of_lt_of_le ?_ (V_B_bounds hε hδ).1
+  exact mul_pos (mul_pos (mul_pos (by norm_num) (sq_pos_of_pos hB)) (Qε_pos ε))
     (exp_pos _)
 
-theorem eventually_upperSaddleVariance_pos : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 0 < ℓ →
-    ∀ δ : ℝ, ε / 2 ≤ δ → 0 < upperSaddleVariance ε ℓ δ := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upperSaddleVariance_bounds]
+theorem eventually_V_uδ_pos : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 0 < ℓ →
+    ∀ δ : ℝ, ε / 2 ≤ δ → 0 < V_uδ ε ℓ δ := by
+  filter_upwards [self_mem_nhdsWithin, eventually_V_uδ_bounds]
     with ε hε hbound ℓ hℓ δ hδ
   change 0 < ε at hε
   have hδ0 : (0 : ℝ) ≤ δ := by nlinarith
-  have hshell := upperPositiveShellVariance_pos hε hδ0
+  have hshell := V_B_pos hε hδ0
   have hpositive : 0 < 1 / (2 * (2 + δ)) + 99 / 100 * V_B ε δ := by positivity
   exact hpositive.trans_le (hbound ℓ hℓ δ hδ).1
 
@@ -16969,10 +16985,10 @@ theorem eventually_upperSaddleVariance_pos : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ
 def upperSaddleShellThirdCoefficient (ε : ℝ) : ℝ := Bε ε + 1 + Aε ε / 100
 
 /-- Report (48): the saddle third moment is dominated by the saddle variance. -/
-theorem eventually_upperSaddleThirdMoment_le_variance : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 1 ≤ ℓ →
+theorem eventually_M₃_le_variance : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 1 ≤ ℓ →
     ∀ δ : ℝ, ε / 2 ≤ δ → M₃ ε ℓ δ ≤
-      (2 + (100 / 99 : ℝ) * upperSaddleShellThirdCoefficient ε) * upperSaddleVariance ε ℓ δ := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
+      (2 + (100 / 99 : ℝ) * upperSaddleShellThirdCoefficient ε) * V_uδ ε ℓ δ := by
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
     eventually_upper_netShellVariance_bounds, eventually_upper_netShellThirdMoment_bound]
     with ε hε horder hnet hthird ℓ hℓ δ hδ
   change 0 < ε at hε
@@ -16980,11 +16996,11 @@ theorem eventually_upperSaddleThirdMoment_le_variance : ∀ᶠ ε : ℝ in 𝓝[
   have hδ0 : 0 ≤ δ := by nlinarith
   have hηpos : (0 : ℝ) < 2 + δ := by linarith
   obtain ⟨hnetlower, hnetupper⟩ := hnet δ hδ
-  have hpositiveShell := upperPositiveShellVariance_pos hε hδ0
+  have hpositiveShell := V_B_pos hε hδ0
   have hnetnonneg : 0 ≤ upperNetShellVariance ε δ := by linarith
   have hgammavariance : 0 ≤ V_γ ℓ (2 + δ) :=
     le_trans (by positivity : (0 : ℝ) ≤ 1 / (2 * (2 + δ)))
-      (upperGammaVariance_bounds hℓpos hηpos).1
+      (V_γ_bounds hℓpos hηpos).1
   have hgamma : M₃_γ ℓ (2 + δ) ≤ 2 * V_γ ℓ (2 + δ) := by
     have hsquare : (4 : ℝ) ≤ ℓ * (2 + δ) ^ 2 := by
       nlinarith [mul_nonneg (show (0 : ℝ) ≤ ℓ - 1 by linarith) (sq_nonneg (2 + δ))]
@@ -16994,8 +17010,8 @@ theorem eventually_upperSaddleThirdMoment_le_variance : ∀ᶠ ε : ℝ in 𝓝[
     have hsecond : 2 / (ℓ * (2 + δ) ^ 3) ≤ 1 / (2 * (2 + δ)) := by
       rw [div_le_div_iff₀ (by positivity) (by positivity)]
       nlinarith [mul_le_mul_of_nonneg_right hsquare hηpos.le]
-    linarith [(upperGammaThirdMoment_bounds hℓpos hηpos).2,
-      (upperGammaVariance_bounds hℓpos hηpos).1]
+    linarith [(M₃_γ_bounds hℓpos hηpos).2,
+      (V_γ_bounds hℓpos hηpos).1]
   have hC : 0 ≤ upperSaddleShellThirdCoefficient ε := by
     have hB : 0 ≤ Bε ε := by unfold Bε; positivity
     have hA : 0 ≤ Aε ε := ((show 0 < a₀ε ε by unfold a₀ε; positivity).trans_le horder).le
@@ -17007,13 +17023,13 @@ theorem eventually_upperSaddleThirdMoment_le_variance : ∀ᶠ ε : ℝ in 𝓝[
     have h : upperNetShellThirdMoment ε δ ≤ upperSaddleShellThirdCoefficient ε * V_B ε δ :=
       hthird δ hδ
     nlinarith [mul_le_mul_of_nonneg_left htransfer hC]
-  unfold M₃ upperSaddleVariance
+  unfold M₃ V_uδ
   nlinarith [mul_nonneg hC hgammavariance, mul_nonneg hC hnetnonneg]
 
 /-! ### The first-branch saddle damping of report (49) -/
 
 /-- The short-shell margin factor `b(a) e^{εa}` is at most its value `1 - 2ε` at `a = 0`. -/
-theorem shortMargin_mul_exp_le {ε a : ℝ} (hε : 0 < ε) (ha : 0 ≤ a) :
+theorem bε_mul_exp_le {ε a : ℝ} (hε : 0 < ε) (ha : 0 ≤ a) :
     bε ε a * exp (ε * a) ≤ 1 - 2 * ε := by
   have hderiv (x : ℝ) : HasDerivAt (fun t : ℝ ↦ bε ε t * exp (ε * t))
       (ε * exp (ε * x) * (bε ε x - 2)) x := by
@@ -17064,7 +17080,7 @@ theorem upperFirstBranch_shortRatio_le {ε u a : ℝ} (hε : 0 < ε) (ha : 0 ≤
         congr 1
         ring_nf
       _ ≤ bε ε a * exp (ε * a) := mul_le_mul_of_nonneg_left hdouble hmargin
-      _ ≤ 1 - 2 * ε := shortMargin_mul_exp_le hε ha
+      _ ≤ 1 - 2 * ε := bε_mul_exp_le hε ha
       _ ≤ 1 - 2 * ε := by linarith
 
 /-- Report (49): pointwise, the short shell is dominated by `(1 - 2ε)` times the gamma density. -/
@@ -17092,23 +17108,23 @@ theorem upperFirstBranch_shortMeasure_pointwise {ε ℓ u a : ℝ} (hε : 0 < ε
         (by positivity)
     _ ≤ (1 - 2 * ε) * μ_ℓ ℓ (1 + u) a := mul_le_mul_of_nonneg_left hbase (by linarith)
 
-theorem positiveShellDamping_nonneg {ε ℓ δ T : ℝ} (hℓ : 0 ≤ ℓ) : 0 ≤ D_B ε ℓ δ T := by
+theorem D_B_nonneg {ε ℓ δ T : ℝ} (hℓ : 0 ≤ ℓ) : 0 ≤ D_B ε ℓ δ T := by
   unfold D_B
   refine mul_nonneg hℓ (intervalIntegral.integral_nonneg (by linarith) fun a ha ↦ ?_)
   unfold w_B
-  exact mul_nonneg (mul_nonneg (div_nonneg (shellWeight_pos ε).le (cosh_pos a).le)
+  exact mul_nonneg (mul_nonneg (div_nonneg (Qε_pos ε).le (cosh_pos a).le)
     (cosh_pos _).le) (sub_nonneg.2 (cos_le_one _))
 
-/-- The damping exponent `D(u, T) = D_γ + D_B - D_s` of the contour `z = λ(1 + u) - iλT`,
-report (46) and (49). -/
-def saddleSourceContourDamping (ε ℓ u T : ℝ) : ℝ :=
+/-- The total damping `D_u(T) = -Re L_u(T) = D_γ(T) - D_s(T) + D_B(T)` of report (47) on the
+contour `z = λ(1 + u) - iλT` (see also `D_uδ`, the same quantity as a function of `δ = u - 1`). -/
+def D_u (ε ℓ u T : ℝ) : ℝ :=
   D_γ ℓ (1 + u) T + D_B ε ℓ (u - 1) T - D_s ε ℓ (u - 1) T
 
 /-- Report (49): on the first branch the saddle damping dominates `2ε D_γ`. -/
-theorem upperFirstBranchSaddleDamping_lower_bound {ε ℓ u : ℝ} (hε : 0 < ε) (hεsmall : ε ≤ 1 / 4)
+theorem upperFirstBranch_D_u_lower_bound {ε ℓ u : ℝ} (hε : 0 < ε) (hεsmall : ε ≤ 1 / 4)
     (hℓ : 0 < ℓ) (hulower : -1 < u) (huupper : u ≤ 1 + ε / 2) (horder : a₀ε ε ≤ Aε ε)
     (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) (T : ℝ) :
-    2 * ε * D_γ ℓ (1 + u) T ≤ saddleSourceContourDamping ε ℓ u T := by
+    2 * ε * D_γ ℓ (1 + u) T ≤ D_u ε ℓ u T := by
   have hη : (0 : ℝ) < 1 + u := by linarith
   have ha₀ : 0 < a₀ε ε := by unfold a₀ε; positivity
   have hsubset : Ioc (a₀ε ε) (Aε ε) ⊆ Ioi (0 : ℝ) := fun a ha ↦ ha₀.trans ha.1
@@ -17116,7 +17132,7 @@ theorem upperFirstBranchSaddleDamping_lower_bound {ε ℓ u : ℝ} (hε : 0 < ε
   have hshortOn : IntegrableOn (fun a : ℝ ↦ ℓ * (-w_s ε a) * cosh (u * a) *
       (1 - cos (a * T))) (Ioc (a₀ε ε) (Aε ε)) := by
     refine (intervalIntegrable_iff_integrableOn_Ioc_of_le horder).mp ?_
-    exact ((((shortShellDensity_intervalIntegrable hε horder).neg.const_mul ℓ).mul_continuousOn
+    exact ((((w_s_intervalIntegrable hε horder).neg.const_mul ℓ).mul_continuousOn
         (by fun_prop : Continuous fun a : ℝ ↦ cosh (u * a)).continuousOn).mul_continuousOn
       (by fun_prop : Continuous fun a : ℝ ↦ 1 - cos (a * T)).continuousOn)
   have hmono := setIntegral_mono_on hshortOn ((hgamma.mono_set hsubset).const_mul (1 - 2 * ε))
@@ -17127,7 +17143,7 @@ theorem upperFirstBranchSaddleDamping_lower_bound {ε ℓ u : ℝ} (hε : 0 < ε
           (sub_nonneg.2 (cos_le_one (a * T)))
   have hnonneg : 0 ≤ᵐ[volume.restrict (Ioi (0 : ℝ))] upperGammaDampingIntegrand ℓ (1 + u) T := by
     filter_upwards [ae_restrict_mem measurableSet_Ioi] with a ha
-    exact mul_nonneg (sub_nonneg.2 (cos_le_one _)) (upperGammaMeasureDensity_pos hℓ ha).le
+    exact mul_nonneg (sub_nonneg.2 (cos_le_one _)) (μ_ℓ_pos hℓ ha).le
   have hrestrict := mul_le_mul_of_nonneg_left (setIntegral_mono_set hgamma hnonneg
     (Filter.Eventually.of_forall fun a ha ↦ hsubset ha)) (show (0 : ℝ) ≤ 1 - 2 * ε by linarith)
   have hshort : D_s ε ℓ (u - 1) T ≤ (1 - 2 * ε) * D_γ ℓ (1 + u) T := by
@@ -17144,8 +17160,8 @@ theorem upperFirstBranchSaddleDamping_lower_bound {ε ℓ u : ℝ} (hε : 0 < ε
           upperGammaDampingIntegrand ℓ (1 + u) T a := integral_const_mul _ _
       _ ≤ (1 - 2 * ε) * ∫ a : ℝ in Ioi 0, upperGammaDampingIntegrand ℓ (1 + u) T a := hrestrict
       _ = (1 - 2 * ε) * D_γ ℓ (1 + u) T := rfl
-  unfold saddleSourceContourDamping
-  nlinarith [positiveShellDamping_nonneg (ε := ε) (δ := u - 1) (T := T) hℓ.le]
+  unfold D_u
+  nlinarith [D_B_nonneg (ε := ε) (δ := u - 1) (T := T) hℓ.le]
 
 /-! ### The shell phase on the shifted contour (report (49)) -/
 
@@ -17179,7 +17195,7 @@ theorem saddle_complexShellInterval_re (w : ℝ → ℝ) {a b : ℝ} (hab : a �
       rw [Complex.mul_re, Complex.sub_re, hcosre]
       simp
 
-theorem shortShellDensity_continuousOn_support {ε : ℝ} (hε : 0 < ε) :
+theorem w_s_continuousOn_support {ε : ℝ} (hε : 0 < ε) :
     ContinuousOn (w_s ε) (Icc (a₀ε ε) (Aε ε)) := by
   have hn : Continuous fun a : ℝ ↦ bε ε a * exp (-2 * a) := by unfold bε; fun_prop
   have hd : Continuous fun a : ℝ ↦ 2 * a ^ 2 * cosh a := by fun_prop
@@ -17210,9 +17226,9 @@ theorem saddleShellPhase_damping_identity {ε : ℝ} (hε : 0 < ε) (horder : a�
       D_B ε ℓ (u - 1) T - D_s ε ℓ (u - 1) T := by
   have hB : Bε ε ≤ Bε ε + 1 := by linarith
   have hshort := saddle_shellInterval_hyperbolic_sub_oscillatory (w_s ε) horder
-    (shortShellDensity_continuousOn_support hε) T u
+    (w_s_continuousOn_support hε) T u
   have hpos := saddle_shellInterval_hyperbolic_sub_oscillatory (w_B ε) hB
-    (positiveShellDensity_continuous ε).continuousOn T u
+    (w_B_continuous ε).continuousOn T u
   have hre : (h_ε ε ((T : ℂ) + I * (u : ℂ))).re =
       (∫ a in a₀ε ε..Aε ε, w_s ε a * (cos (a * T) * cosh (a * u) - 1)) +
         ∫ a in Bε ε..Bε ε + 1, w_B ε a * (cos (a * T) * cosh (a * u) - 1) := by
@@ -17220,9 +17236,9 @@ theorem saddleShellPhase_damping_identity {ε : ℝ} (hε : 0 < ε) (horder : a�
     rw [Complex.add_re]
     congr 1
     · exact saddle_complexShellInterval_re (w_s ε) horder
-        (shortShellDensity_continuousOn_support hε) T u
+        (w_s_continuousOn_support hε) T u
     · exact saddle_complexShellInterval_re (w_B ε) hB
-        (positiveShellDensity_continuous ε).continuousOn T u
+        (w_B_continuous ε).continuousOn T u
   have hneg : (∫ a in a₀ε ε..Aε ε, -w_s ε a * cosh (u * a) * (1 - cos (a * T))) =
       -∫ a in a₀ε ε..Aε ε, w_s ε a * cosh (u * a) * (1 - cos (a * T)) := by
     rw [← intervalIntegral.integral_neg]
@@ -17265,7 +17281,7 @@ open scoped FourierTransform SchwartzMap Topology
 /-! ### The critical log profile of a radial test function (report (8)) -/
 
 /-- The critical log profile `u ↦ e^{-λu} g(e^{-u})`, `λ = d/2`, of the radial profile `g` of a
-test function `f`. -/
+test function `f`: the reflection `u ↦ Φ_g(-u)` of the report's `Φ_g(v) = e^{λv} g(e^v)` (§2.2). -/
 def radialCriticalLogProfile {d : ℕ} (hd : 0 < d) (f : TestFunction d) (u : ℝ) : ℂ :=
   exp (-((d : ℝ) / 2) * u) • radialProfile hd f (exp (-u))
 
@@ -17298,12 +17314,12 @@ theorem radialCriticalLogProfile_fourier_integrable {d : ℕ} (hd : 0 < d) (f : 
   simpa [Function.comp_def, G] using (Real.fourier_comp_linearIsometry
     (LinearIsometryEquiv.neg ℝ) G u).symm
 
-theorem radialMellinFrequency_eq_criticalLogFourier {d : ℕ} (hd : 0 < d) (f : TestFunction d)
+theorem X_fℝ_eq_criticalLogFourier {d : ℕ} (hd : 0 < d) (f : TestFunction d)
     (t : ℝ) : X_fℝ hd f t = (𝓕 (radialCriticalLogProfile hd f) : ℝ → ℂ) (-t / (2 * π)) :=
-  radialMellinFrequency_eq_fourier hd f t
+  X_fℝ_eq_fourier hd f t
 
 /-- Report (8): a radial test function is determined by its Mellin frequency `X_f`. -/
-theorem radialMellinFrequency_injective {d : ℕ} (hd : 0 < d) {f g : TestFunction d}
+theorem X_fℝ_injective {d : ℕ} (hd : 0 < d) {f g : TestFunction d}
     (hf : IsRadial f) (hg : IsRadial g)
     (hfrequency : ∀ t : ℝ, X_fℝ hd f t = X_fℝ hd g t) :
     f = g := by
@@ -17316,8 +17332,8 @@ theorem radialMellinFrequency_injective {d : ℕ} (hd : 0 < d) {f g : TestFuncti
       (𝓕 (radialCriticalLogProfile hd g) : ℝ → ℂ) := by
     funext ξ
     have h := hfrequency (-(2 * π * ξ))
-    rw [radialMellinFrequency_eq_criticalLogFourier,
-      radialMellinFrequency_eq_criticalLogFourier] at h
+    rw [X_fℝ_eq_criticalLogFourier,
+      X_fℝ_eq_criticalLogFourier] at h
     convert h using 1 <;> field_simp [Real.pi_ne_zero]
   have hlog : radialCriticalLogProfile hd f = radialCriticalLogProfile hd g := by
     rw [← hinv f, hfourier, hinv g]
@@ -17374,12 +17390,12 @@ theorem fourier_integrable_of_source {d : ℕ} (hd : 0 < d) {F G : ℝ → ℂ}
     congrFun (criticalLogProfile_eq_fourierInv hd hF f hf) (-u)
 
 /-- Report (40): the Mellin frequency of such a source is `t ↦ G(-t/2π)`. -/
-theorem radialMellinFrequency_of_source {d : ℕ} (hd : 0 < d) {F G : ℝ → ℂ}
+theorem X_fℝ_of_source {d : ℕ} (hd : 0 < d) {F G : ℝ → ℂ}
     (hF : ∀ r : ℝ, 0 < r → F r = (r ^ (-((d : ℝ) / 2)) : ℝ) * 𝓕 G (log r))
     (hGint : Integrable G) (hGcont : Continuous G) (f : TestFunction d)
     (hf : ∀ x : Euclidean d, f x = F ‖x‖) (t : ℝ) :
     X_fℝ hd f t = G (-t / (2 * π)) := by
-  rw [radialMellinFrequency_eq_criticalLogFourier hd f t,
+  rw [X_fℝ_eq_criticalLogFourier hd f t,
     criticalLogProfile_eq_fourierInv hd hF f hf]
   exact hGint.fourier_fourierInv_eq (fourier_integrable_of_source hd hF f hf) hGcont.continuousAt
 
@@ -17393,7 +17409,7 @@ theorem isRadial_of_source {d : ℕ} {F : ℝ → ℂ} {f : TestFunction d}
 theorem fourierData_continuous {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (horder : a₀ε ε ≤ Aε ε)
     {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) : Continuous (fourierData ε ℓ P) := by
   unfold fourierData
-  exact (spectrum_continuous hε hℓ horder hP.continuous).comp (by fun_prop)
+  exact (X_P_continuous hε hℓ horder hP.continuous).comp (by fun_prop)
 
 theorem fourierData_integrable {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (horder : a₀ε ε ≤ Aε ε)
     {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) : Integrable (fourierData ε ℓ P) :=
@@ -17401,13 +17417,13 @@ theorem fourierData_integrable {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (h
     (by simpa using fourierData_norm_moment_integrable hε hℓ horder hP 0)
 
 /-- Report (40): the Mellin frequency of a test function `x ↦ f_P(‖x‖)` is the spectrum `X_P`. -/
-theorem radialMellinFrequency_of_mellinProfile {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
+theorem X_fℝ_of_f_P {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) {c : ℝ}
-    (f : TestFunction d) (hf : ∀ x : Euclidean d, f x = mellinProfileFun ε d P c x) (t : ℝ) :
-    X_fℝ hd f t = spectrum ε ((d : ℝ) / 2) P t := by
+    (f : TestFunction d) (hf : ∀ x : Euclidean d, f x = f_PFun ε d P c x) (t : ℝ) :
+    X_fℝ hd f t = X_P ε ((d : ℝ) / 2) P t := by
   have hdim : (0 : ℝ) < (d : ℝ) / 2 := div_pos (by exact_mod_cast hd) (by norm_num)
-  rw [radialMellinFrequency_of_source hd
-    (fun r hr ↦ mellinProfile_eq_fourier ε ((d : ℝ) / 2) P c hr)
+  rw [X_fℝ_of_source hd
+    (fun r hr ↦ f_P_eq_fourier ε ((d : ℝ) / 2) P c hr)
     (fourierData_integrable hε hdim horder hP) (fourierData_continuous hε hdim horder hP) f hf t]
   unfold fourierData
   congr 1
@@ -17415,51 +17431,51 @@ theorem radialMellinFrequency_of_mellinProfile {ε : ℝ} (hε : 0 < ε) {d : �
 
 /-! ### The Fourier pair `f̂₋ = f₊` (report (40)) and the admissible source -/
 
-theorem isRealValued_of_mellinProfile {ε : ℝ} {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) {d : ℕ}
-    {c : ℝ} {f : TestFunction d} (hf : ∀ x : Euclidean d, f x = mellinProfileFun ε d P c x) :
+theorem isRealValued_of_f_P {ε : ℝ} {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) {d : ℕ}
+    {c : ℝ} {f : TestFunction d} (hf : ∀ x : Euclidean d, f x = f_PFun ε d P c x) :
     IsRealValued f :=
-  fun x ↦ by rw [hf x]; exact mellinProfileFun_im hP d c x
+  fun x ↦ by rw [hf x]; exact f_PFun_im hP d c x
 
-theorem isRadial_of_mellinProfile {ε : ℝ} {P : ℂ → ℂ} {d : ℕ} {c : ℝ} {f : TestFunction d}
-    (hf : ∀ x : Euclidean d, f x = mellinProfileFun ε d P c x) : IsRadial f :=
-  isRadial_of_source (F := mellinProfile ε ((d : ℝ) / 2) P c) hf
+theorem isRadial_of_f_P {ε : ℝ} {P : ℂ → ℂ} {d : ℕ} {c : ℝ} {f : TestFunction d}
+    (hf : ∀ x : Euclidean d, f x = f_PFun ε d P c x) : IsRadial f :=
+  isRadial_of_source (F := f_P ε ((d : ℝ) / 2) P c) hf
 
 theorem plusSaddle_real_of_source {ε : ℝ} {d : ℕ} {f : TestFunction d}
     (hf : ∀ x : Euclidean d, f x = fPlusFun ε d x) : IsRealValued f :=
-  isRealValued_of_mellinProfile (c := originValue ε ((d : ℝ) / 2)) (isSaddlePolynomial_PPlus ε) hf
+  isRealValued_of_f_P (c := originValue ε ((d : ℝ) / 2)) (isSaddlePolynomial_PPlus ε) hf
 
 theorem minusSaddle_real_of_source {ε : ℝ} {d : ℕ} {f : TestFunction d}
     (hf : ∀ x : Euclidean d, f x = fMinusFun ε d x) : IsRealValued f :=
-  isRealValued_of_mellinProfile (c := originValue ε ((d : ℝ) / 2)) (isSaddlePolynomial_PMinus ε)
+  isRealValued_of_f_P (c := originValue ε ((d : ℝ) / 2)) (isSaddlePolynomial_PMinus ε)
     hf
 
 /-- Report (40): `𝓕 f_P = f_Q` for test functions `f_P`, `f_Q` realizing the profiles of two
 saddle polynomials with `P(-ζ) = Q(ζ)`. -/
-theorem fourier_eq_of_mellinProfile {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
+theorem fourier_eq_of_f_P {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
     (horder : a₀ε ε ≤ Aε ε) {P Q : ℂ → ℂ} (hP : IsSaddlePolynomial ε P)
     (hQ : IsSaddlePolynomial ε Q) (hPQ : ∀ z : ℂ, P (-z) = Q z) {c c' : ℝ}
-    (f g : TestFunction d) (hf : ∀ x : Euclidean d, f x = mellinProfileFun ε d P c x)
-    (hg : ∀ x : Euclidean d, g x = mellinProfileFun ε d Q c' x) :
+    (f g : TestFunction d) (hf : ∀ x : Euclidean d, f x = f_PFun ε d P c x)
+    (hg : ∀ x : Euclidean d, g x = f_PFun ε d Q c' x) :
     (𝓕 f : TestFunction d) = g := by
-  have hrf : IsRadial f := isRadial_of_mellinProfile hf
-  refine radialMellinFrequency_injective hd (gaussianMellin_fourier_radial hrf)
-    (isRadial_of_mellinProfile hg) fun t ↦ ?_
+  have hrf : IsRadial f := isRadial_of_f_P hf
+  refine X_fℝ_injective hd (gaussianMellin_fourier_radial hrf)
+    (isRadial_of_f_P hg) fun t ↦ ?_
   calc
     X_fℝ hd (𝓕 f : TestFunction d) t = m_ℓ ((d : ℝ) / 2) t * X_fℝ hd f (-t) :=
       radialMellinMultiplier hd f hrf t
-    _ = m_ℓ ((d : ℝ) / 2) t * spectrum ε ((d : ℝ) / 2) P (-t) := by
-      rw [radialMellinFrequency_of_mellinProfile hε hd horder hP f hf]
-    _ = spectrum ε ((d : ℝ) / 2) Q t :=
-      mellinMultiplier_mul_spectrum_neg (div_pos (by exact_mod_cast hd) (by norm_num)) hPQ t
-    _ = X_fℝ hd g t := (radialMellinFrequency_of_mellinProfile hε hd horder hQ g hg t).symm
+    _ = m_ℓ ((d : ℝ) / 2) t * X_P ε ((d : ℝ) / 2) P (-t) := by
+      rw [X_fℝ_of_f_P hε hd horder hP f hf]
+    _ = X_P ε ((d : ℝ) / 2) Q t :=
+      m_ℓ_mul_X_P_neg (div_pos (by exact_mod_cast hd) (by norm_num)) hPQ t
+    _ = X_fℝ hd g t := (X_fℝ_of_f_P hε hd horder hQ g hg t).symm
 
 /-- Report (40): `f̂₋ = f₊`. -/
 theorem saddleSource_fourier_minus_eq_plus {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
     (horder : a₀ε ε ≤ Aε ε) (fminus fplus : TestFunction d)
     (hminus : ∀ x : Euclidean d, fminus x = fMinusFun ε d x)
     (hplus : ∀ x : Euclidean d, fplus x = fPlusFun ε d x) : (𝓕 fminus : TestFunction d) = fplus :=
-  fourier_eq_of_mellinProfile hε hd horder (isSaddlePolynomial_PMinus ε)
-    (isSaddlePolynomial_PPlus ε) (minusPolynomial_neg ε) (c := originValue ε ((d : ℝ) / 2))
+  fourier_eq_of_f_P hε hd horder (isSaddlePolynomial_PMinus ε)
+    (isSaddlePolynomial_PPlus ε) (PMinus_neg ε) (c := originValue ε ((d : ℝ) / 2))
     (c' := originValue ε ((d : ℝ) / 2)) fminus fplus hminus hplus
 
 /-- Report (42): the common value `f₊(0) = f₋(0) > 0` at the origin. -/
@@ -17474,7 +17490,7 @@ theorem saddleSource_zero_eq {ε : ℝ} {d : ℕ} (fminus fplus : TestFunction d
     (hminus : ∀ x : Euclidean d, fminus x = fMinusFun ε d x)
     (hplus : ∀ x : Euclidean d, fplus x = fPlusFun ε d x) :
     fminus (0 : Euclidean d) = fplus (0 : Euclidean d) := by
-  rw [hminus, hplus, minusSaddleFunction_zero, plusSaddleFunction_zero]
+  rw [hminus, hplus, fMinusFun_zero, fPlusFun_zero]
 
 /-- The radial admissible function `x ↦ f₋(Rx)` built from the saddle pair `(f₋, f₊)`. -/
 def saddleSourceAdmissible {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε)
@@ -17538,7 +17554,8 @@ theorem saddleSourceAdmissible_normalizedCost {ε : ℝ} (hε : 0 < ε) {d : ℕ
 
 /-! ### The Real.digamma asymptotics and the saddle radius `R_{ε,d}` (report (84)) -/
 
-/-- Report (83): the logarithm of the saddle radius `r(u)` in dimension `d`. -/
+/-- Report (44): the saddle log-radius `v(u)` in dimension `d`, `λ = d/2` (`v_ℓ` is the same
+function for real `λ`); the saddle radius is `e^{v(u)}`. -/
 def logRadius (ε : ℝ) (d : ℕ) (u : ℝ) : ℝ := -(log π) / 2 +
     Real.digamma (((d : ℝ) / 2) * (1 + u) / 2) / 2 +
     (∫ a in a₀ε ε..Aε ε, w_s ε a * a * sinh (u * a)) +
@@ -17547,7 +17564,7 @@ def logRadius (ε : ℝ) (d : ℕ) (u : ℝ) : ℝ := -(log π) / 2 +
 /-- The saddle radius `R_{ε,d} = r(1 + ε/4)` of report (84). -/
 def R_ε (ε : ℝ) (d : ℕ) : ℝ := exp (logRadius ε d (1 + ε / 4))
 
-theorem saddleSourceRadius_pos (ε : ℝ) (d : ℕ) : 0 < R_ε ε d := exp_pos _
+theorem R_ε_pos (ε : ℝ) (d : ℕ) : 0 < R_ε ε d := exp_pos _
 
 theorem saddle_exp_half_log_eq_sqrt {x : ℝ} (hx : 0 < x) : exp (log x / 2) = √x := by
   rw [← log_sqrt hx.le, exp_log (sqrt_pos.2 hx)]
@@ -17556,7 +17573,7 @@ theorem saddle_exp_half_log_eq_sqrt {x : ℝ} (hx : 0 < x) : exp (log x / 2) = �
 def saddleCriticalGammaArgument (ε : ℝ) (d : ℕ) : ℝ := ((d : ℝ) / 2) * (2 + ε / 4) / 2
 
 /-- Report (84): `R_{ε,d}/√d → α_ε` as `d → ∞`. -/
-theorem tendsto_saddleSourceRadius_normalized {ε : ℝ} (hε : 0 < ε) :
+theorem tendsto_R_ε_normalized {ε : ℝ} (hε : 0 < ε) :
     Tendsto (fun d : ℕ ↦ R_ε ε d / √(d : ℝ)) atTop (𝓝 (α_ε ε)) := by
   have ha : (0 : ℝ) < 2 + ε / 4 := by positivity
   have hformula : ∀ d : ℕ, 0 < d → R_ε ε d / √(d : ℝ) =
@@ -17636,7 +17653,7 @@ ordinate `u_*` and radius `r_*`, the truncation `N_λ` of the residue series and
 of the truncated residue sum on `r ≤ r_*`, the negative-contour estimates (Gamma reflection,
 short-shell damping on the negative contour), the Laplace-type identities for the Gamma damping
 (via complex Frullani integrals), and the conclusion `Re f₊(r) > 0` for `0 ≤ r ≤ r_*`, eventually
-in `d` (`eventually_plusSaddleProfile_re_pos_on_star`).
+in `d` (`eventually_fPlus_re_pos_on_star`).
 -/
 
 namespace CohnElkies
@@ -17651,7 +17668,7 @@ open scoped Topology
 /-- The Mellin contour point `z = λ(1 + u) - iλT` of the saddle-point analysis. -/
 def z_contour (ℓ u T : ℝ) : ℂ := (ℓ * (1 + u) : ℝ) - I * (ℓ * T : ℝ)
 
-theorem saddleSourceMellinContour_shellArgument {ℓ : ℝ} (hℓ : 0 < ℓ) (u T : ℝ) :
+theorem z_contour_shellArgument {ℓ : ℝ} (hℓ : 0 < ℓ) (u T : ℝ) :
     I * (z_contour ℓ u T - (ℓ : ℂ)) / (ℓ : ℂ) = (T : ℂ) + I * (u : ℂ) := by
   have hℓcomplex : (ℓ : ℂ) ≠ 0 := by exact_mod_cast hℓ.ne'
   unfold z_contour
@@ -17660,7 +17677,7 @@ theorem saddleSourceMellinContour_shellArgument {ℓ : ℝ} (hℓ : 0 < ℓ) (u 
   ring_nf
   simp [Complex.I_sq]
 
-theorem saddleSourceMellinContour_gammaArgument (ℓ u T : ℝ) :
+theorem z_contour_gammaArgument (ℓ u T : ℝ) :
     z_contour ℓ u T / 2 = (ℓ * (1 + u) / 2 : ℂ) - I * (ℓ * T / 2 : ℂ) := by
   unfold z_contour
   push_cast
@@ -17677,22 +17694,23 @@ theorem norm_saddleShellExponential_eq_exp_neg_damping {ε : ℝ} (hε : 0 < ε)
   congr 1
   linarith [saddleShellPhase_damping_identity hε horder ℓ T u]
 
-/-- The derivative `h_ε'(u)` of the real shell phase, report (79). -/
-def saddleSourceShellDerivative (ε u : ℝ) : ℝ :=
+/-- The shell part `H(u) = ∫ w(a) a sinh(ua) da` of the saddle log-radius `v(u)` (report (44) and
+the proof of Lemma 4.10), the derivative of `u ↦ h_ε(iu)`. -/
+def H_ε (ε u : ℝ) : ℝ :=
   (∫ a in a₀ε ε..Aε ε, w_s ε a * a * sinh (u * a)) +
     ∫ a in Bε ε..Bε ε + 1, w_B ε a * a * sinh (u * a)
 
-theorem saddleSourceShellDerivative_neg_one (ε : ℝ) :
-    saddleSourceShellDerivative ε (-1) = -h₁' ε := by
-  simp only [saddleSourceShellDerivative, h₁', neg_one_mul, sinh_neg, mul_neg,
+theorem H_ε_neg_one (ε : ℝ) :
+    H_ε ε (-1) = -h₁' ε := by
+  simp only [H_ε, h₁', neg_one_mul, sinh_neg, mul_neg,
     intervalIntegral.integral_neg]
   ring
 
-theorem saddleLogRadius_eq_digamma_add_shellDerivative (ε : ℝ) (d : ℕ) (u : ℝ) :
+theorem logRadius_eq_digamma_add_H_ε (ε : ℝ) (d : ℕ) (u : ℝ) :
     logRadius ε d u =
       -log π / 2 + Real.digamma ((d / 2 : ℝ) * (1 + u) / 2) / 2 +
-        saddleSourceShellDerivative ε u := by
-  unfold logRadius saddleSourceShellDerivative
+        H_ε ε u := by
+  unfold logRadius H_ε
   ring
 
 /-- Report Lemma 4.10: the near-optimal contour height `u_* = -1 + (log λ)/(4λ)`, `λ = d/2`. -/
@@ -17701,51 +17719,51 @@ def u_star (_ε : ℝ) (d : ℕ) : ℝ := -1 + log (d / 2 : ℝ) / (4 * (d / 2 :
 /-- Report Lemma 4.10: the small radius `r_*` at which positivity of `f₊` is proved. -/
 def r_star (ε : ℝ) (d : ℕ) : ℝ := exp (logRadius ε d (u_star ε d))
 
-theorem saddleSmallRadiusStar_pos (ε : ℝ) (d : ℕ) : 0 < r_star ε d := exp_pos _
+theorem r_star_pos (ε : ℝ) (d : ℕ) : 0 < r_star ε d := exp_pos _
 
-theorem saddleSmallRadiusStar_gammaArgument {d : ℕ} (hd : 0 < d) (ε : ℝ) :
+theorem r_star_gammaArgument {d : ℕ} (hd : 0 < d) (ε : ℝ) :
     (d / 2 : ℝ) * (1 + u_star ε d) / 2 = log (d / 2 : ℝ) / 8 := by
   have hdreal : (d : ℝ) ≠ 0 := Nat.cast_ne_zero.2 hd.ne'
   unfold u_star
   field_simp
   ring
 
-theorem saddleSourceShellDerivative_contDiff_one {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) :
-    ContDiff ℝ (1 : WithTop ℕ∞) (saddleSourceShellDerivative ε) := by
+theorem H_ε_contDiff_one {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) :
+    ContDiff ℝ (1 : WithTop ℕ∞) (H_ε ε) := by
   have hphase : ContDiff ℝ ((1 : WithTop ℕ∞) + 1) (h_εI ε) :=
-    realHyperbolicShellPhase_contDiff hε horder _
-  have heq : saddleSourceShellDerivative ε = deriv (h_εI ε) := by
+    h_εI_contDiff hε horder _
+  have heq : H_ε ε = deriv (h_εI ε) := by
     funext u
-    unfold saddleSourceShellDerivative
-    simpa [mul_comm] using (realHyperbolicShellPhase_hasDerivAt hε horder u).deriv.symm
+    unfold H_ε
+    simpa [mul_comm] using (h_εI_hasDerivAt hε horder u).deriv.symm
   rw [heq]
   exact (contDiff_succ_iff_deriv.mp hphase).2.2
 
-theorem saddleSmallRadiusVariable_star_eq {ε : ℝ} {d : ℕ} (hd : 0 < d) :
+theorem y_r_star_eq {ε : ℝ} {d : ℕ} (hd : 0 < d) :
     y_r ε (r_star ε d) = exp (Real.digamma (log (d / 2 : ℝ) / 8) +
-      2 * (h₁' ε + saddleSourceShellDerivative ε (u_star ε d))) := by
+      2 * (h₁' ε + H_ε ε (u_star ε d))) := by
   have hpi : π = exp (log π) := (exp_log pi_pos).symm
   have hsq : ∀ x : ℝ, exp x ^ 2 = exp (2 * x) := fun x ↦ by rw [two_mul, exp_add, sq]
   unfold y_r r_star
-  rw [saddleLogRadius_eq_digamma_add_shellDerivative, saddleSmallRadiusStar_gammaArgument hd ε]
+  rw [logRadius_eq_digamma_add_H_ε, r_star_gammaArgument hd ε]
   nth_rw 1 [hpi]
   rw [hsq, ← exp_add, ← exp_add]
   congr 1
   ring
 
-theorem exists_saddleSourceShellDerivative_endpoint_bound {ε : ℝ} (hε : 0 < ε)
+theorem exists_H_ε_endpoint_bound {ε : ℝ} (hε : 0 < ε)
     (horder : a₀ε ε ≤ Aε ε) :
     ∃ C : ℝ, 0 ≤ C ∧ ∀ u ∈ Icc (-1 : ℝ) 0,
-      |h₁' ε + saddleSourceShellDerivative ε u| ≤ C * (u + 1) := by
-  have hcont : ContDiffOn ℝ ((0 : WithTop ℕ∞) + 1) (saddleSourceShellDerivative ε)
+      |h₁' ε + H_ε ε u| ≤ C * (u + 1) := by
+  have hcont : ContDiffOn ℝ ((0 : WithTop ℕ∞) + 1) (H_ε ε)
       (Icc (-1 : ℝ) 0) := by
-    simpa using (saddleSourceShellDerivative_contDiff_one hε horder).contDiffOn
-  obtain ⟨C, hC⟩ := exists_taylor_mean_remainder_bound (f := saddleSourceShellDerivative ε)
+    simpa using (H_ε_contDiff_one hε horder).contDiffOn
+  obtain ⟨C, hC⟩ := exists_taylor_mean_remainder_bound (f := H_ε ε)
     (n := 0) (by norm_num : (-1 : ℝ) ≤ 0) hcont
   refine ⟨max C 0, le_max_right _ _, fun u hu ↦ ?_⟩
   have hbound := hC u hu
   simp only [taylor_within_zero_eval, Real.norm_eq_abs, Nat.zero_add, pow_one,
-    saddleSourceShellDerivative_neg_one, sub_neg_eq_add] at hbound
+    H_ε_neg_one, sub_neg_eq_add] at hbound
   rw [add_comm (h₁' ε)]
   exact hbound.trans (mul_le_mul_of_nonneg_right (le_max_left _ _) (by linarith [hu.1]))
 
@@ -17761,7 +17779,7 @@ theorem exists_eventually_y_star_le_log_eighth_add {ε : ℝ} (hε : 0 < ε)
     (horder : a₀ε ε ≤ Aε ε) :
     ∃ C : ℝ, 0 ≤ C ∧ ∀ᶠ d : ℕ in atTop, ∀ r : ℝ, 0 ≤ r → r ≤ r_star ε d →
       y_r ε r ≤ log (d / 2 : ℝ) / 8 + C := by
-  obtain ⟨K, hK, hKbound⟩ := exists_saddleSourceShellDerivative_endpoint_bound hε horder
+  obtain ⟨K, hK, hKbound⟩ := exists_H_ε_endpoint_bound hε horder
   have key : ∀ m q : ℝ, 0 ≤ q → q ≤ 1 / 4 → 0 < m → m * (2 * K * q) ≤ K / 4 →
       m * exp (2 * K * q) ≤ m + K / 4 * exp (K / 2) := by
     intro m q hq0 hq4 hm hmz
@@ -17789,7 +17807,7 @@ theorem exists_eventually_y_star_le_log_eighth_add {ε : ℝ} (hε : 0 < ε)
     rw [div_le_iff₀ (by linarith : (0 : ℝ) < 4 * ((d : ℝ) / 2))]
     linarith [log_le_sub_one_of_pos hℓ]
   have hstar : u_star ε d + 1 = log (d / 2 : ℝ) / (4 * (d / 2 : ℝ)) := by unfold u_star; ring
-  have hshell : h₁' ε + saddleSourceShellDerivative ε (u_star ε d) ≤
+  have hshell : h₁' ε + H_ε ε (u_star ε d) ≤
       K * (log (d / 2 : ℝ) / (4 * (d / 2 : ℝ))) := by
     have h := (le_abs_self _).trans (hKbound _ ⟨by linarith, by linarith⟩)
     rwa [hstar] at h
@@ -17800,8 +17818,8 @@ theorem exists_eventually_y_star_le_log_eighth_add {ε : ℝ} (hε : 0 < ε)
     linarith [mul_le_mul_of_nonneg_left (saddle_log_sq_le_four_mul hℓone.le) hK]
   calc y_r ε r ≤ y_r ε (r_star ε d) := by unfold y_r; gcongr
     _ = exp (Real.digamma (log (d / 2 : ℝ) / 8) +
-          2 * (h₁' ε + saddleSourceShellDerivative ε (u_star ε d))) :=
-        saddleSmallRadiusVariable_star_eq hd0
+          2 * (h₁' ε + H_ε ε (u_star ε d))) :=
+        y_r_star_eq hd0
     _ ≤ exp (log (log (d / 2 : ℝ) / 8) + 2 * K * (log (d / 2 : ℝ) / (4 * (d / 2 : ℝ)))) :=
         exp_le_exp.2 (by
           linarith [(Real.log_sub_one_le_digamma_le_log (by linarith : 1 < log (d / 2 : ℝ) / 8)).2])
@@ -17812,15 +17830,15 @@ theorem exists_eventually_y_star_le_log_eighth_add {ε : ℝ} (hε : 0 < ε)
 /-- Report Lemma 4.10: the truncation order `N_λ = ⌈log λ⌉` of the residue series. -/
 def N_ℓ (ℓ : ℝ) : ℕ := ⌈log ℓ⌉₊
 
-theorem saddleSmallResidueTruncation_lower (ℓ : ℝ) : log ℓ ≤ (N_ℓ ℓ : ℝ) := Nat.le_ceil _
+theorem N_ℓ_lower (ℓ : ℝ) : log ℓ ≤ (N_ℓ ℓ : ℝ) := Nat.le_ceil _
 
-theorem saddleSmallResidueTruncation_upper {ℓ : ℝ} (hℓ : 1 ≤ ℓ) : (N_ℓ ℓ : ℝ) ≤ log ℓ + 1 :=
+theorem N_ℓ_upper {ℓ : ℝ} (hℓ : 1 ≤ ℓ) : (N_ℓ ℓ : ℝ) ≤ log ℓ + 1 :=
   (Nat.ceil_lt_add_one (log_nonneg hℓ)).le
 
 theorem tendsto_log_pow_div_atTop (n : ℕ) : Tendsto (fun ℓ : ℝ ↦ log ℓ ^ n / ℓ) atTop (𝓝 0) := by
   simpa using tendsto_pow_log_div_mul_add_atTop 1 0 n one_ne_zero
 
-theorem tendsto_saddleSmallResidueTruncation_div :
+theorem tendsto_N_ℓ_div :
     Tendsto (fun ℓ : ℝ ↦ (N_ℓ ℓ : ℝ) / ℓ) atTop (𝓝 0) := by
   have h : Tendsto (fun ℓ : ℝ ↦ (log ℓ + 1) / ℓ) atTop (𝓝 0) := by
     have h := (tendsto_log_pow_div_atTop 1).add (tendsto_log_pow_div_atTop 0)
@@ -17830,9 +17848,9 @@ theorem tendsto_saddleSmallResidueTruncation_div :
   · filter_upwards [eventually_gt_atTop (0 : ℝ)] with ℓ hℓ
     positivity
   · filter_upwards [eventually_ge_atTop (1 : ℝ)] with ℓ hℓ
-    exact div_le_div_of_nonneg_right (saddleSmallResidueTruncation_upper hℓ) (by linarith)
+    exact div_le_div_of_nonneg_right (N_ℓ_upper hℓ) (by linarith)
 
-theorem tendsto_saddleSmallResidueTruncation_sq_div :
+theorem tendsto_N_ℓ_sq_div :
     Tendsto (fun ℓ : ℝ ↦ (N_ℓ ℓ : ℝ) ^ 2 / ℓ) atTop (𝓝 0) := by
   have h : Tendsto (fun ℓ : ℝ ↦ (log ℓ + 1) ^ 2 / ℓ) atTop (𝓝 0) := by
     have h := ((tendsto_log_pow_div_atTop 2).add
@@ -17845,21 +17863,21 @@ theorem tendsto_saddleSmallResidueTruncation_sq_div :
   · filter_upwards [eventually_ge_atTop (1 : ℝ)] with ℓ hℓ
     refine div_le_div_of_nonneg_right ?_ (by linarith)
     exact (sq_le_sq₀ (Nat.cast_nonneg _) (by nlinarith [log_nonneg hℓ])).mpr
-      (saddleSmallResidueTruncation_upper hℓ)
+      (N_ℓ_upper hℓ)
 
-theorem eventually_saddleSmallResidueTruncation_succ_double_le :
+theorem eventually_N_ℓ_succ_double_le :
     ∀ᶠ ℓ : ℝ in atTop, 2 * ((N_ℓ ℓ + 1 : ℕ) : ℝ) ≤ ℓ := by
-  filter_upwards [tendsto_saddleSmallResidueTruncation_div.eventually
+  filter_upwards [tendsto_N_ℓ_div.eventually
       (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1 / 4)), eventually_ge_atTop (4 : ℝ)] with ℓ hratio hℓ
   have h := (div_lt_iff₀ (by linarith : (0 : ℝ) < ℓ)).mp hratio
   push_cast
   linarith
 
-theorem eventually_saddleSmallResidueTruncation_dominates_window {C : ℝ} :
+theorem eventually_N_ℓ_dominates_window {C : ℝ} :
     ∀ᶠ ℓ : ℝ in atTop, ∀ y : ℝ, 0 ≤ y → y ≤ log ℓ / 8 + C → 2 * y ≤ (N_ℓ ℓ : ℝ) + 2 := by
   filter_upwards [tendsto_log_atTop.eventually (eventually_ge_atTop (8 * C / 3))]
     with ℓ hlog y hy hyupper
-  linarith [saddleSmallResidueTruncation_lower ℓ]
+  linarith [N_ℓ_lower ℓ]
 
 theorem saddleExpSeries_term_le_exp_mul_half_pow {y : ℝ} (hy : 0 ≤ y) (m : ℕ) :
     y ^ m / (m.factorial : ℝ) ≤ exp (2 * y) * (1 / 2 : ℝ) ^ m := by
@@ -17871,13 +17889,13 @@ theorem saddleExpSeries_term_le_exp_mul_half_pow {y : ℝ} (hy : 0 ≤ y) (m : �
         ring_nf
     _ ≤ exp (2 * y) * (1 / 2 : ℝ) ^ m := mul_le_mul_of_nonneg_right hterm (by positivity)
 
-theorem saddleSmallResidueTruncation_half_pow_le (ℓ : ℝ) :
+theorem N_ℓ_half_pow_le (ℓ : ℝ) :
     (1 / 2 : ℝ) ^ (N_ℓ ℓ + 1) ≤ exp (-1 / 2 * log ℓ) := by
   have hhalf : log (1 / 2 : ℝ) ≤ -(1 / 2 : ℝ) := by
     linarith [log_le_sub_one_of_pos (by norm_num : (0 : ℝ) < 1 / 2)]
   have hlower : log ℓ ≤ ((N_ℓ ℓ + 1 : ℕ) : ℝ) := by
     push_cast
-    linarith [saddleSmallResidueTruncation_lower ℓ]
+    linarith [N_ℓ_lower ℓ]
   have hnonneg : (0 : ℝ) ≤ ((N_ℓ ℓ + 1 : ℕ) : ℝ) := Nat.cast_nonneg _
   rw [show ((1 : ℝ) / 2) ^ (N_ℓ ℓ + 1) = exp (((N_ℓ ℓ + 1 : ℕ) : ℝ) * log (1 / 2 : ℝ)) by
     rw [exp_nat_mul, exp_log (by norm_num)]]
@@ -17957,7 +17975,7 @@ theorem tendsto_saddleLogWindowPolynomial_exp_neg (C : ℝ) :
 theorem tendsto_saddleSmallResidueCoefficientMajorant (K C : ℝ) :
     Tendsto (saddleSmallResidueCoefficientMajorant K C) atTop (𝓝 0) := by
   have hfactor : Tendsto (fun ℓ : ℝ ↦ exp (K * (N_ℓ ℓ : ℝ) ^ 2 / ℓ)) atTop (𝓝 1) := by
-    have h := tendsto_saddleSmallResidueTruncation_sq_div.const_mul K
+    have h := tendsto_N_ℓ_sq_div.const_mul K
     rw [mul_zero] at h
     simpa using (h.congr fun ℓ ↦ by ring : Tendsto (fun ℓ : ℝ ↦
       K * (N_ℓ ℓ : ℝ) ^ 2 / ℓ) atTop (𝓝 0)).rexp
@@ -17989,13 +18007,13 @@ theorem eventually_plusSaddleSmallRadius_relativeFiniteResidue_lt_half {ε : ℝ
   obtain ⟨K, hK, hfinite⟩ := exists_plusSaddleSmallRadius_relativeFiniteResidue_error hε horder
   filter_upwards [(tendsto_saddleSmallResidueRelativeErrorMajorant K C).eventually
       (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1 / 2)),
-    eventually_saddleSmallResidueTruncation_succ_double_le,
-    eventually_saddleSmallResidueTruncation_dominates_window (C := C),
+    eventually_N_ℓ_succ_double_le,
+    eventually_N_ℓ_dominates_window (C := C),
     eventually_ge_atTop (1 : ℝ)] with ℓ hsmall hN hwindow hℓ y hy hyupper
   have hℓpos : 0 < ℓ := lt_of_lt_of_le zero_lt_one hℓ
   have hN' : 2 * (N_ℓ ℓ : ℝ) ≤ ℓ := by push_cast at hN; linarith
   have htail := saddleSmallResidue_tail_le_majorant (m := N_ℓ ℓ + 1) (c := 1) hy hyupper
-    (by simpa using saddleSmallResidueTruncation_half_pow_le ℓ)
+    (by simpa using N_ℓ_half_pow_le ℓ)
   rw [one_mul] at htail
   refine lt_of_le_of_lt ((hfinite ℓ hℓpos (N_ℓ ℓ) hN' y hy (hwindow y hy hyupper)).trans ?_) hsmall
   unfold saddleSmallResidueRelativeErrorMajorant
@@ -18015,7 +18033,7 @@ theorem eventually_plusSaddleSmallRadius_relativeFiniteResidue_lt_half_on_star {
   filter_upwards [tendsto_saddleResidue_dimension_half.eventually
       (eventually_plusSaddleSmallRadius_relativeFiniteResidue_lt_half hε horder (C := C)), hstar]
     with d hres hcut r hr hrstar
-  exact hres (y_r ε r) (saddleSmallRadiusVariable_nonneg ε r) (hcut r hr hrstar)
+  exact hres (y_r ε r) (y_r_nonneg ε r) (hcut r hr hrstar)
 
 end
 
@@ -18042,7 +18060,7 @@ theorem saddleNegative_factorialTail_le_majorant {C ℓ y : ℝ} (hy : 0 ≤ y)
     (hyupper : y ≤ log ℓ / 8 + C) :
     exp y * (y ^ N_ℓ ℓ / ((N_ℓ ℓ).factorial : ℝ)) ≤ 2 * saddleSmallResidueTailMajorant C ℓ := by
   refine saddleSmallResidue_tail_le_majorant hy hyupper ?_
-  have h := saddleSmallResidueTruncation_half_pow_le ℓ
+  have h := N_ℓ_half_pow_le ℓ
   rw [pow_succ] at h
   linarith
 
@@ -18081,8 +18099,8 @@ def saddleNegativeRelativeGammaTailMajorant (C K Kε ℓ : ℝ) : ℝ :=
 
 theorem tendsto_saddleNegativeTruncation_odd_sq_div :
     Tendsto (fun ℓ : ℝ ↦ (2 * (N_ℓ ℓ : ℝ) + 1) ^ 2 / ℓ) atTop (𝓝 0) := by
-  have h := ((tendsto_saddleSmallResidueTruncation_sq_div.const_mul 4).add
-    (tendsto_saddleSmallResidueTruncation_div.const_mul 4)).add (tendsto_log_pow_div_atTop 0)
+  have h := ((tendsto_N_ℓ_sq_div.const_mul 4).add
+    (tendsto_N_ℓ_div.const_mul 4)).add (tendsto_log_pow_div_atTop 0)
   simp only [mul_zero, add_zero] at h
   exact h.congr fun ℓ ↦ by ring
 
@@ -18346,14 +18364,14 @@ open scoped Topology
 
 /-- Report (82): if both relative errors of the residue expansion are `< 1/2`, then `f₊(r)` has
 positive real part. -/
-theorem plusSaddleProfile_re_pos_of_relative_residue_bounds {ε ℓ r : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem fPlus_re_pos_of_relative_residue_bounds {ε ℓ r : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) (hr : 0 < r) (N : ℕ)
     (hfinite : exp (y_r ε r) * |(∑ n ∈ Finset.range (N + 1),
         (-y_r ε r) ^ n / (n.factorial : ℝ) * A_ℓn ε ℓ n) - exp (-(y_r ε r))| < (1 / 2 : ℝ))
     (hremainder : exp (y_r ε r) *
-        ‖plusSaddleTaylorRemainder ε ℓ N r / (originValue ε ℓ : ℂ)‖ < (1 / 2 : ℝ)) :
+        ‖taylorRemainderPlus ε ℓ N r / (originValue ε ℓ : ℂ)‖ < (1 / 2 : ℝ)) :
     0 < (fPlus ε ℓ r).re := by
-  have hO : 0 < originValue ε ℓ := saddleOriginValue_pos hε ℓ
+  have hO : 0 < originValue ε ℓ := originValue_pos hε ℓ
   have hexp : 0 < exp (y_r ε r) := exp_pos _
   have hone : exp (y_r ε r) * exp (-(y_r ε r)) = 1 := by rw [← exp_add]; simp
   have key : ∀ S Q : ℝ, exp (y_r ε r) * |S - exp (-(y_r ε r))| < 1 / 2 →
@@ -18365,12 +18383,12 @@ theorem plusSaddleProfile_re_pos_of_relative_residue_bounds {ε ℓ r : ℝ} (h�
     nlinarith
   have hnormal : (fPlus ε ℓ r).re / originValue ε ℓ =
       (∑ n ∈ Finset.range (N + 1), (-y_r ε r) ^ n / (n.factorial : ℝ) * A_ℓn ε ℓ n) +
-        (plusSaddleTaylorRemainder ε ℓ N r / (originValue ε ℓ : ℂ)).re := by
-    have h := congrArg Complex.re (plusSaddleProfile_div_origin_eq_small_radius_residue_series
+        (taylorRemainderPlus ε ℓ N r / (originValue ε ℓ : ℂ)).re := by
+    have h := congrArg Complex.re (fPlus_div_origin_eq_small_radius_residue_series
       hε hℓ horder hr N)
     simpa [Complex.div_ofReal_re, ← Complex.ofReal_neg, ← Complex.ofReal_pow] using h
   have hQ : exp (y_r ε r) *
-      |(plusSaddleTaylorRemainder ε ℓ N r / (originValue ε ℓ : ℂ)).re| < 1 / 2 :=
+      |(taylorRemainderPlus ε ℓ N r / (originValue ε ℓ : ℂ)).re| < 1 / 2 :=
     lt_of_le_of_lt (mul_le_mul_of_nonneg_left (Complex.abs_re_le_norm _) hexp.le) hremainder
   have hsum := key _ _ hfinite hQ
   rw [← hnormal] at hsum
@@ -18459,18 +18477,18 @@ theorem upperNegativeContour_shortDamping_le_gamma {ε ℓ κ η : ℝ} (hε : 0
     (hℓ : 0 < ℓ) (hκ : 1 ≤ κ) (hη : 0 < η) (hκη : κ + η ≤ 3) (horder : a₀ε ε ≤ Aε ε)
     (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) (T : ℝ) :
     D_s ε ℓ (-κ - 1) T ≤ (1 - 2 * ε) * D_γ ℓ η T := by
-  have ha₀ := shortCutoff_pos hε
+  have ha₀ := a₀ε_pos hε
   have hsubset : Ioc (a₀ε ε) (Aε ε) ⊆ Ioi (0 : ℝ) := fun a ha ↦ ha₀.trans ha.1
   have hgamma := upperGammaDampingIntegrand_integrable hℓ hη T
   have hshortOn : IntegrableOn (fun a : ℝ ↦
       ℓ * (-w_s ε a) * cosh (κ * a) * (1 - cos (a * T))) (Ioc (a₀ε ε) (Aε ε)) := by
     refine (intervalIntegrable_iff_integrableOn_Ioc_of_le horder).mp ?_
-    exact ((((shortShellDensity_intervalIntegrable hε horder).neg).const_mul ℓ).mul_continuousOn
+    exact ((((w_s_intervalIntegrable hε horder).neg).const_mul ℓ).mul_continuousOn
       (by fun_prop : Continuous fun a : ℝ ↦ cosh (κ * a)).continuousOn).mul_continuousOn
       (by fun_prop : Continuous fun a : ℝ ↦ 1 - cos (a * T)).continuousOn
   have hnonneg : 0 ≤ᵐ[volume.restrict (Ioi (0 : ℝ))] upperGammaDampingIntegrand ℓ η T := by
     filter_upwards [ae_restrict_mem measurableSet_Ioi] with a ha
-    exact mul_nonneg (sub_nonneg.mpr (cos_le_one _)) (upperGammaMeasureDensity_pos hℓ ha).le
+    exact mul_nonneg (sub_nonneg.mpr (cos_le_one _)) (μ_ℓ_pos hℓ ha).le
   calc D_s ε ℓ (-κ - 1) T =
         ∫ a : ℝ in Ioc (a₀ε ε) (Aε ε), ℓ * (-w_s ε a) * cosh (κ * a) * (1 - cos (a * T)) := by
         unfold D_s
@@ -18491,8 +18509,9 @@ theorem upperNegativeContour_shortDamping_le_gamma {ε ℓ κ η : ℝ} (hε : 0
         mul_le_mul_of_nonneg_left (setIntegral_mono_set hgamma hnonneg
           (Eventually.of_forall hsubset)) (by linarith)
 
-/-- The height `κ = 1 + (2N+1)/λ` of the negative Taylor contour of report (82). -/
-def saddleNegativeContourOrdinate (ℓ : ℝ) (N : ℕ) : ℝ := 1 + (2 * (N : ℝ) + 1) / ℓ
+/-- The height `κ = 1 + 2p/λ`, `p = N + 1/2`, of the contour `t = s - i(λ + 2p)` below the first
+`N + 1` gamma poles (report, proof of Lemma 4.10). -/
+def κ_ℓ (ℓ : ℝ) (N : ℕ) : ℝ := 1 + (2 * (N : ℝ) + 1) / ℓ
 
 /-- The gamma rate `η = (2N+3)/λ` matched to the negative Taylor contour. -/
 def saddleNegativeGammaRate (ℓ : ℝ) (N : ℕ) : ℝ := (2 * (N : ℝ) + 3) / ℓ
@@ -18502,24 +18521,24 @@ theorem saddleNegativeGammaRate_pos {ℓ : ℝ} (hℓ : 0 < ℓ) (N : ℕ) :
   unfold saddleNegativeGammaRate
   positivity
 
-theorem one_le_saddleNegativeContourOrdinate {ℓ : ℝ} (hℓ : 0 < ℓ) (N : ℕ) :
-    1 ≤ saddleNegativeContourOrdinate ℓ N := by
-  unfold saddleNegativeContourOrdinate
+theorem one_le_κ_ℓ {ℓ : ℝ} (hℓ : 0 < ℓ) (N : ℕ) :
+    1 ≤ κ_ℓ ℓ N := by
+  unfold κ_ℓ
   linarith [show (0 : ℝ) ≤ (2 * (N : ℝ) + 1) / ℓ by positivity]
 
-theorem saddleNegativeContourOrdinate_le_two {ℓ : ℝ} (hℓ : 0 < ℓ) (N : ℕ)
-    (hN : 2 * ((N + 1 : ℕ) : ℝ) ≤ ℓ) : saddleNegativeContourOrdinate ℓ N ≤ 2 := by
-  unfold saddleNegativeContourOrdinate
+theorem κ_ℓ_le_two {ℓ : ℝ} (hℓ : 0 < ℓ) (N : ℕ)
+    (hN : 2 * ((N + 1 : ℕ) : ℝ) ≤ ℓ) : κ_ℓ ℓ N ≤ 2 := by
+  unfold κ_ℓ
   push_cast at hN
   have h : (2 * (N : ℝ) + 1) / ℓ ≤ 1 := by
     rw [div_le_one hℓ]
     linarith
   linarith
 
-theorem saddleNegativeContourOrdinate_add_rate_le_three {ℓ : ℝ} (hℓ : 0 < ℓ) (N : ℕ)
+theorem κ_ℓ_add_rate_le_three {ℓ : ℝ} (hℓ : 0 < ℓ) (N : ℕ)
     (hN : 2 * ((N + 1 : ℕ) : ℝ) ≤ ℓ) :
-    saddleNegativeContourOrdinate ℓ N + saddleNegativeGammaRate ℓ N ≤ 3 := by
-  unfold saddleNegativeContourOrdinate saddleNegativeGammaRate
+    κ_ℓ ℓ N + saddleNegativeGammaRate ℓ N ≤ 3 := by
+  unfold κ_ℓ saddleNegativeGammaRate
   push_cast at hN
   have h : (2 * (N : ℝ) + 1) / ℓ + (2 * (N : ℝ) + 3) / ℓ ≤ 2 := by
     rw [← add_div, div_le_iff₀ hℓ]
@@ -18646,13 +18665,13 @@ theorem upperNegativeContour_gamma_mul_exp_short_le {ε ℓ : ℝ} (hε : 0 < ε
     (hℓ : 0 < ℓ) (N : ℕ) (hN : 2 * ((N + 1 : ℕ) : ℝ) ≤ ℓ) (horder : a₀ε ε ≤ Aε ε)
     (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) (s : ℝ) :
     ‖Complex.Gamma (upperNegativeHalfGammaArgument N s)‖ *
-        exp (D_s ε ℓ (-saddleNegativeContourOrdinate ℓ N - 1) (-s / ℓ)) ≤
+        exp (D_s ε ℓ (-κ_ℓ ℓ N - 1) (-s / ℓ)) ≤
       π / Gamma ((N : ℝ) + 3 / 2) * exp (ε * log 2) * exp (-(ε / 2) * π * |s|) := by
   have hpref : (0 : ℝ) ≤ π / Gamma ((N : ℝ) + 3 / 2) :=
     div_nonneg pi_pos.le (Gamma_pos_of_pos (by positivity)).le
   have hC : 0 < cosh (π * (s / 2)) := cosh_pos _
   set D : ℝ := D_γ ℓ (saddleNegativeGammaRate ℓ N) (-s / ℓ) with hD
-  have hDnonneg : 0 ≤ D := upperGammaDamping_nonneg hℓ _
+  have hDnonneg : 0 ≤ D := D_γ_nonneg hℓ _
   have hDlog : 2 * D ≤ log (cosh (π * (s / 2))) := by
     apply exp_le_exp.mp
     rw [exp_log hC]
@@ -18666,13 +18685,13 @@ theorem upperNegativeContour_gamma_mul_exp_short_le {ε ℓ : ℝ} (hε : 0 < ε
         (show 0 ≤ log (cosh (π * (s / 2))) - 2 * D by linarith),
       mul_nonneg (show (0 : ℝ) ≤ ε by positivity)
         (show 0 ≤ log (cosh (π * (s / 2))) - (π * |s| / 2 - log 2) by linarith)]
-  have hshort : D_s ε ℓ (-saddleNegativeContourOrdinate ℓ N - 1) (-s / ℓ) ≤ (1 - 2 * ε) * D :=
+  have hshort : D_s ε ℓ (-κ_ℓ ℓ N - 1) (-s / ℓ) ≤ (1 - 2 * ε) * D :=
     upperNegativeContour_shortDamping_le_gamma hε hεsmall hℓ
-      (one_le_saddleNegativeContourOrdinate hℓ N) (saddleNegativeGammaRate_pos hℓ N)
-      (saddleNegativeContourOrdinate_add_rate_le_three hℓ N hN) horder hmargin (-s / ℓ)
+      (one_le_κ_ℓ hℓ N) (saddleNegativeGammaRate_pos hℓ N)
+      (κ_ℓ_add_rate_le_three hℓ N hN) horder hmargin (-s / ℓ)
   rw [upperNegativeHalfGamma_norm_eq_reflected_damping hℓ N s, ← hD]
   calc π / Gamma ((N : ℝ) + 3 / 2) * exp D / cosh (π * (s / 2)) *
-        exp (D_s ε ℓ (-saddleNegativeContourOrdinate ℓ N - 1) (-s / ℓ)) ≤
+        exp (D_s ε ℓ (-κ_ℓ ℓ N - 1) (-s / ℓ)) ≤
         π / Gamma ((N : ℝ) + 3 / 2) * exp D / cosh (π * (s / 2)) * exp ((1 - 2 * ε) * D) := by
         gcongr
     _ = π / Gamma ((N : ℝ) + 3 / 2) *
@@ -18684,7 +18703,7 @@ theorem upperNegativeContour_gamma_mul_exp_short_le {ε ℓ : ℝ} (hε : 0 < ε
         rw [show ε * log 2 - ε / 2 * π * |s| = ε * log 2 + -(ε / 2) * π * |s| by ring, exp_add]
         ring
 
-theorem upperShortShellDamping_neg_frequency (ε ℓ δ T : ℝ) : D_s ε ℓ δ (-T) = D_s ε ℓ δ T := by
+theorem D_s_neg_frequency (ε ℓ δ T : ℝ) : D_s ε ℓ δ (-T) = D_s ε ℓ δ T := by
   unfold D_s
   congr 1
   refine intervalIntegral.integral_congr fun a _ ↦ ?_
@@ -18698,8 +18717,8 @@ theorem saddleTaylorContour_gammaArgument (N : ℕ) (s : ℝ) :
 
 theorem saddleTaylorContour_shellArgument {ℓ : ℝ} (hℓ : 0 < ℓ) (N : ℕ) (s : ℝ) :
     I * ((saddleTaylorContour N : ℂ) + (s : ℂ) * I - (ℓ : ℂ)) / (ℓ : ℂ) =
-      (-s / ℓ : ℂ) + I * (-saddleNegativeContourOrdinate ℓ N : ℂ) := by
-  unfold saddleTaylorContour saddleNegativeContourOrdinate
+      (-s / ℓ : ℂ) + I * (-κ_ℓ ℓ N : ℂ) := by
+  unfold saddleTaylorContour κ_ℓ
   push_cast
   field_simp [hℓ.ne']
   ring_nf
@@ -18712,38 +18731,38 @@ theorem upperNegativeContour_gamma_mul_shellExponential_le {ε ℓ : ℝ} (hε :
     ‖Complex.Gamma (((saddleTaylorContour N : ℂ) + (s : ℂ) * I) / 2) *
         Complex.exp ((ℓ : ℂ) * h_ε ε (I * ((saddleTaylorContour N : ℂ) + (s : ℂ) * I -
           (ℓ : ℂ)) / (ℓ : ℂ)))‖ ≤
-      exp (ℓ * h_εI ε (saddleNegativeContourOrdinate ℓ N)) *
+      exp (ℓ * h_εI ε (κ_ℓ ℓ N)) *
         (π / Gamma ((N : ℝ) + 3 / 2) * exp (ε * log 2) * exp (-(ε / 2) * π * |s|)) := by
-  have hP : 0 ≤ D_B ε ℓ (-saddleNegativeContourOrdinate ℓ N - 1) (-s / ℓ) :=
-    positiveShellDamping_nonneg hℓ.le
+  have hP : 0 ≤ D_B ε ℓ (-κ_ℓ ℓ N - 1) (-s / ℓ) :=
+    D_B_nonneg hℓ.le
   have hgamma' : ‖Complex.Gamma (upperNegativeHalfGammaArgument N (-s))‖ *
-      exp (D_s ε ℓ (-saddleNegativeContourOrdinate ℓ N - 1) (-s / ℓ)) ≤
+      exp (D_s ε ℓ (-κ_ℓ ℓ N - 1) (-s / ℓ)) ≤
         π / Gamma ((N : ℝ) + 3 / 2) * exp (ε * log 2) * exp (-(ε / 2) * π * |s|) := by
     have h := upperNegativeContour_gamma_mul_exp_short_le hε hεsmall hℓ N hN horder hmargin (-s)
-    rwa [show -(-s) / ℓ = -(-s / ℓ) by ring, upperShortShellDamping_neg_frequency, abs_neg] at h
+    rwa [show -(-s) / ℓ = -(-s / ℓ) by ring, D_s_neg_frequency, abs_neg] at h
   have hshell : ‖Complex.exp ((ℓ : ℂ) * h_ε ε ((-s / ℓ : ℂ) +
-      I * (-saddleNegativeContourOrdinate ℓ N : ℂ)))‖ =
-      exp (ℓ * h_εI ε (saddleNegativeContourOrdinate ℓ N)) *
-        exp (-(D_B ε ℓ (-saddleNegativeContourOrdinate ℓ N - 1) (-s / ℓ) -
-          D_s ε ℓ (-saddleNegativeContourOrdinate ℓ N - 1) (-s / ℓ))) := by
+      I * (-κ_ℓ ℓ N : ℂ)))‖ =
+      exp (ℓ * h_εI ε (κ_ℓ ℓ N)) *
+        exp (-(D_B ε ℓ (-κ_ℓ ℓ N - 1) (-s / ℓ) -
+          D_s ε ℓ (-κ_ℓ ℓ N - 1) (-s / ℓ))) := by
     have h := norm_saddleShellExponential_eq_exp_neg_damping hε horder ℓ (-s / ℓ)
-      (-saddleNegativeContourOrdinate ℓ N)
-    rw [realHyperbolicShellPhase_neg] at h
+      (-κ_ℓ ℓ N)
+    rw [h_εI_neg] at h
     push_cast at h
     exact h
   rw [saddleTaylorContour_gammaArgument, saddleTaylorContour_shellArgument hℓ N s, norm_mul, hshell]
   calc ‖Complex.Gamma (upperNegativeHalfGammaArgument N (-s))‖ *
-        (exp (ℓ * h_εI ε (saddleNegativeContourOrdinate ℓ N)) *
-          exp (-(D_B ε ℓ (-saddleNegativeContourOrdinate ℓ N - 1) (-s / ℓ) -
-            D_s ε ℓ (-saddleNegativeContourOrdinate ℓ N - 1) (-s / ℓ)))) ≤
+        (exp (ℓ * h_εI ε (κ_ℓ ℓ N)) *
+          exp (-(D_B ε ℓ (-κ_ℓ ℓ N - 1) (-s / ℓ) -
+            D_s ε ℓ (-κ_ℓ ℓ N - 1) (-s / ℓ)))) ≤
         ‖Complex.Gamma (upperNegativeHalfGammaArgument N (-s))‖ *
-          (exp (ℓ * h_εI ε (saddleNegativeContourOrdinate ℓ N)) *
-            exp (D_s ε ℓ (-saddleNegativeContourOrdinate ℓ N - 1) (-s / ℓ))) := by
+          (exp (ℓ * h_εI ε (κ_ℓ ℓ N)) *
+            exp (D_s ε ℓ (-κ_ℓ ℓ N - 1) (-s / ℓ))) := by
         gcongr
         linarith
-    _ = exp (ℓ * h_εI ε (saddleNegativeContourOrdinate ℓ N)) *
+    _ = exp (ℓ * h_εI ε (κ_ℓ ℓ N)) *
           (‖Complex.Gamma (upperNegativeHalfGammaArgument N (-s))‖ *
-            exp (D_s ε ℓ (-saddleNegativeContourOrdinate ℓ N - 1) (-s / ℓ))) := by ring
+            exp (D_s ε ℓ (-κ_ℓ ℓ N - 1) (-s / ℓ))) := by ring
     _ ≤ _ := mul_le_mul_of_nonneg_left hgamma' (exp_pos _).le
 
 /-- The frequency majorant `(1 + |s|)³ e^{-επ|s|/2}` of the negative-contour integrand. -/
@@ -18761,28 +18780,28 @@ theorem saddleNegativeFrequencyMajorant_integrable {ε : ℝ} (hε : 0 < ε) :
   simp only [Pi.add_apply, pow_zero, pow_one]
   ring_nf
 
-theorem norm_plusPolynomial_negativeContour_le {ε ℓ : ℝ} (hℓ : 0 < ℓ) (N : ℕ)
+theorem norm_PPlus_negativeContour_le {ε ℓ : ℝ} (hℓ : 0 < ℓ) (N : ℕ)
     (hN : 2 * ((N + 1 : ℕ) : ℝ) ≤ ℓ) (s : ℝ) :
     ‖PPlus ε (I * ((saddleTaylorContour N : ℂ) + (s : ℂ) * I - (ℓ : ℂ)) / (ℓ : ℂ))‖ ≤
       27 * (1 + |β ε|) * (1 + |s|) ^ 3 := by
-  have hκ := one_le_saddleNegativeContourOrdinate hℓ N
-  have hκtop := saddleNegativeContourOrdinate_le_two hℓ N hN
+  have hκ := one_le_κ_ℓ hℓ N
+  have hκtop := κ_ℓ_le_two hℓ N hN
   have hℓone : 1 ≤ ℓ := by
     push_cast at hN
     linarith [Nat.cast_nonneg (α := ℝ) N]
-  have hbase : 1 + ‖(-s / ℓ : ℂ) + I * (-saddleNegativeContourOrdinate ℓ N : ℂ)‖ ≤
+  have hbase : 1 + ‖(-s / ℓ : ℂ) + I * (-κ_ℓ ℓ N : ℂ)‖ ≤
       3 * (1 + |s|) := by
-    have hnorm : ‖(-s / ℓ : ℂ) + I * (-saddleNegativeContourOrdinate ℓ N : ℂ)‖ ≤
-        |s| / ℓ + saddleNegativeContourOrdinate ℓ N := by
+    have hnorm : ‖(-s / ℓ : ℂ) + I * (-κ_ℓ ℓ N : ℂ)‖ ≤
+        |s| / ℓ + κ_ℓ ℓ N := by
       refine (norm_add_le _ _).trans (le_of_eq ?_)
       simp [Complex.norm_real, Real.norm_eq_abs, abs_of_pos hℓ,
-        abs_of_nonneg (show (0 : ℝ) ≤ saddleNegativeContourOrdinate ℓ N by linarith)]
+        abs_of_nonneg (show (0 : ℝ) ≤ κ_ℓ ℓ N by linarith)]
     have hdivide : |s| / ℓ ≤ |s| := div_le_self (abs_nonneg s) hℓone
     linarith [abs_nonneg s]
   rw [saddleTaylorContour_shellArgument hℓ N s]
-  calc ‖PPlus ε ((-s / ℓ : ℂ) + I * (-saddleNegativeContourOrdinate ℓ N : ℂ))‖ ≤
+  calc ‖PPlus ε ((-s / ℓ : ℂ) + I * (-κ_ℓ ℓ N : ℂ))‖ ≤
         (1 + |β ε|) * (1 + ‖(-s / ℓ : ℂ) +
-          I * (-saddleNegativeContourOrdinate ℓ N : ℂ)‖) ^ 3 := norm_plusPolynomial_le ε _
+          I * (-κ_ℓ ℓ N : ℂ)‖) ^ 3 := norm_PPlus_le ε _
     _ ≤ (1 + |β ε|) * (3 * (1 + |s|)) ^ 3 := by gcongr
     _ = 27 * (1 + |β ε|) * (1 + |s|) ^ 3 := by ring
 
@@ -18790,16 +18809,16 @@ theorem norm_plusPolynomial_negativeContour_le {ε ℓ : ℝ} (hℓ : 0 < ℓ) (
 def saddleNegativeMellinMajorantCoefficient (ε ℓ : ℝ) (N : ℕ) : ℝ :=
   27 * (1 + |β ε|) * exp (ε * log 2) * (π / Gamma ((N : ℝ) + 3 / 2)) *
     exp ((ℓ - saddleTaylorContour N) * log π / 2) *
-    exp (ℓ * h_εI ε (saddleNegativeContourOrdinate ℓ N))
+    exp (ℓ * h_εI ε (κ_ℓ ℓ N))
 
-theorem plusSaddleMellinData_negativeContour_norm_le {ε ℓ : ℝ} (hε : 0 < ε) (hεsmall : ε ≤ 1 / 4)
+theorem MPlus_negativeContour_norm_le {ε ℓ : ℝ} (hε : 0 < ε) (hεsmall : ε ≤ 1 / 4)
     (hℓ : 0 < ℓ) (N : ℕ) (hN : 2 * ((N + 1 : ℕ) : ℝ) ≤ ℓ) (horder : a₀ε ε ≤ Aε ε)
     (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) (s : ℝ) :
     ‖MPlus ε ℓ ((saddleTaylorContour N : ℂ) + (s : ℂ) * I)‖ ≤
       saddleNegativeMellinMajorantCoefficient ε ℓ N * saddleNegativeFrequencyMajorant ε s := by
   have hfactor := upperNegativeContour_gamma_mul_shellExponential_le hε hεsmall hℓ N hN horder
     hmargin s
-  have hpoly := norm_plusPolynomial_negativeContour_le (ε := ε) hℓ N hN s
+  have hpoly := norm_PPlus_negativeContour_le (ε := ε) hℓ N hN s
   have hpi : ‖Complex.exp (((ℓ : ℂ) - ((saddleTaylorContour N : ℂ) + (s : ℂ) * I)) *
       (log π : ℂ) / 2)‖ = exp ((ℓ - saddleTaylorContour N) * log π / 2) := by
     rw [Complex.norm_exp]
@@ -18820,7 +18839,7 @@ theorem plusSaddleMellinData_negativeContour_norm_le {ε ℓ : ℝ} (hε : 0 < �
         rw [norm_mul]
         ring
     _ ≤ exp ((ℓ - saddleTaylorContour N) * log π / 2) *
-          (exp (ℓ * h_εI ε (saddleNegativeContourOrdinate ℓ N)) *
+          (exp (ℓ * h_εI ε (κ_ℓ ℓ N)) *
             (π / Gamma ((N : ℝ) + 3 / 2) * exp (ε * log 2) * exp (-(ε / 2) * π * |s|))) *
           (27 * (1 + |β ε|) * (1 + |s|) ^ 3) := by gcongr
     _ = saddleNegativeMellinMajorantCoefficient ε ℓ N * saddleNegativeFrequencyMajorant ε s := by
@@ -18835,37 +18854,37 @@ theorem saddleNegativeFrequencyMass_nonneg (ε : ℝ) : 0 ≤ saddleNegativeFreq
     unfold saddleNegativeFrequencyMajorant
     positivity
 
-theorem plusSaddleMellinData_negativeContour_integral_norm_le {ε ℓ : ℝ} (hε : 0 < ε)
+theorem MPlus_negativeContour_integral_norm_le {ε ℓ : ℝ} (hε : 0 < ε)
     (hεsmall : ε ≤ 1 / 4) (hℓ : 0 < ℓ) (N : ℕ) (hN : 2 * ((N + 1 : ℕ) : ℝ) ≤ ℓ)
     (horder : a₀ε ε ≤ Aε ε) (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) :
     (∫ s : ℝ, ‖MPlus ε ℓ ((saddleTaylorContour N : ℂ) + (s : ℂ) * I)‖) ≤
       saddleNegativeMellinMajorantCoefficient ε ℓ N * saddleNegativeFrequencyMass ε := by
   have hdata : Integrable fun s : ℝ ↦ MPlus ε ℓ ((saddleTaylorContour N : ℂ) + (s : ℂ) * I) := by
-    simpa using plusSaddleMellinData_shiftedLine_moment_integrable hε hℓ horder
+    simpa using MPlus_shiftedLine_moment_integrable hε hℓ horder
       (fun n : ℕ ↦ saddleTaylorContour_ne_pole N n) 0
   calc (∫ s : ℝ, ‖MPlus ε ℓ ((saddleTaylorContour N : ℂ) + (s : ℂ) * I)‖) ≤
         ∫ s : ℝ, saddleNegativeMellinMajorantCoefficient ε ℓ N *
           saddleNegativeFrequencyMajorant ε s :=
         integral_mono hdata.norm ((saddleNegativeFrequencyMajorant_integrable hε).const_mul _)
-          fun s ↦ plusSaddleMellinData_negativeContour_norm_le hε hεsmall hℓ N hN horder hmargin s
+          fun s ↦ MPlus_negativeContour_norm_le hε hεsmall hℓ N hN horder hmargin s
     _ = saddleNegativeMellinMajorantCoefficient ε ℓ N * saddleNegativeFrequencyMass ε := by
         rw [integral_const_mul]
         rfl
 
-theorem plusSaddleTaylorRemainder_negativeContour_bound {ε ℓ : ℝ} (hε : 0 < ε)
+theorem taylorRemainderPlus_negativeContour_bound {ε ℓ : ℝ} (hε : 0 < ε)
     (hεsmall : ε ≤ 1 / 4) (hℓ : 0 < ℓ) (N : ℕ) (hN : 2 * ((N + 1 : ℕ) : ℝ) ≤ ℓ)
     (horder : a₀ε ε ≤ Aε ε) (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) {r : ℝ} (hr : 0 < r) :
-    ‖plusSaddleTaylorRemainder ε ℓ N r‖ ≤ 1 / (2 * π) * r ^ (2 * N + 1) *
+    ‖taylorRemainderPlus ε ℓ N r‖ ≤ 1 / (2 * π) * r ^ (2 * N + 1) *
       saddleNegativeMellinMajorantCoefficient ε ℓ N * saddleNegativeFrequencyMass ε := by
   have hdata : Integrable fun t : ℝ ↦
       MPlus ε ℓ ((saddleTaylorContour N : ℂ) + (t : ℂ) * I) := by
-    simpa using plusSaddleMellinData_shiftedLine_moment_integrable hε hℓ horder
+    simpa using MPlus_shiftedLine_moment_integrable hε hℓ horder
       (fun n : ℕ ↦ saddleTaylorContour_ne_pole N n) 0
   have hnorm : ‖(2 * π : ℂ)⁻¹‖ = 1 / (2 * π) := by
     rw [norm_inv, one_div]
     congr 1
     simp [abs_of_pos Real.pi_pos]
-  unfold plusSaddleTaylorRemainder
+  unfold taylorRemainderPlus
   rw [norm_mul, hnorm]
   calc 1 / (2 * π) * ‖∫ t : ℝ, saddleMellinInversePower r ((saddleTaylorContour N : ℂ) +
         (t : ℂ) * I) * MPlus ε ℓ ((saddleTaylorContour N : ℂ) + (t : ℂ) * I)‖ ≤
@@ -18880,11 +18899,11 @@ theorem plusSaddleTaylorRemainder_negativeContour_bound {ε ℓ : ℝ} (hε : 0 
     _ ≤ 1 / (2 * π) * (r ^ (2 * N + 1) * (saddleNegativeMellinMajorantCoefficient ε ℓ N *
           saddleNegativeFrequencyMass ε)) := by
         gcongr
-        exact plusSaddleMellinData_negativeContour_integral_norm_le hε hεsmall hℓ N hN horder
+        exact MPlus_negativeContour_integral_norm_le hε hεsmall hℓ N hN horder
           hmargin
     _ = _ := by ring
 
-theorem saddleSmallRadiusVariable_sqrt_eq_source (ε : ℝ) {r : ℝ} (hr : 0 ≤ r) :
+theorem y_r_sqrt_eq_source (ε : ℝ) {r : ℝ} (hr : 0 ≤ r) :
     √(y_r ε r) = r * exp (log π / 2 + h₁' ε) := by
   have hsq : (r * exp (log π / 2 + h₁' ε)) ^ 2 = y_r ε r := by
     rw [mul_pow, ← exp_nat_mul, y_r]
@@ -18893,17 +18912,17 @@ theorem saddleSmallRadiusVariable_sqrt_eq_source (ε : ℝ) {r : ℝ} (hr : 0 �
     ring
   rw [← hsq, sqrt_sq (by positivity)]
 
-theorem saddleSmallRadiusVariable_halfIntegerFactor (ε : ℝ) {r : ℝ} (hr : 0 ≤ r) (N : ℕ) :
+theorem y_r_halfIntegerFactor (ε : ℝ) {r : ℝ} (hr : 0 ≤ r) (N : ℕ) :
     r ^ (2 * N + 1) * exp (((2 * N + 1 : ℕ) : ℝ) * (log π / 2 + h₁' ε)) =
       √(y_r ε r) * y_r ε r ^ N := by
-  have hsqrt := saddleSmallRadiusVariable_sqrt_eq_source ε hr
+  have hsqrt := y_r_sqrt_eq_source ε hr
   have hsq : (r * exp (log π / 2 + h₁' ε)) ^ 2 = y_r ε r := by
-    rw [← hsqrt, sq_sqrt (saddleSmallRadiusVariable_nonneg ε r)]
+    rw [← hsqrt, sq_sqrt (y_r_nonneg ε r)]
   rw [exp_nat_mul, ← mul_pow, hsqrt, ← hsq, ← pow_mul, ← pow_succ']
 
 /-- The phase error `λ(h_ε(κ) - h_ε(1)) - (2N+1)h₁'` of the negative Taylor contour. -/
 def saddleNegativeContourPhaseError (ε ℓ : ℝ) (N : ℕ) : ℝ :=
-  ℓ * (h_εI ε (saddleNegativeContourOrdinate ℓ N) - h_εI ε 1) - ((2 * N + 1 : ℕ) : ℝ) * h₁' ε
+  ℓ * (h_εI ε (κ_ℓ ℓ N) - h_εI ε 1) - ((2 * N + 1 : ℕ) : ℝ) * h₁' ε
 
 theorem mul_exp_mul_exp (k a b : ℝ) : k * exp a * exp b = k * exp (a + b) := by
   rw [mul_assoc, ← exp_add]
@@ -18915,10 +18934,10 @@ theorem mul_exp_div_exp (k a b c d : ℝ) :
 
 theorem saddleNegativeContour_sourceNormalizationFactor (ε ℓ : ℝ) (N : ℕ) {r : ℝ} (hr : 0 ≤ r) :
     r ^ (2 * N + 1) * exp ((ℓ - saddleTaylorContour N) * log π / 2) *
-        exp (ℓ * h_εI ε (saddleNegativeContourOrdinate ℓ N)) /
+        exp (ℓ * h_εI ε (κ_ℓ ℓ N)) /
       (exp (ℓ / 2 * log π) * exp (ℓ * h_εI ε 1)) =
       √(y_r ε r) * y_r ε r ^ N * exp (saddleNegativeContourPhaseError ε ℓ N) := by
-  rw [← saddleSmallRadiusVariable_halfIntegerFactor ε hr N, mul_exp_div_exp, mul_exp_mul_exp]
+  rw [← y_r_halfIntegerFactor ε hr N, mul_exp_div_exp, mul_exp_mul_exp]
   unfold saddleNegativeContourPhaseError saddleTaylorContour
   push_cast
   ring_nf
@@ -18931,7 +18950,7 @@ theorem saddleNegativeRelativeCoefficient_nonneg {ε : ℝ} (hε : 0 < ε) :
     0 ≤ saddleNegativeRelativeCoefficient ε := by
   unfold saddleNegativeRelativeCoefficient
   have := saddleNegativeFrequencyMass_nonneg ε
-  have := (beta_pos hε).le
+  have := (β_pos hε).le
   positivity
 
 theorem saddleNegativeContour_normalizedMajorant_eq {ε : ℝ} (hε : 0 < ε) (ℓ : ℝ) (N : ℕ) {r : ℝ}
@@ -18940,7 +18959,7 @@ theorem saddleNegativeContour_normalizedMajorant_eq {ε : ℝ} (hε : 0 < ε) (�
         saddleNegativeFrequencyMass ε / originValue ε ℓ =
       saddleNegativeRelativeCoefficient ε * √(y_r ε r) * y_r ε r ^ N /
         Gamma ((N : ℝ) + 3 / 2) * exp (saddleNegativeContourPhaseError ε ℓ N) := by
-  have hb : β ε ≠ 0 := (beta_pos hε).ne'
+  have hb : β ε ≠ 0 := (β_pos hε).ne'
   have hΓ : Gamma ((N : ℝ) + 3 / 2) ≠ 0 := (Gamma_pos_of_pos (by positivity)).ne'
   have horigin : originValue ε ℓ = 2 * (exp (ℓ / 2 * log π) * exp (ℓ * h_εI ε 1)) * β ε := by
     unfold originValue
@@ -18950,7 +18969,7 @@ theorem saddleNegativeContour_normalizedMajorant_eq {ε : ℝ} (hε : 0 < ε) (�
         saddleNegativeFrequencyMass ε / originValue ε ℓ =
         saddleNegativeRelativeCoefficient ε * (r ^ (2 * N + 1) *
           exp ((ℓ - saddleTaylorContour N) * log π / 2) *
-          exp (ℓ * h_εI ε (saddleNegativeContourOrdinate ℓ N)) /
+          exp (ℓ * h_εI ε (κ_ℓ ℓ N)) /
           (exp (ℓ / 2 * log π) * exp (ℓ * h_εI ε 1))) / Gamma ((N : ℝ) + 3 / 2) := by
         rw [horigin]
         unfold saddleNegativeMellinMajorantCoefficient saddleNegativeRelativeCoefficient
@@ -18960,52 +18979,52 @@ theorem saddleNegativeContour_normalizedMajorant_eq {ε : ℝ} (hε : 0 < ε) (�
         rw [saddleNegativeContour_sourceNormalizationFactor ε ℓ N hr]
         ring
 
-theorem plusSaddleTaylorRemainder_negativeContour_relative_bound {ε ℓ : ℝ} (hε : 0 < ε)
+theorem taylorRemainderPlus_negativeContour_relative_bound {ε ℓ : ℝ} (hε : 0 < ε)
     (hεsmall : ε ≤ 1 / 4) (hℓ : 0 < ℓ) (N : ℕ) (hN : 2 * ((N + 1 : ℕ) : ℝ) ≤ ℓ)
     (horder : a₀ε ε ≤ Aε ε) (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) {r : ℝ} (hr : 0 < r) :
-    ‖plusSaddleTaylorRemainder ε ℓ N r / (originValue ε ℓ : ℂ)‖ ≤
+    ‖taylorRemainderPlus ε ℓ N r / (originValue ε ℓ : ℂ)‖ ≤
       saddleNegativeRelativeCoefficient ε * √(y_r ε r) * y_r ε r ^ N /
         Gamma ((N : ℝ) + 3 / 2) * exp (saddleNegativeContourPhaseError ε ℓ N) := by
-  have hO := saddleOriginValue_pos hε ℓ
+  have hO := originValue_pos hε ℓ
   rw [norm_div, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hO,
     ← saddleNegativeContour_normalizedMajorant_eq hε ℓ N hr.le]
   exact (div_le_div_iff_of_pos_right hO).mpr
-    (plusSaddleTaylorRemainder_negativeContour_bound hε hεsmall hℓ N hN horder hmargin hr)
+    (taylorRemainderPlus_negativeContour_bound hε hεsmall hℓ N hN horder hmargin hr)
 
 theorem exists_saddleNegativeContourPhaseError_bound {ε : ℝ} (hε : 0 < ε)
     (horder : a₀ε ε ≤ Aε ε) :
     ∃ K : ℝ, 0 ≤ K ∧ ∀ ℓ : ℝ, 0 < ℓ → ∀ N : ℕ, 2 * ((N + 1 : ℕ) : ℝ) ≤ ℓ →
       |saddleNegativeContourPhaseError ε ℓ N| ≤ K * (2 * (N : ℝ) + 1) ^ 2 / ℓ := by
-  obtain ⟨K, hK, hTaylor⟩ := exists_realHyperbolicShellPhase_quadratic_remainder hε horder
+  obtain ⟨K, hK, hTaylor⟩ := exists_h_εI_quadratic_remainder hε horder
   refine ⟨K, hK, fun ℓ hℓ N hN ↦ ?_⟩
-  have hscale : ℓ * (saddleNegativeContourOrdinate ℓ N - 1) = 2 * (N : ℝ) + 1 := by
-    unfold saddleNegativeContourOrdinate
+  have hscale : ℓ * (κ_ℓ ℓ N - 1) = 2 * (N : ℝ) + 1 := by
+    unfold κ_ℓ
     field_simp
     ring
   have hidentity : saddleNegativeContourPhaseError ε ℓ N =
-      ℓ * (h_εI ε (saddleNegativeContourOrdinate ℓ N) - h_εI ε 1 -
-        (saddleNegativeContourOrdinate ℓ N - 1) * h₁' ε) := by
+      ℓ * (h_εI ε (κ_ℓ ℓ N) - h_εI ε 1 -
+        (κ_ℓ ℓ N - 1) * h₁' ε) := by
     unfold saddleNegativeContourPhaseError
     push_cast
     rw [← hscale]
     ring
   rw [hidentity, abs_mul, abs_of_pos hℓ]
-  calc ℓ * |h_εI ε (saddleNegativeContourOrdinate ℓ N) - h_εI ε 1 -
-        (saddleNegativeContourOrdinate ℓ N - 1) * h₁' ε| ≤
-        ℓ * (K * (saddleNegativeContourOrdinate ℓ N - 1) ^ 2) :=
-        mul_le_mul_of_nonneg_left (hTaylor _ ⟨one_le_saddleNegativeContourOrdinate hℓ N,
-          saddleNegativeContourOrdinate_le_two hℓ N hN⟩) hℓ.le
+  calc ℓ * |h_εI ε (κ_ℓ ℓ N) - h_εI ε 1 -
+        (κ_ℓ ℓ N - 1) * h₁' ε| ≤
+        ℓ * (K * (κ_ℓ ℓ N - 1) ^ 2) :=
+        mul_le_mul_of_nonneg_left (hTaylor _ ⟨one_le_κ_ℓ hℓ N,
+          κ_ℓ_le_two hℓ N hN⟩) hℓ.le
     _ = K * (2 * (N : ℝ) + 1) ^ 2 / ℓ := by
         rw [← hscale]
         field_simp
 
-theorem eventually_plusSaddleTaylorRemainder_relative_lt_half_on_star {ε : ℝ} (hε : 0 < ε)
+theorem eventually_taylorRemainderPlus_relative_lt_half_on_star {ε : ℝ} (hε : 0 < ε)
     (hεsmall : ε ≤ 1 / 4) (horder : a₀ε ε ≤ Aε ε)
     (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) :
     ∀ᶠ d : ℕ in atTop, ∀ r : ℝ, 0 < r → r ≤ r_star ε d → let ℓ : ℝ := (d : ℝ) / 2
       let N : ℕ := N_ℓ ℓ
       let y : ℝ := y_r ε r
-      exp y * ‖plusSaddleTaylorRemainder ε ℓ N r / (originValue ε ℓ : ℂ)‖ < 1 / 2 := by
+      exp y * ‖taylorRemainderPlus ε ℓ N r / (originValue ε ℓ : ℂ)‖ < 1 / 2 := by
   obtain ⟨C, hC, hstar⟩ := exists_eventually_y_star_le_log_eighth_add hε horder
   obtain ⟨K, -, hphase⟩ := exists_saddleNegativeContourPhaseError_bound hε horder
   have hKε := saddleNegativeRelativeCoefficient_nonneg hε
@@ -19013,13 +19032,13 @@ theorem eventually_plusSaddleTaylorRemainder_relative_lt_half_on_star {ε : ℝ}
       (eventually_saddleNegative_relativeGammaTail_lt_half C K (saddleNegativeRelativeCoefficient ε)
         hC hKε),
     tendsto_saddleResidue_dimension_half.eventually
-      eventually_saddleSmallResidueTruncation_succ_double_le,
+      eventually_N_ℓ_succ_double_le,
     eventually_gt_atTop (0 : ℕ)] with d hcut htaild hNd hd r hr hrstar
   have hℓ : (0 : ℝ) < (d : ℝ) / 2 := by positivity
-  have hy : 0 ≤ y_r ε r := saddleSmallRadiusVariable_nonneg ε r
-  have hrelative := plusSaddleTaylorRemainder_negativeContour_relative_bound hε hεsmall hℓ
+  have hy : 0 ≤ y_r ε r := y_r_nonneg ε r
+  have hrelative := taylorRemainderPlus_negativeContour_relative_bound hε hεsmall hℓ
     (N_ℓ ((d : ℝ) / 2)) hNd horder hmargin hr
-  calc exp (y_r ε r) * ‖plusSaddleTaylorRemainder ε ((d : ℝ) / 2) (N_ℓ ((d : ℝ) / 2)) r /
+  calc exp (y_r ε r) * ‖taylorRemainderPlus ε ((d : ℝ) / 2) (N_ℓ ((d : ℝ) / 2)) r /
         (originValue ε ((d : ℝ) / 2) : ℂ)‖ ≤
         exp (y_r ε r) * (saddleNegativeRelativeCoefficient ε * √(y_r ε r) *
           y_r ε r ^ N_ℓ ((d : ℝ) / 2) / Gamma ((N_ℓ ((d : ℝ) / 2) : ℝ) + 3 / 2) *
@@ -19032,27 +19051,27 @@ theorem eventually_plusSaddleTaylorRemainder_relative_lt_half_on_star {ε : ℝ}
         exact (le_abs_self _).trans (hphase _ hℓ _ hNd)
     _ < 1 / 2 := htaild (y_r ε r) hy (hcut r hr.le hrstar)
 
-theorem eventually_plusSaddleProfile_re_pos_on_star_fixed {ε : ℝ} (hε : 0 < ε)
+theorem eventually_fPlus_re_pos_on_star_fixed {ε : ℝ} (hε : 0 < ε)
     (hεsmall : ε ≤ 1 / 4) (horder : a₀ε ε ≤ Aε ε)
     (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) :
     ∀ᶠ d : ℕ in atTop, ∀ r : ℝ, 0 ≤ r → r ≤ r_star ε d → 0 < (fPlus ε ((d : ℝ) / 2) r).re := by
   filter_upwards [eventually_plusSaddleSmallRadius_relativeFiniteResidue_lt_half_on_star hε horder,
-    eventually_plusSaddleTaylorRemainder_relative_lt_half_on_star hε hεsmall horder hmargin,
+    eventually_taylorRemainderPlus_relative_lt_half_on_star hε hεsmall horder hmargin,
     eventually_gt_atTop (0 : ℕ)] with d hfinite_d hrem_d hd r hr hrstar
   rcases eq_or_lt_of_le hr with hzero | hrpos
-  · simpa [fPlus, ← hzero] using saddleOriginValue_pos hε ((d : ℝ) / 2)
-  · exact plusSaddleProfile_re_pos_of_relative_residue_bounds hε (by positivity) horder hrpos
+  · simpa [fPlus, ← hzero] using originValue_pos hε ((d : ℝ) / 2)
+  · exact fPlus_re_pos_of_relative_residue_bounds hε (by positivity) horder hrpos
       (N_ℓ ((d : ℝ) / 2)) (by simpa using hfinite_d r hr hrstar)
       (by simpa using hrem_d r hrpos hrstar)
 
 /-- Report (82): for all small `ε` and large `d`, `f₊` is positive on `[0, r_*]`. -/
-theorem eventually_plusSaddleProfile_re_pos_on_star : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_fPlus_re_pos_on_star : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ᶠ d : ℕ in atTop, ∀ r : ℝ, 0 ≤ r → r ≤ r_star ε d → 0 < (fPlus ε ((d : ℝ) / 2) r).re := by
   have hsmall := (tendsto_id.mono_left (nhdsWithin_le_nhds : 𝓝[>] (0 : ℝ) ≤ 𝓝 (0 : ℝ))).eventually
     (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1 / 4))
-  filter_upwards [self_mem_nhdsWithin, hsmall, eventually_upper_shortCutoff_le_shortEndpoint,
-    eventually_upper_shortMargin_positive] with ε hε hεsmall horder hmargin
-  exact eventually_plusSaddleProfile_re_pos_on_star_fixed hε hεsmall.le horder
+  filter_upwards [self_mem_nhdsWithin, hsmall, eventually_upper_a₀ε_le_Aε,
+    eventually_upper_bε_positive] with ε hε hεsmall horder hmargin
+  exact eventually_fPlus_re_pos_on_star_fixed hε hεsmall.le horder
     fun a ha ↦ by linarith [hmargin a ha]
 
 end
@@ -19071,8 +19090,8 @@ section CohnElkies_UpperBound_Schwartz
 Contour moments of the inverse Mellin kernel `(max u 0)^z` and their derivatives, smoothness of
 the profiles at the origin (the residue expansion shows `f_P(r)` is a smooth function of `r²`),
 the vertical contour moved into the right half-plane, derivatives of the contour moment far from
-the origin, and the Schwartz decay, giving the test functions `plusSaddleSchwartz`,
-`minusSaddleSchwartz` (and `mellinProfileSchwartz` for a general saddle polynomial).
+the origin, and the Schwartz decay, giving the test functions `fPlusSchwartz`,
+`fMinusSchwartz` (and `f_PSchwartz` for a general saddle polynomial).
 -/
 
 namespace CohnElkies
@@ -19394,19 +19413,19 @@ theorem saddleProfile_eq_squaredTaylor {f : ℝ → ℂ} {M : ℂ → ℂ} {c : 
 
 theorem taylorRemainder_eq_squaredContour (ε ℓ : ℝ) (P : ℂ → ℂ) (N : ℕ) {r : ℝ} (hr : 0 < r) :
     taylorRemainder ε ℓ P N r =
-      saddleSquaredContour (mellinData ε ℓ P) (saddleTaylorContour N) (r ^ 2) :=
-  saddleSquaredContour_eq (mellinData ε ℓ P) _ hr
+      saddleSquaredContour (M_P ε ℓ P) (saddleTaylorContour N) (r ^ 2) :=
+  saddleSquaredContour_eq (M_P ε ℓ P) _ hr
 
 /-- Report (78) in the variable `u = r²`: `f_P(r) = ∑_{n ≤ N} Res_n (r²)^n + remainder`, for a
 profile whose origin value is the residue at `z = 0`. -/
-theorem mellinProfile_eq_squaredTaylor {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem f_P_eq_squaredTaylor {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) {c : ℝ}
     (hc : (c : ℂ) = poleResidue ε ℓ P 0) (N : ℕ) {r : ℝ} (hr : 0 ≤ r) :
-    mellinProfile ε ℓ P c r = saddleSquaredResiduePolynomial (poleResidue ε ℓ P) N (r ^ 2) +
-      saddleSquaredContour (mellinData ε ℓ P) (saddleTaylorContour N) (r ^ 2) :=
-  saddleProfile_eq_squaredTaylor (by rw [mellinProfile_zero]; exact hc)
+    f_P ε ℓ P c r = saddleSquaredResiduePolynomial (poleResidue ε ℓ P) N (r ^ 2) +
+      saddleSquaredContour (M_P ε ℓ P) (saddleTaylorContour N) (r ^ 2) :=
+  saddleProfile_eq_squaredTaylor (by rw [f_P_zero]; exact hc)
     (fun r hr ↦ by
-      rw [mellinProfile_eq_residue_sum_add_remainder hε hℓ horder hP c hr N,
+      rw [f_P_eq_residue_sum_add_remainder hε hℓ horder hP c hr N,
         taylorRemainder_eq_squaredContour ε ℓ P N hr]) hr
 
 theorem saddleTaylorContour_smoothShift (n : ℕ) :
@@ -19444,13 +19463,13 @@ theorem saddleFunction_contDiff {d : ℕ} {F : Euclidean d → ℂ} {M : ℂ →
       (by simpa using hx))).of_le (mod_cast le_top))
 
 /-- Lemma 4.3: `x ↦ f_P(‖x‖)` is smooth on `ℝᵈ` when `f_P(0)` is the residue at `z = 0`. -/
-theorem mellinProfileFun_contDiff {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
+theorem f_PFun_contDiff {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) {c : ℝ}
-    (hc : (c : ℂ) = poleResidue ε (d / 2 : ℝ) P 0) : ContDiff ℝ ∞ (mellinProfileFun ε d P c) :=
-  saddleFunction_contDiff (mellinProfileFun_contDiffOn hε hd horder hP c)
-    (fun N k ↦ mellinData_shiftedLine_moment_integrable hε (dimension_half_pos hd) horder hP
+    (hc : (c : ℂ) = poleResidue ε (d / 2 : ℝ) P 0) : ContDiff ℝ ∞ (f_PFun ε d P c) :=
+  saddleFunction_contDiff (f_PFun_contDiffOn hε hd horder hP c)
+    (fun N k ↦ M_P_shiftedLine_moment_integrable hε (dimension_half_pos hd) horder hP
       (saddleTaylorContour_ne_pole N) k)
-    fun N y ↦ mellinProfile_eq_squaredTaylor hε (dimension_half_pos hd) horder hP hc N
+    fun N y ↦ f_P_eq_squaredTaylor hε (dimension_half_pos hd) horder hP hc N
       (norm_nonneg y)
 
 end
@@ -19510,26 +19529,26 @@ theorem saddleMellinData_vertical_integral_eq {M : ℂ → ℂ} {r : ℝ} (hr : 
 
 /-- Report §4.2: `f_P(r)` is the inverse Mellin integral of `M_P` over **any** vertical line in the
 open right half-plane. -/
-theorem mellinProfile_eq_positive_contour {ε ℓ r a : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem f_P_eq_positive_contour {ε ℓ r a : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (c : ℝ) (hr : 0 < r)
     (ha : 0 < a) :
-    mellinProfile ε ℓ P c r = (2 * π : ℂ)⁻¹ * (∫ t : ℝ, saddleMellinInversePower r
-        ((a : ℂ) + (t : ℂ) * I) * mellinData ε ℓ P ((a : ℂ) + (t : ℂ) * I)) := by
-  rw [mellinProfile_eq_normalized_vertical_integral P c hr]
+    f_P ε ℓ P c r = (2 * π : ℂ)⁻¹ * (∫ t : ℝ, saddleMellinInversePower r
+        ((a : ℂ) + (t : ℂ) * I) * M_P ε ℓ P ((a : ℂ) + (t : ℂ) * I)) := by
+  rw [f_P_eq_normalized_vertical_integral P c hr]
   congr 1
   exact saddleMellinData_vertical_integral_eq hr
-    (mellinData_differentiableOn_rightHalfPlane hε horder ℓ hP.differentiable)
-    (fun b hb ↦ mellinData_shiftedLine_weighted_integrable hε hℓ horder hP
+    (M_P_differentiableOn_rightHalfPlane hε horder ℓ hP.differentiable)
+    (fun b hb ↦ M_P_shiftedLine_weighted_integrable hε hℓ horder hP
       (saddlePositiveContour_ne_pole hb) hr)
-    (fun A B hAB s hs ↦ mellinData_weighted_horizontalIntegral_tendsto_zero hε hℓ horder hP hr
+    (fun A B hAB s hs ↦ M_P_weighted_horizontalIntegral_tendsto_zero hε hℓ horder hP hr
       hAB s hs) ha hℓ
 
-theorem mellinProfile_eq_positive_squaredContour {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem f_P_eq_positive_squaredContour {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (c : ℝ) (r a : ℝ)
     (hr : 0 < r) (ha : 0 < a) :
-    mellinProfile ε ℓ P c r = saddleSquaredContour (mellinData ε ℓ P) a (r ^ 2) := by
-  rw [mellinProfile_eq_positive_contour hε hℓ horder hP c hr ha,
-    saddleSquaredContour_eq (mellinData ε ℓ P) a hr]
+    f_P ε ℓ P c r = saddleSquaredContour (M_P ε ℓ P) a (r ^ 2) := by
+  rw [f_P_eq_positive_contour hε hℓ horder hP c hr ha,
+    saddleSquaredContour_eq (M_P ε ℓ P) a hr]
 
 /-! ### Derivatives of the contour moment far from the origin -/
 
@@ -19792,48 +19811,48 @@ theorem schwartz_decay_of_hasCompactSupport {d : ℕ} {F : Euclidean d → ℂ} 
 
 /-- Report Lemma 4.3: `x ↦ f_P(‖x‖)` is a Schwartz function on `ℝᵈ` for every saddle polynomial
 `P`, when `f_P(0)` is the residue at `z = 0`. -/
-def mellinProfileSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε)
+def f_PSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε)
     {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) {c : ℝ}
     (hc : (c : ℂ) = poleResidue ε (d / 2 : ℝ) P 0) : TestFunction d where
-  toFun := mellinProfileFun ε d P c
-  smooth' := mellinProfileFun_contDiff hε hd horder hP hc
+  toFun := f_PFun ε d P c
+  smooth' := f_PFun_contDiff hε hd horder hP hc
   decay' := by
     have hℓ : (0 : ℝ) < (d : ℝ) / 2 := dimension_half_pos hd
     have hmom : ∀ a : ℝ, 0 < a → ∀ j : ℕ, Integrable fun t : ℝ ↦
-        (t : ℂ) ^ j * mellinData ε ((d : ℝ) / 2) P ((a : ℂ) + (t : ℂ) * I) :=
-      fun a ha j ↦ mellinData_shiftedLine_moment_integrable hε hℓ horder hP
+        (t : ℂ) ^ j * M_P ε ((d : ℝ) / 2) P ((a : ℂ) + (t : ℂ) * I) :=
+      fun a ha j ↦ M_P_shiftedLine_moment_integrable hε hℓ horder hP
         (saddlePositiveContour_ne_pole ha) j
-    have hprof := mellinProfile_eq_positive_squaredContour hε hℓ horder hP c
+    have hprof := f_P_eq_positive_squaredContour hε hℓ horder hP c
     intro k n
     exact schwartz_decay_of_hasCompactSupport (saddleOuterSchwartz hmom hprof d)
-      (mellinProfileFun_contDiff hε hd horder hP hc)
+      (f_PFun_contDiff hε hd horder hP hc)
       (saddleOuterDifference_hasCompactSupport hmom hprof d) k n
 
-@[simp] theorem mellinProfileSchwartz_apply {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
+@[simp] theorem f_PSchwartz_apply {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) {c : ℝ}
     (hc : (c : ℂ) = poleResidue ε (d / 2 : ℝ) P 0) (x : Euclidean d) :
-    mellinProfileSchwartz hε hd horder hP hc x = mellinProfileFun ε d P c x := rfl
+    f_PSchwartz hε hd horder hP hc x = f_PFun ε d P c x := rfl
 
 /-- Report Lemma 4.3: `f₊` is a Schwartz function on `ℝᵈ`. -/
-def plusSaddleSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε) :
+def fPlusSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε) :
     TestFunction d :=
-  mellinProfileSchwartz hε hd horder (isSaddlePolynomial_PPlus ε)
+  f_PSchwartz hε hd horder (isSaddlePolynomial_PPlus ε)
     (poleResidue_PPlus_zero (dimension_half_pos hd)).symm
 
 /-- Report Lemma 4.3: `f₋` is a Schwartz function on `ℝᵈ`. -/
-def minusSaddleSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε) :
+def fMinusSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε) :
     TestFunction d :=
-  mellinProfileSchwartz hε hd horder (isSaddlePolynomial_PMinus ε)
+  f_PSchwartz hε hd horder (isSaddlePolynomial_PMinus ε)
     (poleResidue_PMinus_zero (dimension_half_pos hd)).symm
 
-theorem plusSaddleSchwartz_apply {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
+theorem fPlusSchwartz_apply {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
     (horder : a₀ε ε ≤ Aε ε) (x : Euclidean d) :
-    plusSaddleSchwartz hε hd horder x = fPlusFun ε d x :=
+    fPlusSchwartz hε hd horder x = fPlusFun ε d x :=
   rfl
 
-theorem minusSaddleSchwartz_apply {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
+theorem fMinusSchwartz_apply {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
     (horder : a₀ε ε ≤ Aε ε) (x : Euclidean d) :
-    minusSaddleSchwartz hε hd horder x = fMinusFun ε d x :=
+    fMinusSchwartz hε hd horder x = fMinusFun ε d x :=
   rfl
 
 end
@@ -19853,7 +19872,7 @@ The envelope of `M_P` on the contour `z = λ(1 + u) - iλT`, the rewriting of `f
 integral over the contour with the centered integrand `e^{L(T)} P(...)`, the Gaussian kernel of
 variance `V_u`, the positivity of the variance on the first branch, and the integrability of the
 centered integrands; the sign of `f_P` at the saddle point follows once the Gaussian error is small
-(`mellinProfile_exp_re_mul_pos_of_gaussian_error`).
+(`f_P_exp_re_mul_pos_of_gaussian_error`).
 -/
 
 namespace CohnElkies
@@ -19880,7 +19899,7 @@ theorem saddleSourceContourEnvelopeScale_pos {ε ℓ u : ℝ} (hℓ : 0 < ℓ) (
 theorem saddleSourceContour_mellinEnvelope_norm {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (hu : -1 < u) (horder : a₀ε ε ≤ Aε ε) (T : ℝ) :
     ‖mellinEnvelope ε ℓ (z_contour ℓ u T)‖ =
-      saddleSourceContourEnvelopeScale ε ℓ u * exp (-saddleSourceContourDamping ε ℓ u T) := by
+      saddleSourceContourEnvelopeScale ε ℓ u * exp (-D_u ε ℓ u T) := by
   have hπ : ‖Complex.exp (((ℓ : ℂ) - z_contour ℓ u T) * (log π : ℂ) / 2)‖ =
       exp (-(ℓ * u) * log π / 2) := by
     rw [Complex.norm_exp]
@@ -19889,19 +19908,19 @@ theorem saddleSourceContour_mellinEnvelope_norm {ε ℓ u : ℝ} (hε : 0 < ε) 
     ring
   have hΓ : ‖Complex.Gamma (z_contour ℓ u T / 2)‖ =
       Gamma (ℓ * (1 + u) / 2) * exp (-D_γ ℓ (1 + u) T) := by
-    rw [saddleSourceMellinContour_gammaArgument]
+    rw [z_contour_gammaArgument]
     have h := upperGammaShifted_modulus_eq_exp_neg_damping (η := 1 + u) hℓ (by linarith) T
     push_cast at h
     exact h
   have hshell : ‖Complex.exp ((ℓ : ℂ) * h_ε ε (I * (z_contour ℓ u T - (ℓ : ℂ)) / (ℓ : ℂ)))‖ =
       exp (ℓ * h_εI ε u) * exp (-(D_B ε ℓ (u - 1) T - D_s ε ℓ (u - 1) T)) := by
-    rw [saddleSourceMellinContour_shellArgument hℓ]
+    rw [z_contour_shellArgument hℓ]
     exact norm_saddleShellExponential_eq_exp_neg_damping hε horder ℓ T u
   have hexp : exp (-D_γ ℓ (1 + u) T) * exp (-(D_B ε ℓ (u - 1) T - D_s ε ℓ (u - 1) T)) =
-      exp (-saddleSourceContourDamping ε ℓ u T) := by
+      exp (-D_u ε ℓ u T) := by
     rw [← exp_add]
     congr 1
-    unfold saddleSourceContourDamping
+    unfold D_u
     ring
   unfold mellinEnvelope
   rw [norm_mul, norm_mul, hπ, hΓ, hshell]
@@ -19915,7 +19934,7 @@ def saddleSourceNormalizedEnvelope (ε ℓ u T : ℝ) : ℂ :=
 
 theorem saddleSourceNormalizedEnvelope_norm {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (hu : -1 < u)
     (horder : a₀ε ε ≤ Aε ε) (T : ℝ) :
-    ‖saddleSourceNormalizedEnvelope ε ℓ u T‖ = exp (-saddleSourceContourDamping ε ℓ u T) := by
+    ‖saddleSourceNormalizedEnvelope ε ℓ u T‖ = exp (-D_u ε ℓ u T) := by
   have hscale := saddleSourceContourEnvelopeScale_pos (ε := ε) hℓ hu
   unfold saddleSourceNormalizedEnvelope
   rw [norm_div, saddleSourceContour_mellinEnvelope_norm hε hℓ hu horder T,
@@ -19925,9 +19944,9 @@ theorem saddleSourceNormalizedEnvelope_norm {ε ℓ u : ℝ} (hε : 0 < ε) (h�
 def expL (ε ℓ u v T : ℝ) : ℂ :=
   saddleSourceNormalizedEnvelope ε ℓ u T * Complex.exp (I * (ℓ * T * v : ℂ))
 
-theorem saddleSourceCenteredEnvelope_norm {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (hu : -1 < u)
+theorem expL_norm {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (hu : -1 < u)
     (horder : a₀ε ε ≤ Aε ε) (v T : ℝ) :
-    ‖expL ε ℓ u v T‖ = exp (-saddleSourceContourDamping ε ℓ u T) := by
+    ‖expL ε ℓ u v T‖ = exp (-D_u ε ℓ u T) := by
   unfold expL
   rw [norm_mul, saddleSourceNormalizedEnvelope_norm hε hℓ hu horder T,
     show ‖Complex.exp (I * (ℓ * T * v : ℂ))‖ = 1 by rw [Complex.norm_exp]; simp, mul_one]
@@ -19939,21 +19958,21 @@ def centeredIntegrand (ε ℓ : ℝ) (P : ℂ → ℂ) (u v T : ℝ) : ℂ :=
 theorem centeredIntegrand_norm {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (hu : -1 < u)
     (horder : a₀ε ε ≤ Aε ε) (P : ℂ → ℂ) (v T : ℝ) :
     ‖centeredIntegrand ε ℓ P u v T‖ =
-      exp (-saddleSourceContourDamping ε ℓ u T) * ‖P ((T : ℂ) + I * (u : ℂ))‖ := by
+      exp (-D_u ε ℓ u T) * ‖P ((T : ℂ) + I * (u : ℂ))‖ := by
   unfold centeredIntegrand
-  rw [norm_mul, saddleSourceCenteredEnvelope_norm hε hℓ hu horder]
+  rw [norm_mul, expL_norm hε hℓ hu horder]
 
-@[simp] theorem saddleSourceContourDamping_eq_firstBranch (ε ℓ u T : ℝ) :
-    saddleSourceContourDamping ε ℓ u T = saddleSourceContourDamping ε ℓ u T := rfl
+@[simp] theorem D_u_eq_firstBranch (ε ℓ u T : ℝ) :
+    D_u ε ℓ u T = D_u ε ℓ u T := rfl
 
-@[simp] theorem saddleSourceContourDamping_eq_secondBranch (ε ℓ δ T : ℝ) :
-    saddleSourceContourDamping ε ℓ (1 + δ) T = D_u ε ℓ δ T := by
-  simp [saddleSourceContourDamping, D_u, show 1 + (1 + δ) = 2 + δ from by ring,
+@[simp] theorem D_u_eq_secondBranch (ε ℓ δ T : ℝ) :
+    D_u ε ℓ (1 + δ) T = D_uδ ε ℓ δ T := by
+  simp [D_u, D_uδ, show 1 + (1 + δ) = 2 + δ from by ring,
     show 1 + δ - 1 = δ from by ring]
 
 /-! ### Rewriting the Mellin integral on the contour -/
 
-theorem saddleSourceMellinContour_integral_change {ℓ : ℝ} (hℓ : 0 < ℓ) (u : ℝ) (F : ℂ → ℂ) :
+theorem z_contour_integral_change {ℓ : ℝ} (hℓ : 0 < ℓ) (u : ℝ) (F : ℂ → ℂ) :
     (∫ t : ℝ, F (((ℓ * (1 + u) : ℝ) : ℂ) + (t : ℂ) * I)) =
       (ℓ : ℂ) * ∫ T : ℝ, F (z_contour ℓ u T) := by
   have hpt (T : ℝ) : F (z_contour ℓ u T) =
@@ -19985,17 +20004,17 @@ theorem saddleProfile_eq_sourceContourIntegral {M : ℂ → ℂ} {f : ℝ → �
     f r = (ℓ / (2 * π) : ℂ) *
       ∫ T : ℝ, saddleMellinInversePower r (z_contour ℓ u T) * M (z_contour ℓ u T) := by
   have hη : 0 < 1 + u := by linarith
-  rw [hcontour (ℓ * (1 + u)) (by positivity), saddleSourceMellinContour_integral_change hℓ u
+  rw [hcontour (ℓ * (1 + u)) (by positivity), z_contour_integral_change hℓ u
     fun z ↦ saddleMellinInversePower r z * M z]
   ring
 
-theorem mellinProfile_eq_sourceContourIntegral {ε ℓ r u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem f_P_eq_sourceContourIntegral {ε ℓ r u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (c : ℝ) (hr : 0 < r)
     (hu : -1 < u) :
-    mellinProfile ε ℓ P c r = (ℓ / (2 * π) : ℂ) *
-      ∫ T : ℝ, saddleMellinInversePower r (z_contour ℓ u T) * mellinData ε ℓ P (z_contour ℓ u T) :=
+    f_P ε ℓ P c r = (ℓ / (2 * π) : ℂ) *
+      ∫ T : ℝ, saddleMellinInversePower r (z_contour ℓ u T) * M_P ε ℓ P (z_contour ℓ u T) :=
   saddleProfile_eq_sourceContourIntegral hℓ hu fun _a ha ↦
-    mellinProfile_eq_positive_contour hε hℓ horder hP c hr ha
+    f_P_eq_positive_contour hε hℓ horder hP c hr ha
 
 theorem saddleSourceContour_inversePower_exp (ℓ u v T : ℝ) :
     saddleMellinInversePower (exp v) (z_contour ℓ u T) =
@@ -20034,7 +20053,7 @@ theorem saddleSourceCenteredIntegrand_sourcePointwise {ε ℓ u : ℝ} (hℓ : 0
           P (I * (z_contour ℓ u T - (ℓ : ℂ)) / (ℓ : ℂ))) =
       (exp (-(ℓ * (1 + u) * v)) * saddleSourceContourEnvelopeScale ε ℓ u : ℂ) *
         (expL ε ℓ u v T * P ((T : ℂ) + I * (u : ℂ))) := by
-  rw [saddleSourceContour_inversePower_exp, saddleSourceMellinContour_shellArgument hℓ,
+  rw [saddleSourceContour_inversePower_exp, z_contour_shellArgument hℓ,
     saddleSourceContour_envelope_eq_scale_mul_normalized hℓ hu T]
   unfold expL
   push_cast
@@ -20042,7 +20061,7 @@ theorem saddleSourceCenteredIntegrand_sourcePointwise {ε ℓ u : ℝ} (hℓ : 0
 
 theorem centeredIntegrand_sourcePointwise {ε ℓ u : ℝ} (hℓ : 0 < ℓ) (hu : -1 < u) (P : ℂ → ℂ)
     (v T : ℝ) :
-    saddleMellinInversePower (exp v) (z_contour ℓ u T) * mellinData ε ℓ P (z_contour ℓ u T) =
+    saddleMellinInversePower (exp v) (z_contour ℓ u T) * M_P ε ℓ P (z_contour ℓ u T) =
       (exp (-(ℓ * (1 + u) * v)) * saddleSourceContourEnvelopeScale ε ℓ u : ℂ) *
         centeredIntegrand ε ℓ P u v T :=
   saddleSourceCenteredIntegrand_sourcePointwise hℓ hu P v T
@@ -20061,18 +20080,19 @@ theorem saddleProfile_exp_eq_centeredIntegral {ε ℓ u v : ℝ} {f : ℝ → �
   ring
 
 /-- Report (46): `f_P(e^v)` is a positive multiple of the integral of the centered integrand. -/
-theorem mellinProfile_exp_eq_centeredIntegral {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (hu : -1 < u)
+theorem f_P_exp_eq_centeredIntegral {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (hu : -1 < u)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (c v : ℝ) :
-    mellinProfile ε ℓ P c (exp v) = (saddleSourceCenteredPrefactor ε ℓ u v : ℂ) *
+    f_P ε ℓ P c (exp v) = (saddleSourceCenteredPrefactor ε ℓ u v : ℂ) *
       ∫ T : ℝ, centeredIntegrand ε ℓ P u v T :=
   saddleProfile_exp_eq_centeredIntegral
-    (mellinProfile_eq_sourceContourIntegral hε hℓ horder hP c (exp_pos v) hu)
+    (f_P_eq_sourceContourIntegral hε hℓ horder hP c (exp_pos v) hu)
     fun T ↦ centeredIntegrand_sourcePointwise hℓ hu P v T
 
 /-! ### The Gaussian approximation of report (71) -/
 
-/-- The variance `V(u)` of the Gaussian approximation, report (71). -/
-def V_u (ε ℓ u : ℝ) : ℝ := upperSaddleVariance ε ℓ (u - 1)
+/-- The saddle variance `V(u) = v'(u)` of report (44), the variance of the Gaussian approximation
+in Lemma 4.8. -/
+def V_u (ε ℓ u : ℝ) : ℝ := V_uδ ε ℓ (u - 1)
 
 /-- The Gaussian `e^{-λV(u)T²/2}` of report (71). -/
 def saddleSourceGaussianKernel (ε ℓ u T : ℝ) : ℝ := exp (-(ℓ * V_u ε ℓ u / 2) * T ^ 2)
@@ -20115,19 +20135,19 @@ theorem gaussianIntegrand_integral_re (ε ℓ : ℝ) (P : ℂ → ℂ) (u : ℝ)
   simp only [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im, zero_mul, sub_zero]
   ring
 
-theorem eventually_saddleSourceGaussianVariance_secondBranch_pos : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_V_u_secondBranch_pos : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ ℓ : ℝ, 0 < ℓ → ∀ δ : ℝ, ε / 2 ≤ δ → 0 < V_u ε ℓ (1 + δ) := by
-  filter_upwards [eventually_upperSaddleVariance_pos] with ε hpositive ℓ hℓ δ hδ
+  filter_upwards [eventually_V_uδ_pos] with ε hpositive ℓ hℓ δ hδ
   simpa [V_u] using hpositive ℓ hℓ δ hδ
 
 /-- Report §4.3: a Gaussian approximation with error smaller than the Gaussian mass
 `‖P(iu)‖ ∫ e^{-λV T²/2}` forces `f_P(e^v)` to have the sign of `P(iu)`, i.e.
 `Re P(iu) · Re f_P(e^v) > 0`. -/
-theorem mellinProfile_exp_re_mul_pos_of_gaussian_error {ε ℓ u v : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem f_P_exp_re_mul_pos_of_gaussian_error {ε ℓ u v : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (hu : -1 < u) (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (c : ℝ)
     (herror : ‖(∫ T : ℝ, centeredIntegrand ε ℓ P u v T) - ∫ T : ℝ, gaussianIntegrand ε ℓ P u T‖ <
       ‖P (I * (u : ℂ))‖ * ∫ T : ℝ, saddleSourceGaussianKernel ε ℓ u T) :
-    0 < (P (I * (u : ℂ))).re * (mellinProfile ε ℓ P c (exp v)).re := by
+    0 < (P (I * (u : ℂ))).re * (f_P ε ℓ P c (exp v)).re := by
   set a : ℝ := (P (I * (u : ℂ))).re with ha
   set G : ℝ := ∫ T : ℝ, saddleSourceGaussianKernel ε ℓ u T with hG
   set J : ℂ := ∫ T : ℝ, centeredIntegrand ε ℓ P u v T with hJdef
@@ -20150,17 +20170,17 @@ theorem mellinProfile_exp_re_mul_pos_of_gaussian_error {ε ℓ u v : ℝ} (hε :
       rw [← abs_mul]
       exact neg_abs_le _
     nlinarith
-  rw [mellinProfile_exp_eq_centeredIntegral hε hℓ hu horder hP c v, ← hJdef]
+  rw [f_P_exp_eq_centeredIntegral hε hℓ hu horder hP c v, ← hJdef]
   simp only [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im, zero_mul, sub_zero]
   rw [mul_left_comm]
   exact mul_pos (saddleSourceCenteredPrefactor_pos hℓ hu v) hJ
 
 /-! ### Positivity of the variance on the first branch -/
 
-theorem saddleSourcePositiveShellVariance_nonneg (ε δ : ℝ) : 0 ≤ V_B ε δ := by
+theorem V_B_nonneg (ε δ : ℝ) : 0 ≤ V_B ε δ := by
   refine intervalIntegral.integral_nonneg (by linarith) fun a _ ↦ ?_
   unfold w_B
-  exact mul_nonneg (mul_nonneg (div_nonneg (shellWeight_pos ε).le (cosh_pos a).le)
+  exact mul_nonneg (mul_nonneg (div_nonneg (Qε_pos ε).le (cosh_pos a).le)
     (sq_nonneg a)) (cosh_pos _).le
 
 /-- Report §4.3: on the first branch the short shell carries at most `(1 - 2ε)` of the gamma
@@ -20178,7 +20198,7 @@ theorem upperFirstBranch_shortVariance_le_gamma {ε ℓ u : ℝ} (hε : 0 < ε) 
   have hshortOn : IntegrableOn (fun a : ℝ ↦ ℓ * (-w_s ε a) * cosh (u * a) * a ^ 2)
       (Ioc (a₀ε ε) (Aε ε)) := by
     refine (intervalIntegrable_iff_integrableOn_Ioc_of_le horder).mp ?_
-    exact ((((shortShellDensity_intervalIntegrable hε horder).neg.const_mul ℓ).mul_continuousOn
+    exact ((((w_s_intervalIntegrable hε horder).neg.const_mul ℓ).mul_continuousOn
       (by fun_prop)).mul_continuousOn (by fun_prop))
   have hpoint (a : ℝ) (ha : a ∈ Ioc (a₀ε ε) (Aε ε)) :
       ℓ * (-w_s ε a) * cosh (u * a) * a ^ 2 ≤ (1 - 2 * ε) * (a ^ 2 * μ_ℓ ℓ (1 + u) a) := by
@@ -20189,7 +20209,7 @@ theorem upperFirstBranch_shortVariance_le_gamma {ε ℓ u : ℝ} (hε : 0 < ε) 
     ((hgamma.mono_set hsubset).const_mul (1 - 2 * ε)) measurableSet_Ioc hpoint
   have hnonneg : 0 ≤ᵐ[volume.restrict (Ioi (0 : ℝ))] fun a : ℝ ↦ a ^ 2 * μ_ℓ ℓ (1 + u) a := by
     filter_upwards [ae_restrict_mem measurableSet_Ioi] with a ha
-    exact mul_nonneg (sq_nonneg a) (upperGammaMeasureDensity_pos hℓ ha).le
+    exact mul_nonneg (sq_nonneg a) (μ_ℓ_pos hℓ ha).le
   have hrestrict := mul_le_mul_of_nonneg_left (setIntegral_mono_set hgamma hnonneg
     (Filter.Eventually.of_forall fun a ha ↦ hsubset ha)) hfactor
   have hshortEq : ℓ * V_s ε (u - 1) =
@@ -20213,32 +20233,32 @@ theorem upperFirstBranch_shortVariance_le_gamma {ε ℓ u : ℝ} (hε : 0 < ε) 
         unfold V_γ
         ring
 
-theorem upperFirstBranch_saddleSourceGaussianVariance_lower_bound {ε ℓ u : ℝ} (hε : 0 < ε)
+theorem upperFirstBranch_V_u_lower_bound {ε ℓ u : ℝ} (hε : 0 < ε)
     (hεsmall : ε ≤ 1 / 4) (hℓ : 0 < ℓ) (hulower : -1 < u) (huupper : u ≤ 1 + ε / 2)
     (horder : a₀ε ε ≤ Aε ε) (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) :
     2 * ε * V_γ ℓ (1 + u) ≤ V_u ε ℓ u := by
   have hshort :=
     upperFirstBranch_shortVariance_le_gamma hε hεsmall hℓ hulower huupper horder hmargin
-  have hpositive := saddleSourcePositiveShellVariance_nonneg ε (u - 1)
-  unfold V_u upperSaddleVariance upperNetShellVariance
+  have hpositive := V_B_nonneg ε (u - 1)
+  unfold V_u V_uδ upperNetShellVariance
   rw [show 2 + (u - 1) = 1 + u from by ring]
   nlinarith
 
-theorem eventually_saddleSourceGaussianVariance_firstBranch_pos : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_V_u_firstBranch_pos : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ ℓ : ℝ, 0 < ℓ → ∀ u : ℝ, -1 < u → u ≤ 1 + ε / 2 → 0 < V_u ε ℓ u := by
   have hsmall : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ε ≤ 1 / 4 := by
     have htendsto : Tendsto (fun ε : ℝ ↦ ε) (𝓝[>] (0 : ℝ)) (𝓝 (0 : ℝ)) :=
       tendsto_id.mono_left nhdsWithin_le_nhds
     filter_upwards [htendsto.eventually (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1 / 4))] with ε hε
     exact hε.le
-  filter_upwards [self_mem_nhdsWithin, hsmall, eventually_upper_shortCutoff_le_shortEndpoint,
-    eventually_upper_shortMargin_positive] with ε hε hεsmall horder hmargin ℓ hℓ u hulower huupper
+  filter_upwards [self_mem_nhdsWithin, hsmall, eventually_upper_a₀ε_le_Aε,
+    eventually_upper_bε_positive] with ε hε hεsmall horder hmargin ℓ hℓ u hulower huupper
   change 0 < ε at hε
   have hη : 0 < 1 + u := by linarith
   have hgammaPos : 0 < V_γ ℓ (1 + u) :=
-    (show (0 : ℝ) < 1 / (2 * (1 + u)) by positivity).trans_le (upperGammaVariance_bounds hℓ hη).1
+    (show (0 : ℝ) < 1 / (2 * (1 + u)) by positivity).trans_le (V_γ_bounds hℓ hη).1
   exact (mul_pos (by positivity : (0 : ℝ) < 2 * ε) hgammaPos).trans_le
-    (upperFirstBranch_saddleSourceGaussianVariance_lower_bound hε hεsmall hℓ hulower huupper horder
+    (upperFirstBranch_V_u_lower_bound hε hεsmall hℓ hulower huupper horder
       fun a ha ↦ le_trans (by norm_num) (hmargin a ha))
 
 /-! ### Integrability of the centered integrands -/
@@ -20276,7 +20296,7 @@ theorem centeredIntegrand_integrable {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 <
   have hη : 0 < 1 + u := by linarith
   have ha : 0 < ℓ * (1 + u) := by positivity
   exact saddleSourceCenteredIntegrand_integrable hℓ hu
-    (mellinData_shiftedLine_weighted_integrable hε hℓ horder hP (saddlePositiveContour_ne_pole ha)
+    (M_P_shiftedLine_weighted_integrable hε hℓ horder hP (saddlePositiveContour_ne_pole ha)
       (exp_pos v))
     fun T ↦ centeredIntegrand_sourcePointwise hℓ hu P v T
 
@@ -20455,8 +20475,8 @@ theorem norm_integral_w_B_cosRem_le {ε : ℝ} (hε : 0 < ε) (u T : ℝ) :
       |T| ^ 3 / 6 * upperPositiveShellThirdMoment ε (u - 1) := by
   have hB : (0 : ℝ) ≤ Bε ε := by unfold Bε; positivity
   refine (norm_integral_cosRem_le (w_B ε) (by linarith) hB
-    (positiveShellDensity_continuous ε).continuousOn
-    (fun a _ ↦ by unfold w_B; exact div_nonneg (shellWeight_pos ε).le (cosh_pos a).le) u T).trans_eq
+    (w_B_continuous ε).continuousOn
+    (fun a _ ↦ by unfold w_B; exact div_nonneg (Qε_pos ε).le (cosh_pos a).le) u T).trans_eq
     ?_
   unfold upperPositiveShellThirdMoment
   congr 1
@@ -20473,7 +20493,7 @@ theorem norm_integral_w_s_cosRem_le {ε : ℝ} (hε : 0 < ε) (horder : a₀ε �
     have hd : 0 < 2 * a ^ 2 * cosh a := by positivity
     simpa using div_nonneg (mul_nonneg (hmargin a ha) (exp_pos _).le) hd.le
   have hbound := norm_integral_cosRem_le (fun a : ℝ ↦ -w_s ε a) horder ha₀.le
-    (shortShellDensity_continuousOn_support hε).neg hnonneg u T
+    (w_s_continuousOn_support hε).neg hnonneg u T
   have hneg : (∫ a in a₀ε ε..Aε ε, ((-w_s ε a : ℝ) : ℂ) * cosRem a u T) =
       -∫ a in a₀ε ε..Aε ε, (w_s ε a : ℂ) * cosRem a u T := by
     rw [← intervalIntegral.integral_neg]
@@ -20526,7 +20546,7 @@ theorem integral_cosRem_eq (w : ℝ → ℝ) {b c : ℝ} (hbc : b ≤ c) (hw : C
 /-- The centred shell phase `ℓ (h_ε(T + iu) - h_ε(iu) + i T h_ε'(u))` of report (46). -/
 def shellPhase (ε ℓ u T : ℝ) : ℂ :=
   (ℓ : ℂ) * (h_ε ε ((T : ℂ) + I * (u : ℂ)) - (h_εI ε u : ℂ) +
-    I * (T * saddleSourceShellDerivative ε u : ℂ))
+    I * (T * H_ε ε u : ℂ))
 
 /-- The quadratic remainder of the shell phase, integrated over both shells. -/
 def shellRem (ε u T : ℝ) : ℂ := (∫ a in a₀ε ε..Aε ε, (w_s ε a : ℂ) * cosRem a u T) +
@@ -20534,7 +20554,7 @@ def shellRem (ε u T : ℝ) : ℂ := (∫ a in a₀ε ε..Aε ε, (w_s ε a : �
 
 theorem shellRem_eq {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) (u T : ℝ) :
     shellRem ε u T = h_ε ε ((T : ℂ) + I * (u : ℂ)) - (h_εI ε u : ℂ) +
-      I * (T * saddleSourceShellDerivative ε u : ℂ) +
+      I * (T * H_ε ε u : ℂ) +
       (T ^ 2 / 2 * upperNetShellVariance ε (u - 1) : ℂ) := by
   have hVs : (∫ a in a₀ε ε..Aε ε, w_s ε a * a ^ 2 * cosh (u * a)) = -V_s ε (u - 1) := by
     unfold V_s
@@ -20549,14 +20569,14 @@ theorem shellRem_eq {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε) (u
     have harg (a : ℝ) : Complex.cos ((a : ℂ) * (I * (u : ℂ))) = (cosh (u * a) : ℂ) := by
       rw [show (a : ℂ) * (I * (u : ℂ)) = ((u * a : ℝ) : ℂ) * I by push_cast; ring,
         Complex.cos_mul_I, ← Complex.ofReal_cosh]
-    rw [← mellinShellPhase_imaginary]
+    rw [← h_ε_imaginary]
     unfold h_ε
     congr 1 <;> exact intervalIntegral.integral_congr fun a _ ↦ by rw [harg]
   unfold shellRem
-  rw [integral_cosRem_eq (w_s ε) horder (shortShellDensity_continuousOn_support hε) u T,
+  rw [integral_cosRem_eq (w_s ε) horder (w_s_continuousOn_support hε) u T,
     integral_cosRem_eq (w_B ε) (by linarith : Bε ε ≤ Bε ε + 1)
-      (positiveShellDensity_continuous ε).continuousOn u T, hVs, hVB, hI]
-  unfold h_ε saddleSourceShellDerivative upperNetShellVariance
+      (w_B_continuous ε).continuousOn u T, hVs, hVB, hI]
+  unfold h_ε H_ε upperNetShellVariance
   push_cast
   ring
 
@@ -20601,7 +20621,7 @@ theorem integrableOn_Gker {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η) (T : �
   have hmeas : Measurable (Gker ℓ η T) := by unfold Gker expI μ_ℓ; fun_prop
   refine hmajor.mono' hmeas.aestronglyMeasurable ?_
   filter_upwards [ae_restrict_mem measurableSet_Ioi] with a ha
-  have hd := upperGammaMeasureDensity_pos (η := η) hℓ ha
+  have hd := μ_ℓ_pos (η := η) hℓ ha
   unfold Gker
   rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hd]
   calc ‖expI (a * T) - 1 - I * (a * T : ℂ)‖ * μ_ℓ ℓ η a
@@ -20618,7 +20638,7 @@ def Gker₃ (ℓ η T a : ℝ) : ℂ :=
 
 theorem norm_Gker₃_le {ℓ η a : ℝ} (hℓ : 0 < ℓ) (ha : 0 < a) (T : ℝ) :
     ‖Gker₃ ℓ η T a‖ ≤ |T| ^ 3 / 6 * (a ^ 3 * μ_ℓ ℓ η a) := by
-  have hd := upperGammaMeasureDensity_pos (η := η) hℓ ha
+  have hd := μ_ℓ_pos (η := η) hℓ ha
   unfold Gker₃
   rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hd]
   calc ‖expI (a * T) - 1 - I * (a * T : ℂ) + ((a * T) ^ 2 / 2 : ℂ)‖ * μ_ℓ ℓ η a
@@ -20883,13 +20903,14 @@ noncomputable section
 open Filter MeasureTheory Real Set intervalIntegral
 open scoped Topology
 
-/-- Report (44): the stationary log radius `v_ℓ(u)`. -/
-def vℓ (ε ℓ u : ℝ) : ℝ :=
-  -(Real.log π) / 2 + Real.digamma (ℓ * (1 + u) / 2) / 2 + saddleSourceShellDerivative ε u
+/-- Report (44): the saddle log-radius `v(u)` for real `λ = ℓ` (`logRadius` is the case
+`λ = d/2`). -/
+def v_ℓ (ε ℓ u : ℝ) : ℝ :=
+  -(Real.log π) / 2 + Real.digamma (ℓ * (1 + u) / 2) / 2 + H_ε ε u
 
-theorem saddleSourceStationaryLogRadius_eq_saddleLogRadius (ε : ℝ) (d : ℕ) (u : ℝ) :
-    vℓ ε ((d : ℝ) / 2) u = logRadius ε d u := by
-  rw [saddleLogRadius_eq_digamma_add_shellDerivative]; rfl
+theorem v_ℓ_eq_logRadius (ε : ℝ) (d : ℕ) (u : ℝ) :
+    v_ℓ ε ((d : ℝ) / 2) u = logRadius ε d u := by
+  rw [logRadius_eq_digamma_add_H_ε]; rfl
 
 /-- The centred saddle phase `L_u(T)` of report (46): gamma part plus shell part. -/
 def L_u (ε ℓ u T : ℝ) : ℂ := G_ℓη ℓ (1 + u) T + shellPhase ε ℓ u T
@@ -20902,7 +20923,7 @@ theorem norm_L_u_add_le {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (hu : -
   have heq : L_u ε ℓ u T + (ℓ * V_u ε ℓ u / 2 * T ^ 2 : ℂ) =
       (G_ℓη ℓ (1 + u) T + (ℓ * V_γ ℓ (1 + u) / 2 * T ^ 2 : ℂ)) +
         (shellPhase ε ℓ u T + (ℓ * upperNetShellVariance ε (u - 1) / 2 * T ^ 2 : ℂ)) := by
-    unfold L_u V_u upperSaddleVariance
+    unfold L_u V_u V_uδ
     rw [show (2 : ℝ) + (u - 1) = 1 + u by ring]
     push_cast
     ring
@@ -20942,26 +20963,26 @@ theorem expL_eq {ε ℓ u : ℝ} (hℓ : 0 < ℓ) (hu : -1 < u) (v T : ℝ) :
     push_cast
     ring
   unfold expL saddleSourceNormalizedEnvelope mellinEnvelope saddleSourceContourEnvelopeScale
-  rw [saddleSourceMellinContour_shellArgument hℓ, saddleSourceMellinContour_gammaArgument, hpi,
+  rw [z_contour_shellArgument hℓ, z_contour_gammaArgument, hpi,
     hshell]
   push_cast
   field_simp [hπ, hG, hs]
 
 theorem expL_stationary_eq {ε ℓ u : ℝ} (hℓ : 0 < ℓ) (hu : -1 < u) (T : ℝ) :
-    expL ε ℓ u (vℓ ε ℓ u) T = Complex.exp (L_u ε ℓ u T) := by
+    expL ε ℓ u (v_ℓ ε ℓ u) T = Complex.exp (L_u ε ℓ u T) := by
   have hη : 0 < 1 + u := by linarith
   have hphase : Complex.exp (I * (ℓ * T * Real.log π / 2 : ℂ)) *
-      Complex.exp (I * (ℓ * T * vℓ ε ℓ u : ℂ)) =
+      Complex.exp (I * (ℓ * T * v_ℓ ε ℓ u : ℂ)) =
       Complex.exp (I * (ℓ * T / 2 * Real.digamma (ℓ * (1 + u) / 2) : ℂ)) *
-        Complex.exp (I * (ℓ * T * saddleSourceShellDerivative ε u : ℂ)) := by
+        Complex.exp (I * (ℓ * T * H_ε ε u : ℂ)) := by
     rw [← Complex.exp_add, ← Complex.exp_add]
     congr 1
-    unfold vℓ
+    unfold v_ℓ
     push_cast
     ring
   have hshell : Complex.exp (shellPhase ε ℓ u T) =
       Complex.exp ((ℓ : ℂ) * (h_ε ε ((T : ℂ) + I * (u : ℂ)) - (h_εI ε u : ℂ))) *
-        Complex.exp (I * (ℓ * T * saddleSourceShellDerivative ε u : ℂ)) := by
+        Complex.exp (I * (ℓ * T * H_ε ε u : ℂ)) := by
     rw [← Complex.exp_add]
     congr 1
     unfold shellPhase
@@ -20977,7 +20998,7 @@ theorem expL_stationary_eq {ε ℓ u : ℝ} (hℓ : 0 < ℓ) (hu : -1 < u) (T : 
 theorem norm_expL_sub_gaussian_le {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (hu : -1 < u)
     (horder : a₀ε ε ≤ Aε ε) (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) (T : ℝ)
     (hsmall : ℓ * M₃ ε ℓ (u - 1) / 6 * |T| ^ 3 ≤ 1) :
-    ‖expL ε ℓ u (vℓ ε ℓ u) T - (saddleSourceGaussianKernel ε ℓ u T : ℂ)‖ ≤
+    ‖expL ε ℓ u (v_ℓ ε ℓ u) T - (saddleSourceGaussianKernel ε ℓ u T : ℂ)‖ ≤
       2 * saddleSourceGaussianKernel ε ℓ u T * (ℓ * M₃ ε ℓ (u - 1) / 6 * |T| ^ 3) := by
   have hR := norm_L_u_add_le hε hℓ hu horder hmargin T
   have hg : 0 < saddleSourceGaussianKernel ε ℓ u T := by
@@ -21006,11 +21027,11 @@ for an arbitrary polynomial factor `P`. -/
 theorem norm_integral_sub_gaussian_le {ε ℓ u R q p : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (hu : -1 < u)
     (horder : a₀ε ε ≤ Aε ε) (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a)
     (hV : 0 < V_u ε ℓ u) (hq : 0 ≤ q) (hqone : q ≤ 1) (hp : 0 ≤ p) (P : ℂ → ℂ)
-    (hsource : Integrable fun T : ℝ ↦ expL ε ℓ u (vℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)))
+    (hsource : Integrable fun T : ℝ ↦ expL ε ℓ u (v_ℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)))
     (hcubic : ∀ T : ℝ, |T| ≤ R → ℓ * M₃ ε ℓ (u - 1) / 6 * |T| ^ 3 ≤ q)
     (hpoly : ∀ T : ℝ, |T| ≤ R →
       ‖P ((T : ℂ) + I * (u : ℂ)) - P (I * (u : ℂ))‖ ≤ p * ‖P (I * (u : ℂ))‖) :
-    ‖∫ T : ℝ in Icc (-R) R, (expL ε ℓ u (vℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)) -
+    ‖∫ T : ℝ in Icc (-R) R, (expL ε ℓ u (v_ℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)) -
         (saddleSourceGaussianKernel ε ℓ u T : ℂ) * P (I * (u : ℂ)))‖ ≤
       (2 * q + (1 + 2 * q) * p) * ‖P (I * (u : ℂ))‖ *
         ∫ T : ℝ, saddleSourceGaussianKernel ε ℓ u T := by
@@ -21022,11 +21043,11 @@ theorem norm_integral_sub_gaussian_le {ε ℓ u R q p : ℝ} (hε : 0 < ε) (h�
   have hmajor : Integrable fun T : ℝ ↦
       (2 * q + (1 + 2 * q) * p) * ‖P (I * (u : ℂ))‖ * saddleSourceGaussianKernel ε ℓ u T :=
     hgaussian.const_mul _
-  have hintegrable : Integrable fun T : ℝ ↦ expL ε ℓ u (vℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)) -
+  have hintegrable : Integrable fun T : ℝ ↦ expL ε ℓ u (v_ℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)) -
       (saddleSourceGaussianKernel ε ℓ u T : ℂ) * P (I * (u : ℂ)) :=
     hsource.sub (hgaussian.ofReal.mul_const _)
   have hpoint : ∀ T ∈ Icc (-R) R,
-      ‖expL ε ℓ u (vℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)) -
+      ‖expL ε ℓ u (v_ℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)) -
           (saddleSourceGaussianKernel ε ℓ u T : ℂ) * P (I * (u : ℂ))‖ ≤
         (2 * q + (1 + 2 * q) * p) * ‖P (I * (u : ℂ))‖ * saddleSourceGaussianKernel ε ℓ u T := by
     intro T hT
@@ -21038,9 +21059,9 @@ theorem norm_integral_sub_gaussian_le {ε ℓ u R q p : ℝ} (hε : 0 < ε) (h�
       have h := norm_add_le (P ((T : ℂ) + I * (u : ℂ)) - P (I * (u : ℂ))) (P (I * (u : ℂ)))
       rw [sub_add_cancel] at h
       linarith [hpoly T (abs_le.mpr ⟨hT.1, hT.2⟩)]
-    rw [show expL ε ℓ u (vℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)) -
+    rw [show expL ε ℓ u (v_ℓ ε ℓ u) T * P ((T : ℂ) + I * (u : ℂ)) -
         (saddleSourceGaussianKernel ε ℓ u T : ℂ) * P (I * (u : ℂ)) =
-        (expL ε ℓ u (vℓ ε ℓ u) T - (saddleSourceGaussianKernel ε ℓ u T : ℂ)) *
+        (expL ε ℓ u (v_ℓ ε ℓ u) T - (saddleSourceGaussianKernel ε ℓ u T : ℂ)) *
             P ((T : ℂ) + I * (u : ℂ)) +
           (saddleSourceGaussianKernel ε ℓ u T : ℂ) *
             (P ((T : ℂ) + I * (u : ℂ)) - P (I * (u : ℂ))) by ring]
@@ -21065,12 +21086,12 @@ theorem centeredIntegrand_centralGaussianError_le {ε ℓ u R q p : ℝ} (hε : 
     (hcubic : ∀ T : ℝ, |T| ≤ R → ℓ * M₃ ε ℓ (u - 1) / 6 * |T| ^ 3 ≤ q)
     (hpoly : ∀ T : ℝ, |T| ≤ R →
       ‖P ((T : ℂ) + I * (u : ℂ)) - P (I * (u : ℂ))‖ ≤ p * ‖P (I * (u : ℂ))‖) :
-    ‖∫ T : ℝ in Icc (-R) R, (centeredIntegrand ε ℓ P u (vℓ ε ℓ u) T -
+    ‖∫ T : ℝ in Icc (-R) R, (centeredIntegrand ε ℓ P u (v_ℓ ε ℓ u) T -
         gaussianIntegrand ε ℓ P u T)‖ ≤
       (2 * q + (1 + 2 * q) * p) * ‖P (I * (u : ℂ))‖ *
         ∫ T : ℝ, saddleSourceGaussianKernel ε ℓ u T :=
   norm_integral_sub_gaussian_le hε hℓ hu horder hmargin hV hq hqone hp P
-    (centeredIntegrand_integrable hε hℓ hu horder hP (vℓ ε ℓ u)) hcubic hpoly
+    (centeredIntegrand_integrable hε hℓ hu horder hP (v_ℓ ε ℓ u)) hcubic hpoly
 
 end
 
@@ -21274,8 +21295,8 @@ theorem eventually_saddleGaussianOuterPhi_uniform_polynomial {B Q c δ₀ K : �
       _ < K * (κ / K) := mul_lt_mul_of_pos_left (hℓ δ hδ) hKpos
       _ = κ := by field_simp
 
-theorem positiveShellDensity_nonneg (ε a : ℝ) : 0 ≤ w_B ε a :=
-  div_nonneg (shellWeight_pos ε).le (Real.cosh_pos a).le
+theorem w_B_nonneg (ε a : ℝ) : 0 ≤ w_B ε a :=
+  div_nonneg (Qε_pos ε).le (Real.cosh_pos a).le
 
 /-- The positive-shell moments `∫ w_B a aⁿ cosh (u a)` grow with the contour height, so on the
 first branch they are dominated by their value at `u = 1 + ε/2`. -/
@@ -21285,13 +21306,13 @@ theorem positiveShellMoment_firstBranch_le {ε u : ℝ} (hε : 0 < ε) (n : ℕ)
       ∫ a in Bε ε..Bε ε + 1, w_B ε a * a ^ n * cosh ((1 + ε / 2) * a) := by
   have hB : (0 : ℝ) ≤ Bε ε := by unfold Bε; positivity
   have hcont (v : ℝ) : Continuous fun a : ℝ ↦ w_B ε a * a ^ n * cosh (v * a) := by
-    have := positiveShellDensity_continuous ε
+    have := w_B_continuous ε
     fun_prop
   refine intervalIntegral.integral_mono_on (μ := volume) (by linarith)
     ((hcont u).intervalIntegrable _ _) ((hcont (1 + ε / 2)).intervalIntegrable _ _) fun a ha ↦ ?_
   have ha0 : 0 ≤ a := hB.trans ha.1
   refine mul_le_mul_of_nonneg_left (Real.cosh_le_cosh.mpr ?_)
-    (mul_nonneg (positiveShellDensity_nonneg ε a) (pow_nonneg ha0 n))
+    (mul_nonneg (w_B_nonneg ε a) (pow_nonneg ha0 n))
   rw [abs_mul, abs_mul, abs_of_nonneg ha0, abs_of_pos (by positivity : (0 : ℝ) < 1 + ε / 2)]
   exact mul_le_mul_of_nonneg_right (abs_le.mpr ⟨by linarith, by linarith⟩) ha0
 
@@ -21303,9 +21324,9 @@ theorem saddleSourceFirstBranchVarianceCoefficient_pos {ε : ℝ} (hε : 0 < ε)
     0 < saddleSourceFirstBranchVarianceCoefficient ε := by
   unfold saddleSourceFirstBranchVarianceCoefficient
   nlinarith [mul_nonneg (show (0 : ℝ) ≤ 2 + ε / 2 by positivity)
-    (saddleSourcePositiveShellVariance_nonneg ε (ε / 2))]
+    (V_B_nonneg ε (ε / 2))]
 
-theorem upperFirstBranch_saddleSourceGaussianVariance_upper_bound {ε ℓ u : ℝ} (hε : 0 < ε)
+theorem upperFirstBranch_V_u_upper_bound {ε ℓ u : ℝ} (hε : 0 < ε)
     (hℓ : 0 < ℓ) (hulower : -1 < u) (huupper : u ≤ 1 + ε / 2) (horder : a₀ε ε ≤ Aε ε)
     (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) (hscale : 1 ≤ ℓ * (1 + u)) :
     V_u ε ℓ u ≤ saddleSourceFirstBranchVarianceCoefficient ε / (1 + u) := by
@@ -21313,16 +21334,16 @@ theorem upperFirstBranch_saddleSourceGaussianVariance_upper_bound {ε ℓ u : �
   have hgamma : (1 + u) * V_γ ℓ (1 + u) ≤ 3 / 2 := by
     have hone : 1 / (ℓ * (1 + u)) ≤ (1 : ℝ) := by rw [div_le_one (by positivity)]; linarith
     calc (1 + u) * V_γ ℓ (1 + u) ≤ (1 + u) * (1 / (2 * (1 + u)) + 1 / (ℓ * (1 + u) ^ 2)) :=
-          mul_le_mul_of_nonneg_left (upperGammaVariance_bounds hℓ hη).2 hη.le
+          mul_le_mul_of_nonneg_left (V_γ_bounds hℓ hη).2 hη.le
       _ = 1 / 2 + 1 / (ℓ * (1 + u)) := by field_simp [hℓ.ne', hη.ne']
       _ ≤ 3 / 2 := by linarith
-  have hshort := upperShortShellVariance_nonneg (δ := u - 1) hε horder hmargin
+  have hshort := V_s_nonneg (δ := u - 1) hε horder hmargin
   have hremote : V_B ε (u - 1) ≤ V_B ε (ε / 2) := by
     unfold V_B
     rw [show 1 + (u - 1) = u by ring]
     exact positiveShellMoment_firstBranch_le hε 2 hulower huupper
-  have hpositive := saddleSourcePositiveShellVariance_nonneg ε (ε / 2)
-  unfold V_u upperSaddleVariance upperNetShellVariance saddleSourceFirstBranchVarianceCoefficient
+  have hpositive := V_B_nonneg ε (ε / 2)
+  unfold V_u V_uδ upperNetShellVariance saddleSourceFirstBranchVarianceCoefficient
   rw [show 2 + (u - 1) = 1 + u by ring, le_div_iff₀ hη]
   nlinarith [hgamma, mul_nonneg hshort hη.le, mul_le_mul_of_nonneg_right hremote hη.le,
     mul_nonneg hpositive (show (0 : ℝ) ≤ 2 + ε / 2 - (1 + u) by linarith)]
@@ -21341,7 +21362,7 @@ theorem saddle_exp_neg_mul_min_le_add {a x y : ℝ} (ha : 0 ≤ a) :
 theorem saddleSourceTailIntegrand_continuous {ε ℓ u : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ) (hu : -1 < u)
     (horder : a₀ε ε ≤ Aε ε) :
     Continuous fun T : ℝ ↦
-      saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ u T) := by
+      saddleGaussianTailWeight T * exp (-D_u ε ℓ u T) := by
   have harg : Continuous fun T : ℝ ↦ z_contour ℓ u T := by unfold z_contour; fun_prop
   have hgamma : Continuous fun T : ℝ ↦ Complex.Gamma (z_contour ℓ u T / 2) := by
     refine continuous_iff_continuousAt.mpr fun T ↦ ?_
@@ -21365,18 +21386,18 @@ theorem saddleSourceTailIntegrand_continuous {ε ℓ u : ℝ} (hε : 0 < ε) (h�
   unfold saddleSourceNormalizedEnvelope
   exact henvelope.div_const _
 
-theorem saddleSourceContourDamping_firstBranch_min_lower_bound {ε ℓ u : ℝ} (hε : 0 < ε)
+theorem D_u_firstBranch_min_lower_bound {ε ℓ u : ℝ} (hε : 0 < ε)
     (hεsmall : ε ≤ 1 / 4) (hℓ : 0 < ℓ) (hulower : -1 < u) (huupper : u ≤ 1 + ε / 2)
     (horder : a₀ε ε ≤ Aε ε) (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) (T : ℝ) :
-    ε * ℓ / (4 * exp 1) * min (T ^ 2 / (1 + u)) |T| ≤ saddleSourceContourDamping ε ℓ u T := by
+    ε * ℓ / (4 * exp 1) * min (T ^ 2 / (1 + u)) |T| ≤ D_u ε ℓ u T := by
   have hη : (0 : ℝ) < 1 + u := by linarith
-  rw [saddleSourceContourDamping_eq_firstBranch]
+  rw [D_u_eq_firstBranch]
   calc ε * ℓ / (4 * exp 1) * min (T ^ 2 / (1 + u)) |T|
       = 2 * ε * (ℓ / (8 * exp 1) * min (T ^ 2 / (1 + u)) |T|) := by ring
     _ ≤ 2 * ε * D_γ ℓ (1 + u) T :=
-        mul_le_mul_of_nonneg_left (upperGammaDamping_lower_bound hℓ hη T) (by positivity)
-    _ ≤ saddleSourceContourDamping ε ℓ u T :=
-        upperFirstBranchSaddleDamping_lower_bound hε hεsmall hℓ hulower huupper horder hmargin T
+        mul_le_mul_of_nonneg_left (D_γ_lower_bound hℓ hη T) (by positivity)
+    _ ≤ D_u ε ℓ u T :=
+        upperFirstBranch_D_u_lower_bound hε hεsmall hℓ hulower huupper horder hmargin T
 
 /-- Pointwise majorant for a damping bounded below by `a · min (T²/η) |T|`. -/
 theorem saddleGaussianTailWeight_exp_neg_le {D : ℝ → ℝ} {a η : ℝ} (ha : 0 < a)
@@ -21407,10 +21428,10 @@ theorem saddleSource_firstBranch_weighted_integrable {ε ℓ u : ℝ} (hε : 0 <
     (hℓ : 0 < ℓ) (hulower : -1 < u) (huupper : u ≤ 1 + ε / 2) (horder : a₀ε ε ≤ Aε ε)
     (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) :
     Integrable fun T : ℝ ↦
-      saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ u T) :=
+      saddleGaussianTailWeight T * exp (-D_u ε ℓ u T) :=
   integrable_saddleGaussianTailWeight_exp_neg (by positivity) (by linarith)
     (saddleSourceTailIntegrand_continuous hε hℓ hulower horder)
-    (saddleSourceContourDamping_firstBranch_min_lower_bound hε hεsmall hℓ hulower huupper horder
+    (D_u_firstBranch_min_lower_bound hε hεsmall hℓ hulower huupper horder
       hmargin)
 
 theorem saddleSource_firstBranch_weighted_tail_le {ε ℓ u R : ℝ} (hε : 0 < ε) (hεsmall : ε ≤ 1 / 4)
@@ -21418,7 +21439,7 @@ theorem saddleSource_firstBranch_weighted_tail_le {ε ℓ u R : ℝ} (hε : 0 < 
     (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) (hR : 0 ≤ R)
     (hquadratic : 6 ≤ ε * ℓ / (4 * exp 1) / (1 + u)) (hlinear : 6 ≤ ε * ℓ / (4 * exp 1)) :
     (∫ T : ℝ in saddleGaussianTailSet R,
-        saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ u T)) ≤
+        saddleGaussianTailWeight T * exp (-D_u ε ℓ u T)) ≤
       2 * exp (-(ε * ℓ / (4 * exp 1) / (1 + u) / 4) * R ^ 2) *
           √(π / (ε * ℓ / (4 * exp 1) / (1 + u) / 4)) +
         2 * exp (-(ε * ℓ / (4 * exp 1) / 4) * R) * (2 / (ε * ℓ / (4 * exp 1) / 4)) := by
@@ -21427,7 +21448,7 @@ theorem saddleSource_firstBranch_weighted_tail_le {ε ℓ u R : ℝ} (hε : 0 < 
   have hgauss := saddleGaussianTailWeight_mul_gaussian_integrable (div_pos ha hη)
   have hlin := saddleGaussianTailWeight_mul_exp_abs_integrable ha
   calc (∫ T : ℝ in saddleGaussianTailSet R,
-        saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ u T))
+        saddleGaussianTailWeight T * exp (-D_u ε ℓ u T))
       ≤ ∫ T : ℝ in saddleGaussianTailSet R,
           (saddleGaussianTailWeight T * exp (-(ε * ℓ / (4 * exp 1) / (1 + u)) * T ^ 2) +
             saddleGaussianTailWeight T * exp (-(ε * ℓ / (4 * exp 1)) * |T|)) :=
@@ -21436,7 +21457,7 @@ theorem saddleSource_firstBranch_weighted_tail_le {ε ℓ u R : ℝ} (hε : 0 < 
             hmargin).integrableOn (hgauss.add hlin).integrableOn
           (saddleGaussianTailSet_measurable R) fun T _ ↦
             saddleGaussianTailWeight_exp_neg_le ha
-              (saddleSourceContourDamping_firstBranch_min_lower_bound hε hεsmall hℓ hulower
+              (D_u_firstBranch_min_lower_bound hε hεsmall hℓ hulower
                 huupper horder hmargin) T
     _ = (∫ T : ℝ in saddleGaussianTailSet R,
             saddleGaussianTailWeight T * exp (-(ε * ℓ / (4 * exp 1) / (1 + u)) * T ^ 2)) +
@@ -21553,10 +21574,10 @@ theorem eventually_saddleSource_firstBranch_uniform_tail : ∀ᶠ ε : ℝ in �
     ∀ κ : ℝ, 0 < κ → ∀ᶠ ℓ : ℝ in atTop, ∀ u : ℝ, -1 < u → u ≤ 1 + ε / 2 →
       log ℓ / 4 ≤ ℓ * (1 + u) → √(ℓ * V_u ε ℓ u) *
         (∫ T : ℝ in saddleGaussianTailSet ((ℓ * (1 + u)) ^ (1 / 12 : ℝ) / √(ℓ * V_u ε ℓ u)),
-          saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ u T)) < κ := by
+          saddleGaussianTailWeight T * exp (-D_u ε ℓ u T)) < κ := by
   filter_upwards [self_mem_nhdsWithin, eventually_nhdsGT_le_quarter,
-    eventually_upper_shortCutoff_le_shortEndpoint, eventually_upper_shortMargin_positive,
-    eventually_saddleSourceGaussianVariance_firstBranch_pos]
+    eventually_upper_a₀ε_le_Aε, eventually_upper_bε_positive,
+    eventually_V_u_firstBranch_pos]
     with ε hε hεsmall horder hmargin hVpos
   change 0 < ε at hε
   have hmargin' : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a := fun a ha ↦ by linarith [hmargin a ha]
@@ -21574,7 +21595,7 @@ theorem eventually_saddleSource_firstBranch_uniform_tail : ∀ᶠ ε : ℝ in �
   have hη : (0 : ℝ) < 1 + u := by linarith
   have hV : 0 < V_u ε ℓ u := hVpos ℓ hℓ u hulower huupper
   have hupper : (1 + u) * V_u ε ℓ u ≤ saddleSourceFirstBranchVarianceCoefficient ε := by
-    have h := upperFirstBranch_saddleSourceGaussianVariance_upper_bound hε hℓ hulower huupper
+    have h := upperFirstBranch_V_u_upper_bound hε hℓ hulower huupper
       horder hmargin' (hlogone.trans hlogscale)
     rw [le_div_iff₀ hη] at h
     linarith
@@ -21590,7 +21611,7 @@ theorem eventually_saddleSource_firstBranch_uniform_tail : ∀ᶠ ε : ℝ in �
     (R := (ℓ * (1 + u)) ^ (1 / 12 : ℝ) / √(ℓ * V_u ε ℓ u)) hε hεsmall hℓ hulower huupper horder
     hmargin' (by positivity) hquadratic hlinear
   rw [show ε * ℓ / (4 * exp 1) = ε / (4 * exp 1) * ℓ by ring] at htail
-  refine (saddleSource_normalized_tail_bound (D := saddleSourceContourDamping ε ℓ u) hℓ hV hη hc
+  refine (saddleSource_normalized_tail_bound (D := D_u ε ℓ u) hℓ hV hη hc
     hC hupper hz htail).trans_lt (lt_of_le_of_lt ?_ htailℓ)
   have hpower : (log ℓ / 4) ^ (1 / 6 : ℝ) ≤ ((ℓ * (1 + u)) ^ (1 / 12 : ℝ)) ^ 2 := by
     rw [← Real.rpow_natCast _ 2, ← Real.rpow_mul (by positivity : (0 : ℝ) ≤ ℓ * (1 + u)),
@@ -21611,12 +21632,12 @@ noncomputable section
 open Filter MeasureTheory Real Set intervalIntegral
 open scoped Topology
 
-theorem saddleSourcePositiveShellThirdMoment_nonneg {ε : ℝ} (hε : 0 < ε) (δ : ℝ) :
+theorem upperPositiveShellThirdMoment_nonneg {ε : ℝ} (hε : 0 < ε) (δ : ℝ) :
     0 ≤ upperPositiveShellThirdMoment ε δ := by
   have hB : (0 : ℝ) ≤ Bε ε := by unfold Bε; positivity
   unfold upperPositiveShellThirdMoment
   refine intervalIntegral.integral_nonneg (by linarith) fun a ha ↦ ?_
-  exact mul_nonneg (mul_nonneg (positiveShellDensity_nonneg ε a) (pow_nonneg (hB.trans ha.1) 3))
+  exact mul_nonneg (mul_nonneg (w_B_nonneg ε a) (pow_nonneg (hB.trans ha.1) 3))
     (Real.cosh_pos _).le
 
 /-- The constant `5/2 + (3/2) A (2 + ε/2) + (2 + ε/2)² M₃_B(ε/2)` bounding `(1+u)² M₃` on the
@@ -21624,7 +21645,7 @@ first branch. -/
 def saddleSourceFirstBranchThirdMomentCoefficient (ε : ℝ) : ℝ :=
   5 / 2 + 3 / 2 * Aε ε * (2 + ε / 2) + (2 + ε / 2) ^ 2 * upperPositiveShellThirdMoment ε (ε / 2)
 
-theorem upperFirstBranch_saddleSourceThirdMoment_scaled_le {ε ℓ u : ℝ} (hε : 0 < ε)
+theorem upperFirstBranch_M₃_scaled_le {ε ℓ u : ℝ} (hε : 0 < ε)
     (hεsmall : ε ≤ 1 / 4) (hℓ : 0 < ℓ) (hulower : -1 < u) (huupper : u ≤ 1 + ε / 2)
     (horder : a₀ε ε ≤ Aε ε) (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a)
     (hscale : 1 ≤ ℓ * (1 + u)) :
@@ -21635,17 +21656,17 @@ theorem upperFirstBranch_saddleSourceThirdMoment_scaled_le {ε ℓ u : ℝ} (hε
   have htwo : 2 / (ℓ * (1 + u)) ≤ (2 : ℝ) := by rw [div_le_iff₀ (by positivity)]; linarith
   have hgammaV : (1 + u) * V_γ ℓ (1 + u) ≤ 3 / 2 := by
     calc (1 + u) * V_γ ℓ (1 + u) ≤ (1 + u) * (1 / (2 * (1 + u)) + 1 / (ℓ * (1 + u) ^ 2)) :=
-          mul_le_mul_of_nonneg_left (upperGammaVariance_bounds hℓ hη).2 hη.le
+          mul_le_mul_of_nonneg_left (V_γ_bounds hℓ hη).2 hη.le
       _ = 1 / 2 + 1 / (ℓ * (1 + u)) := by field_simp [hℓ.ne', hη.ne']
       _ ≤ 3 / 2 := by linarith
   have hgammaM : (1 + u) ^ 2 * M₃_γ ℓ (1 + u) ≤ 5 / 2 := by
     calc (1 + u) ^ 2 * M₃_γ ℓ (1 + u)
         ≤ (1 + u) ^ 2 * (1 / (2 * (1 + u) ^ 2) + 2 / (ℓ * (1 + u) ^ 3)) :=
-          mul_le_mul_of_nonneg_left (upperGammaThirdMoment_bounds hℓ hη).2 (sq_nonneg _)
+          mul_le_mul_of_nonneg_left (M₃_γ_bounds hℓ hη).2 (sq_nonneg _)
       _ = 1 / 2 + 2 / (ℓ * (1 + u)) := by field_simp [hℓ.ne', hη.ne']
       _ ≤ 5 / 2 := by linarith
   have hgammanonneg : 0 ≤ V_γ ℓ (1 + u) :=
-    le_trans (by positivity) (upperGammaVariance_bounds hℓ hη).1
+    le_trans (by positivity) (V_γ_bounds hℓ hη).1
   have hshortvariance : V_s ε (u - 1) ≤ V_γ ℓ (1 + u) := by
     have h := upperFirstBranch_shortVariance_le_gamma hε hεsmall hℓ hulower huupper horder hmargin
     nlinarith [mul_nonneg hε.le hgammanonneg]
@@ -21666,7 +21687,7 @@ theorem upperFirstBranch_saddleSourceThirdMoment_scaled_le {ε ℓ u : ℝ} (hε
     unfold upperPositiveShellThirdMoment
     rw [show 1 + (u - 1) = u by ring]
     exact positiveShellMoment_firstBranch_le hε 3 hulower huupper
-  have hremote0 := saddleSourcePositiveShellThirdMoment_nonneg hε (ε / 2)
+  have hremote0 := upperPositiveShellThirdMoment_nonneg hε (ε / 2)
   have hremoteScaled : (1 + u) ^ 2 * upperPositiveShellThirdMoment ε (u - 1) ≤
       (2 + ε / 2) ^ 2 * upperPositiveShellThirdMoment ε (ε / 2) := by
     calc (1 + u) ^ 2 * upperPositiveShellThirdMoment ε (u - 1)
@@ -21685,13 +21706,13 @@ def saddleSourceSecondBranchVarianceFloor (ε : ℝ) : ℝ :=
 theorem saddleSourceSecondBranchVarianceFloor_pos {ε : ℝ} (hε : 0 < ε) :
     0 < saddleSourceSecondBranchVarianceFloor ε := by
   unfold saddleSourceSecondBranchVarianceFloor Bε
-  have := shellWeight_pos ε
+  have := Qε_pos ε
   positivity
 
-theorem eventually_saddleSourceGaussianVariance_secondBranch_floor :
+theorem eventually_V_u_secondBranch_floor :
     ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 0 < ℓ → ∀ δ : ℝ, ε / 2 ≤ δ →
       saddleSourceSecondBranchVarianceFloor ε ≤ V_u ε ℓ (1 + δ) := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upperSaddleVariance_bounds] with ε hε hvariance
+  filter_upwards [self_mem_nhdsWithin, eventually_V_uδ_bounds] with ε hε hvariance
   change 0 < ε at hε
   intro ℓ hℓ δ hδ
   have hδ0 : 0 ≤ δ := by linarith
@@ -21701,9 +21722,9 @@ theorem eventually_saddleSourceGaussianVariance_secondBranch_floor :
         = 99 / 100 * (1 / 2 * Bε ε ^ 2 * Qε ε * exp (ε / 2 * Bε ε)) := by
           unfold saddleSourceSecondBranchVarianceFloor; ring
       _ ≤ 99 / 100 * (1 / 2 * Bε ε ^ 2 * Qε ε * exp (δ * Bε ε)) := by
-          have hweight := shellWeight_pos ε
+          have hweight := Qε_pos ε
           gcongr
-      _ ≤ 99 / 100 * V_B ε δ := by gcongr; exact (upperPositiveShellVariance_bounds hε hδ0).1
+      _ ≤ 99 / 100 * V_B ε δ := by gcongr; exact (V_B_bounds hε hδ0).1
   unfold V_u
   rw [show 1 + δ - 1 = δ by ring]
   have hgamma : (0 : ℝ) ≤ 1 / (2 * (2 + δ)) := by positivity
@@ -21784,20 +21805,20 @@ theorem SaddleRangeBounds.exists_central_window {P : ℂ → ℂ} {u₀ : ℝ} (
 
 /-- Lemmas 4.2, 4.4, 4.5 for `P₊` on `u ≥ -1`. -/
 theorem saddleRangeBounds_PPlus {ε : ℝ} (hε : 0 < ε) : SaddleRangeBounds (PPlus ε) (-1) where
-  norm_pos u hu := (beta_pos hε).trans_le (plusPolynomial_imaginary_norm_ge_beta hε hu)
+  norm_pos u hu := (β_pos hε).trans_le (PPlus_imaginary_norm_ge_β hε hu)
   difference := by
-    obtain ⟨C, hC, hbound⟩ := exists_plusPolynomial_uniform_difference_ratio hε
-    exact ⟨C, hC, fun u hu T ↦ (div_le_iff₀ ((beta_pos hε).trans_le
-      (plusPolynomial_imaginary_norm_ge_beta hε hu))).mp (hbound u hu T)⟩
+    obtain ⟨C, hC, hbound⟩ := exists_PPlus_uniform_difference_ratio hε
+    exact ⟨C, hC, fun u hu T ↦ (div_le_iff₀ ((β_pos hε).trans_le
+      (PPlus_imaginary_norm_ge_β hε hu))).mp (hbound u hu T)⟩
 
 /-- Lemmas 4.2, 4.4, 4.5 for `P₋` on `u ≥ 1 + ε/4`. -/
 theorem saddleRangeBounds_PMinus {ε : ℝ} (hε : 0 < ε) :
     SaddleRangeBounds (PMinus ε) (1 + ε / 4) where
-  norm_pos u hu := by nlinarith [beta_pos hε, minusPolynomial_imaginary_norm_ge_three_beta hε hu]
+  norm_pos u hu := by nlinarith [β_pos hε, PMinus_imaginary_norm_ge_three_β hε hu]
   difference := by
-    obtain ⟨C, hC, hbound⟩ := exists_minusPolynomial_uniform_difference_ratio hε
+    obtain ⟨C, hC, hbound⟩ := exists_PMinus_uniform_difference_ratio hε
     refine ⟨C, hC, fun u hu T ↦ (div_le_iff₀ ?_).mp (hbound u hu T)⟩
-    nlinarith [beta_pos hε, minusPolynomial_imaginary_norm_ge_three_beta hε hu]
+    nlinarith [β_pos hε, PMinus_imaginary_norm_ge_three_β hε hu]
 
 end
 
@@ -21806,12 +21827,14 @@ noncomputable section
 open Filter MeasureTheory Real Set intervalIntegral
 open scoped Topology
 
-/-- Radius `(ℓ(1+u))^{1/12}/√(ℓ V_u)` of the central window on the first branch. -/
-def saddleSourceFirstBranchCentralRadius (ε ℓ u : ℝ) : ℝ :=
+/-- The radius `T_* = K/√(λV(u))`, `K = (λ(1+u))^{1/12}`, of the central window of report
+Lemma 4.8 on the first branch `u_* ≤ u ≤ U`. -/
+def T_star₁ (ε ℓ u : ℝ) : ℝ :=
   (ℓ * (1 + u)) ^ (1 / 12 : ℝ) / √(ℓ * V_u ε ℓ u)
 
-/-- Radius `ℓ^{1/12}/√(ℓ V_u)` of the central window on the second branch. -/
-def saddleSourceSecondBranchCentralRadius (ε ℓ u : ℝ) : ℝ :=
+/-- The radius `T_* = K/√(λV(u))`, `K = λ^{1/12}`, of the central window of report Lemma 4.8 on the
+second branch `u ≥ U`. -/
+def T_star₂ (ε ℓ u : ℝ) : ℝ :=
   ℓ ^ (1 / 12 : ℝ) / √(ℓ * V_u ε ℓ u)
 
 theorem saddleSource_central_rpow_cube_div_sqrt {x : ℝ} (hx : 0 < x) :
@@ -21865,13 +21888,13 @@ theorem saddleSource_scaled_cubic_window_le {ℓ η V M K c z T : ℝ} (hℓ : 0
         field_simp [ht.ne', hc.ne', hcroot.ne']
         rw [Real.sq_sqrt hc.le]
 
-theorem upperFirstBranch_saddleSourceGaussianVariance_scaled_lower_bound {ε ℓ u : ℝ} (hε : 0 < ε)
+theorem upperFirstBranch_V_u_scaled_lower_bound {ε ℓ u : ℝ} (hε : 0 < ε)
     (hεsmall : ε ≤ 1 / 4) (hℓ : 0 < ℓ) (hulower : -1 < u) (huupper : u ≤ 1 + ε / 2)
     (horder : a₀ε ε ≤ Aε ε) (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) :
     ε ≤ (1 + u) * V_u ε ℓ u := by
   have hη : (0 : ℝ) < 1 + u := by linarith
-  have hgamma := (upperGammaVariance_bounds hℓ hη).1
-  have hsource := upperFirstBranch_saddleSourceGaussianVariance_lower_bound hε hεsmall hℓ hulower
+  have hgamma := (V_γ_bounds hℓ hη).1
+  have hsource := upperFirstBranch_V_u_lower_bound hε hεsmall hℓ hulower
     huupper horder hmargin
   calc ε = (1 + u) * (2 * ε * (1 / (2 * (1 + u)))) := by field_simp [hη.ne']
     _ ≤ (1 + u) * (2 * ε * V_γ ℓ (1 + u)) := by gcongr
@@ -21896,16 +21919,16 @@ theorem saddleSource_scaled_central_radius_le {ℓ η V c U z : ℝ} (hℓ : 0 <
 
 theorem eventually_saddleSourceFirstBranch_cubic_window : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ κ : ℝ, 0 < κ → ∀ᶠ ℓ : ℝ in atTop, ∀ u : ℝ, -1 < u → u ≤ 1 + ε / 2 →
-      log ℓ / 4 ≤ ℓ * (1 + u) → ∀ T : ℝ, |T| ≤ saddleSourceFirstBranchCentralRadius ε ℓ u →
+      log ℓ / 4 ≤ ℓ * (1 + u) → ∀ T : ℝ, |T| ≤ T_star₁ ε ℓ u →
         ℓ * M₃ ε ℓ (u - 1) / 6 * |T| ^ 3 < κ := by
   filter_upwards [self_mem_nhdsWithin, eventually_nhdsGT_le_quarter,
-    eventually_upper_shortCutoff_le_shortEndpoint, eventually_upper_shortMargin_positive]
+    eventually_upper_a₀ε_le_Aε, eventually_upper_bε_positive]
     with ε hε hεsmall horder hmargin
   change 0 < ε at hε
   have hmargin' : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a := fun a ha ↦ by linarith [hmargin a ha]
   have hA : (0 : ℝ) ≤ Aε ε := le_trans (by unfold a₀ε; positivity) horder
   have hK : 0 < saddleSourceFirstBranchThirdMomentCoefficient ε := by
-    have := saddleSourcePositiveShellThirdMoment_nonneg hε (ε / 2)
+    have := upperPositiveShellThirdMoment_nonneg hε (ε / 2)
     unfold saddleSourceFirstBranchThirdMomentCoefficient
     positivity
   intro κ hκ
@@ -21925,9 +21948,9 @@ theorem eventually_saddleSourceFirstBranch_cubic_window : ∀ᶠ ε : ℝ in �
           (K := saddleSourceFirstBranchThirdMomentCoefficient ε) (c := ε)
           (z := (ℓ * (1 + u)) ^ (1 / 12 : ℝ)) hℓ hη (by positivity) hK.le
           (Real.rpow_nonneg hx.le _)
-          (upperFirstBranch_saddleSourceThirdMoment_scaled_le hε hεsmall hℓ hulower huupper horder
+          (upperFirstBranch_M₃_scaled_le hε hεsmall hℓ hulower huupper horder
             hmargin' (by nlinarith))
-          (upperFirstBranch_saddleSourceGaussianVariance_scaled_lower_bound hε hεsmall hℓ hulower
+          (upperFirstBranch_V_u_scaled_lower_bound hε hεsmall hℓ hulower
             huupper horder hmargin') hT
     _ = saddleSourceFirstBranchThirdMomentCoefficient ε / (6 * ε * √ε) *
           (ℓ * (1 + u)) ^ (-(1 / 4 : ℝ)) := by
@@ -21935,11 +21958,11 @@ theorem eventually_saddleSourceFirstBranch_cubic_window : ∀ᶠ ε : ℝ in �
 
 theorem eventually_saddleSourceSecondBranch_cubic_window : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ κ : ℝ, 0 < κ → ∀ᶠ ℓ : ℝ in atTop, ∀ δ : ℝ, ε / 2 ≤ δ → ∀ T : ℝ,
-      |T| ≤ saddleSourceSecondBranchCentralRadius ε ℓ (1 + δ) →
+      |T| ≤ T_star₂ ε ℓ (1 + δ) →
         ℓ * M₃ ε ℓ δ / 6 * |T| ^ 3 < κ := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
-    eventually_saddleSourceGaussianVariance_secondBranch_floor,
-    eventually_upperSaddleThirdMoment_le_variance] with ε hε horder hfloor hmoment
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
+    eventually_V_u_secondBranch_floor,
+    eventually_M₃_le_variance] with ε hε horder hfloor hmoment
   change 0 < ε at hε
   have hfloorpos := saddleSourceSecondBranchVarianceFloor_pos hε
   have hA : (0 : ℝ) ≤ Aε ε := le_trans (by unfold a₀ε; positivity) horder
@@ -21971,11 +21994,11 @@ theorem eventually_saddleSourceSecondBranch_cubic_window : ∀ᶠ ε : ℝ in �
           (6 * √(saddleSourceSecondBranchVarianceFloor ε)) * ℓ ^ (-(1 / 4 : ℝ)) := by
         rw [saddleSource_central_rpow_cube_div_sqrt hℓpos]
 
-theorem eventually_saddleSourceFirstBranch_central_radius_lt : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_T_star₁_lt : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ κ : ℝ, 0 < κ → ∀ᶠ ℓ : ℝ in atTop, ∀ u : ℝ, -1 < u → u ≤ 1 + ε / 2 →
-      log ℓ / 4 ≤ ℓ * (1 + u) → saddleSourceFirstBranchCentralRadius ε ℓ u < κ := by
+      log ℓ / 4 ≤ ℓ * (1 + u) → T_star₁ ε ℓ u < κ := by
   filter_upwards [self_mem_nhdsWithin, eventually_nhdsGT_le_quarter,
-    eventually_upper_shortCutoff_le_shortEndpoint, eventually_upper_shortMargin_positive]
+    eventually_upper_a₀ε_le_Aε, eventually_upper_bε_positive]
     with ε hε hεsmall horder hmargin
   change 0 < ε at hε
   have hmargin' : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a := fun a ha ↦ by linarith [hmargin a ha]
@@ -21987,20 +22010,20 @@ theorem eventually_saddleSourceFirstBranch_central_radius_lt : ∀ᶠ ε : ℝ i
   have hη : (0 : ℝ) < 1 + u := by linarith
   have hx : (0 : ℝ) < ℓ * (1 + u) := mul_pos hℓ hη
   refine lt_of_le_of_lt ?_ (hN (ℓ * (1 + u)) (by nlinarith))
-  calc saddleSourceFirstBranchCentralRadius ε ℓ u
+  calc T_star₁ ε ℓ u
       ≤ (2 + ε / 2) / √ε * ((ℓ * (1 + u)) ^ (1 / 12 : ℝ) / √(ℓ * (1 + u))) :=
         saddleSource_scaled_central_radius_le (V := V_u ε ℓ u) (c := ε) (U := 2 + ε / 2)
           (z := (ℓ * (1 + u)) ^ (1 / 12 : ℝ)) hℓ hη (by positivity) (by linarith)
           (Real.rpow_nonneg hx.le _)
-          (upperFirstBranch_saddleSourceGaussianVariance_scaled_lower_bound hε hεsmall hℓ hulower
+          (upperFirstBranch_V_u_scaled_lower_bound hε hεsmall hℓ hulower
             huupper horder hmargin')
     _ = (2 + ε / 2) / √ε * (ℓ * (1 + u)) ^ (-(5 / 12 : ℝ)) := by
         rw [saddleSource_central_rpow_div_sqrt hx]
 
-theorem eventually_saddleSourceSecondBranch_central_radius_lt : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_T_star₂_lt : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ κ : ℝ, 0 < κ → ∀ᶠ ℓ : ℝ in atTop, ∀ δ : ℝ, ε / 2 ≤ δ →
-      saddleSourceSecondBranchCentralRadius ε ℓ (1 + δ) < κ := by
-  filter_upwards [self_mem_nhdsWithin, eventually_saddleSourceGaussianVariance_secondBranch_floor]
+      T_star₂ ε ℓ (1 + δ) < κ := by
+  filter_upwards [self_mem_nhdsWithin, eventually_V_u_secondBranch_floor]
     with ε hε hfloor
   change 0 < ε at hε
   have hfloorpos := saddleSourceSecondBranchVarianceFloor_pos hε
@@ -22012,7 +22035,7 @@ theorem eventually_saddleSourceSecondBranch_central_radius_lt : ∀ᶠ ε : ℝ 
   have hV : 0 < V_u ε ℓ (1 + δ) := hfloorpos.trans_le hfl
   have hz : (0 : ℝ) ≤ ℓ ^ (1 / 12 : ℝ) := Real.rpow_nonneg hℓ.le _
   refine lt_of_le_of_lt ?_ hsmall
-  calc saddleSourceSecondBranchCentralRadius ε ℓ (1 + δ)
+  calc T_star₂ ε ℓ (1 + δ)
       = ℓ ^ (1 / 12 : ℝ) / √(ℓ * V_u ε ℓ (1 + δ)) := rfl
     _ ≤ ℓ ^ (1 / 12 : ℝ) / √(ℓ * saddleSourceSecondBranchVarianceFloor ε) := by gcongr
     _ = 1 / √(saddleSourceSecondBranchVarianceFloor ε) * (ℓ ^ (1 / 12 : ℝ) / √ℓ) := by
@@ -22038,14 +22061,14 @@ central Gaussian error of the centred integral is `< κ ‖P(iu)‖ ∫ e^{-λV 
 theorem eventually_firstBranch_centralGaussianError : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ κ : ℝ, 0 < κ → ∀ (P : ℂ → ℂ) (u₀ : ℝ), IsSaddlePolynomial ε P → SaddleRangeBounds P u₀ →
       ∀ᶠ ℓ : ℝ in atTop, ∀ u : ℝ, -1 < u → u ≤ 1 + ε / 2 → log ℓ / 4 ≤ ℓ * (1 + u) → u₀ ≤ u →
-        ‖∫ T : ℝ in Icc (-(saddleSourceFirstBranchCentralRadius ε ℓ u))
-            (saddleSourceFirstBranchCentralRadius ε ℓ u),
-            (centeredIntegrand ε ℓ P u (vℓ ε ℓ u) T - gaussianIntegrand ε ℓ P u T)‖ <
+        ‖∫ T : ℝ in Icc (-(T_star₁ ε ℓ u))
+            (T_star₁ ε ℓ u),
+            (centeredIntegrand ε ℓ P u (v_ℓ ε ℓ u) T - gaussianIntegrand ε ℓ P u T)‖ <
           κ * ‖P (I * u)‖ * ∫ T : ℝ, saddleSourceGaussianKernel ε ℓ u T := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
-    eventually_upper_shortMargin_positive, eventually_saddleSourceGaussianVariance_firstBranch_pos,
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
+    eventually_upper_bε_positive, eventually_V_u_firstBranch_pos,
     eventually_saddleSourceFirstBranch_cubic_window,
-    eventually_saddleSourceFirstBranch_central_radius_lt]
+    eventually_T_star₁_lt]
     with ε hε horder hmargin hvariance hcubic hradius
   change 0 < ε at hε
   have hmargin' : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a := fun a ha ↦ by linarith [hmargin a ha]
@@ -22055,7 +22078,7 @@ theorem eventually_firstBranch_centralGaussianError : ∀ᶠ ε : ℝ in 𝓝[>]
   filter_upwards [eventually_gt_atTop (0 : ℝ), hcubic q hq, hradius R hR]
     with ℓ hℓ hqc hsmall u hu huupper hstar hu₀
   have hV := hvariance ℓ hℓ u hu huupper
-  have hphase : ∀ T : ℝ, |T| ≤ saddleSourceFirstBranchCentralRadius ε ℓ u →
+  have hphase : ∀ T : ℝ, |T| ≤ T_star₁ ε ℓ u →
       ℓ * M₃ ε ℓ (u - 1) / 6 * |T| ^ 3 ≤ q := fun T hT ↦ (hqc u hu huupper hstar T hT).le
   exact centralGaussianError_lt (hrange.norm_pos u hu₀)
     (saddleSourceGaussianKernel_integral_pos hℓ hV) hfactor
@@ -22067,16 +22090,16 @@ integral of a saddle polynomial with range bounds. -/
 theorem eventually_secondBranch_centralGaussianError : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ κ : ℝ, 0 < κ → ∀ (P : ℂ → ℂ) (u₀ : ℝ), IsSaddlePolynomial ε P → SaddleRangeBounds P u₀ →
       ∀ᶠ ℓ : ℝ in atTop, ∀ δ : ℝ, ε / 2 ≤ δ → u₀ ≤ 1 + δ →
-        ‖∫ T : ℝ in Icc (-(saddleSourceSecondBranchCentralRadius ε ℓ (1 + δ)))
-            (saddleSourceSecondBranchCentralRadius ε ℓ (1 + δ)),
-            (centeredIntegrand ε ℓ P (1 + δ) (vℓ ε ℓ (1 + δ)) T -
+        ‖∫ T : ℝ in Icc (-(T_star₂ ε ℓ (1 + δ)))
+            (T_star₂ ε ℓ (1 + δ)),
+            (centeredIntegrand ε ℓ P (1 + δ) (v_ℓ ε ℓ (1 + δ)) T -
               gaussianIntegrand ε ℓ P (1 + δ) T)‖ <
           κ * ‖P (I * ((1 + δ : ℝ) : ℂ))‖ *
             ∫ T : ℝ, saddleSourceGaussianKernel ε ℓ (1 + δ) T := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
-    eventually_upper_shortMargin_positive, eventually_saddleSourceGaussianVariance_secondBranch_pos,
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
+    eventually_upper_bε_positive, eventually_V_u_secondBranch_pos,
     eventually_saddleSourceSecondBranch_cubic_window,
-    eventually_saddleSourceSecondBranch_central_radius_lt]
+    eventually_T_star₂_lt]
     with ε hε horder hmargin hvariance hcubic hradius
   change 0 < ε at hε
   have hmargin' : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a := fun a ha ↦ by linarith [hmargin a ha]
@@ -22087,7 +22110,7 @@ theorem eventually_secondBranch_centralGaussianError : ∀ᶠ ε : ℝ in 𝓝[>
     with ℓ hℓ hqc hsmall δ hδ hu₀
   have hu : (-1 : ℝ) < 1 + δ := by linarith
   have hV : 0 < V_u ε ℓ (1 + δ) := hvariance ℓ hℓ δ hδ
-  have hphase : ∀ T : ℝ, |T| ≤ saddleSourceSecondBranchCentralRadius ε ℓ (1 + δ) →
+  have hphase : ∀ T : ℝ, |T| ≤ T_star₂ ε ℓ (1 + δ) →
       ℓ * M₃ ε ℓ (1 + δ - 1) / 6 * |T| ^ 3 ≤ q := by
     intro T hT
     rw [show 1 + δ - 1 = δ by ring]
@@ -22097,7 +22120,7 @@ theorem eventually_secondBranch_centralGaussianError : ∀ᶠ ε : ℝ in 𝓝[>
     (centeredIntegrand_centralGaussianError_le hε hℓ hu horder hmargin' hV hq.le hqone hq.le hP
       hphase fun T hT ↦ hwindow (1 + δ) hu₀ T (hT.trans (hsmall δ hδ).le))
 
-theorem upperPositiveShellDamping_local_variance_lower {ε ℓ δ T : ℝ} (hε : 0 < ε) (hℓ : 0 ≤ ℓ)
+theorem D_B_local_variance_lower {ε ℓ δ T : ℝ} (hε : 0 < ε) (hℓ : 0 ≤ ℓ)
     (hT : |T| ≤ 1 / (2 * (Bε ε + 1))) : ℓ / 4 * V_B ε δ * T ^ 2 ≤ D_B ε ℓ δ T := by
   have hB : (0 : ℝ) ≤ Bε ε := by unfold Bε; positivity
   have hB1 : (0 : ℝ) < Bε ε + 1 := by linarith
@@ -22105,7 +22128,7 @@ theorem upperPositiveShellDamping_local_variance_lower {ε ℓ δ T : ℝ} (hε 
     calc (Bε ε + 1) * |T| ≤ (Bε ε + 1) * (1 / (2 * (Bε ε + 1))) :=
           mul_le_mul_of_nonneg_left hT hB1.le
       _ = 1 / 2 := by field_simp [hB1.ne']
-  have hdensity := positiveShellDensity_continuous ε
+  have hdensity := w_B_continuous ε
   have hleft : Continuous fun a : ℝ ↦
       w_B ε a * a ^ 2 * cosh ((1 + δ) * a) * (T ^ 2 / 4) := by fun_prop
   have hright : Continuous fun a : ℝ ↦
@@ -22124,7 +22147,7 @@ theorem upperPositiveShellDamping_local_variance_lower {ε ℓ δ T : ℝ} (hε 
         = w_B ε a * cosh ((1 + δ) * a) * ((a * T) ^ 2 / 4) := by ring
       _ ≤ w_B ε a * cosh ((1 + δ) * a) * (1 - cos (a * T)) :=
           mul_le_mul_of_nonneg_left (upper_one_sub_cos_quadratic_lower haT)
-            (mul_nonneg (positiveShellDensity_nonneg ε a) (Real.cosh_pos _).le)
+            (mul_nonneg (w_B_nonneg ε a) (Real.cosh_pos _).le)
   have hmono := intervalIntegral.integral_mono_on (μ := volume) (by linarith)
     (hleft.intervalIntegrable _ _) (hright.intervalIntegrable _ _) hpoint
   rw [intervalIntegral.integral_mul_const] at hmono
@@ -22147,7 +22170,7 @@ theorem upperGammaVarianceDensity_laplace_linear_lower {ℓ η a : ℝ} (hℓ : 
         mul_le_mul_of_nonneg_left hinv (by positivity)
     _ = a ^ 2 * μ_ℓ ℓ η a := by unfold μ_ℓ; field_simp [ha.ne', hden.ne']
 
-theorem upperGammaDamping_local_variance_lower {ℓ η T : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η)
+theorem D_γ_local_variance_lower {ℓ η T : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η)
     (hT : |T| ≤ η) : ℓ / (32 * exp 1) * V_γ ℓ η * T ^ 2 ≤ D_γ ℓ η T := by
   let p : ℝ := 1 / (2 * η)
   let q : ℝ := 1 / η
@@ -22193,7 +22216,7 @@ theorem upperGammaDamping_local_variance_lower {ℓ η T : ℝ} (hℓ : 0 < ℓ)
       _ = (a * T) ^ 2 / 4 * μ_ℓ ℓ η a := by ring
       _ ≤ (1 - cos (a * T)) * μ_ℓ ℓ η a :=
           mul_le_mul_of_nonneg_right (upper_one_sub_cos_quadratic_lower haT)
-            (upperGammaMeasureDensity_pos (η := η) hℓ ha0).le
+            (μ_ℓ_pos (η := η) hℓ ha0).le
       _ = upperGammaDampingIntegrand ℓ η T a := rfl
   have hmono := MeasureTheory.setIntegral_mono_on hconstant (hfull.mono_set hsubset)
     measurableSet_Ioc hpoint
@@ -22201,7 +22224,7 @@ theorem upperGammaDamping_local_variance_lower {ℓ η T : ℝ} (hℓ : 0 < ℓ)
       0 ≤ᶠ[ae (volume.restrict (Ioi (0 : ℝ)))] upperGammaDampingIntegrand ℓ η T := by
     filter_upwards [ae_restrict_mem measurableSet_Ioi] with a ha
     exact mul_nonneg (sub_nonneg.mpr (Real.cos_le_one _))
-      (upperGammaMeasureDensity_pos (η := η) hℓ ha).le
+      (μ_ℓ_pos (η := η) hℓ ha).le
   have hrestrict := MeasureTheory.setIntegral_mono_set hfull hnonnegative
     (Filter.Eventually.of_forall fun a ha ↦ hsubset ha)
   have hconstintegral : (∫ _a : ℝ in Ioc p q, C) = (q - p) * C := by
@@ -22213,7 +22236,7 @@ theorem upperGammaDamping_local_variance_lower {ℓ η T : ℝ} (hℓ : 0 < ℓ)
     rfl
   have hscaled : ℓ * V_γ ℓ η ≤ ℓ / η + 1 / η ^ 2 := by
     calc ℓ * V_γ ℓ η ≤ ℓ * (1 / (2 * η) + 1 / (ℓ * η ^ 2)) :=
-          mul_le_mul_of_nonneg_left (upperGammaVariance_bounds hℓ hη).2 hℓ.le
+          mul_le_mul_of_nonneg_left (V_γ_bounds hℓ hη).2 hℓ.le
       _ = ℓ / (2 * η) + 1 / η ^ 2 := by field_simp [hℓ.ne', hη.ne']
       _ ≤ ℓ / η + 1 / η ^ 2 := by gcongr; linarith
   have hidentity : (q - p) * C = (ℓ / η + 1 / η ^ 2) / (32 * exp 1) * T ^ 2 := by
@@ -22228,11 +22251,11 @@ theorem upperGammaDamping_local_variance_lower {ℓ η T : ℝ} (hℓ : 0 < ℓ)
     _ ≤ ∫ a : ℝ in Ioi 0, upperGammaDampingIntegrand ℓ η T a := hrestrict
     _ = D_γ ℓ η T := rfl
 
-theorem eventually_saddleSourceContourDamping_secondBranch_local_coercivity :
+theorem eventually_D_u_secondBranch_local_coercivity :
     ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 0 < ℓ → ∀ δ : ℝ, ε / 2 ≤ δ → ∀ T : ℝ,
       |T| ≤ 1 / (2 * (Bε ε + 1)) →
-        ℓ / (100 * exp 1) * V_u ε ℓ (1 + δ) * T ^ 2 ≤ saddleSourceContourDamping ε ℓ (1 + δ) T := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upperSaddleDamping_gamma_add_shell,
+        ℓ / (100 * exp 1) * V_u ε ℓ (1 + δ) * T ^ 2 ≤ D_u ε ℓ (1 + δ) T := by
+  filter_upwards [self_mem_nhdsWithin, eventually_D_uδ_gamma_add_shell,
     eventually_upper_netShellVariance_bounds] with ε hε hdom hnet ℓ hℓ δ hδ T hT
   change 0 < ε at hε
   have hδ0 : 0 ≤ δ := by linarith
@@ -22242,13 +22265,13 @@ theorem eventually_saddleSourceContourDamping_secondBranch_local_coercivity :
     rw [div_le_iff₀ (by positivity : (0 : ℝ) < 2 * (Bε ε + 1))]
     nlinarith
   have hTgamma : |T| ≤ 2 + δ := by linarith [hT.trans hhalf]
-  have hS : 0 ≤ V_B ε δ := (upperPositiveShellVariance_pos hε hδ0).le
-  have hG : 0 ≤ V_γ ℓ (2 + δ) := le_trans (by positivity) (upperGammaVariance_bounds hℓ hη).1
+  have hS : 0 ≤ V_B ε δ := (V_B_pos hε hδ0).le
+  have hG : 0 ≤ V_γ ℓ (2 + δ) := le_trans (by positivity) (V_γ_bounds hℓ hη).1
   have heone : 1 ≤ exp 1 := Real.one_le_exp (by norm_num)
   have hγcoefficient : (1 : ℝ) / (100 * exp 1) ≤ 1 / (32 * exp 1) := by gcongr; norm_num
   have hγbase : 0 ≤ ℓ * V_γ ℓ (2 + δ) * T ^ 2 := by positivity
   have hγscaled : ℓ / (100 * exp 1) * V_γ ℓ (2 + δ) * T ^ 2 ≤ D_γ ℓ (2 + δ) T := by
-    refine le_trans ?_ (upperGammaDamping_local_variance_lower hℓ hη hTgamma)
+    refine le_trans ?_ (D_γ_local_variance_lower hℓ hη hTgamma)
     convert mul_le_mul_of_nonneg_right hγcoefficient hγbase using 1 <;> ring
   have hscoefficient : (1 : ℝ) / (100 * exp 1) ≤ 99 / 100 * (1 / 4) := by
     rw [div_le_iff₀ (by positivity : (0 : ℝ) < 100 * exp 1)]
@@ -22256,40 +22279,40 @@ theorem eventually_saddleSourceContourDamping_secondBranch_local_coercivity :
   have hsbase : 0 ≤ ℓ * V_B ε δ * T ^ 2 := by positivity
   have hsscaled : ℓ / (100 * exp 1) * V_B ε δ * T ^ 2 ≤ 99 / 100 * D_B ε ℓ δ T := by
     refine le_trans ?_ (mul_le_mul_of_nonneg_left
-      (upperPositiveShellDamping_local_variance_lower hε hℓ.le hT)
+      (D_B_local_variance_lower hε hℓ.le hT)
       (by norm_num : (0 : ℝ) ≤ 99 / 100))
     convert mul_le_mul_of_nonneg_right hscoefficient hsbase using 1 <;> ring
-  have hvariance : upperSaddleVariance ε ℓ δ ≤ V_γ ℓ (2 + δ) + V_B ε δ := by
-    unfold upperSaddleVariance
+  have hvariance : V_uδ ε ℓ δ ≤ V_γ ℓ (2 + δ) + V_B ε δ := by
+    unfold V_uδ
     linarith [(hnet δ hδ).2]
   have hfactor : (0 : ℝ) ≤ ℓ / (100 * exp 1) * T ^ 2 := by positivity
   calc ℓ / (100 * exp 1) * V_u ε ℓ (1 + δ) * T ^ 2
-      = ℓ / (100 * exp 1) * upperSaddleVariance ε ℓ δ * T ^ 2 := by simp [V_u]
+      = ℓ / (100 * exp 1) * V_uδ ε ℓ δ * T ^ 2 := by simp [V_u]
     _ ≤ ℓ / (100 * exp 1) * V_γ ℓ (2 + δ) * T ^ 2 +
           ℓ / (100 * exp 1) * V_B ε δ * T ^ 2 := by
         linarith [mul_le_mul_of_nonneg_left hvariance hfactor]
     _ ≤ D_γ ℓ (2 + δ) T + 99 / 100 * D_B ε ℓ δ T := add_le_add hγscaled hsscaled
-    _ ≤ D_u ε ℓ δ T := hdom ℓ hℓ δ hδ T
-    _ = saddleSourceContourDamping ε ℓ (1 + δ) T := (saddleSourceContourDamping_eq_secondBranch
+    _ ≤ D_uδ ε ℓ δ T := hdom ℓ hℓ δ hδ T
+    _ = D_u ε ℓ (1 + δ) T := (D_u_eq_secondBranch
         ε ℓ δ T).symm
 
-theorem eventually_saddleSourceContourDamping_secondBranch_min_lower_bound :
+theorem eventually_D_u_secondBranch_min_lower_bound :
     ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 0 < ℓ → ∀ δ : ℝ, ε / 2 ≤ δ → ∀ T : ℝ,
-      ℓ / (8 * exp 1) * min (T ^ 2 / (2 + δ)) |T| ≤ saddleSourceContourDamping ε ℓ (1 + δ) T := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upperSaddleDamping_gamma_add_shell]
+      ℓ / (8 * exp 1) * min (T ^ 2 / (2 + δ)) |T| ≤ D_u ε ℓ (1 + δ) T := by
+  filter_upwards [self_mem_nhdsWithin, eventually_D_uδ_gamma_add_shell]
     with ε hε hdom ℓ hℓ δ hδ T
   change 0 < ε at hε
   have hη : (0 : ℝ) < 2 + δ := by linarith
   have hshell : (0 : ℝ) ≤ 99 / 100 * D_B ε ℓ δ T :=
-    mul_nonneg (by norm_num) (positiveShellDamping_nonneg hℓ.le)
-  rw [saddleSourceContourDamping_eq_secondBranch]
-  linarith [hdom ℓ hℓ δ hδ T, upperGammaDamping_lower_bound hℓ hη T]
+    mul_nonneg (by norm_num) (D_B_nonneg hℓ.le)
+  rw [D_u_eq_secondBranch]
+  linarith [hdom ℓ hℓ δ hδ T, D_γ_lower_bound hℓ hη T]
 
 theorem eventually_saddleSource_secondBranch_weighted_integrable : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ ℓ : ℝ, 0 < ℓ → ∀ δ : ℝ, ε / 2 ≤ δ → Integrable fun T : ℝ ↦
-      saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ (1 + δ) T) := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
-    eventually_saddleSourceContourDamping_secondBranch_min_lower_bound]
+      saddleGaussianTailWeight T * exp (-D_u ε ℓ (1 + δ) T) := by
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
+    eventually_D_u_secondBranch_min_lower_bound]
     with ε hε horder hcoercive ℓ hℓ δ hδ
   change 0 < ε at hε
   exact integrable_saddleGaussianTailWeight_exp_neg (a := ℓ / (8 * exp 1)) (η := 2 + δ)
@@ -22384,8 +22407,9 @@ theorem integral_tailWeight_expAbs_le {k : ℝ} (hk : 0 < k) :
 
 /-! ### The second-branch tail, report Lemma 4.8 (74)–(75) -/
 
-/-- Half-width `t₀ = 1/(2(B_ε+1))` of the window where `D_u` is quadratically coercive. -/
-def secondBranchFreq (ε : ℝ) : ℝ := 1 / (2 * (Bε ε + 1))
+/-- The frequency `T₀ = (2(B + 1))⁻¹` of report §4.3, the half-width of the window where `D_u` is
+quadratically coercive (Lemma 4.7). -/
+def T₀ε (ε : ℝ) : ℝ := 1 / (2 * (Bε ε + 1))
 
 /-- Gaussian rate `λV(1+δ)/(100e)` of the local lower bound for `D_u`. -/
 def secondBranchRate (ε ℓ δ : ℝ) : ℝ := ℓ / (100 * exp 1) * V_u ε ℓ (1 + δ)
@@ -22398,19 +22422,19 @@ def secondBranchLinearRate (ℓ : ℝ) : ℝ := ℓ / (8 * exp 1)
 
 /-- Height of the shell barrier `D_B` outside the local window. -/
 def secondBranchBarrier (ε ℓ δ : ℝ) : ℝ :=
-  99 / 5000 * ℓ * Qε ε * exp (δ * Bε ε) * secondBranchFreq ε ^ 2
+  99 / 5000 * ℓ * Qε ε * exp (δ * Bε ε) * T₀ε ε ^ 2
 
 /-- Splitting `e^{-D_u}` into the local Gaussian and the barrier-suppressed outer part. -/
 theorem eventually_secondBranch_damping_pointwise : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 0 < ℓ →
     ∀ δ : ℝ, ε / 2 ≤ δ → ∀ T : ℝ,
-      saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ (1 + δ) T) ≤
+      saddleGaussianTailWeight T * exp (-D_u ε ℓ (1 + δ) T) ≤
         saddleGaussianTailWeight T * exp (-secondBranchRate ε ℓ δ * T ^ 2) +
           exp (-secondBranchBarrier ε ℓ δ) *
             (saddleGaussianTailWeight T * exp (-secondBranchGammaRate ℓ δ * T ^ 2) +
               saddleGaussianTailWeight T * exp (-secondBranchLinearRate ℓ * |T|)) := by
   filter_upwards [self_mem_nhdsWithin,
-      eventually_saddleSourceContourDamping_secondBranch_local_coercivity,
-      eventually_upperSaddleDamping_gamma_add_shell] with ε hε hlocal hdom
+      eventually_D_u_secondBranch_local_coercivity,
+      eventually_D_uδ_gamma_add_shell] with ε hε hlocal hdom
   change 0 < ε at hε
   intro ℓ hℓ δ hδ T
   have hδ0 : (0 : ℝ) ≤ δ := by nlinarith
@@ -22421,41 +22445,41 @@ theorem eventually_secondBranch_damping_pointwise : ∀ᶠ ε : ℝ in 𝓝[>] (
   have houter : 0 ≤ exp (-secondBranchBarrier ε ℓ δ) *
       (saddleGaussianTailWeight T * exp (-secondBranchGammaRate ℓ δ * T ^ 2) +
         saddleGaussianTailWeight T * exp (-secondBranchLinearRate ℓ * |T|)) := by positivity
-  by_cases hinside : |T| ≤ secondBranchFreq ε
-  · have hexp : exp (-saddleSourceContourDamping ε ℓ (1 + δ) T) ≤
+  by_cases hinside : |T| ≤ T₀ε ε
+  · have hexp : exp (-D_u ε ℓ (1 + δ) T) ≤
         exp (-secondBranchRate ε ℓ δ * T ^ 2) := by
       refine Real.exp_le_exp.2 ?_
-      have := hlocal ℓ hℓ δ hδ T (by simpa [secondBranchFreq] using hinside)
+      have := hlocal ℓ hℓ δ hδ T (by simpa [T₀ε] using hinside)
       unfold secondBranchRate
       linarith
     linarith [mul_le_mul_of_nonneg_left hexp hw]
-  · have ht₀ : 0 < secondBranchFreq ε := by unfold secondBranchFreq Bε; positivity
-    have hmin : secondBranchFreq ε ^ 2 ≤ min (T ^ 2) 1 := by
+  · have ht₀ : 0 < T₀ε ε := by unfold T₀ε Bε; positivity
+    have hmin : T₀ε ε ^ 2 ≤ min (T ^ 2) 1 := by
       refine le_min ?_ ?_
       · simpa [sq_abs] using pow_le_pow_left₀ ht₀.le (le_of_not_ge hinside) 2
-      · have : secondBranchFreq ε ≤ 1 := by
-          unfold secondBranchFreq
+      · have : T₀ε ε ≤ 1 := by
+          unfold T₀ε
           rw [div_le_one (by positivity)]
           linarith
         nlinarith
     have hbarrier : secondBranchBarrier ε ℓ δ ≤ 99 / 100 * D_B ε ℓ δ T := by
-      have hshell := positiveShellDamping_lower_bound (ε := ε) (ℓ := ℓ) (δ := δ) (T := T)
+      have hshell := D_B_lower_bound (ε := ε) (ℓ := ℓ) (δ := δ) (T := T)
         hε hℓ.le hδ0
       have hstep := mul_le_mul_of_nonneg_left hmin
-        (by positivity [shellWeight_pos ε] : (0 : ℝ) ≤ ℓ / 50 * Qε ε * exp (δ * Bε ε))
+        (by positivity [Qε_pos ε] : (0 : ℝ) ≤ ℓ / 50 * Qε ε * exp (δ * Bε ε))
       unfold secondBranchBarrier
       nlinarith
     have hcombined : secondBranchBarrier ε ℓ δ +
         secondBranchLinearRate ℓ * min (T ^ 2 / (2 + δ)) |T| ≤
-          saddleSourceContourDamping ε ℓ (1 + δ) T := by
-      rw [saddleSourceContourDamping_eq_secondBranch]
+          D_u ε ℓ (1 + δ) T := by
+      rw [D_u_eq_secondBranch]
       unfold secondBranchLinearRate
       linarith [hdom ℓ hℓ δ hδ T,
-        upperGammaDamping_lower_bound hℓ (show (0 : ℝ) < 2 + δ by linarith) T]
-    have hexp : exp (-saddleSourceContourDamping ε ℓ (1 + δ) T) ≤
+        D_γ_lower_bound hℓ (show (0 : ℝ) < 2 + δ by linarith) T]
+    have hexp : exp (-D_u ε ℓ (1 + δ) T) ≤
         exp (-secondBranchBarrier ε ℓ δ) * (exp (-secondBranchGammaRate ℓ δ * T ^ 2) +
           exp (-secondBranchLinearRate ℓ * |T|)) := by
-      calc exp (-saddleSourceContourDamping ε ℓ (1 + δ) T)
+      calc exp (-D_u ε ℓ (1 + δ) T)
           ≤ exp (-(secondBranchBarrier ε ℓ δ +
               secondBranchLinearRate ℓ * min (T ^ 2 / (2 + δ)) |T|)) :=
             Real.exp_le_exp.2 (by linarith)
@@ -22477,7 +22501,7 @@ theorem eventually_secondBranch_damping_pointwise : ∀ᶠ ε : ℝ in 𝓝[>] (
 theorem eventually_secondBranch_weighted_tail_le : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 0 < ℓ →
     ∀ δ : ℝ, ε / 2 ≤ δ → ∀ R : ℝ, 0 ≤ R → 6 ≤ secondBranchRate ε ℓ δ →
       (∫ T : ℝ in saddleGaussianTailSet R,
-          saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ (1 + δ) T)) ≤
+          saddleGaussianTailWeight T * exp (-D_u ε ℓ (1 + δ) T)) ≤
         2 * exp (-(secondBranchRate ε ℓ δ / 4) * R ^ 2) * √(π / (secondBranchRate ε ℓ δ / 4)) +
           exp (-secondBranchBarrier ε ℓ δ) *
             (2 * max 1 ((√(secondBranchGammaRate ℓ δ / 6) ^ 3)⁻¹) *
@@ -22509,7 +22533,7 @@ theorem eventually_secondBranch_weighted_tail_le : ∀ᶠ ε : ℝ in 𝓝[>] (0
   have hgammaFull := integral_tailWeight_gaussian_le hq
   have hlinearFull := integral_tailWeight_expAbs_le ha
   calc (∫ T : ℝ in saddleGaussianTailSet R,
-        saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ (1 + δ) T))
+        saddleGaussianTailWeight T * exp (-D_u ε ℓ (1 + δ) T))
       ≤ ∫ T : ℝ in saddleGaussianTailSet R, (saddleGaussianTailWeight T *
           exp (-secondBranchRate ε ℓ δ * T ^ 2) + exp (-secondBranchBarrier ε ℓ δ) *
             (saddleGaussianTailWeight T * exp (-secondBranchGammaRate ℓ δ * T ^ 2) +
@@ -22538,7 +22562,7 @@ theorem eventually_secondBranch_normalized_tail_le : ∀ᶠ ε : ℝ in 𝓝[>] 
     ∀ δ : ℝ, ε / 2 ≤ δ → ∀ z : ℝ, 0 ≤ z → 6 ≤ secondBranchRate ε ℓ δ →
       √(ℓ * V_u ε ℓ (1 + δ)) * (∫ T : ℝ in saddleGaussianTailSet
             (z / √(ℓ * V_u ε ℓ (1 + δ))),
-          saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ (1 + δ) T)) ≤
+          saddleGaussianTailWeight T * exp (-D_u ε ℓ (1 + δ) T)) ≤
         2 * √(400 * exp 1 * π) * exp (-(z ^ 2 / (400 * exp 1))) +
           √(ℓ * V_u ε ℓ (1 + δ)) * exp (-secondBranchBarrier ε ℓ δ) *
             (2 * max 1 ((√(secondBranchGammaRate ℓ δ / 6) ^ 3)⁻¹) *
@@ -22546,7 +22570,7 @@ theorem eventually_secondBranch_normalized_tail_le : ∀ᶠ ε : ℝ in 𝓝[>] 
               2 * max 1 (((secondBranchLinearRate ℓ / 6) ^ 3)⁻¹) *
                 (2 / (secondBranchLinearRate ℓ / 2))) := by
   filter_upwards [eventually_secondBranch_weighted_tail_le,
-      eventually_saddleSourceGaussianVariance_secondBranch_pos] with ε htail hvariance
+      eventually_V_u_secondBranch_pos] with ε htail hvariance
   intro ℓ hℓ δ hδ z hz hk
   have hV : 0 < V_u ε ℓ (1 + δ) := hvariance ℓ hℓ δ hδ
   have hLV : 0 < ℓ * V_u ε ℓ (1 + δ) := mul_pos hℓ hV
@@ -22565,7 +22589,7 @@ theorem eventually_secondBranch_normalized_tail_le : ∀ᶠ ε : ℝ in 𝓝[>] 
     ring
   calc √(ℓ * V_u ε ℓ (1 + δ)) * (∫ T : ℝ in saddleGaussianTailSet
           (z / √(ℓ * V_u ε ℓ (1 + δ))),
-        saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ (1 + δ) T))
+        saddleGaussianTailWeight T * exp (-D_u ε ℓ (1 + δ) T))
       ≤ √(ℓ * V_u ε ℓ (1 + δ)) * (2 * exp (-(secondBranchRate ε ℓ δ / 4) *
             (z / √(ℓ * V_u ε ℓ (1 + δ))) ^ 2) * √(π / (secondBranchRate ε ℓ δ / 4)) +
           exp (-secondBranchBarrier ε ℓ δ) *
@@ -22669,12 +22693,12 @@ def secondBranchVarCoeff (ε : ℝ) : ℝ := 2 + (Bε ε + 1) ^ 2 * Qε ε
 
 theorem secondBranchVarCoeff_pos (ε : ℝ) : 0 < secondBranchVarCoeff ε := by
   unfold secondBranchVarCoeff
-  positivity [shellWeight_pos ε]
+  positivity [Qε_pos ε]
 
 theorem eventually_secondBranch_sqrtVariance_le : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 1 ≤ ℓ →
     ∀ δ : ℝ, ε / 2 ≤ δ → √(ℓ * V_u ε ℓ (1 + δ)) ≤
       √(secondBranchVarCoeff ε) * √ℓ * exp ((Bε ε + 1) / 2 * δ) := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upperSaddleVariance_bounds] with ε hε hvariance
+  filter_upwards [self_mem_nhdsWithin, eventually_V_uδ_bounds] with ε hε hvariance
   change 0 < ε at hε
   intro ℓ hℓ δ hδ
   have hℓ0 : (0 : ℝ) < ℓ := by linarith
@@ -22691,7 +22715,7 @@ theorem eventually_secondBranch_sqrtVariance_le : ∀ᶠ ε : ℝ in 𝓝[>] (0 
     have hfull : V_u ε ℓ (1 + δ) ≤ 1 / (2 * (2 + δ)) + 1 / (ℓ * (2 + δ) ^ 2) + V_B ε δ := by
       simpa [V_u] using (hvariance ℓ hℓ0 δ hδ).2
     have hshell : V_B ε δ ≤ (Bε ε + 1) ^ 2 * Qε ε * exp ((Bε ε + 1) * δ) := by
-      have h := (upperPositiveShellVariance_bounds hε hδ0).2
+      have h := (V_B_bounds hε hδ0).2
       rwa [show δ * (Bε ε + 1) = (Bε ε + 1) * δ from mul_comm _ _] at h
     unfold secondBranchVarCoeff
     nlinarith
@@ -22715,17 +22739,17 @@ theorem eventually_saddleSource_secondBranch_uniform_tail : ∀ᶠ ε : ℝ in �
     0 < κ → ∀ᶠ ℓ : ℝ in atTop, ∀ δ : ℝ, ε / 2 ≤ δ →
       √(ℓ * V_u ε ℓ (1 + δ)) * (∫ T : ℝ in saddleGaussianTailSet
           (ℓ ^ (1 / 12 : ℝ) / √(ℓ * V_u ε ℓ (1 + δ))),
-        saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ (1 + δ) T)) < κ := by
+        saddleGaussianTailWeight T * exp (-D_u ε ℓ (1 + δ) T)) < κ := by
   filter_upwards [self_mem_nhdsWithin, eventually_secondBranch_normalized_tail_le,
       eventually_secondBranch_sqrtVariance_le,
-      eventually_saddleSourceGaussianVariance_secondBranch_floor]
+      eventually_V_u_secondBranch_floor]
     with ε hε htail hsqrt hfloor
   change 0 < ε at hε
   intro κ hκ
   have hB : 0 < Bε ε := by unfold Bε; positivity
-  have hQ : 0 < Qε ε := shellWeight_pos ε
-  have ht₀ : 0 < secondBranchFreq ε := by unfold secondBranchFreq Bε; positivity
-  have hc : (0 : ℝ) < 99 / 5000 * secondBranchFreq ε ^ 2 := by positivity
+  have hQ : 0 < Qε ε := Qε_pos ε
+  have ht₀ : 0 < T₀ε ε := by unfold T₀ε Bε; positivity
+  have hc : (0 : ℝ) < 99 / 5000 * T₀ε ε ^ 2 := by positivity
   have hV₀ : 0 < saddleSourceSecondBranchVarianceFloor ε :=
     saddleSourceSecondBranchVarianceFloor_pos hε
   have hK : (0 : ℝ) < √(secondBranchVarCoeff ε) * secondBranchMomentCoeff :=
@@ -22775,7 +22799,7 @@ theorem eventually_saddleSource_secondBranch_uniform_tail : ∀ᶠ ε : ℝ in �
           gcongr
       _ = √(secondBranchVarCoeff ε) * secondBranchMomentCoeff * √ℓ *
             exp ((Bε ε + 1) / 2 * δ) * (2 + δ) ^ 4 *
-            exp (-(99 / 5000 * secondBranchFreq ε ^ 2) * ℓ * Qε ε * exp (Bε ε * δ)) := by
+            exp (-(99 / 5000 * T₀ε ε ^ 2) * ℓ * Qε ε * exp (Bε ε * δ)) := by
           unfold secondBranchBarrier
           ring_nf
       _ < κ / 2 := houterℓ δ hδ
@@ -22893,10 +22917,10 @@ theorem SaddleRangeBounds.exists_centered_tail_bound {ε : ℝ} (hε : 0 < ε)
     (hrange : SaddleRangeBounds P u₀) :
     ∃ C : ℝ, 0 < C ∧ ∀ ℓ : ℝ, 0 < ℓ → ∀ u : ℝ, -1 < u → u₀ ≤ u → ∀ v R : ℝ,
       Integrable (fun T : ℝ ↦ saddleGaussianTailWeight T *
-          exp (-saddleSourceContourDamping ε ℓ u T)) →
+          exp (-D_u ε ℓ u T)) →
         (∫ T : ℝ in saddleGaussianTailSet R, ‖centeredIntegrand ε ℓ P u v T‖) ≤
           C * ‖P (I * (u : ℂ))‖ * ∫ T : ℝ in saddleGaussianTailSet R,
-            saddleGaussianTailWeight T * exp (-saddleSourceContourDamping ε ℓ u T) := by
+            saddleGaussianTailWeight T * exp (-D_u ε ℓ u T) := by
   obtain ⟨C, hC, hpoly⟩ := hrange.weighted
   exact ⟨C, hC, fun ℓ hℓ u hu hu₀ v R hW ↦ centered_tail_integral_le
     (centeredIntegrand_integrable hε hℓ hu horder hP v) hW
@@ -22978,11 +23002,11 @@ theorem tendsto_gaussianNormalizedTailMajorant :
 theorem eventually_firstBranch_uniform_gaussian_tail : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ κ : ℝ, 0 < κ →
     ∀ᶠ ℓ : ℝ in atTop, ∀ u : ℝ, -1 < u → u ≤ 1 + ε / 2 → log ℓ / 4 ≤ ℓ * (1 + u) →
       √(ℓ * V_u ε ℓ u) * (∫ T : ℝ in saddleGaussianTailSet
-          (saddleSourceFirstBranchCentralRadius ε ℓ u),
+          (T_star₁ ε ℓ u),
         saddleSourceGaussianKernel ε ℓ u T) < κ := by
   filter_upwards [self_mem_nhdsWithin, eventually_eps_le_quarter,
-      eventually_upper_shortCutoff_le_shortEndpoint, eventually_upper_shortMargin_positive,
-      eventually_saddleSourceGaussianVariance_firstBranch_pos]
+      eventually_upper_a₀ε_le_Aε, eventually_upper_bε_positive,
+      eventually_V_u_firstBranch_pos]
     with ε hε hεsmall horder hmargin hvariance
   change 0 < ε at hε
   intro κ hκ
@@ -22999,7 +23023,7 @@ theorem eventually_firstBranch_uniform_gaussian_tail : ∀ᶠ ε : ℝ in 𝓝[>
   have hV : 0 < V_u ε ℓ u := hvariance ℓ hℓ u hulower huupper
   have hlarge : 12 ≤ ℓ * V_u ε ℓ u := by
     have h1 : ε ≤ (2 + ε / 2) * V_u ε ℓ u :=
-      (upperFirstBranch_saddleSourceGaussianVariance_scaled_lower_bound hε hεsmall hℓ hulower
+      (upperFirstBranch_V_u_scaled_lower_bound hε hεsmall hℓ hulower
         huupper horder hmargin').trans (mul_le_mul_of_nonneg_right (by linarith) hV.le)
     have h2 : 12 * (2 + ε / 2) ≤ ℓ * ε := (div_le_iff₀ hε).mp hthreshold
     nlinarith [mul_le_mul_of_nonneg_left h1 hℓ.le, hU]
@@ -23011,7 +23035,7 @@ theorem eventually_firstBranch_uniform_gaussian_tail : ∀ᶠ ε : ℝ in 𝓝[>
     rw [hsquare]
     exact Real.rpow_le_rpow hlognonneg hlogscale (by norm_num)
   calc √(ℓ * V_u ε ℓ u) * (∫ T : ℝ in saddleGaussianTailSet
-        (saddleSourceFirstBranchCentralRadius ε ℓ u), saddleSourceGaussianKernel ε ℓ u T)
+        (T_star₁ ε ℓ u), saddleSourceGaussianKernel ε ℓ u T)
       ≤ 4 * √(2 * π) * exp (-(((ℓ * (1 + u)) ^ (1 / 12 : ℝ)) ^ 2 / 8)) :=
         gaussianKernel_normalized_tail_le hℓ hV (Real.rpow_nonneg (by positivity) _) hlarge
     _ ≤ gaussianNormalizedTailMajorant (log ℓ / 4) := by
@@ -23021,9 +23045,9 @@ theorem eventually_firstBranch_uniform_gaussian_tail : ∀ᶠ ε : ℝ in 𝓝[>
 
 theorem eventually_secondBranch_uniform_gaussian_tail : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ κ : ℝ, 0 < κ →
     ∀ᶠ ℓ : ℝ in atTop, ∀ δ : ℝ, ε / 2 ≤ δ → √(ℓ * V_u ε ℓ (1 + δ)) *
-      (∫ T : ℝ in saddleGaussianTailSet (saddleSourceSecondBranchCentralRadius ε ℓ (1 + δ)),
+      (∫ T : ℝ in saddleGaussianTailSet (T_star₂ ε ℓ (1 + δ)),
         saddleSourceGaussianKernel ε ℓ (1 + δ) T) < κ := by
-  filter_upwards [self_mem_nhdsWithin, eventually_saddleSourceGaussianVariance_secondBranch_floor]
+  filter_upwards [self_mem_nhdsWithin, eventually_V_u_secondBranch_floor]
     with ε hε hfloor
   change 0 < ε at hε
   intro κ hκ
@@ -23043,7 +23067,7 @@ theorem eventually_secondBranch_uniform_gaussian_tail : ∀ᶠ ε : ℝ in 𝓝[
     rw [← Real.rpow_natCast (ℓ ^ (1 / 12 : ℝ)) 2, ← Real.rpow_mul hℓ.le]
     norm_num
   calc √(ℓ * V_u ε ℓ (1 + δ)) * (∫ T : ℝ in saddleGaussianTailSet
-        (saddleSourceSecondBranchCentralRadius ε ℓ (1 + δ)),
+        (T_star₂ ε ℓ (1 + δ)),
         saddleSourceGaussianKernel ε ℓ (1 + δ) T)
       ≤ 4 * √(2 * π) * exp (-((ℓ ^ (1 / 12 : ℝ)) ^ 2 / 8)) :=
         gaussianKernel_normalized_tail_le hℓ hV (Real.rpow_nonneg hℓ.le _) hlarge
@@ -23063,10 +23087,10 @@ theorem eventually_firstBranch_sourceL1Tail : ∀ᶠ ε : ℝ in 𝓝[>] (0 : �
     ∀ (P : ℂ → ℂ) (u₀ : ℝ), IsSaddlePolynomial ε P → SaddleRangeBounds P u₀ →
       ∀ᶠ ℓ : ℝ in atTop, ∀ u : ℝ, -1 < u → u ≤ 1 + ε / 2 → log ℓ / 4 ≤ ℓ * (1 + u) → u₀ ≤ u →
         √(ℓ * V_u ε ℓ u) * (∫ T : ℝ in saddleGaussianTailSet
-            (saddleSourceFirstBranchCentralRadius ε ℓ u),
-          ‖centeredIntegrand ε ℓ P u (vℓ ε ℓ u) T‖) < κ * ‖P (I * (u : ℂ))‖ := by
+            (T_star₁ ε ℓ u),
+          ‖centeredIntegrand ε ℓ P u (v_ℓ ε ℓ u) T‖) < κ * ‖P (I * (u : ℂ))‖ := by
   filter_upwards [self_mem_nhdsWithin, eventually_eps_le_quarter,
-      eventually_upper_shortCutoff_le_shortEndpoint, eventually_upper_shortMargin_positive,
+      eventually_upper_a₀ε_le_Aε, eventually_upper_bε_positive,
       eventually_saddleSource_firstBranch_uniform_tail]
     with ε hε hεsmall horder hmargin htail
   change 0 < ε at hε
@@ -23083,7 +23107,7 @@ theorem eventually_firstBranch_gaussianL1Tail : ∀ᶠ ε : ℝ in 𝓝[>] (0 : 
     ∀ (P : ℂ → ℂ) (u₀ : ℝ), SaddleRangeBounds P u₀ →
       ∀ᶠ ℓ : ℝ in atTop, ∀ u : ℝ, -1 < u → u ≤ 1 + ε / 2 → log ℓ / 4 ≤ ℓ * (1 + u) → u₀ ≤ u →
         √(ℓ * V_u ε ℓ u) * (∫ T : ℝ in saddleGaussianTailSet
-            (saddleSourceFirstBranchCentralRadius ε ℓ u),
+            (T_star₁ ε ℓ u),
           ‖gaussianIntegrand ε ℓ P u T‖) < κ * ‖P (I * (u : ℂ))‖ := by
   filter_upwards [eventually_firstBranch_uniform_gaussian_tail] with ε htail
   intro κ hκ P u₀ hrange
@@ -23096,11 +23120,11 @@ its Gaussian with an error smaller than the Gaussian mass `‖P(iu)‖ ∫ e^{-�
 theorem eventually_firstBranch_fullGaussianError : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ (P : ℂ → ℂ) (u₀ : ℝ), IsSaddlePolynomial ε P → SaddleRangeBounds P u₀ →
       ∀ᶠ ℓ : ℝ in atTop, ∀ u : ℝ, -1 < u → u ≤ 1 + ε / 2 → log ℓ / 4 ≤ ℓ * (1 + u) → u₀ ≤ u →
-        ‖(∫ T : ℝ, centeredIntegrand ε ℓ P u (vℓ ε ℓ u) T) -
+        ‖(∫ T : ℝ, centeredIntegrand ε ℓ P u (v_ℓ ε ℓ u) T) -
             (∫ T : ℝ, gaussianIntegrand ε ℓ P u T)‖ <
           ‖P (I * (u : ℂ))‖ * (∫ T : ℝ, saddleSourceGaussianKernel ε ℓ u T) := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
-      eventually_saddleSourceGaussianVariance_firstBranch_pos,
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
+      eventually_V_u_firstBranch_pos,
       eventually_firstBranch_centralGaussianError, eventually_firstBranch_sourceL1Tail,
       eventually_firstBranch_gaussianL1Tail]
     with ε hε horder hvariance hcentral hsource hgaussian
@@ -23120,10 +23144,10 @@ theorem eventually_secondBranch_sourceL1Tail : ∀ᶠ ε : ℝ in 𝓝[>] (0 : �
     ∀ (P : ℂ → ℂ) (u₀ : ℝ), IsSaddlePolynomial ε P → SaddleRangeBounds P u₀ →
       ∀ᶠ ℓ : ℝ in atTop, ∀ δ : ℝ, ε / 2 ≤ δ → u₀ ≤ 1 + δ →
         √(ℓ * V_u ε ℓ (1 + δ)) * (∫ T : ℝ in saddleGaussianTailSet
-            (saddleSourceSecondBranchCentralRadius ε ℓ (1 + δ)),
-          ‖centeredIntegrand ε ℓ P (1 + δ) (vℓ ε ℓ (1 + δ)) T‖) <
+            (T_star₂ ε ℓ (1 + δ)),
+          ‖centeredIntegrand ε ℓ P (1 + δ) (v_ℓ ε ℓ (1 + δ)) T‖) <
         κ * ‖P (I * ((1 + δ : ℝ) : ℂ))‖ := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
       eventually_saddleSource_secondBranch_weighted_integrable,
       eventually_saddleSource_secondBranch_uniform_tail]
     with ε hε horder hweight htail
@@ -23140,7 +23164,7 @@ theorem eventually_secondBranch_gaussianL1Tail : ∀ᶠ ε : ℝ in 𝓝[>] (0 :
     ∀ (P : ℂ → ℂ) (u₀ : ℝ), SaddleRangeBounds P u₀ →
       ∀ᶠ ℓ : ℝ in atTop, ∀ δ : ℝ, ε / 2 ≤ δ → u₀ ≤ 1 + δ →
         √(ℓ * V_u ε ℓ (1 + δ)) * (∫ T : ℝ in saddleGaussianTailSet
-            (saddleSourceSecondBranchCentralRadius ε ℓ (1 + δ)),
+            (T_star₂ ε ℓ (1 + δ)),
           ‖gaussianIntegrand ε ℓ P (1 + δ) T‖) < κ * ‖P (I * ((1 + δ : ℝ) : ℂ))‖ := by
   filter_upwards [eventually_secondBranch_uniform_gaussian_tail] with ε htail
   intro κ hκ P u₀ hrange
@@ -23153,11 +23177,11 @@ by its Gaussian with an error smaller than the Gaussian mass. -/
 theorem eventually_secondBranch_fullGaussianError : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ (P : ℂ → ℂ) (u₀ : ℝ), IsSaddlePolynomial ε P → SaddleRangeBounds P u₀ →
       ∀ᶠ ℓ : ℝ in atTop, ∀ δ : ℝ, ε / 2 ≤ δ → u₀ ≤ 1 + δ →
-        ‖(∫ T : ℝ, centeredIntegrand ε ℓ P (1 + δ) (vℓ ε ℓ (1 + δ)) T) -
+        ‖(∫ T : ℝ, centeredIntegrand ε ℓ P (1 + δ) (v_ℓ ε ℓ (1 + δ)) T) -
             (∫ T : ℝ, gaussianIntegrand ε ℓ P (1 + δ) T)‖ <
           ‖P (I * ((1 + δ : ℝ) : ℂ))‖ * (∫ T : ℝ, saddleSourceGaussianKernel ε ℓ (1 + δ) T) := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
-      eventually_saddleSourceGaussianVariance_secondBranch_pos,
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
+      eventually_V_u_secondBranch_pos,
       eventually_secondBranch_centralGaussianError, eventually_secondBranch_sourceL1Tail,
       eventually_secondBranch_gaussianL1Tail]
     with ε hε horder hvariance hcentral hsource hgaussian
@@ -23189,7 +23213,7 @@ section CohnElkies_UpperBound_Coverage
 
 Differentiating the shell contribution to `log r(u)`, the continuity and eventual monotonicity of
 the log-radius `u ↦ log r(u)` on `u ≥ u_*`, hence its coverage of every radius `≥ r_*`
-(`eventually_saddleLogRadius_covers_Ici`), and the location of `r_*` relative to `R_{ε,d}`.
+(`eventually_logRadius_covers_Ici`), and the location of `r_*` relative to `R_{ε,d}`.
 -/
 
 namespace CohnElkies
@@ -23243,9 +23267,9 @@ theorem sinhShellInterval_hasDerivAt (w : ℝ → ℝ) (hw : Continuous w) {a b 
     (hF' u).aestronglyMeasurable hbound (integrableOn_const isCompact_Icc.measure_ne_top)
     (Eventually.of_forall fun x v _ ↦ hderiv x v)).2
 
-theorem saddleSourceShellDerivative_hasDerivAt {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
+theorem H_ε_hasDerivAt {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
     (u : ℝ) :
-    HasDerivAt (saddleSourceShellDerivative ε) (upperNetShellVariance ε (u - 1)) u := by
+    HasDerivAt (H_ε ε) (upperNetShellVariance ε (u - 1)) u := by
   have hcutoff : 0 < a₀ε ε := by unfold a₀ε; positivity
   have hmax (a : ℝ) : 0 < max a (a₀ε ε) := hcutoff.trans_le (le_max_right _ _)
   have hw : Continuous fun a : ℝ ↦ w_s ε (max a (a₀ε ε)) := by
@@ -23268,7 +23292,7 @@ theorem saddleSourceShellDerivative_hasDerivAt {ε : ℝ} (hε : 0 < ε) (horder
       ring_nf
   have hpositive : HasDerivAt (fun v : ℝ ↦ ∫ a in Bε ε..Bε ε + 1, w_B ε a * a * sinh (v * a))
       (∫ a in Bε ε..Bε ε + 1, w_B ε a * a ^ 2 * cosh (u * a)) u := by
-    convert! sinhShellInterval_hasDerivAt (w_B ε) (positiveShellDensity_continuous ε)
+    convert! sinhShellInterval_hasDerivAt (w_B ε) (w_B_continuous ε)
       (by linarith : Bε ε ≤ Bε ε + 1) u using 1
     · funext v
       exact intervalIntegral.integral_congr fun a _ ↦ by ring_nf
@@ -23281,26 +23305,26 @@ theorem saddleSourceShellDerivative_hasDerivAt {ε : ℝ} (hε : 0 < ε) (horder
       V_B ε (u - 1) := by
     unfold V_B
     exact intervalIntegral.integral_congr fun a _ ↦ by ring_nf
-  unfold saddleSourceShellDerivative
+  unfold H_ε
   convert! hshort.add hpositive using 1
   rw [hshortvariance, hpositivevariance]
   unfold upperNetShellVariance
   ring
 
-theorem eventually_saddleSourceShellDerivative_monotoneOn : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
-    MonotoneOn (saddleSourceShellDerivative ε) (Ici (1 + ε / 2)) := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
+theorem eventually_H_ε_monotoneOn : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+    MonotoneOn (H_ε ε) (Ici (1 + ε / 2)) := by
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
       eventually_upper_netShellVariance_bounds] with ε hε horder hnet
   change 0 < ε at hε
   apply monotoneOn_of_hasDerivWithinAt_nonneg (convex_Ici (1 + ε / 2))
-    (saddleSourceShellDerivative_contDiff_one hε horder).continuous.continuousOn
-    fun u _ ↦ (saddleSourceShellDerivative_hasDerivAt hε horder u).hasDerivWithinAt
+    (H_ε_contDiff_one hε horder).continuous.continuousOn
+    fun u _ ↦ (H_ε_hasDerivAt hε horder u).hasDerivWithinAt
   intro u hu
   have hthreshold : 1 + ε / 2 ≤ u := interior_subset hu
   have hpositive : 0 ≤ V_B ε (u - 1) :=
     (show 0 ≤ 1 / 2 * Bε ε ^ 2 * Qε ε * exp ((u - 1) * Bε ε) by
-      positivity [shellWeight_pos ε]).trans
-      (upperPositiveShellVariance_bounds hε (by linarith : (0 : ℝ) ≤ u - 1)).1
+      positivity [Qε_pos ε]).trans
+      (V_B_bounds hε (by linarith : (0 : ℝ) ≤ u - 1)).1
   linarith [(hnet (u - 1) (by linarith : ε / 2 ≤ u - 1)).1]
 
 /-! ### Corollary 4.9: `u ↦ log R_{ε,d}(u)` covers every large radius -/
@@ -23316,15 +23340,15 @@ theorem logRadius_continuousOn_Ici {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε
     Real.continuousOn_digamma_Ioi.comp (by fun_prop : Continuous fun u : ℝ ↦
       (d : ℝ) / 2 * (1 + u) / 2).continuousOn hmap
   exact ((continuousOn_const.add (hdigamma.div_const 2)).add
-    (saddleSourceShellDerivative_contDiff_one hε horder).continuous.continuousOn).congr
-    fun u _ ↦ saddleLogRadius_eq_digamma_add_shellDerivative ε d u
+    (H_ε_contDiff_one hε horder).continuous.continuousOn).congr
+    fun u _ ↦ logRadius_eq_digamma_add_H_ε ε d u
 
 /-- Report Corollary 4.9: every radius above `e^{v(u₀)}` is attained by some `u ≥ u₀`. -/
-theorem eventually_saddleLogRadius_covers_Ici : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ d : ℕ, 0 < d →
+theorem eventually_logRadius_covers_Ici : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ d : ℕ, 0 < d →
     ∀ u₀ : ℝ, -1 < u₀ → ∀ r : ℝ, exp (logRadius ε d u₀) ≤ r →
       ∃ u : ℝ, u₀ ≤ u ∧ logRadius ε d u = log r := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
-      eventually_saddleSourceShellDerivative_monotoneOn] with ε hε horder hmono
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
+      eventually_H_ε_monotoneOn] with ε hε horder hmono
   change 0 < ε at hε
   intro d hd u₀ hu₀ r hr
   have hdreal : (0 : ℝ) < d := by exact_mod_cast hd
@@ -23336,9 +23360,9 @@ theorem eventually_saddleLogRadius_covers_Ici : ∀ᶠ ε : ℝ in 𝓝[>] (0 : 
   have htop : Tendsto (logRadius ε d) atTop atTop := by
     refine tendsto_atTop_mono' atTop ?_
       (((hdigamma.comp hargument).atTop_div_const (by norm_num : (0 : ℝ) < 2)).atTop_add
-        (tendsto_const_nhds (x := -log π / 2 + saddleSourceShellDerivative ε (1 + ε / 2))))
+        (tendsto_const_nhds (x := -log π / 2 + H_ε ε (1 + ε / 2))))
     filter_upwards [eventually_ge_atTop (1 + ε / 2)] with u hu
-    rw [saddleLogRadius_eq_digamma_add_shellDerivative]
+    rw [logRadius_eq_digamma_add_H_ε]
     simp only [Function.comp_apply]
     linarith [hmono (Set.mem_Ici.2 le_rfl) hu hu]
   exact (isPreconnected_Ici.intermediate_value_Ici (Set.mem_Ici.2 le_rfl)
@@ -23346,7 +23370,7 @@ theorem eventually_saddleLogRadius_covers_Ici : ∀ᶠ ε : ℝ in 𝓝[>] (0 : 
     (logRadius_continuousOn_Ici hε horder hd hu₀) htop)
     (Real.exp_le_exp.mp (by rwa [Real.exp_log ((Real.exp_pos _).trans_le hr)]))
 
-theorem eventually_saddleSmallRadiusStarOrdinate_gt_neg_one (ε : ℝ) :
+theorem eventually_u_star_gt_neg_one (ε : ℝ) :
     ∀ᶠ d : ℕ in atTop, -1 < u_star ε d := by
   filter_upwards [eventually_ge_atTop (3 : ℕ)] with d hd
   have hdreal : (3 : ℝ) ≤ d := by exact_mod_cast hd
@@ -23355,17 +23379,17 @@ theorem eventually_saddleSmallRadiusStarOrdinate_gt_neg_one (ε : ℝ) :
   unfold u_star
   linarith
 
-theorem eventually_saddleSmallRadiusStar_log_coverage : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_r_star_log_coverage : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ᶠ d : ℕ in atTop, ∀ r : ℝ, r_star ε d ≤ r →
       ∃ u : ℝ, u_star ε d ≤ u ∧ logRadius ε d u = log r := by
-  filter_upwards [eventually_saddleLogRadius_covers_Ici] with ε hcoverage
-  filter_upwards [eventually_saddleSmallRadiusStarOrdinate_gt_neg_one ε,
+  filter_upwards [eventually_logRadius_covers_Ici] with ε hcoverage
+  filter_upwards [eventually_u_star_gt_neg_one ε,
       eventually_gt_atTop (0 : ℕ)] with d hstar hd r hr
   exact hcoverage d hd (u_star ε d) hstar r hr
 
-theorem eventually_saddleSourceRadius_log_coverage : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ d : ℕ, 0 < d →
+theorem eventually_R_ε_log_coverage : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ d : ℕ, 0 < d →
     ∀ r : ℝ, R_ε ε d ≤ r → ∃ u : ℝ, 1 + ε / 4 ≤ u ∧ logRadius ε d u = log r := by
-  filter_upwards [self_mem_nhdsWithin, eventually_saddleLogRadius_covers_Ici] with ε hε hcoverage
+  filter_upwards [self_mem_nhdsWithin, eventually_logRadius_covers_Ici] with ε hε hcoverage
   change 0 < ε at hε
   exact fun d hd r hr ↦ hcoverage d hd (1 + ε / 4) (by linarith) r hr
 
@@ -23416,18 +23440,18 @@ def SaddleSourceEventualSigns : Prop := ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), �
 def saddleOrderedUpperConstruction (hschwartz : SaddleSourceSchwartzRealization)
     (hsigns : SaddleSourceEventualSigns) : OrderedEpsilonUpperConstruction :=
   let hex := mem_nhdsGT_iff_exists_Ioo_subset.mp
-    (eventually_upper_shortCutoff_le_shortEndpoint.and hsigns)
+    (eventually_upper_a₀ε_le_Aε.and hsigns)
   { epsilonBound := hex.choose
     epsilonBound_pos := hex.choose_spec.1
     normalizedRadius := fun ε d ↦ R_ε ε d / √(d : ℝ)
     limitingRadius := α_ε
-    limitingRadius_tendsto := tendsto_limitingSaddleRadius
-    normalizedRadius_tendsto := fun _ hε _ ↦ tendsto_saddleSourceRadius_normalized hε
+    limitingRadius_tendsto := tendsto_α_ε
+    normalizedRadius_tendsto := fun _ hε _ ↦ tendsto_R_ε_normalized hε
     admissibleWitness := fun ε hε hsmall ↦ by
       obtain ⟨horder, hsignε⟩ := hex.choose_spec.2 ⟨hε, hsmall⟩
       filter_upwards [hsignε, eventually_gt_atTop 0] with d hsign hd
       obtain ⟨fminus, fplus, hminus, hplus⟩ := hschwartz ε hε horder d hd
-      exact ⟨_, (saddleSourceAdmissible_normalizedCost hε hd horder (saddleSourceRadius_pos ε d)
+      exact ⟨_, (saddleSourceAdmissible_normalizedCost hε hd horder (R_ε_pos ε d)
         fminus fplus hminus hplus hsign.1 hsign.2).le⟩ }
 
 end
@@ -23466,30 +23490,30 @@ theorem eventually_scale_le_of_le {u₀ : ℝ} (hu₀ : -1 < u₀) :
 /-- Report §4.3, first branch: at the saddle point of height `u` (`-1 < u ≤ 1 + ε/2`, with
 `log λ / 4 ≤ λ(1 + u)`) the profile `f_P` of a saddle polynomial with range bounds on `u ≥ u₀`
 has the sign of `P(iu)`, whatever its origin value `c`. -/
-theorem eventually_mellinProfile_re_mul_pos_firstBranch : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_f_P_re_mul_pos_firstBranch : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ (P : ℂ → ℂ) (u₀ : ℝ), IsSaddlePolynomial ε P → SaddleRangeBounds P u₀ →
       ∀ᶠ d : ℕ in atTop, ∀ (c u : ℝ), -1 < u → u ≤ 1 + ε / 2 →
         log ((d : ℝ) / 2) / 4 ≤ (d : ℝ) / 2 * (1 + u) → u₀ ≤ u →
         0 < (P (I * (u : ℂ))).re *
-          (mellinProfile ε ((d : ℝ) / 2) P c (exp (logRadius ε d u))).re := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
+          (f_P ε ((d : ℝ) / 2) P c (exp (logRadius ε d u))).re := by
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
     eventually_firstBranch_fullGaussianError] with ε hε horder hfull
   intro P u₀ hP hrange
   filter_upwards [tendsto_saddleResidue_dimension_half.eventually (hfull P u₀ hP hrange),
     eventually_gt_atTop 0] with d hdimen hd c u hu hupper hscale hu₀
   have hℓ : (0 : ℝ) < (d : ℝ) / 2 := by positivity
-  rw [← saddleSourceStationaryLogRadius_eq_saddleLogRadius]
-  exact mellinProfile_exp_re_mul_pos_of_gaussian_error hε hℓ hu horder hP c
+  rw [← v_ℓ_eq_logRadius]
+  exact f_P_exp_re_mul_pos_of_gaussian_error hε hℓ hu horder hP c
     (hdimen u hu hupper hscale hu₀)
 
 /-- Report §4.3, second branch: at the saddle point of height `u ≥ 1 + ε/2` the profile `f_P` of
 a saddle polynomial with range bounds on `u ≥ u₀` has the sign of `P(iu)`. -/
-theorem eventually_mellinProfile_re_mul_pos_secondBranch : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_f_P_re_mul_pos_secondBranch : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ (P : ℂ → ℂ) (u₀ : ℝ), IsSaddlePolynomial ε P → SaddleRangeBounds P u₀ →
       ∀ᶠ d : ℕ in atTop, ∀ (c u : ℝ), 1 + ε / 2 ≤ u → u₀ ≤ u →
         0 < (P (I * (u : ℂ))).re *
-          (mellinProfile ε ((d : ℝ) / 2) P c (exp (logRadius ε d u))).re := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
+          (f_P ε ((d : ℝ) / 2) P c (exp (logRadius ε d u))).re := by
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
     eventually_secondBranch_fullGaussianError] with ε hε horder hfull
   intro P u₀ hP hrange
   filter_upwards [tendsto_saddleResidue_dimension_half.eventually (hfull P u₀ hP hrange),
@@ -23499,21 +23523,21 @@ theorem eventually_mellinProfile_re_mul_pos_secondBranch : ∀ᶠ ε : ℝ in �
   have hidentity : 1 + (u - 1) = u := by ring
   have hulower : -1 < u := by linarith
   have hℓ : (0 : ℝ) < (d : ℝ) / 2 := by positivity
-  rw [← saddleSourceStationaryLogRadius_eq_saddleLogRadius]
-  refine mellinProfile_exp_re_mul_pos_of_gaussian_error hε hℓ hulower horder hP c ?_
+  rw [← v_ℓ_eq_logRadius]
+  refine f_P_exp_re_mul_pos_of_gaussian_error hε hℓ hulower horder hP c ?_
   simpa only [hidentity] using hdimen (u - 1) hδ (by rwa [hidentity])
 
 /-- Report §4.3 with Corollary 4.9: for a saddle polynomial `P` with range bounds on `u ≥ u₀`
 (`u₀ > -1`) whose values `P(iu)`, `u ≥ u₀`, have the sign `s`, the profile `f_P` has the sign
 `s` at every radius `r ≥ e^{v(u₀)}`, for small `ε` and large `d`. -/
-theorem eventually_mellinProfile_re_mul_pos_of_radius : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_f_P_re_mul_pos_of_radius : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ (P : ℂ → ℂ) (u₀ s : ℝ), IsSaddlePolynomial ε P → SaddleRangeBounds P u₀ → -1 < u₀ →
       (∀ u : ℝ, u₀ ≤ u → 0 < s * (P (I * (u : ℂ))).re) →
       ∀ᶠ d : ℕ in atTop, ∀ (c r : ℝ), exp (logRadius ε d u₀) ≤ r →
-        0 < s * (mellinProfile ε ((d : ℝ) / 2) P c r).re := by
-  filter_upwards [eventually_saddleLogRadius_covers_Ici,
-    eventually_mellinProfile_re_mul_pos_firstBranch,
-    eventually_mellinProfile_re_mul_pos_secondBranch] with ε hcoverage hfirst hsecond
+        0 < s * (f_P ε ((d : ℝ) / 2) P c r).re := by
+  filter_upwards [eventually_logRadius_covers_Ici,
+    eventually_f_P_re_mul_pos_firstBranch,
+    eventually_f_P_re_mul_pos_secondBranch] with ε hcoverage hfirst hsecond
   intro P u₀ s hP hrange hu₀ hs
   filter_upwards [hfirst P u₀ hP hrange, hsecond P u₀ hP hrange, eventually_gt_atTop 0,
     tendsto_saddleResidue_dimension_half.eventually (eventually_scale_le_of_le hu₀)]
@@ -23521,7 +23545,7 @@ theorem eventually_mellinProfile_re_mul_pos_of_radius : ∀ᶠ ε : ℝ in 𝓝[
   obtain ⟨u, hu, hlog⟩ := hcoverage d hd u₀ hu₀ r hr
   rw [← show exp (logRadius ε d u) = r by rw [hlog, exp_log ((exp_pos _).trans_le hr)]]
   have hmul : 0 < (P (I * (u : ℂ))).re *
-      (mellinProfile ε ((d : ℝ) / 2) P c (exp (logRadius ε d u))).re := by
+      (f_P ε ((d : ℝ) / 2) P c (exp (logRadius ε d u))).re := by
     rcases le_or_gt u (1 + ε / 2) with hbranch | hbranch
     · exact hfirst_d c u (by linarith) hbranch (hscale u hu) hu
     · exact hsecond_d c u hbranch.le hu
@@ -23533,39 +23557,39 @@ theorem eventually_mellinProfile_re_mul_pos_of_radius : ∀ᶠ ε : ℝ in 𝓝[
 theorem eventually_fPlus_re_pos_firstBranch : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ᶠ d : ℕ in atTop,
     ∀ u : ℝ, u_star ε d ≤ u → u ≤ 1 + ε / 2 →
       0 < (fPlus ε ((d : ℝ) / 2) (exp (logRadius ε d u))).re := by
-  filter_upwards [self_mem_nhdsWithin, eventually_mellinProfile_re_mul_pos_firstBranch]
+  filter_upwards [self_mem_nhdsWithin, eventually_f_P_re_mul_pos_firstBranch]
     with ε hε hfirst
   filter_upwards [hfirst (PPlus ε) (-1) (isSaddlePolynomial_PPlus ε) (saddleRangeBounds_PPlus hε),
-    eventually_saddleSmallRadiusStarOrdinate_gt_neg_one ε, eventually_gt_atTop 0]
+    eventually_u_star_gt_neg_one ε, eventually_gt_atTop 0]
     with d hfirst_d hstar hd u hu hupper
   have hulower : -1 < u := hstar.trans_le hu
-  rw [fPlus_eq_mellinProfile]
+  rw [fPlus_eq_f_P]
   exact (pos_iff_pos_of_mul_pos (hfirst_d (originValue ε ((d : ℝ) / 2)) u hulower hupper
-    (scale_le_of_star_le hd ε hu) hulower.le)).mp (plusPolynomial_imaginary_re_pos hε hulower)
+    (scale_le_of_star_le hd ε hu) hulower.le)).mp (PPlus_imaginary_re_pos hε hulower)
 
 /-- `Re f₊ > 0` at the saddles of the second branch `1 + ε/2 ≤ u`. -/
 theorem eventually_fPlus_re_pos_secondBranch : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ᶠ d : ℕ in atTop,
     ∀ u : ℝ, 1 + ε / 2 ≤ u → 0 < (fPlus ε ((d : ℝ) / 2) (exp (logRadius ε d u))).re := by
-  filter_upwards [self_mem_nhdsWithin, eventually_mellinProfile_re_mul_pos_secondBranch]
+  filter_upwards [self_mem_nhdsWithin, eventually_f_P_re_mul_pos_secondBranch]
     with ε hε hsecond
   filter_upwards [hsecond (PPlus ε) (-1) (isSaddlePolynomial_PPlus ε)
     (saddleRangeBounds_PPlus hε)] with d hsecond_d u hu
   change 0 < ε at hε
   have hulower : -1 < u := by linarith
-  rw [fPlus_eq_mellinProfile]
+  rw [fPlus_eq_f_P]
   exact (pos_iff_pos_of_mul_pos (hsecond_d (originValue ε ((d : ℝ) / 2)) u hu hulower.le)).mp
-    (plusPolynomial_imaginary_re_pos hε hulower)
+    (PPlus_imaginary_re_pos hε hulower)
 
 /-- `Re f₊ ≥ 0` beyond the small radius `r_*`, covering both saddle branches. -/
 theorem eventually_fPlus_nonneg_of_star : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ᶠ d : ℕ in atTop,
     ∀ r : ℝ, r_star ε d ≤ r → 0 ≤ (fPlus ε ((d : ℝ) / 2) r).re := by
-  filter_upwards [eventually_saddleSmallRadiusStar_log_coverage,
+  filter_upwards [eventually_r_star_log_coverage,
     eventually_fPlus_re_pos_firstBranch, eventually_fPlus_re_pos_secondBranch]
     with ε hcoverage hfirst hsecond
   filter_upwards [hcoverage, hfirst, hsecond] with d hcov hfirst_d hsecond_d r hr
   obtain ⟨u, hu, hlog⟩ := hcov r hr
   rw [← show exp (logRadius ε d u) = r by
-    rw [hlog, exp_log ((saddleSmallRadiusStar_pos ε d).trans_le hr)]]
+    rw [hlog, exp_log ((r_star_pos ε d).trans_le hr)]]
   rcases le_or_gt u (1 + ε / 2) with hbranch | hbranch
   · exact (hfirst_d u hu hbranch).le
   · exact (hsecond_d u hbranch.le).le
@@ -23573,14 +23597,14 @@ theorem eventually_fPlus_nonneg_of_star : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), 
 /-- Report §4.3: `Re f₋ < 0` beyond the source radius `R_ε`, covering both saddle branches. -/
 theorem eventually_fMinus_re_neg_of_radius : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ᶠ d : ℕ in atTop,
     ∀ r : ℝ, R_ε ε d ≤ r → (fMinus ε ((d : ℝ) / 2) r).re < 0 := by
-  filter_upwards [self_mem_nhdsWithin, eventually_mellinProfile_re_mul_pos_of_radius]
+  filter_upwards [self_mem_nhdsWithin, eventually_f_P_re_mul_pos_of_radius]
     with ε hε hradius
   change 0 < ε at hε
   have hsign : ∀ u : ℝ, 1 + ε / 4 ≤ u → 0 < (-1 : ℝ) * (PMinus ε (I * (u : ℂ))).re :=
-    fun u hu ↦ by linarith [minusPolynomial_imaginary_re_neg hε hu]
+    fun u hu ↦ by linarith [PMinus_imaginary_re_neg hε hu]
   filter_upwards [hradius (PMinus ε) (1 + ε / 4) (-1) (isSaddlePolynomial_PMinus ε)
     (saddleRangeBounds_PMinus hε) (by linarith) hsign] with d hd r hr
-  rw [fMinus_eq_mellinProfile]
+  rw [fMinus_eq_f_P]
   linarith [hd (originValue ε ((d : ℝ) / 2)) r hr]
 
 /-- `Re f₋ ≤ 0` beyond the source radius `R_ε`. -/
@@ -23593,7 +23617,7 @@ theorem eventually_fMinus_nonpos_of_radius : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ
 /-- Report §4: for small `ε` and large `d` the pair `f_ε^±` has the Cohn–Elkies sign pattern. -/
 theorem saddleSourceEventualSigns : SaddleSourceEventualSigns := by
   unfold SaddleSourceEventualSigns
-  filter_upwards [eventually_plusSaddleProfile_re_pos_on_star, eventually_fPlus_nonneg_of_star,
+  filter_upwards [eventually_fPlus_re_pos_on_star, eventually_fPlus_nonneg_of_star,
     eventually_fMinus_nonpos_of_radius] with ε hsmall hlarge hminus
   filter_upwards [hsmall, hlarge, hminus] with d hsmall_d hlarge_d hminus_d
   refine ⟨fun x ↦ ?_, fun x hx ↦ hminus_d ‖x‖ hx⟩
@@ -23669,7 +23693,7 @@ theorem uniformAdmissibleLowerBound_of_signRadius (hsign : UniformAntiFourierSig
   · exact .of_forall fun d f ↦ hc0.trans (normalizedCost_nonneg f)
   · filter_upwards [hsign c hc0 hc, eventually_gt_atTop 0] with d hno hd f
     rw [← f.normalizedCost_radialize]
-    exact normalizedCost_ge_of_no_antiFourierWitness f.radialize hd c hno
+    exact normalizedCost_ge_of_no_antiSelfFourierWitness f.radialize hd c hno
 
 theorem normalizedProgram_eq_quotientInf_root_unconditional (d : ℕ) :
     normalizedProgram d = quotientRootMap d (sInf (quotientSet d)) :=
@@ -23678,7 +23702,7 @@ theorem normalizedProgram_eq_quotientInf_root_unconditional (d : ℕ) :
 theorem quotientInf_nonneg_unconditional (d : ℕ) : 0 ≤ sInf (quotientSet d) :=
   quotientInf_nonneg d (admissible_nonempty d)
 
-theorem linearProgram_nonneg (d : ℕ) : 0 ≤ LP d :=
+theorem LP_nonneg (d : ℕ) : 0 ≤ LP d :=
   mul_nonneg (geometricFactor_pos d).le (quotientInf_nonneg_unconditional d)
 
 /-- The two constants of Theorem 1.1 match: `√(2πe)/2 · (1/π) = √(e/(2π))`. -/
@@ -23696,9 +23720,9 @@ theorem sharpPackingRoot_of_sharpQuotient (hquotient : SharpQuotientAsymptotic) 
   unfold SharpPackingRootAsymptotic
   refine hproduct.congr' ?_
   filter_upwards [eventually_gt_atTop 0] with d hd
-  exact (linearProgram_root_eq_geometric_mul_normalizedProgram hd (admissible_nonempty d)).symm
+  exact (LP_root_eq_geometric_mul_normalizedProgram hd (admissible_nonempty d)).symm
 
-theorem eventually_linearProgram_pos_of_sharpQuotient (hquotient : SharpQuotientAsymptotic) :
+theorem eventually_LP_pos_of_sharpQuotient (hquotient : SharpQuotientAsymptotic) :
     ∀ᶠ d : ℕ in atTop, 0 < LP d := by
   have hnorm : ∀ᶠ d : ℕ in atTop, 0 < normalizedProgram d :=
     hquotient.eventually (Ioi_mem_nhds criticalRadius_pos)
@@ -23715,7 +23739,7 @@ theorem sharpLog_of_sharpQuotient (hquotient : SharpQuotientAsymptotic) : SharpL
   rw [log_criticalPackingBase] at hlogs
   unfold SharpLogAsymptotic
   refine hlogs.congr' ?_
-  filter_upwards [eventually_linearProgram_pos_of_sharpQuotient hquotient] with d hd
+  filter_upwards [eventually_LP_pos_of_sharpQuotient hquotient] with d hd
   rw [log_rpow hd]
   ring
 
@@ -23731,7 +23755,7 @@ theorem sharpBinaryLog_of_sharpQuotient (hquotient : SharpQuotientAsymptotic) :
   exact hscaled.congr fun d ↦ by rw [logb]; ring
 
 theorem saddleSourceSchwartzRealization : SaddleSourceSchwartzRealization :=
-  fun _ hε horder _ hd ↦ ⟨minusSaddleSchwartz hε hd horder, plusSaddleSchwartz hε hd horder,
+  fun _ hε horder _ hd ↦ ⟨fMinusSchwartz hε hd horder, fPlusSchwartz hε hd horder,
     fun _ ↦ rfl, fun _ ↦ rfl⟩
 
 /-- Theorem 1.1 in its four forms, from the eventual signs of the saddle-point pair `f_ε^±`. -/
@@ -23833,7 +23857,7 @@ theorem manuscriptPackingDeficit_le (d : ℕ) :
     manuscriptPackingDeficit d ≤ criticalPackingBase := by
   rw [manuscriptPackingDeficit]
   refine max_le criticalPackingBase_pos.le ?_
-  have : 0 ≤ (LP d) ^ ((d : ℝ)⁻¹) := rpow_nonneg (linearProgram_nonneg d) _
+  have : 0 ≤ (LP d) ^ ((d : ℝ)⁻¹) := rpow_nonneg (LP_nonneg d) _
   linarith
 
 /-- Manuscript Corollary: a universal lower bound on every quotient, with an `o(1)` deficit. -/
@@ -23849,7 +23873,7 @@ theorem manuscriptUniversalQuotientBound {d : ℕ} (hd : 0 < d) (f : Admissible 
     linarith
   have hpow : (criticalPackingBase - manuscriptPackingDeficit d) ^ d ≤ LP d := by
     have h := pow_le_pow_left₀ hbase hroot d
-    rwa [rpow_inv_natCast_pow (linearProgram_nonneg d) hd.ne'] at h
+    rwa [rpow_inv_natCast_pow (LP_nonneg d) hd.ne'] at h
   have hLP : LP d ≤ unitBallVolume d / 2 ^ d * quotient f :=
     mul_le_mul_of_nonneg_left (csInf_le (quotientSet_bddBelow d) ⟨f, rfl⟩)
       (geometricFactor_pos d).le
@@ -23882,7 +23906,7 @@ theorem exists_manuscriptPackingIsLittleO : ∃ e : ℕ → ℝ,
   refine ⟨manuscriptPackingRootError, manuscriptPackingRootError_isLittleO, fun d hd ↦ ?_⟩
   rw [show criticalPackingBase + manuscriptPackingRootError d = (LP d) ^ ((d : ℝ)⁻¹) from by
       rw [manuscriptPackingRootError]; ring,
-    rpow_inv_natCast_pow (linearProgram_nonneg d) hd.ne']
+    rpow_inv_natCast_pow (LP_nonneg d) hd.ne']
 
 /-- The manuscript's error term `-(log₂ LP_d)/d - (1/2) log₂ (2π/e)`. -/
 def manuscriptBinaryExponentError (d : ℕ) : ℝ :=
@@ -23900,7 +23924,7 @@ theorem exists_manuscriptBinaryIsLittleO : ∃ e : ℕ → ℝ,
       ∀ᶠ d : ℕ in atTop, LP d = (2 : ℝ) ^ (-(criticalBinaryExponent + e d) * (d : ℝ)) := by
   refine ⟨manuscriptBinaryExponentError, manuscriptBinaryExponentError_isLittleO, ?_⟩
   filter_upwards [eventually_gt_atTop 0,
-    eventually_linearProgram_pos_of_sharpQuotient sharpQuotientAsymptotic] with d hd hpositive
+    eventually_LP_pos_of_sharpQuotient sharpQuotientAsymptotic] with d hd hpositive
   have hdreal : (d : ℝ) ≠ 0 := Nat.cast_ne_zero.2 hd.ne'
   rw [show -(criticalBinaryExponent + manuscriptBinaryExponentError d) * (d : ℝ)
       = logb 2 (LP d) from by rw [manuscriptBinaryExponentError]; field_simp; ring,
@@ -24356,12 +24380,12 @@ open scoped Filter FourierTransform Real SchwartzMap Topology
 theorem P_σ_le_exponentialMajorant {σ : ℝ} (hσ : 0 ≤ σ) (habove : σ < 1) (T : ℝ) :
     P_σ σ T ≤ stripPoissonExponentialMajorant T := by
   obtain ⟨hnonneg, hle⟩ := stripNormalizedPoissonExtension_le_majorant hσ habove.le T
-  have hmass := stripBottomMass_pos habove
+  have hmass := M_σ_pos habove
   have hP : P_σ σ T = M_σ σ * stripNormalizedPoissonExtension σ T := by
     rw [← stripNormalizedPoissonKernel_eq_extension (by linarith) habove T,
       stripNormalizedPoissonKernel]
     field_simp
-  nlinarith [mul_nonneg (sub_nonneg.mpr (stripBottomMass_lt_one (by linarith : -1 < σ)).le) hnonneg]
+  nlinarith [mul_nonneg (sub_nonneg.mpr (M_σ_lt_one (by linarith : -1 < σ)).le) hnonneg]
 
 theorem integrable_exponentialMajorant_mul_abs :
     Integrable fun T : ℝ ↦ stripPoissonExponentialMajorant T * |T| := by
@@ -24376,7 +24400,7 @@ theorem integrable_P_σ_mul_abs_of_nonneg {σ : ℝ} (hσ : 0 ≤ σ) (habove : 
   have hmeas : Measurable fun T : ℝ ↦ P_σ σ T * |T| := by unfold P_σ θ; fun_prop
   refine integrable_exponentialMajorant_mul_abs.mono' hmeas.aestronglyMeasurable
     (.of_forall fun T ↦ ?_)
-  have hpos := stripPoissonKernel_pos (by linarith) habove T
+  have hpos := P_σ_pos (by linarith) habove T
   rw [Real.norm_eq_abs, abs_of_nonneg (mul_nonneg hpos.le (abs_nonneg T))]
   exact mul_le_mul_of_nonneg_right (P_σ_le_exponentialMajorant hσ habove T) (abs_nonneg T)
 
@@ -24384,7 +24408,7 @@ theorem integrable_P_σ_mul_abs_of_nonneg {σ : ℝ} (hσ : 0 ≤ σ) (habove : 
 theorem integrable_P_σ_mul_abs {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
     Integrable fun T : ℝ ↦ P_σ σ T * |T| :=
   (le_or_gt σ 0).elim
-    (fun hσ ↦ stripPoissonKernel_lower_product_integrable hbelow hσ continuous_abs
+    (fun hσ ↦ P_σ_lower_product_integrable hbelow hσ continuous_abs
       (integrable_P_σ_mul_abs_of_nonneg le_rfl one_pos))
     (fun hσ ↦ integrable_P_σ_mul_abs_of_nonneg hσ.le habove)
 
@@ -24399,18 +24423,18 @@ theorem exists_integral_P_σ_mul_abs_le :
       (Real.one_lt_cosh.mpr (half_pos Real.pi_pos).ne')
     exact ⟨1 / (1 - (Real.cosh (π / 2))⁻¹), one_div_pos.mpr (by linarith),
       fun σ T hbelow hσ hT ↦ by
-        simpa using stripPoissonKernel_le_center_of_lower_of_abs_ge hbelow hσ one_pos hT⟩
+        simpa using P_σ_le_center_of_lower_of_abs_ge hbelow hσ one_pos hT⟩
   have hcenter : Integrable fun T : ℝ ↦ P_σ 0 T * |T| :=
     integrable_P_σ_mul_abs_of_nonneg le_rfl one_pos
   have hJ : 0 ≤ ∫ T : ℝ, P_σ 0 T * |T| := integral_nonneg fun T ↦
-    mul_nonneg (stripPoissonKernel_pos (by norm_num) one_pos T).le (abs_nonneg T)
+    mul_nonneg (P_σ_pos (by norm_num) one_pos T).le (abs_nonneg T)
   have hE : 0 ≤ ∫ T : ℝ, stripPoissonExponentialMajorant T * |T| := integral_nonneg fun T ↦ by
     unfold stripPoissonExponentialMajorant; positivity
   refine ⟨1 + C * (∫ T : ℝ, P_σ 0 T * |T|) + ∫ T : ℝ, stripPoissonExponentialMajorant T * |T|,
     by positivity, fun σ hbelow habove ↦ ?_⟩
   have hmoment : Integrable fun T : ℝ ↦ P_σ σ T * |T| := integrable_P_σ_mul_abs hbelow habove
   rcases le_or_gt σ 0 with hσ | hσ
-  · have hk : Integrable (P_σ σ) := stripPoissonKernel_integrable hbelow habove
+  · have hk : Integrable (P_σ σ) := P_σ_integrable hbelow habove
     have hscaled : Integrable fun T : ℝ ↦ C * (P_σ 0 T * |T|) := hcenter.const_mul C
     have hS : MeasurableSet {T : ℝ | 1 ≤ |T|} :=
       (isClosed_le continuous_const continuous_abs).measurableSet
@@ -24422,17 +24446,17 @@ theorem exists_integral_P_σ_mul_abs_le :
                 (abs_nonneg T)
         _ ≤ ∫ T : ℝ, C * (P_σ 0 T * |T|) := setIntegral_le_integral hscaled
             (.of_forall fun T ↦ mul_nonneg hC.le (mul_nonneg
-              (stripPoissonKernel_pos (by norm_num) one_pos T).le (abs_nonneg T)))
+              (P_σ_pos (by norm_num) one_pos T).le (abs_nonneg T)))
         _ = C * ∫ T : ℝ, P_σ 0 T * |T| := integral_const_mul _ _
     have hnear : (∫ T in {T : ℝ | 1 ≤ |T|}ᶜ, P_σ σ T * |T|) ≤ 1 := by
       calc (∫ T in {T : ℝ | 1 ≤ |T|}ᶜ, P_σ σ T * |T|) ≤ ∫ T in {T : ℝ | 1 ≤ |T|}ᶜ, P_σ σ T :=
             setIntegral_mono_on hmoment.integrableOn hk.integrableOn hS.compl fun T hT ↦ by
               have hT' : |T| ≤ 1 := le_of_lt (not_le.mp hT)
-              nlinarith [(stripPoissonKernel_pos hbelow habove T).le]
+              nlinarith [(P_σ_pos hbelow habove T).le]
         _ ≤ ∫ T : ℝ, P_σ σ T := setIntegral_le_integral hk
-            (.of_forall fun T ↦ (stripPoissonKernel_pos hbelow habove T).le)
-        _ = M_σ σ := integral_stripPoissonKernel hbelow habove
-        _ ≤ 1 := (stripBottomMass_lt_one hbelow).le
+            (.of_forall fun T ↦ (P_σ_pos hbelow habove T).le)
+        _ = M_σ σ := integral_P_σ hbelow habove
+        _ ≤ 1 := (M_σ_lt_one hbelow).le
     linarith [integral_add_compl hS hmoment]
   · linarith [integral_mono hmoment integrable_exponentialMajorant_mul_abs fun T ↦
       mul_le_mul_of_nonneg_right (P_σ_le_exponentialMajorant hσ.le habove T) (abs_nonneg T),
@@ -24486,7 +24510,7 @@ moment: `|P_σ(T) b(x − ℓT)| ≤ A (1 + |x|) P_σ(T) + A ℓ P_σ(T) |T|`. -
 theorem norm_P_σ_mul_le_of_abs_le {ℓ σ : ℝ} (hℓ : 0 < ℓ) (hbelow : -1 < σ) (habove : σ < 1)
     {b : ℝ → ℝ} {A : ℝ} (hA : 0 ≤ A) (hbound : ∀ y : ℝ, |b y| ≤ A * (1 + |y|)) (x T : ℝ) :
     ‖P_σ σ T * b (x - ℓ * T)‖ ≤ A * (1 + |x|) * P_σ σ T + A * ℓ * (P_σ σ T * |T|) := by
-  have hkpos := stripPoissonKernel_pos hbelow habove T
+  have hkpos := P_σ_pos hbelow habove T
   have hb : |b (x - ℓ * T)| ≤ A * (1 + |x| + ℓ * |T|) := by
     refine (hbound _).trans (mul_le_mul_of_nonneg_left ?_ hA)
     have habs := abs_sub x (ℓ * T)
@@ -24504,7 +24528,7 @@ theorem integrable_P_σ_mul_of_abs_le {ℓ σ : ℝ} (hℓ : 0 < ℓ) (hbelow : 
   have hmeas : Measurable fun T : ℝ ↦ P_σ σ T * b (x - ℓ * T) :=
     (by unfold P_σ θ; fun_prop : Measurable fun T : ℝ ↦ P_σ σ T).mul
       (hb.measurable.comp (by fun_prop))
-  exact (((stripPoissonKernel_integrable hbelow habove).const_mul _).add
+  exact (((P_σ_integrable hbelow habove).const_mul _).add
     ((integrable_P_σ_mul_abs hbelow habove).const_mul _)).mono' hmeas.aestronglyMeasurable
     (.of_forall fun T ↦ norm_P_σ_mul_le_of_abs_le hℓ hbelow habove hA hbound x T)
 
@@ -24519,7 +24543,7 @@ theorem exists_abs_W_b_re_le {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb 
   refine ⟨A * (1 + ℓ * M), by positivity, fun z hz ↦ ?_⟩
   obtain ⟨hbelow, habove⟩ := im_div_mem_Ioo_of_mem_strip hℓ hz
   have hconstant : Integrable fun T : ℝ ↦ A * (1 + |z.re|) * P_σ (z.im / ℓ) T :=
-    (stripPoissonKernel_integrable hbelow habove).const_mul _
+    (P_σ_integrable hbelow habove).const_mul _
   have hlinear : Integrable fun T : ℝ ↦ A * ℓ * (P_σ (z.im / ℓ) T * |T|) :=
     (integrable_P_σ_mul_abs hbelow habove).const_mul _
   rw [W_b_re_of_mem_strip hℓ hb hbound hz]
@@ -24530,9 +24554,9 @@ theorem exists_abs_W_b_re_le {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb 
           (.of_forall fun T ↦ norm_P_σ_mul_le_of_abs_le hℓ hbelow habove hA hbound z.re T)
     _ = A * (1 + |z.re|) * M_σ (z.im / ℓ) + A * ℓ * ∫ T : ℝ, P_σ (z.im / ℓ) T * |T| := by
         rw [integral_add hconstant hlinear, integral_const_mul, integral_const_mul,
-          integral_stripPoissonKernel hbelow habove]
+          integral_P_σ hbelow habove]
     _ ≤ A * (1 + ℓ * M) * (1 + |z.re|) := by
-        have h₁ := mul_le_mul_of_nonneg_left (stripBottomMass_lt_one hbelow).le
+        have h₁ := mul_le_mul_of_nonneg_left (M_σ_lt_one hbelow).le
           (by positivity : (0 : ℝ) ≤ A * (1 + |z.re|))
         have h₂ := mul_le_mul_of_nonneg_left (hmoment _ hbelow habove)
           (by positivity : (0 : ℝ) ≤ A * ℓ)
@@ -24675,16 +24699,16 @@ theorem tendsto_integral_far_bottom {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → �
   obtain ⟨C, hC, hCle⟩ : ∃ C : ℝ, 0 < C ∧ ∀ σ T : ℝ, -1 < σ → σ ≤ 0 → δ ≤ |T| →
       P_σ σ T ≤ C * P_σ 0 T :=
     ⟨1 / (1 - (Real.cosh (π * δ / 2))⁻¹), one_div_pos.mpr hCpos,
-      fun σ T hbelow hσ hT ↦ stripPoissonKernel_le_center_of_lower_of_abs_ge hbelow hσ hδ hT⟩
+      fun σ T hbelow hσ hT ↦ P_σ_le_center_of_lower_of_abs_ge hbelow hσ hδ hT⟩
   obtain ⟨hre, hσ, hrange⟩ := tendsto_bottom_edge hℓ s
   refine tendsto_setIntegral_P_σ_mul hℓ hb hA hbound
     (isClosed_le continuous_const continuous_abs).measurableSet
-    ((stripPoissonKernel_integrable (by norm_num) one_pos).const_mul C)
+    ((P_σ_integrable (by norm_num) one_pos).const_mul C)
     (by simpa [mul_assoc] using (integrable_P_σ_mul_abs_of_nonneg le_rfl one_pos).const_mul C)
-    (fun T ↦ mul_nonneg hC.le (stripPoissonKernel_pos (by norm_num) one_pos T).le) hre
-    (hrange.mono fun z hz T ↦ (stripPoissonKernel_pos hz.1 (by linarith [hz.2]) T).le)
+    (fun T ↦ mul_nonneg hC.le (P_σ_pos (by norm_num) one_pos T).le) hre
+    (hrange.mono fun z hz T ↦ (P_σ_pos hz.1 (by linarith [hz.2]) T).le)
     (hrange.mono fun z hz T hT ↦ hCle _ T hz.1 hz.2 hT) fun T hT ↦ ?_
-  refine (stripPoissonKernel_tendsto_zero_bottom_of_ne ?_).comp hσ
+  refine (P_σ_tendsto_zero_bottom_of_ne ?_).comp hσ
   rintro rfl
   simp only [Set.mem_ofPred_eq, abs_zero] at hT
   linarith
@@ -24711,9 +24735,9 @@ theorem tendsto_integral_bottom_of_eq_zero {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ
     hre.eventually (Metric.ball_mem_nhds s (half_pos hη))] with z hz hzfar hzre
   have hzabove : z.im / ℓ < 1 := by linarith [hz.2]
   have hzre' : |z.re - s| < η / 2 := by simpa [Metric.mem_ball, Real.dist_eq] using hzre
-  have hk : Integrable (P_σ (z.im / ℓ)) := stripPoissonKernel_integrable hz.1 hzabove
+  have hk : Integrable (P_σ (z.im / ℓ)) := P_σ_integrable hz.1 hzabove
   have hprod : Integrable fun T : ℝ ↦ P_σ (z.im / ℓ) T * b (z.re - ℓ * T) :=
-    stripPoissonKernel_lower_product_integrable hz.1 hz.2
+    P_σ_lower_product_integrable hz.1 hz.2
       (hb.comp (by fun_prop : Continuous fun T : ℝ ↦ z.re - ℓ * T)) (hcentral z.re)
   have hnear : ‖∫ T in {T : ℝ | η / (2 * ℓ) ≤ |T|}ᶜ, P_σ (z.im / ℓ) T * b (z.re - ℓ * T)‖ ≤
       ε / 2 := by
@@ -24731,14 +24755,14 @@ theorem tendsto_integral_bottom_of_eq_zero {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ
             linarith
           have hbsmall : |b (z.re - ℓ * T)| < ε / 2 := by
             simpa [Real.dist_eq, hszero] using hcontrol harg
-          have hkpos := stripPoissonKernel_pos hz.1 hzabove T
+          have hkpos := P_σ_pos hz.1 hzabove T
           rw [norm_mul, Real.norm_eq_abs, abs_of_pos hkpos, Real.norm_eq_abs]
           nlinarith [mul_nonneg hkpos.le (sub_nonneg.mpr hbsmall.le)]
       _ ≤ ∫ T : ℝ, ε / 2 * P_σ (z.im / ℓ) T := setIntegral_le_integral (hk.const_mul (ε / 2))
-          (.of_forall fun T ↦ mul_nonneg hhalf.le (stripPoissonKernel_pos hz.1 hzabove T).le)
+          (.of_forall fun T ↦ mul_nonneg hhalf.le (P_σ_pos hz.1 hzabove T).le)
       _ = ε / 2 * M_σ (z.im / ℓ) := by
-          rw [integral_const_mul, integral_stripPoissonKernel hz.1 hzabove]
-      _ ≤ ε / 2 := by nlinarith [(stripBottomMass_lt_one hz.1).le]
+          rw [integral_const_mul, integral_P_σ hz.1 hzabove]
+      _ ≤ ε / 2 := by nlinarith [(M_σ_lt_one hz.1).le]
   rw [dist_zero_right] at hzfar ⊢
   rw [← integral_add_compl hS hprod]
   exact lt_of_le_of_lt (norm_add_le _ _) (by linarith)
@@ -24756,7 +24780,7 @@ theorem tendsto_integral_bottom {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (
     nlinarith [abs_sub (b y) (b s), hbound y, abs_nonneg y, abs_nonneg (b s)]
   have hcentral₀ : ∀ t : ℝ, Integrable fun T : ℝ ↦ P_σ 0 T * (b (t - ℓ * T) - b s) := fun t ↦ by
     have h : Integrable fun T : ℝ ↦ P_σ 0 T * b (t - ℓ * T) - P_σ 0 T * b s :=
-      (hcentral t).sub ((stripPoissonKernel_integrable (by norm_num) one_pos).mul_const (b s))
+      (hcentral t).sub ((P_σ_integrable (by norm_num) one_pos).mul_const (b s))
     simpa [mul_sub] using h
   have hzero := tendsto_integral_bottom_of_eq_zero hℓ hb₀ (by positivity) hbound₀ hcentral₀ s
     (by simp)
@@ -24773,15 +24797,15 @@ theorem tendsto_integral_bottom {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (
         M_σ (z.im / ℓ) * b s := by
     filter_upwards [hrange] with z hz
     have hzabove : z.im / ℓ < 1 := by linarith [hz.2]
-    have hprod₀ := stripPoissonKernel_lower_product_integrable hz.1 hz.2
+    have hprod₀ := P_σ_lower_product_integrable hz.1 hz.2
       (hb₀.comp (by fun_prop : Continuous fun T : ℝ ↦ z.re - ℓ * T)) (hcentral₀ z.re)
-    have hk : Integrable (P_σ (z.im / ℓ)) := stripPoissonKernel_integrable hz.1 hzabove
+    have hk : Integrable (P_σ (z.im / ℓ)) := P_σ_integrable hz.1 hzabove
     calc (∫ T : ℝ, P_σ (z.im / ℓ) T * b (z.re - ℓ * T))
         = ∫ T : ℝ, (P_σ (z.im / ℓ) T * (b (z.re - ℓ * T) - b s) + P_σ (z.im / ℓ) T * b s) := by
           simp [mul_sub]
       _ = (∫ T : ℝ, P_σ (z.im / ℓ) T * (b (z.re - ℓ * T) - b s)) +
             ∫ T : ℝ, P_σ (z.im / ℓ) T * b s := integral_add hprod₀ (hk.mul_const (b s))
-      _ = _ := by rw [integral_mul_const, integral_stripPoissonKernel hz.1 hzabove]
+      _ = _ := by rw [integral_mul_const, integral_P_σ hz.1 hzabove]
   simpa using (hzero.add (hmass.mul_const (b s))).congr' heq.symm
 
 /-- At the top edge the kernel vanishes: `P_σ(T) → 0` as `σ → 1`, since `θ σ → π`. -/
@@ -24820,7 +24844,7 @@ theorem tendsto_integral_top {ℓ : ℝ} (hℓ : 0 < ℓ) {b : ℝ → ℝ} (hb 
   simpa using tendsto_setIntegral_P_σ_mul (S := univ) hℓ hb hA hbound MeasurableSet.univ
     stripPoissonExponentialMajorant_integrable integrable_exponentialMajorant_mul_abs
     (fun T ↦ by unfold stripPoissonExponentialMajorant; positivity) hre
-    (hrange.mono fun z hz T ↦ (stripPoissonKernel_pos (by linarith [hz.1]) hz.2 T).le)
+    (hrange.mono fun z hz T ↦ (P_σ_pos (by linarith [hz.1]) hz.2 T).le)
     (hrange.mono fun z hz T _ ↦ P_σ_le_exponentialMajorant hz.1 hz.2 T)
     fun T _ ↦ (tendsto_P_σ_one T).comp hσ
 
@@ -25049,7 +25073,7 @@ theorem norm_Z_g_le_exp_integral_of_cap_phragmenLindelof {d : ℕ} {ς : ℤˣ} 
   obtain ⟨K, -, hK⟩ := g.exists_norm_Z_g_le hd R
   rw [hcast] at hcap ⊢
   exact norm_le_exp_integral_P_σ_of_strip_phragmenLindelof hℓ (g.diffContOnCl_Z_g hd R)
-    (fun z hz ↦ hK z hz.1.le hz.2.le) (lowerGammaBoundaryCapped_continuous hℓ R D) hA hbound hcap
+    (fun z hz ↦ hK z hz.1.le hz.2.le) (h_ℓD_continuous hℓ R D) hA hbound hcap
     (fun y ↦ by rw [← hcast]; exact g.norm_Z_g_top_le_one hd R y) hbelow habove s
 
 /-- Report Lemma 3.2 by Phragmén–Lindelöf: `exists_capped_poisson_majorization` derived from
@@ -27668,7 +27692,7 @@ theorem sphere_packing_le_linear_program (d : ℕ) (hd : 0 < d) :
   have hfinite : SpherePackingConstant d ≠ ⊤ :=
     ne_top_of_le_ne_top ENNReal.one_ne_top
       (iSup_le fun P ↦ SpherePacking.upper_packing_density_le_one P)
-  refine (ENNReal.le_ofReal_iff_toReal_le hfinite (CohnElkies.linearProgram_nonneg d)).2 ?_
+  refine (ENNReal.le_ofReal_iff_toReal_le hfinite (CohnElkies.LP_nonneg d)).2 ?_
   have hbound : (SpherePackingConstant d).toReal / (CohnElkies.unitBallVolume d / (2 : ℝ) ^ d) ≤
       sInf (CohnElkies.quotientSet d) := by
     refine le_csInf (CohnElkies.quotientSet_nonempty d) ?_
@@ -28610,92 +28634,92 @@ theorem integral_ofReal_gaussianReal_one : ∫ x : Euclidean d, (gaussianReal 1 
   simpa using h
 
 /-- `κ_n(x) = (n+1)^d e^{-π (n+1)² ‖x‖²}`, the Gaussian approximate identity of report §2.1. -/
-def gaussianKernel (n : ℕ) (x : Euclidean d) : ℝ :=
+def κ_n (n : ℕ) (x : Euclidean d) : ℝ :=
   (n + 1 : ℝ) ^ d * gaussianReal ((n + 1 : ℝ) ^ 2) x
 
 /-- `η_n(x) = e^{-π ‖x‖²/(n+1)²}`, the Gaussian cutoff of report §2.1. -/
-def gaussianCutoff (n : ℕ) (x : Euclidean d) : ℝ := gaussianReal (((n + 1 : ℝ) ^ 2)⁻¹) x
+def η_n (n : ℕ) (x : Euclidean d) : ℝ := gaussianReal (((n + 1 : ℝ) ^ 2)⁻¹) x
 
-theorem gaussianKernel_eq_scaledKernel (n : ℕ) :
-    (fun x : Euclidean d ↦ (gaussianKernel n x : ℂ)) =
+theorem κ_n_eq_scaledKernel (n : ℕ) :
+    (fun x : Euclidean d ↦ (κ_n n x : ℂ)) =
       scaledKernel (fun x ↦ (gaussianReal 1 x : ℂ)) (n + 1) := by
   funext x
-  simp [gaussianKernel, scaledKernel, gaussianReal_smul]
+  simp [κ_n, scaledKernel, gaussianReal_smul]
 
-theorem continuous_gaussianKernel (n : ℕ) : Continuous (gaussianKernel (d := d) n) :=
+theorem continuous_κ_n (n : ℕ) : Continuous (κ_n (d := d) n) :=
   continuous_const.mul (continuous_gaussianReal _)
 
-theorem continuous_gaussianCutoff (n : ℕ) : Continuous (gaussianCutoff (d := d) n) :=
+theorem continuous_η_n (n : ℕ) : Continuous (η_n (d := d) n) :=
   continuous_gaussianReal _
 
-theorem gaussianKernel_nonneg (n : ℕ) (x : Euclidean d) : 0 ≤ gaussianKernel n x :=
+theorem κ_n_nonneg (n : ℕ) (x : Euclidean d) : 0 ≤ κ_n n x :=
   mul_nonneg (by positivity) (gaussianReal_pos _ _).le
 
-theorem gaussianKernel_le (n : ℕ) (x : Euclidean d) : gaussianKernel n x ≤ (n + 1 : ℝ) ^ d :=
+theorem κ_n_le (n : ℕ) (x : Euclidean d) : κ_n n x ≤ (n + 1 : ℝ) ^ d :=
   mul_le_of_le_one_right (by positivity) (gaussianReal_le_one (by positivity) x)
 
-theorem gaussianKernel_neg (n : ℕ) (x : Euclidean d) :
-    gaussianKernel n (-x) = gaussianKernel n x := by
-  simp [gaussianKernel, gaussianReal_neg]
+theorem κ_n_neg (n : ℕ) (x : Euclidean d) :
+    κ_n n (-x) = κ_n n x := by
+  simp [κ_n, gaussianReal_neg]
 
-theorem gaussianCutoff_nonneg (n : ℕ) (x : Euclidean d) : 0 ≤ gaussianCutoff n x :=
+theorem η_n_nonneg (n : ℕ) (x : Euclidean d) : 0 ≤ η_n n x :=
   (gaussianReal_pos _ _).le
 
-theorem gaussianCutoff_le_one (n : ℕ) (x : Euclidean d) : gaussianCutoff n x ≤ 1 :=
+theorem η_n_le_one (n : ℕ) (x : Euclidean d) : η_n n x ≤ 1 :=
   gaussianReal_le_one (by positivity) x
 
-theorem gaussianCutoff_eq_of_norm_eq (n : ℕ) : IsRadial (gaussianCutoff (d := d) n) :=
+theorem η_n_eq_of_norm_eq (n : ℕ) : IsRadial (η_n (d := d) n) :=
   fun x y h ↦ gaussianReal_eq_of_norm_eq _ x y h
 
-theorem integrable_gaussianKernel (n : ℕ) : Integrable (gaussianKernel (d := d) n) :=
+theorem integrable_κ_n (n : ℕ) : Integrable (κ_n (d := d) n) :=
   (integrable_gaussianReal (by positivity)).const_mul _
 
 /-- `η_n → 1` pointwise. -/
-theorem tendsto_gaussianCutoff (x : Euclidean d) :
-    Tendsto (fun n ↦ gaussianCutoff n x) atTop (𝓝 1) := by
+theorem tendsto_η_n (x : Euclidean d) :
+    Tendsto (fun n ↦ η_n n x) atTop (𝓝 1) := by
   have h0 : Tendsto (fun n : ℕ ↦ (n + 1 : ℝ)⁻¹) atTop (𝓝 0) :=
     tendsto_inv_atTop_zero.comp (tendsto_atTop_add_const_right _ 1 tendsto_natCast_atTop_atTop)
   have h1 : Tendsto (fun n : ℕ ↦ (((n + 1 : ℝ) ^ 2)⁻¹ : ℝ)) atTop (𝓝 0) := by
     simpa [inv_pow] using h0.pow 2
   have h2 : Tendsto (fun n : ℕ ↦ -(π * (((n + 1 : ℝ) ^ 2)⁻¹) * ‖x‖ ^ 2)) atTop (𝓝 0) := by
     simpa using ((h1.const_mul π).mul_const (‖x‖ ^ 2)).neg
-  simpa [gaussianCutoff, gaussianReal, Function.comp_def] using
+  simpa [η_n, gaussianReal, Function.comp_def] using
     (Real.continuous_exp.tendsto 0).comp h2
 
 /-- `𝓕 κ_n = η_n`. -/
-theorem fourier_gaussianKernel (n : ℕ) (w : Euclidean d) :
-    𝓕 (fun x ↦ (gaussianKernel n x : ℂ)) w = gaussianCutoff n w := by
+theorem fourier_κ_n (n : ℕ) (w : Euclidean d) :
+    𝓕 (fun x ↦ (κ_n n x : ℂ)) w = η_n n w := by
   have hn : (0 : ℝ) < n + 1 := by positivity
-  have h : (fun x : Euclidean d ↦ (gaussianKernel n x : ℂ)) =
+  have h : (fun x : Euclidean d ↦ (κ_n n x : ℂ)) =
       fun x ↦ ((n : ℂ) + 1) ^ d * (gaussianReal ((n + 1 : ℝ) ^ 2) x : ℂ) := by
     funext x
-    simp [gaussianKernel]
+    simp [κ_n]
   rw [h, fourier_const_mul_apply, fourier_gaussianReal (by positivity), rpow_sq_half hn.le]
-  unfold gaussianCutoff
+  unfold η_n
   push_cast
   rw [← mul_assoc, mul_inv_cancel₀ (pow_ne_zero _ (Nat.cast_add_one_ne_zero n)), one_mul]
 
 /-- `𝓕 η_n = κ_n`. -/
-theorem fourier_gaussianCutoff (n : ℕ) (w : Euclidean d) :
-    𝓕 (fun x ↦ (gaussianCutoff n x : ℂ)) w = gaussianKernel n w := by
+theorem fourier_η_n (n : ℕ) (w : Euclidean d) :
+    𝓕 (fun x ↦ (η_n n x : ℂ)) w = κ_n n w := by
   have hn : (0 : ℝ) < n + 1 := by positivity
-  unfold gaussianCutoff gaussianKernel
+  unfold η_n κ_n
   rw [fourier_gaussianReal (by positivity), Real.inv_rpow (by positivity), rpow_sq_half hn.le,
     inv_inv, inv_inv]
   push_cast
   ring
 
 /-- `∫ κ_n = 1`. -/
-theorem integral_gaussianKernel (n : ℕ) : ∫ x : Euclidean d, (gaussianKernel n x : ℂ) = 1 := by
-  have h := fourier_gaussianKernel (d := d) n 0
+theorem integral_κ_n (n : ℕ) : ∫ x : Euclidean d, (κ_n n x : ℂ) = 1 := by
+  have h := fourier_κ_n (d := d) n 0
   rw [fourier_zero_eq_integral] at h
-  simpa [gaussianCutoff] using h
+  simpa [η_n] using h
 
-theorem integral_norm_gaussianKernel (n : ℕ) :
-    ∫ x : Euclidean d, ‖(gaussianKernel n x : ℂ)‖ = 1 := by
-  have h := integral_gaussianKernel (d := d) n
+theorem integral_norm_κ_n (n : ℕ) :
+    ∫ x : Euclidean d, ‖(κ_n n x : ℂ)‖ = 1 := by
+  have h := integral_κ_n (d := d) n
   rw [integral_complex_ofReal] at h
-  simp_rw [Complex.norm_real, Real.norm_of_nonneg (gaussianKernel_nonneg n _)]
+  simp_rw [Complex.norm_real, Real.norm_of_nonneg (κ_n_nonneg n _)]
   exact_mod_cast h
 
 /-! ### The moment bound for Gaussian cutoffs -/
@@ -28715,8 +28739,8 @@ theorem pow_mul_exp_neg_sq_le {c : ℝ} (hc : 0 < c) (k : ℕ) {r : ℝ} (hr : 0
         nlinarith [sq_nonneg ((k : ℝ) - 2 * c * r)]
 
 /-- The Gaussian cutoff `η_n` beats every polynomial: `(1 + ‖x‖)^k η_n(x)` is bounded. -/
-theorem pow_mul_gaussianCutoff_le (n k : ℕ) (x : Euclidean d) :
-    (1 + ‖x‖) ^ k * gaussianCutoff n x ≤
+theorem pow_mul_η_n_le (n k : ℕ) (x : Euclidean d) :
+    (1 + ‖x‖) ^ k * η_n n x ≤
       Real.exp ((k : ℝ) ^ 2 / (4 * (π * ((n + 1 : ℝ) ^ 2)⁻¹))) :=
   pow_mul_exp_neg_sq_le (by positivity) k (norm_nonneg x)
 
@@ -29252,7 +29276,7 @@ theorem integral_rpow_mul_profile :
     simp only [hg x y hxy, hxy]
   have h := g.integral_mul_norm_rpow_eq_zero hd
   rw [integral_eq_sphereArea_mul_of_radial hd hrad] at h
-  refine Eq.trans ?_ ((mul_eq_zero.1 h).resolve_left (radialSurfaceArea_pos hd).ne')
+  refine Eq.trans ?_ ((mul_eq_zero.1 h).resolve_left (sphereArea_pos hd).ne')
   refine setIntegral_congr_fun measurableSet_Ioi fun r hr ↦ ?_
   simp only [norm_smul, norm_radialUnitDirection hd, mul_one,
     Real.norm_of_nonneg (mem_Ioi.1 hr).le]
@@ -31129,9 +31153,9 @@ For a radial sign eigenfunction `h` (`𝓕 h = ς h`, `h(0) = 0`) we construct r
 functions `g_n` with `𝓕 g_n = ς g_n`, `g_n(0) = 0` and `g_n → h` in `L¹`, following report §2.1:
 * `q_n = (η_n h) ⋆ φ_n` is a test function (`schwartzConvolution`), real and radial, with
   `𝓕 q_n = ς (h ⋆ κ_n) 𝓕 φ_n` (convolution theorem, Gaussian duality `𝓕 κ_n = η_n` and Fourier
-  inversion), and `q_n → h`, `𝓕 q_n → ς h` in `L¹` (`approximant`);
+  inversion), and `q_n → h`, `𝓕 q_n → ς h` in `L¹` (`q_n`);
 * `p_n = (q_n + ς 𝓕 q_n)/2` is a `ς`-eigenfunction with `p_n → h` in `L¹` and `p_n(0) → 0`
-  (`projected`);
+  (`p_n`);
 * `g_n = p_n - (p_n(0)/ψ(0)) ψ` for a fixed real radial `ς`-eigenfunction `ψ` with `ψ(0) ≠ 0`
   (`exists_eigenTest`; we use `ψ = P_ς(bump)` or `P_ς(bump(2·))` instead of the report's
   `ψ₊ = e^{-π|x|²}`, `ψ₋ = (|x|² - d/(4π)) e^{-π|x|²}`).
@@ -31175,22 +31199,22 @@ variable {ς : ℤˣ} (h : SignEigenfunction d ς)
 /-! ### The cutoff eigenfunction `H_n = η_n h` -/
 
 /-- `H_n = η_n h` (complex-valued), report §2.1. -/
-def cutoffEigen (n : ℕ) (x : Euclidean d) : ℂ := (gaussianCutoff n x : ℂ) * h x
+def cutoffEigen (n : ℕ) (x : Euclidean d) : ℂ := (η_n n x : ℂ) * h x
 
 theorem continuous_cutoffEigen (n : ℕ) : Continuous (cutoffEigen h n) :=
-  (Complex.continuous_ofReal.comp (continuous_gaussianCutoff n)).mul h.continuous_toComplex
+  (Complex.continuous_ofReal.comp (continuous_η_n n)).mul h.continuous_toComplex
 
 theorem cutoffEigen_eq_of_norm_eq (hrad : IsRadial h) (n : ℕ) : IsRadial (cutoffEigen h n) :=
   fun x y hxy ↦ by
-    simp [cutoffEigen, gaussianCutoff_eq_of_norm_eq n _ _ hxy, hrad x y hxy]
+    simp [cutoffEigen, η_n_eq_of_norm_eq n _ _ hxy, hrad x y hxy]
 
-theorem norm_cutoff_le (n : ℕ) (x : Euclidean d) : ‖(gaussianCutoff n x : ℂ)‖ ≤ 1 := by
-  rw [Complex.norm_real, Real.norm_of_nonneg (gaussianCutoff_nonneg n x)]
-  exact gaussianCutoff_le_one n x
+theorem norm_cutoff_le (n : ℕ) (x : Euclidean d) : ‖(η_n n x : ℂ)‖ ≤ 1 := by
+  rw [Complex.norm_real, Real.norm_of_nonneg (η_n_nonneg n x)]
+  exact η_n_le_one n x
 
 theorem integrable_cutoffEigen (n : ℕ) : Integrable (cutoffEigen h n) :=
   h.integrable_toComplex.bdd_mul (c := 1)
-    (Complex.continuous_ofReal.comp (continuous_gaussianCutoff n)).aestronglyMeasurable
+    (Complex.continuous_ofReal.comp (continuous_η_n n)).aestronglyMeasurable
     (.of_forall fun x ↦ norm_cutoff_le n x)
 
 /-- All moments of `η_n h` are integrable (the Gaussian cutoff beats every polynomial). -/
@@ -31201,33 +31225,33 @@ theorem integrable_pow_mul_norm_cutoffEigen (n k : ℕ) :
     (((continuous_const.add continuous_norm).pow k).mul
       (continuous_cutoffEigen h n).norm).aestronglyMeasurable (.of_forall fun a ↦ ?_)
   rw [Real.norm_of_nonneg (by positivity), cutoffEigen, norm_mul, Complex.norm_real,
-    Real.norm_of_nonneg (gaussianCutoff_nonneg n a), ← mul_assoc, Complex.norm_real]
-  exact mul_le_mul_of_nonneg_right (pow_mul_gaussianCutoff_le n k a) (norm_nonneg _)
+    Real.norm_of_nonneg (η_n_nonneg n a), ← mul_assoc, Complex.norm_real]
+  exact mul_le_mul_of_nonneg_right (pow_mul_η_n_le n k a) (norm_nonneg _)
 
 /-! ### The approximants `q_n = (η_n h) ⋆ φ_n` -/
 
 /-- `q_n = (η_n h) ⋆ φ_n` (report §2.1, with the bump mollifier `φ_n`), as a test function. -/
-def approximant (n : ℕ) : TestFunction d :=
+def q_n (n : ℕ) : TestFunction d :=
   schwartzConvolution (cutoffEigen h n) (continuous_cutoffEigen h n).aestronglyMeasurable
     (integrable_pow_mul_norm_cutoffEigen h n) (bumpKernel n)
 
-theorem approximant_apply (n : ℕ) (x : Euclidean d) :
-    approximant h n x =
+theorem q_n_apply (n : ℕ) (x : Euclidean d) :
+    q_n h n x =
       (cutoffEigen h n ⋆[ContinuousLinearMap.mul ℂ ℂ] (bumpKernel n : Euclidean d → ℂ)) x :=
   schwartzConvolution_apply _ _ _ _ x
 
-theorem approximant_real (n : ℕ) : IsRealValued (approximant h n) := fun x ↦ by
-  rw [approximant_apply, convolution_def]
+theorem q_n_real (n : ℕ) : IsRealValued (q_n h n) := fun x ↦ by
+  rw [q_n_apply, convolution_def]
   have heq : (fun t ↦ (ContinuousLinearMap.mul ℂ ℂ) (cutoffEigen h n t) (bumpKernel n (x - t))) =
-      fun t ↦ ((gaussianCutoff n t * h t * bumpKernelReal n (x - t) : ℝ) : ℂ) := by
+      fun t ↦ ((η_n n t * h t * bumpKernelReal n (x - t) : ℝ) : ℂ) := by
     funext t
     simp [cutoffEigen, bumpKernel_apply]
   rw [heq, integral_complex_ofReal, Complex.ofReal_im]
 
-theorem approximant_comp_isometry (hrad : IsRadial h) (n : ℕ)
+theorem q_n_comp_isometry (hrad : IsRadial h) (n : ℕ)
     (A : Euclidean d ≃ₗᵢ[ℝ] Euclidean d) (x : Euclidean d) :
-    approximant h n (A x) = approximant h n x := by
-  rw [approximant_apply, approximant_apply, convolution_def, convolution_def]
+    q_n h n (A x) = q_n h n x := by
+  rw [q_n_apply, q_n_apply, convolution_def, convolution_def]
   calc ∫ t, (ContinuousLinearMap.mul ℂ ℂ) (cutoffEigen h n t) (bumpKernel n (A x - t))
       = ∫ t, (ContinuousLinearMap.mul ℂ ℂ) (cutoffEigen h n (A t)) (bumpKernel n (A x - A t)) :=
         (A.measurePreserving.integral_comp A.toHomeomorph.measurableEmbedding
@@ -31238,40 +31262,40 @@ theorem approximant_comp_isometry (hrad : IsRadial h) (n : ℕ)
         rw [← map_sub, cutoffEigen_eq_of_norm_eq h hrad n _ _ (A.norm_map t),
           bumpKernel_radial n _ _ (A.norm_map (x - t))]
 
-theorem approximant_radial (hrad : IsRadial h) (n : ℕ) :
-    IsRadial (approximant h n) := fun x y hxy ↦ by
+theorem q_n_radial (hrad : IsRadial h) (n : ℕ) :
+    IsRadial (q_n h n) := fun x y hxy ↦ by
   let A : Euclidean d ≃ₗᵢ[ℝ] Euclidean d := Submodule.reflection (ℝ ∙ (x - y))ᗮ
   have hA : A x = y := Submodule.reflection_sub hxy
-  calc approximant h n x = approximant h n (A x) := (approximant_comp_isometry h hrad n A x).symm
-    _ = approximant h n y := by rw [hA]
+  calc q_n h n x = q_n h n (A x) := (q_n_comp_isometry h hrad n A x).symm
+    _ = q_n h n y := by rw [hA]
 
 /-! ### The Fourier transform of `q_n` -/
 
 /-- `h ⋆ κ_n`, the Gaussian smoothing of `h`. -/
 def gaussianSmoothing (n : ℕ) : Euclidean d → ℂ :=
-  h.toComplex ⋆[ContinuousLinearMap.mul ℂ ℂ] fun x ↦ (gaussianKernel n x : ℂ)
+  h.toComplex ⋆[ContinuousLinearMap.mul ℂ ℂ] fun x ↦ (κ_n n x : ℂ)
 
 theorem integrable_gaussianSmoothing (n : ℕ) : Integrable (gaussianSmoothing h n) :=
-  h.integrable_toComplex.integrable_convolution _ (integrable_gaussianKernel n).ofReal
+  h.integrable_toComplex.integrable_convolution _ (integrable_κ_n n).ofReal
 
 theorem continuous_gaussianSmoothing (n : ℕ) : Continuous (gaussianSmoothing h n) :=
   BddAbove.continuous_convolution_right_of_integrable _
     ⟨(n + 1 : ℝ) ^ d, by
       rintro _ ⟨x, rfl⟩
       dsimp only
-      rw [Complex.norm_real, Real.norm_of_nonneg (gaussianKernel_nonneg n x)]
-      exact gaussianKernel_le n x⟩
-    h.integrable_toComplex (Complex.continuous_ofReal.comp (continuous_gaussianKernel n))
+      rw [Complex.norm_real, Real.norm_of_nonneg (κ_n_nonneg n x)]
+      exact κ_n_le n x⟩
+    h.integrable_toComplex (Complex.continuous_ofReal.comp (continuous_κ_n n))
 
 /-- `𝓕 (h ⋆ κ_n) = 𝓕 h · 𝓕 κ_n = ς η_n h`. -/
 theorem fourier_gaussianSmoothing (n : ℕ) (ξ : Euclidean d) :
     𝓕 (gaussianSmoothing h n) ξ = ((ς : ℤ) : ℂ) * cutoffEigen h n ξ :=
   calc 𝓕 (gaussianSmoothing h n) ξ
-      = 𝓕 h.toComplex ξ * 𝓕 (fun x ↦ (gaussianKernel n x : ℂ)) ξ :=
+      = 𝓕 h.toComplex ξ * 𝓕 (fun x ↦ (κ_n n x : ℂ)) ξ :=
         Real.fourier_mul_convolution_eq h.integrable_toComplex
-          (integrable_gaussianKernel n).ofReal ξ
+          (integrable_κ_n n).ofReal ξ
     _ = ((ς : ℤ) : ℂ) * cutoffEigen h n ξ := by
-        rw [h.fourier_toComplex, fourier_gaussianKernel, cutoffEigen]
+        rw [h.fourier_toComplex, fourier_κ_n, cutoffEigen]
         ring
 
 theorem integrable_fourier_gaussianSmoothing (n : ℕ) :
@@ -31282,7 +31306,7 @@ theorem integrable_fourier_gaussianSmoothing (n : ℕ) :
 theorem gaussianSmoothing_neg (hrad : IsRadial h) (n : ℕ) (ξ : Euclidean d) :
     gaussianSmoothing h n (-ξ) = gaussianSmoothing h n ξ :=
   convolution_neg_of_neg_eq _ (.of_forall fun x ↦ by simp [hrad (-x) x (norm_neg x)])
-    (.of_forall fun x ↦ by simp [gaussianKernel_neg])
+    (.of_forall fun x ↦ by simp [κ_n_neg])
 
 /-- `𝓕 (η_n h) = ς (h ⋆ κ_n)`: Fourier inversion applied to `𝓕 (h ⋆ κ_n) = ς η_n h`. -/
 theorem fourier_cutoffEigen (hrad : IsRadial h) (n : ℕ) (ξ : Euclidean d) :
@@ -31300,13 +31324,13 @@ theorem fourier_cutoffEigen (hrad : IsRadial h) (n : ℕ) (ξ : Euclidean d) :
     _ = gaussianSmoothing h n ξ := gaussianSmoothing_neg h hrad n ξ
 
 /-- `𝓕 q_n = ς (h ⋆ κ_n) 𝓕 φ_n` (report §2.1). -/
-theorem fourier_approximant_apply (hrad : IsRadial h) (n : ℕ) (ξ : Euclidean d) :
-    (𝓕 (approximant h n) : TestFunction d) ξ =
+theorem fourier_q_n_apply (hrad : IsRadial h) (n : ℕ) (ξ : Euclidean d) :
+    (𝓕 (q_n h n) : TestFunction d) ξ =
       ((ς : ℤ) : ℂ) * (gaussianSmoothing h n ξ * (𝓕 (bumpKernel n) : TestFunction d) ξ) := by
-  have hq : (approximant h n : Euclidean d → ℂ) =
+  have hq : (q_n h n : Euclidean d → ℂ) =
       cutoffEigen h n ⋆[ContinuousLinearMap.mul ℂ ℂ] (bumpKernel n : Euclidean d → ℂ) :=
-    funext (approximant_apply h n)
-  calc (𝓕 (approximant h n) : TestFunction d) ξ
+    funext (q_n_apply h n)
+  calc (𝓕 (q_n h n) : TestFunction d) ξ
       = 𝓕 (cutoffEigen h n ⋆[ContinuousLinearMap.mul ℂ ℂ] (bumpKernel n : Euclidean d → ℂ)) ξ := by
         rw [SchwartzMap.fourier_coe, hq]
     _ = 𝓕 (cutoffEigen h n) ξ * 𝓕 (bumpKernel n : Euclidean d → ℂ) ξ :=
@@ -31317,29 +31341,29 @@ theorem fourier_approximant_apply (hrad : IsRadial h) (n : ℕ) (ξ : Euclidean 
 /-! ### `L¹` convergence of `q_n` and `𝓕 q_n` -/
 
 /-- `q_n → h` in `L¹` (report §2.1). -/
-theorem tendsto_approximant :
-    Tendsto (fun n ↦ ∫ x, ‖approximant h n x - (h x : ℂ)‖) atTop (𝓝 0) := by
-  simp_rw [approximant_apply]
+theorem tendsto_q_n :
+    Tendsto (fun n ↦ ∫ x, ‖q_n h n x - (h x : ℂ)‖) atTop (𝓝 0) := by
+  simp_rw [q_n_apply]
   refine tendsto_integral_norm_convolution_sub_of_tendsto h.integrable_toComplex
     (integrable_cutoffEigen h) (fun n ↦ (bumpKernel n).integrable) integral_norm_bumpKernel ?_ ?_
   · exact tendsto_integral_norm_mul_sub h.integrable_toComplex
-      (fun n ↦ (Complex.continuous_ofReal.comp (continuous_gaussianCutoff n)).aestronglyMeasurable)
+      (fun n ↦ (Complex.continuous_ofReal.comp (continuous_η_n n)).aestronglyMeasurable)
       (fun n x ↦ norm_cutoff_le n x)
       (fun x ↦ by
         simpa [Function.comp_def] using
-          (Complex.continuous_ofReal.tendsto 1).comp (tendsto_gaussianCutoff x))
+          (Complex.continuous_ofReal.tendsto 1).comp (tendsto_η_n x))
   · simp_rw [bumpKernel_eq_scaledKernel]
     exact (tendsto_add_atTop_iff_nat 1).2 (tendsto_integral_norm_convolution_scaledKernel_sub
       h.integrable_toComplex (bumpUnit d).integrable (integral_bumpUnit d))
 
 /-- `𝓕 q_n → ς h` in `L¹` (report §2.1). -/
-theorem tendsto_fourier_approximant (hrad : IsRadial h) :
-    Tendsto (fun n ↦ ∫ x, ‖(𝓕 (approximant h n) : TestFunction d) x - ((ς : ℤ) : ℂ) * h x‖)
+theorem tendsto_fourier_q_n (hrad : IsRadial h) :
+    Tendsto (fun n ↦ ∫ x, ‖(𝓕 (q_n h n) : TestFunction d) x - ((ς : ℤ) : ℂ) * h x‖)
       atTop (𝓝 0) := by
   have hsm : Tendsto (fun n ↦ ∫ x, ‖gaussianSmoothing h n x - h.toComplex x‖) atTop (𝓝 0) := by
     have heq : ∀ n, gaussianSmoothing h n = h.toComplex ⋆[ContinuousLinearMap.mul ℂ ℂ]
         scaledKernel (fun x ↦ (gaussianReal 1 x : ℂ)) (n + 1) := fun n ↦ by
-      rw [gaussianSmoothing, gaussianKernel_eq_scaledKernel]
+      rw [gaussianSmoothing, κ_n_eq_scaledKernel]
     simp_rw [heq]
     exact (tendsto_add_atTop_iff_nat 1).2 (tendsto_integral_norm_convolution_scaledKernel_sub
       h.integrable_toComplex (integrable_ofReal_gaussianReal one_pos)
@@ -31351,105 +31375,105 @@ theorem tendsto_fourier_approximant (hrad : IsRadial h) :
     norm_fourier_bumpKernel_le tendsto_fourier_bumpKernel hsm
   refine key.congr' (.of_forall fun n ↦ integral_congr_ae (.of_forall fun x ↦ ?_))
   dsimp only
-  rw [fourier_approximant_apply h hrad n x, ← mul_sub, norm_mul, norm_units_coe, one_mul]
+  rw [fourier_q_n_apply h hrad n x, ← mul_sub, norm_mul, norm_units_coe, one_mul]
   rfl
 
 /-! ### The projections `p_n = (q_n + ς 𝓕 q_n)/2` -/
 
 /-- `p_n = (q_n + ς 𝓕 q_n)/2` (report §2.1). -/
-def projected (n : ℕ) : TestFunction d :=
-  (2⁻¹ : ℂ) • (approximant h n + ((ς : ℤ) : ℂ) • 𝓕 (approximant h n))
+def p_n (n : ℕ) : TestFunction d :=
+  (2⁻¹ : ℂ) • (q_n h n + ((ς : ℤ) : ℂ) • 𝓕 (q_n h n))
 
-theorem projected_apply (n : ℕ) (x : Euclidean d) :
-    projected h n x = 2⁻¹ * (approximant h n x +
-      ((ς : ℤ) : ℂ) * (𝓕 (approximant h n) : TestFunction d) x) := by
-  simp only [projected, smul_apply, add_apply, smul_eq_mul]
+theorem p_n_apply (n : ℕ) (x : Euclidean d) :
+    p_n h n x = 2⁻¹ * (q_n h n x +
+      ((ς : ℤ) : ℂ) * (𝓕 (q_n h n) : TestFunction d) x) := by
+  simp only [p_n, smul_apply, add_apply, smul_eq_mul]
 
-theorem fourier_approximant_real (hrad : IsRadial h) (n : ℕ) :
-    IsRealValued (𝓕 (approximant h n) : TestFunction d) :=
-  (approximant_real h n).fourier_of_radial (approximant_radial h hrad n)
+theorem fourier_q_n_real (hrad : IsRadial h) (n : ℕ) :
+    IsRealValued (𝓕 (q_n h n) : TestFunction d) :=
+  (q_n_real h n).fourier_of_radial (q_n_radial h hrad n)
 
-theorem projected_real (hrad : IsRadial h) (n : ℕ) : IsRealValued (projected h n) := fun x ↦ by
-  rw [projected_apply]
-  simp [Complex.mul_im, Complex.add_im, approximant_real h n x, fourier_approximant_real h hrad n x]
+theorem p_n_real (hrad : IsRadial h) (n : ℕ) : IsRealValued (p_n h n) := fun x ↦ by
+  rw [p_n_apply]
+  simp [Complex.mul_im, Complex.add_im, q_n_real h n x, fourier_q_n_real h hrad n x]
 
-theorem projected_radial (hrad : IsRadial h) (n : ℕ) : IsRadial (projected h n) := fun x y hxy ↦ by
-  rw [projected_apply, projected_apply, approximant_radial h hrad n x y hxy,
-    (approximant_radial h hrad n).fourier x y hxy]
+theorem p_n_radial (hrad : IsRadial h) (n : ℕ) : IsRadial (p_n h n) := fun x y hxy ↦ by
+  rw [p_n_apply, p_n_apply, q_n_radial h hrad n x y hxy,
+    (q_n_radial h hrad n).fourier x y hxy]
 
 /-- `𝓕 p_n = ς p_n` (report §2.1). -/
-theorem fourier_projected (hrad : IsRadial h) (n : ℕ) :
-    (𝓕 (projected h n) : TestFunction d) = ((ς : ℤ) : ℂ) • projected h n := by
-  have hsq : (𝓕 (𝓕 (approximant h n)) : TestFunction d) = approximant h n := by
+theorem fourier_p_n (hrad : IsRadial h) (n : ℕ) :
+    (𝓕 (p_n h n) : TestFunction d) = ((ς : ℤ) : ℂ) • p_n h n := by
+  have hsq : (𝓕 (𝓕 (q_n h n)) : TestFunction d) = q_n h n := by
     ext x
     rw [fourier_sq_apply]
-    exact approximant_radial h hrad n _ _ (norm_neg x)
-  have e1 : (𝓕 (projected h n) : TestFunction d) =
-      (2⁻¹ : ℂ) • (𝓕 (approximant h n) + ((ς : ℤ) : ℂ) • 𝓕 (𝓕 (approximant h n))) := by
-    rw [projected, fourier_smul_testFunction, fourier_add_testFunction, fourier_smul_testFunction]
+    exact q_n_radial h hrad n _ _ (norm_neg x)
+  have e1 : (𝓕 (p_n h n) : TestFunction d) =
+      (2⁻¹ : ℂ) • (𝓕 (q_n h n) + ((ς : ℤ) : ℂ) • 𝓕 (𝓕 (q_n h n))) := by
+    rw [p_n, fourier_smul_testFunction, fourier_add_testFunction, fourier_smul_testFunction]
   ext x
-  rw [e1, hsq, smul_apply, add_apply, smul_apply, smul_apply, projected_apply]
+  rw [e1, hsq, smul_apply, add_apply, smul_apply, smul_apply, p_n_apply]
   simp only [smul_eq_mul]
-  linear_combination (-(2⁻¹ * (𝓕 (approximant h n) : TestFunction d) x)) * units_coe_mul_self ς
+  linear_combination (-(2⁻¹ * (𝓕 (q_n h n) : TestFunction d) x)) * units_coe_mul_self ς
 
 /-- `p_n(0) → 0`: `q_n(0) = ∫ 𝓕 q_n → ∫ ς h = 0` and `𝓕 q_n(0) = ∫ q_n → ∫ h = 0`. -/
-theorem tendsto_projected_zero (hrad : IsRadial h) :
-    Tendsto (fun n ↦ projected h n 0) atTop (𝓝 0) := by
-  have h1 : ∀ n, approximant h n 0 = ∫ x, (𝓕 (approximant h n) : TestFunction d) x := fun n ↦ by
-    have := fourier_sq_apply (approximant h n) 0
+theorem tendsto_p_n_zero (hrad : IsRadial h) :
+    Tendsto (fun n ↦ p_n h n 0) atTop (𝓝 0) := by
+  have h1 : ∀ n, q_n h n 0 = ∫ x, (𝓕 (q_n h n) : TestFunction d) x := fun n ↦ by
+    have := fourier_sq_apply (q_n h n) 0
     rw [neg_zero] at this
     rw [← this, SchwartzMap.fourier_coe, fourier_zero_eq_integral]
-  have h2 : ∀ n, (𝓕 (approximant h n) : TestFunction d) 0 = ∫ x, approximant h n x := fun n ↦ by
+  have h2 : ∀ n, (𝓕 (q_n h n) : TestFunction d) 0 = ∫ x, q_n h n x := fun n ↦ by
     rw [SchwartzMap.fourier_coe, fourier_zero_eq_integral]
   have hG : ∫ x, h.toComplex x = 0 := h.integral_toComplex
-  have hq : Tendsto (fun n ↦ ∫ x, approximant h n x) atTop (𝓝 0) := by
-    have := tendsto_integral_of_tendsto_integral_norm_sub (fun n ↦ (approximant h n).integrable)
-      h.integrable_toComplex (tendsto_approximant h)
+  have hq : Tendsto (fun n ↦ ∫ x, q_n h n x) atTop (𝓝 0) := by
+    have := tendsto_integral_of_tendsto_integral_norm_sub (fun n ↦ (q_n h n).integrable)
+      h.integrable_toComplex (tendsto_q_n h)
     rwa [hG] at this
-  have hfq : Tendsto (fun n ↦ ∫ x, (𝓕 (approximant h n) : TestFunction d) x) atTop (𝓝 0) := by
+  have hfq : Tendsto (fun n ↦ ∫ x, (𝓕 (q_n h n) : TestFunction d) x) atTop (𝓝 0) := by
     have := tendsto_integral_of_tendsto_integral_norm_sub
-      (fun n ↦ (𝓕 (approximant h n) : TestFunction d).integrable)
-      (h.integrable_toComplex.const_mul ((ς : ℤ) : ℂ)) (tendsto_fourier_approximant h hrad)
+      (fun n ↦ (𝓕 (q_n h n) : TestFunction d).integrable)
+      (h.integrable_toComplex.const_mul ((ς : ℤ) : ℂ)) (tendsto_fourier_q_n h hrad)
     rwa [integral_const_mul, hG, mul_zero] at this
-  have heq : (fun n ↦ projected h n 0) = fun n ↦ 2⁻¹ *
-      ((∫ x, (𝓕 (approximant h n) : TestFunction d) x) +
-        ((ς : ℤ) : ℂ) * ∫ x, approximant h n x) := by
+  have heq : (fun n ↦ p_n h n 0) = fun n ↦ 2⁻¹ *
+      ((∫ x, (𝓕 (q_n h n) : TestFunction d) x) +
+        ((ς : ℤ) : ℂ) * ∫ x, q_n h n x) := by
     funext n
-    rw [projected_apply, h1, h2]
+    rw [p_n_apply, h1, h2]
   rw [heq]
   simpa using (hfq.add (hq.const_mul _)).const_mul (2⁻¹ : ℂ)
 
 /-- `p_n → h` in `L¹` (report §2.1). -/
-theorem tendsto_projected (hrad : IsRadial h) :
-    Tendsto (fun n ↦ ∫ x, ‖projected h n x - (h x : ℂ)‖) atTop (𝓝 0) := by
-  have hlim : Tendsto (fun n ↦ 2⁻¹ * ((∫ x, ‖approximant h n x - (h x : ℂ)‖) +
-      ∫ x, ‖(𝓕 (approximant h n) : TestFunction d) x - ((ς : ℤ) : ℂ) * h x‖)) atTop (𝓝 0) := by
-    simpa using ((tendsto_approximant h).add (tendsto_fourier_approximant h hrad)).const_mul
+theorem tendsto_p_n (hrad : IsRadial h) :
+    Tendsto (fun n ↦ ∫ x, ‖p_n h n x - (h x : ℂ)‖) atTop (𝓝 0) := by
+  have hlim : Tendsto (fun n ↦ 2⁻¹ * ((∫ x, ‖q_n h n x - (h x : ℂ)‖) +
+      ∫ x, ‖(𝓕 (q_n h n) : TestFunction d) x - ((ς : ℤ) : ℂ) * h x‖)) atTop (𝓝 0) := by
+    simpa using ((tendsto_q_n h).add (tendsto_fourier_q_n h hrad)).const_mul
       (2⁻¹ : ℝ)
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds hlim
     (fun n ↦ integral_nonneg fun _ ↦ norm_nonneg _) fun n ↦ ?_
-  have h1 : Integrable fun x ↦ approximant h n x - (h x : ℂ) :=
-    (approximant h n).integrable.sub h.integrable_toComplex
-  have h2 : Integrable fun x ↦ (𝓕 (approximant h n) : TestFunction d) x - ((ς : ℤ) : ℂ) * h x :=
-    (𝓕 (approximant h n) : TestFunction d).integrable.sub (h.integrable_toComplex.const_mul _)
-  calc ∫ x, ‖projected h n x - (h x : ℂ)‖
-      ≤ ∫ x, 2⁻¹ * (‖approximant h n x - (h x : ℂ)‖ +
-          ‖(𝓕 (approximant h n) : TestFunction d) x - ((ς : ℤ) : ℂ) * h x‖) := by
+  have h1 : Integrable fun x ↦ q_n h n x - (h x : ℂ) :=
+    (q_n h n).integrable.sub h.integrable_toComplex
+  have h2 : Integrable fun x ↦ (𝓕 (q_n h n) : TestFunction d) x - ((ς : ℤ) : ℂ) * h x :=
+    (𝓕 (q_n h n) : TestFunction d).integrable.sub (h.integrable_toComplex.const_mul _)
+  calc ∫ x, ‖p_n h n x - (h x : ℂ)‖
+      ≤ ∫ x, 2⁻¹ * (‖q_n h n x - (h x : ℂ)‖ +
+          ‖(𝓕 (q_n h n) : TestFunction d) x - ((ς : ℤ) : ℂ) * h x‖) := by
         refine integral_mono_of_nonneg (.of_forall fun _ ↦ norm_nonneg _)
           ((h1.norm.add h2.norm).const_mul _) (.of_forall fun x ↦ ?_)
         dsimp only
-        rw [projected_apply]
-        have hx : (2⁻¹ : ℂ) * (approximant h n x +
-            ((ς : ℤ) : ℂ) * (𝓕 (approximant h n) : TestFunction d) x) - h x =
-            2⁻¹ * ((approximant h n x - h x) + ((ς : ℤ) : ℂ) *
-              ((𝓕 (approximant h n) : TestFunction d) x - ((ς : ℤ) : ℂ) * h x)) := by
+        rw [p_n_apply]
+        have hx : (2⁻¹ : ℂ) * (q_n h n x +
+            ((ς : ℤ) : ℂ) * (𝓕 (q_n h n) : TestFunction d) x) - h x =
+            2⁻¹ * ((q_n h n x - h x) + ((ς : ℤ) : ℂ) *
+              ((𝓕 (q_n h n) : TestFunction d) x - ((ς : ℤ) : ℂ) * h x)) := by
           linear_combination (2⁻¹ * (h x : ℂ)) * units_coe_mul_self ς
         rw [hx, norm_mul, norm_inv, Complex.norm_two]
         gcongr
         refine (norm_add_le _ _).trans ?_
         rw [norm_mul, norm_units_coe, one_mul]
-    _ = 2⁻¹ * ((∫ x, ‖approximant h n x - (h x : ℂ)‖) +
-          ∫ x, ‖(𝓕 (approximant h n) : TestFunction d) x - ((ς : ℤ) : ℂ) * h x‖) := by
+    _ = 2⁻¹ * ((∫ x, ‖q_n h n x - (h x : ℂ)‖) +
+          ∫ x, ‖(𝓕 (q_n h n) : TestFunction d) x - ((ς : ℤ) : ℂ) * h x‖) := by
         rw [integral_const_mul, integral_add h1.norm h2.norm]
 
 /-! ### The eigenfunction corrector `ψ_ς` -/
@@ -31526,38 +31550,38 @@ theorem exists_schwartz_approximation (hd : 0 < d) (h : SignEigenfunction d ς) 
       (𝓕 (q n) : TestFunction d) = ((ς : ℤ) : ℂ) • q n ∧ q n 0 = 0) ∧
       Tendsto (fun n ↦ ∫ x, ‖q n x - (h x : ℂ)‖) atTop (𝓝 0) := by
   obtain ⟨ψ, hψr, hψrad, hψf, hψ0⟩ := exists_eigenTest hd ς
-  refine ⟨fun n ↦ projected h n - (projected h n 0 / ψ 0) • ψ, fun n ↦ ⟨?_, ?_, ?_, ?_⟩, ?_⟩
+  refine ⟨fun n ↦ p_n h n - (p_n h n 0 / ψ 0) • ψ, fun n ↦ ⟨?_, ?_, ?_, ?_⟩, ?_⟩
   · intro x
     simp [sub_apply, smul_apply, Complex.sub_im, Complex.mul_im, Complex.div_im,
-      projected_real h hrad n x, projected_real h hrad n 0, hψr 0, hψr x]
+      p_n_real h hrad n x, p_n_real h hrad n 0, hψr 0, hψr x]
   · intro x y hxy
-    simp only [sub_apply, smul_apply, projected_radial h hrad n x y hxy, hψrad x y hxy]
-  · have e1 : (𝓕 (projected h n - (projected h n 0 / ψ 0) • ψ) : TestFunction d) =
-        𝓕 (projected h n) - (projected h n 0 / ψ 0) • 𝓕 ψ := by
+    simp only [sub_apply, smul_apply, p_n_radial h hrad n x y hxy, hψrad x y hxy]
+  · have e1 : (𝓕 (p_n h n - (p_n h n 0 / ψ 0) • ψ) : TestFunction d) =
+        𝓕 (p_n h n) - (p_n h n 0 / ψ 0) • 𝓕 ψ := by
       rw [fourier_sub_testFunction, fourier_smul_testFunction]
-    rw [e1, fourier_projected h hrad, hψf, smul_sub, smul_comm]
+    rw [e1, fourier_p_n h hrad, hψf, smul_sub, smul_comm]
   · simp only [sub_apply, smul_apply, smul_eq_mul]
     rw [div_mul_cancel₀ _ hψ0, sub_self]
-  · have hc : Tendsto (fun n ↦ projected h n 0 / ψ 0) atTop (𝓝 0) := by
-      simpa using (tendsto_projected_zero h hrad).div_const (ψ 0)
-    have hlim : Tendsto (fun n ↦ (∫ x, ‖projected h n x - (h x : ℂ)‖) +
-        ‖projected h n 0 / ψ 0‖ * ∫ x, ‖ψ x‖) atTop (𝓝 0) := by
-      simpa using (tendsto_projected h hrad).add (hc.norm.mul_const (∫ x, ‖ψ x‖))
+  · have hc : Tendsto (fun n ↦ p_n h n 0 / ψ 0) atTop (𝓝 0) := by
+      simpa using (tendsto_p_n_zero h hrad).div_const (ψ 0)
+    have hlim : Tendsto (fun n ↦ (∫ x, ‖p_n h n x - (h x : ℂ)‖) +
+        ‖p_n h n 0 / ψ 0‖ * ∫ x, ‖ψ x‖) atTop (𝓝 0) := by
+      simpa using (tendsto_p_n h hrad).add (hc.norm.mul_const (∫ x, ‖ψ x‖))
     refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds hlim
       (fun n ↦ integral_nonneg fun _ ↦ norm_nonneg _) fun n ↦ ?_
-    have h1 : Integrable fun x ↦ projected h n x - (h x : ℂ) :=
-      (projected h n).integrable.sub h.integrable_toComplex
-    have h2 : Integrable fun x ↦ (projected h n 0 / ψ 0) * ψ x := ψ.integrable.const_mul _
-    calc ∫ x, ‖(projected h n - (projected h n 0 / ψ 0) • ψ) x - (h x : ℂ)‖
-        ≤ ∫ x, (‖projected h n x - (h x : ℂ)‖ + ‖(projected h n 0 / ψ 0) * ψ x‖) := by
+    have h1 : Integrable fun x ↦ p_n h n x - (h x : ℂ) :=
+      (p_n h n).integrable.sub h.integrable_toComplex
+    have h2 : Integrable fun x ↦ (p_n h n 0 / ψ 0) * ψ x := ψ.integrable.const_mul _
+    calc ∫ x, ‖(p_n h n - (p_n h n 0 / ψ 0) • ψ) x - (h x : ℂ)‖
+        ≤ ∫ x, (‖p_n h n x - (h x : ℂ)‖ + ‖(p_n h n 0 / ψ 0) * ψ x‖) := by
           refine integral_mono_of_nonneg (.of_forall fun _ ↦ norm_nonneg _) (h1.norm.add h2.norm)
             (.of_forall fun x ↦ ?_)
           dsimp only
           rw [sub_apply, smul_apply, smul_eq_mul, sub_right_comm]
           exact norm_sub_le _ _
-      _ = (∫ x, ‖projected h n x - (h x : ℂ)‖) + ∫ x, ‖(projected h n 0 / ψ 0) * ψ x‖ :=
+      _ = (∫ x, ‖p_n h n x - (h x : ℂ)‖) + ∫ x, ‖(p_n h n 0 / ψ 0) * ψ x‖ :=
           integral_add h1.norm h2.norm
-      _ = (∫ x, ‖projected h n x - (h x : ℂ)‖) + ‖projected h n 0 / ψ 0‖ * ∫ x, ‖ψ x‖ := by
+      _ = (∫ x, ‖p_n h n x - (h x : ℂ)‖) + ‖p_n h n 0 / ψ 0‖ * ∫ x, ‖ψ x‖ := by
           congr 1
           simp_rw [norm_mul]
           exact integral_const_mul _ _
@@ -31764,7 +31788,7 @@ section CohnElkies_UpperBound_SelfFourier
 # The self-Fourier function `f₀` (report §4.3, Lemma 4.3, Corollary 4.9)
 
 The spectrum `X₀`, the Mellin data `M₀` and the profile `f₀` of the polynomial
-`P₀(ζ) = -(1 + ζ²)`, obtained from the generic results on `mellinProfile`: `f₀` is a real radial
+`P₀(ζ) = -(1 + ζ²)`, obtained from the generic results on `f_P`: `f₀` is a real radial
 Schwartz function with `𝓕 f₀ = f₀` and `f₀(0) = 0`, and `f₀ > 0` outside the ball of radius
 `R_{ε,d}` for all large `d`, so that it is a radial eigenfunction of eigenvalue `+1`
 (`eventually_exists_radialEigenfunction_fZero`).
@@ -31784,7 +31808,7 @@ open scoped ContDiff FourierTransform SchwartzMap Topology
 The self-Fourier function `f₀` of the report is the profile of the Mellin data
 `M₀(z) = E_λ(i(z - λ)) P₀(i(z - λ)/λ)`, `P₀(ζ) = -(1 + ζ²)`, exactly as `f₊`, `f₋` are the
 profiles for `P₊`, `P₋`. Everything below is obtained from the generic results on the profiles
-`mellinProfile ε ℓ P c` of a saddle polynomial `P` (`IsSaddlePolynomial`), the only
+`f_P ε ℓ P c` of a saddle polynomial `P` (`IsSaddlePolynomial`), the only
 `P₀`-specific inputs being `P₀(-ζ) = P₀(ζ)` (self-Fourier, report (40)), `P₀(-i) = 0`
 (so `f₀(0) = 0`, report (42)) and `P₀(iu) = u² - 1 ≥ (ε/4)(2 + ε/4) > 0` for `u ≥ 1 + ε/4`
 (the sign, report §4.3 and Corollary 4.9). -/
@@ -31849,20 +31873,20 @@ def XZero (ε ℓ t : ℝ) : ℂ := E ε ℓ t * PZero ((t : ℂ) / (ℓ : ℂ))
 def MZero (ε ℓ : ℝ) (z : ℂ) : ℂ := mellinEnvelope ε ℓ z * PZero (I * (z - (ℓ : ℂ)) / (ℓ : ℂ))
 
 /-- The radial profile `f₀` of the report: the inverse Mellin transform of `M₀` for `r ≠ 0`, with
-`f₀(0) = 0` (report (42)); definitionally `mellinProfile ε ℓ PZero 0`. -/
+`f₀(0) = 0` (report (42)); definitionally `f_P ε ℓ PZero 0`. -/
 def fZero (ε ℓ r : ℝ) : ℂ := if r = 0 then 0 else mellinInv ℓ (MZero ε ℓ) r
 
 /-- The radial function `x ↦ f₀(‖x‖)` on `ℝ ^ d`. -/
 def fZeroFun (ε : ℝ) (d : ℕ) (x : Euclidean d) : ℂ := fZero ε (d / 2 : ℝ) ‖x‖
 
-theorem XZero_eq_spectrum (ε ℓ : ℝ) : XZero ε ℓ = spectrum ε ℓ PZero := rfl
+theorem XZero_eq_X_P (ε ℓ : ℝ) : XZero ε ℓ = X_P ε ℓ PZero := rfl
 
-theorem MZero_eq_mellinData (ε ℓ : ℝ) : MZero ε ℓ = mellinData ε ℓ PZero := rfl
+theorem MZero_eq_M_P (ε ℓ : ℝ) : MZero ε ℓ = M_P ε ℓ PZero := rfl
 
-theorem fZero_eq_mellinProfile (ε ℓ : ℝ) : fZero ε ℓ = mellinProfile ε ℓ PZero 0 := rfl
+theorem fZero_eq_f_P (ε ℓ : ℝ) : fZero ε ℓ = f_P ε ℓ PZero 0 := rfl
 
-theorem fZeroFun_eq_mellinProfileFun (ε : ℝ) (d : ℕ) :
-    fZeroFun ε d = mellinProfileFun ε d PZero 0 := rfl
+theorem fZeroFun_eq_f_PFun (ε : ℝ) (d : ℕ) :
+    fZeroFun ε d = f_PFun ε d PZero 0 := rfl
 
 @[simp] theorem fZero_zero (ε ℓ : ℝ) : fZero ε ℓ 0 = 0 := by simp [fZero]
 
@@ -31878,55 +31902,55 @@ theorem poleResidue_PZero_zero {ε ℓ : ℝ} (hℓ : 0 < ℓ) : poleResidue ε 
   rw [poleResidue_zero hℓ, PZero_neg_I, mul_zero]
 
 /-- The multiplier identity `m_λ(t) X₀(-t) = X₀(t)` of report (40) for `P₀`. -/
-theorem mellinMultiplier_mul_XZero_neg {ε ℓ : ℝ} (hℓ : 0 < ℓ) (t : ℝ) :
+theorem m_ℓ_mul_XZero_neg {ε ℓ : ℝ} (hℓ : 0 < ℓ) (t : ℝ) :
     m_ℓ ℓ t * XZero ε ℓ (-t) = XZero ε ℓ t :=
-  mellinMultiplier_mul_spectrum_neg hℓ PZero_neg t
+  m_ℓ_mul_X_P_neg hℓ PZero_neg t
 
 /-- `f₀` is real valued. -/
 theorem fZeroFun_im (ε : ℝ) (d : ℕ) : IsRealValued (fZeroFun ε d) :=
-  mellinProfileFun_im (isSaddlePolynomial_PZero ε) d 0
+  f_PFun_im (isSaddlePolynomial_PZero ε) d 0
 
 /-- Lemma 4.3 for `f₀`: `x ↦ f₀(‖x‖)` is smooth on `ℝᵈ`. -/
 theorem fZeroFun_contDiff {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε) :
     ContDiff ℝ ∞ (fZeroFun ε d) :=
-  mellinProfileFun_contDiff hε hd horder (isSaddlePolynomial_PZero ε) (c := 0)
+  f_PFun_contDiff hε hd horder (isSaddlePolynomial_PZero ε) (c := 0)
     (by rw [poleResidue_PZero_zero (dimension_half_pos hd), Complex.ofReal_zero])
 
 /-- Report Lemma 4.3: `f₀` is a Schwartz function on `ℝᵈ`. -/
-def zeroSaddleSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε) :
+def fZeroSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε) :
     TestFunction d :=
-  mellinProfileSchwartz hε hd horder (isSaddlePolynomial_PZero ε) (c := 0)
+  f_PSchwartz hε hd horder (isSaddlePolynomial_PZero ε) (c := 0)
     (by rw [poleResidue_PZero_zero (dimension_half_pos hd), Complex.ofReal_zero])
 
-@[simp] theorem zeroSaddleSchwartz_apply {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
+@[simp] theorem fZeroSchwartz_apply {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
     (horder : a₀ε ε ≤ Aε ε) (x : Euclidean d) :
-    zeroSaddleSchwartz hε hd horder x = fZeroFun ε d x :=
+    fZeroSchwartz hε hd horder x = fZeroFun ε d x :=
   rfl
 
-theorem isRealValued_zeroSaddleSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
-    (horder : a₀ε ε ≤ Aε ε) : IsRealValued (zeroSaddleSchwartz hε hd horder) :=
-  isRealValued_of_mellinProfile (c := 0) (isSaddlePolynomial_PZero ε) fun _ ↦ rfl
+theorem isRealValued_fZeroSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
+    (horder : a₀ε ε ≤ Aε ε) : IsRealValued (fZeroSchwartz hε hd horder) :=
+  isRealValued_of_f_P (c := 0) (isSaddlePolynomial_PZero ε) fun _ ↦ rfl
 
-theorem isRadial_zeroSaddleSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
-    (horder : a₀ε ε ≤ Aε ε) : IsRadial (zeroSaddleSchwartz hε hd horder) :=
-  isRadial_of_mellinProfile (ε := ε) (P := PZero) (c := 0) fun _ ↦ rfl
+theorem isRadial_fZeroSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
+    (horder : a₀ε ε ≤ Aε ε) : IsRadial (fZeroSchwartz hε hd horder) :=
+  isRadial_of_f_P (ε := ε) (P := PZero) (c := 0) fun _ ↦ rfl
 
 /-- Report Lemma 4.3 and (40) for `P₀`: `𝓕 f₀ = f₀`, the self-Fourier property of `f₀`. -/
-theorem fourier_zeroSaddleSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
+theorem fourier_fZeroSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
     (horder : a₀ε ε ≤ Aε ε) :
-    (𝓕 (zeroSaddleSchwartz hε hd horder) : TestFunction d) = zeroSaddleSchwartz hε hd horder :=
-  fourier_eq_of_mellinProfile hε hd horder (isSaddlePolynomial_PZero ε)
+    (𝓕 (fZeroSchwartz hε hd horder) : TestFunction d) = fZeroSchwartz hε hd horder :=
+  fourier_eq_of_f_P hε hd horder (isSaddlePolynomial_PZero ε)
     (isSaddlePolynomial_PZero ε) PZero_neg (c := 0) (c' := 0) _ _ (fun _ ↦ rfl) (fun _ ↦ rfl)
 
-/-- `f₀` as a real radial self-Fourier eigenfunction (`𝓕 g = g`, `g(0) = 0`), once it is known to
-be nonzero. -/
-def zeroSaddleEigenfunction {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε)
-    (hne : zeroSaddleSchwartz hε hd horder ≠ 0) : RadialEigenfunction d 1 where
-  toFun := zeroSaddleSchwartz hε hd horder
-  real := isRealValued_zeroSaddleSchwartz hε hd horder
-  radial := isRadial_zeroSaddleSchwartz hε hd horder
+/-- Report, proof of Theorem 1.2: `g_{ε,d,+} = f₀` as a real radial self-Fourier eigenfunction
+(`𝓕 g = g`, `g(0) = 0`), once it is known to be nonzero. -/
+def gPlus {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε)
+    (hne : fZeroSchwartz hε hd horder ≠ 0) : RadialEigenfunction d 1 where
+  toFun := fZeroSchwartz hε hd horder
+  real := isRealValued_fZeroSchwartz hε hd horder
+  radial := isRadial_fZeroSchwartz hε hd horder
   ne_zero := hne
-  fourier_eq := by rw [fourier_zeroSaddleSchwartz]; simp
+  fourier_eq := by rw [fourier_fZeroSchwartz]; simp
   zero := fZeroFun_zero ε d
 
 /-! ### The sign of `f₀` outside the ball of radius `R_{ε,d}` (report §4.3, Corollary 4.9) -/
@@ -31935,14 +31959,14 @@ def zeroSaddleEigenfunction {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (ho
 `d`, `Re f₀(r) > 0` for all `r ≥ R_{ε,d}`. -/
 theorem eventually_fZero_re_pos_of_radius : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ᶠ d : ℕ in atTop,
     ∀ r : ℝ, R_ε ε d ≤ r → 0 < (fZero ε ((d : ℝ) / 2) r).re := by
-  filter_upwards [self_mem_nhdsWithin, eventually_mellinProfile_re_mul_pos_of_radius]
+  filter_upwards [self_mem_nhdsWithin, eventually_f_P_re_mul_pos_of_radius]
     with ε hε hradius
   change 0 < ε at hε
   have hsign : ∀ u : ℝ, 1 + ε / 4 ≤ u → 0 < (1 : ℝ) * (PZero (I * (u : ℂ))).re :=
     fun u hu ↦ by rw [one_mul]; exact PZero_imaginary_re_pos hε hu
   filter_upwards [hradius PZero (1 + ε / 4) 1 (isSaddlePolynomial_PZero ε)
     (saddleRangeBounds_PZero hε) (by linarith) hsign] with d hd r hr
-  rw [fZero_eq_mellinProfile]
+  rw [fZero_eq_f_P]
   simpa using hd 0 r hr
 
 /-- Report §4.3 and Corollary 4.9 for `P₀`: `f₀(x) > 0` for `‖x‖ ≥ R_{ε,d}`, for small `ε` and
@@ -31960,18 +31984,18 @@ theorem eventually_exists_radialEigenfunction_fZero : ∀ᶠ ε : ℝ in 𝓝[>]
     ∀ᶠ d : ℕ in atTop, ∃ g : RadialEigenfunction d 1,
       (∀ x : Euclidean d, g.toFun x = fZeroFun ε d x) ∧
         ∀ x : Euclidean d, R_ε ε d ≤ ‖x‖ → 0 < (g.toFun x).re := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
     eventually_fZeroFun_re_pos_of_radius] with ε hε horder hpos
   filter_upwards [hpos, eventually_gt_atTop 0] with d hd hd0
-  have hne : zeroSaddleSchwartz hε hd0 horder ≠ 0 := by
+  have hne : fZeroSchwartz hε hd0 horder ≠ 0 := by
     intro hzero
     have hx : ‖R_ε ε d • radialUnitDirection hd0‖ = R_ε ε d := by
       rw [norm_smul, norm_radialUnitDirection hd0, mul_one, Real.norm_eq_abs,
-        abs_of_pos (saddleSourceRadius_pos ε d)]
+        abs_of_pos (R_ε_pos ε d)]
     have h := hd (R_ε ε d • radialUnitDirection hd0) hx.symm.le
-    rw [← zeroSaddleSchwartz_apply hε hd0 horder, hzero] at h
+    rw [← fZeroSchwartz_apply hε hd0 horder, hzero] at h
     simp at h
-  exact ⟨zeroSaddleEigenfunction hε hd0 horder hne, fun _ ↦ rfl, hd⟩
+  exact ⟨gPlus hε hd0 horder hne, fun _ ↦ rfl, hd⟩
 
 end
 
@@ -32054,55 +32078,55 @@ section SaddlePair
 
 variable {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε)
 
-theorem isRealValued_plusSaddleSchwartz : IsRealValued (plusSaddleSchwartz hε hd horder) :=
+theorem isRealValued_fPlusSchwartz : IsRealValued (fPlusSchwartz hε hd horder) :=
   plusSaddle_real_of_source fun _ ↦ rfl
 
-theorem isRealValued_minusSaddleSchwartz : IsRealValued (minusSaddleSchwartz hε hd horder) :=
+theorem isRealValued_fMinusSchwartz : IsRealValued (fMinusSchwartz hε hd horder) :=
   minusSaddle_real_of_source fun _ ↦ rfl
 
-theorem isRadial_plusSaddleSchwartz : IsRadial (plusSaddleSchwartz hε hd horder) :=
+theorem isRadial_fPlusSchwartz : IsRadial (fPlusSchwartz hε hd horder) :=
   isRadial_of_source (F := fPlus ε ((d : ℝ) / 2)) fun _ ↦ rfl
 
-theorem isRadial_minusSaddleSchwartz : IsRadial (minusSaddleSchwartz hε hd horder) :=
+theorem isRadial_fMinusSchwartz : IsRadial (fMinusSchwartz hε hd horder) :=
   isRadial_of_source (F := fMinus ε ((d : ℝ) / 2)) fun _ ↦ rfl
 
 /-- Report (40): `𝓕 f₋ = f₊`. -/
-theorem fourier_minusSaddleSchwartz :
-    (𝓕 (minusSaddleSchwartz hε hd horder) : TestFunction d) = plusSaddleSchwartz hε hd horder :=
+theorem fourier_fMinusSchwartz :
+    (𝓕 (fMinusSchwartz hε hd horder) : TestFunction d) = fPlusSchwartz hε hd horder :=
   saddleSource_fourier_minus_eq_plus hε hd horder _ _ (fun _ ↦ rfl) (fun _ ↦ rfl)
 
 /-- Report (83): `f₋(0) = f₊(0)`. -/
-theorem minusSaddleSchwartz_zero_eq :
-    minusSaddleSchwartz hε hd horder 0 = plusSaddleSchwartz hε hd horder 0 :=
+theorem fMinusSchwartz_zero_eq :
+    fMinusSchwartz hε hd horder 0 = fPlusSchwartz hε hd horder 0 :=
   saddleSource_zero_eq (ε := ε) _ _ (fun _ ↦ rfl) (fun _ ↦ rfl)
 
 /-- `f₊ - f₋ = 𝓕 f₋ - f₋` is the anti-self-Fourier part of `f₋` (report (40)). -/
-theorem antiFourierPart_minusSaddleSchwartz :
-    antiFourierPart (minusSaddleSchwartz hε hd horder) =
-      plusSaddleSchwartz hε hd horder - minusSaddleSchwartz hε hd horder := by
-  rw [antiFourierPart, fourier_minusSaddleSchwartz]
+theorem antiFourierPart_fMinusSchwartz :
+    antiFourierPart (fMinusSchwartz hε hd horder) =
+      fPlusSchwartz hε hd horder - fMinusSchwartz hε hd horder := by
+  rw [antiFourierPart, fourier_fMinusSchwartz]
 
 /-- Report, proof of Theorem 1.2: `g_{ε,d,-} = f₊ - f₋` is a real radial test function with
 `𝓕 g = -g` (by (40) and Fourier inversion) and `g(0) = f₊(0) - f₋(0) = 0` (by (83)); it is a
 radial eigenfunction with eigenvalue `-1` once it is known to be nonzero. -/
-def minusSaddleEigenfunction
-    (hne : plusSaddleSchwartz hε hd horder - minusSaddleSchwartz hε hd horder ≠ 0) :
+def gMinus
+    (hne : fPlusSchwartz hε hd horder - fMinusSchwartz hε hd horder ≠ 0) :
     RadialEigenfunction d (-1) where
-  toFun := plusSaddleSchwartz hε hd horder - minusSaddleSchwartz hε hd horder
+  toFun := fPlusSchwartz hε hd horder - fMinusSchwartz hε hd horder
   real := by
     intro x
-    rw [sub_apply, Complex.sub_im, isRealValued_plusSaddleSchwartz hε hd horder x,
-      isRealValued_minusSaddleSchwartz hε hd horder x, sub_zero]
+    rw [sub_apply, Complex.sub_im, isRealValued_fPlusSchwartz hε hd horder x,
+      isRealValued_fMinusSchwartz hε hd horder x, sub_zero]
   radial := by
     intro x y hxy
-    rw [sub_apply, sub_apply, isRadial_plusSaddleSchwartz hε hd horder x y hxy,
-      isRadial_minusSaddleSchwartz hε hd horder x y hxy]
+    rw [sub_apply, sub_apply, isRadial_fPlusSchwartz hε hd horder x y hxy,
+      isRadial_fMinusSchwartz hε hd horder x y hxy]
   ne_zero := hne
   fourier_eq := by
-    rw [← antiFourierPart_minusSaddleSchwartz hε hd horder,
-      fourier_antiFourierPart _ (isRadial_minusSaddleSchwartz hε hd horder)]
+    rw [← antiFourierPart_fMinusSchwartz hε hd horder,
+      fourier_antiFourierPart _ (isRadial_fMinusSchwartz hε hd horder)]
     simp
-  zero := by rw [sub_apply, minusSaddleSchwartz_zero_eq hε hd horder, sub_self]
+  zero := by rw [sub_apply, fMinusSchwartz_zero_eq hε hd horder, sub_self]
 
 end SaddlePair
 
@@ -32114,26 +32138,26 @@ outside the ball of radius `R_{ε,d}` (there `f₊ ≥ 0 > f₋`). -/
 theorem eventually_exists_radialEigenfunction_neg_one : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ᶠ d : ℕ in atTop, ∃ g : RadialEigenfunction d (-1),
       ∀ x : Euclidean d, R_ε ε d ≤ ‖x‖ → 0 < (g.toFun x).re := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
     saddleSourceEventualSigns, eventually_fMinus_re_neg_of_radius] with ε hε₀ horder hsigns hneg
   have hε : 0 < ε := hε₀
   filter_upwards [hsigns, hneg, eventually_gt_atTop 0] with d hsign hneg_d hd0
   have hpos : ∀ x : Euclidean d, R_ε ε d ≤ ‖x‖ →
-      0 < ((plusSaddleSchwartz hε hd0 horder - minusSaddleSchwartz hε hd0 horder) x).re := by
+      0 < ((fPlusSchwartz hε hd0 horder - fMinusSchwartz hε hd0 horder) x).re := by
     intro x hx
     have h1 : 0 ≤ (fPlusFun ε d x).re := hsign.1 x
     have h2 : (fMinusFun ε d x).re < 0 := hneg_d ‖x‖ hx
-    rw [sub_apply, Complex.sub_re, plusSaddleSchwartz_apply, minusSaddleSchwartz_apply]
+    rw [sub_apply, Complex.sub_re, fPlusSchwartz_apply, fMinusSchwartz_apply]
     linarith
-  have hne : plusSaddleSchwartz hε hd0 horder - minusSaddleSchwartz hε hd0 horder ≠ 0 := by
+  have hne : fPlusSchwartz hε hd0 horder - fMinusSchwartz hε hd0 horder ≠ 0 := by
     intro hzero
     have hx : ‖R_ε ε d • radialUnitDirection hd0‖ = R_ε ε d := by
       rw [norm_smul, norm_radialUnitDirection hd0, mul_one, Real.norm_eq_abs,
-        abs_of_pos (saddleSourceRadius_pos ε d)]
+        abs_of_pos (R_ε_pos ε d)]
     have h := hpos (R_ε ε d • radialUnitDirection hd0) hx.symm.le
     rw [hzero] at h
     simp at h
-  exact ⟨minusSaddleEigenfunction hε hd0 horder hne, hpos⟩
+  exact ⟨gMinus hε hd0 horder hne, hpos⟩
 
 /-! ### `A_ς(d) ≤ R_{ε,d}` and the `limsup` bound -/
 
@@ -32169,7 +32193,7 @@ theorem eventually_limsup_signUncertaintyConstant_div_sqrt_le (ς : ℤˣ) :
   filter_upwards [self_mem_nhdsWithin, eventually_signUncertaintyConstant_le ς] with ε hε hle
   have hlim : Tendsto (fun d : ℕ ↦ ENNReal.ofReal (R_ε ε d / √(d : ℝ))) atTop
       (𝓝 (ENNReal.ofReal (α_ε ε))) :=
-    ENNReal.tendsto_ofReal (tendsto_saddleSourceRadius_normalized hε)
+    ENNReal.tendsto_ofReal (tendsto_R_ε_normalized hε)
   refine (limsup_le_limsup ?_).trans hlim.limsup_eq.le
   filter_upwards [hle, eventually_gt_atTop 0] with d hd hd0
   have hsq : 0 < √(d : ℝ) := Real.sqrt_pos.2 (Nat.cast_pos.2 hd0)
@@ -32181,7 +32205,7 @@ theorem eventually_limsup_signUncertaintyConstant_div_sqrt_le (ς : ℤˣ) :
 theorem limsup_signUncertaintyConstant_div_sqrt_le (ς : ℤˣ) :
     limsup (fun d : ℕ ↦ signUncertaintyConstant ς d / ENNReal.ofReal (Real.sqrt d)) atTop ≤
       ENNReal.ofReal (Real.pi⁻¹) :=
-  ge_of_tendsto (ENNReal.tendsto_ofReal tendsto_limitingSaddleRadius)
+  ge_of_tendsto (ENNReal.tendsto_ofReal tendsto_α_ε)
     (eventually_limsup_signUncertaintyConstant_div_sqrt_le ς)
 
 end
@@ -32243,3 +32267,4 @@ end
 end CohnElkies
 
 end CohnElkies_SignUncertainty_Main
+

@@ -26,7 +26,7 @@ transform on the line `Re z = ℓ` (report (10)). -/
 def m_ℓ (ℓ t : ℝ) : ℂ :=
   Complex.exp (I * t * log π) * Complex.Gamma ((ℓ - I * t) / 2) / Complex.Gamma ((ℓ + I * t) / 2)
 
-theorem mellinMultiplier_denominator_ne_zero {ℓ : ℝ} (hℓ : 0 < ℓ) (t : ℝ) :
+theorem m_ℓ_denominator_ne_zero {ℓ : ℝ} (hℓ : 0 < ℓ) (t : ℝ) :
     Complex.Gamma ((ℓ + I * t) / 2) ≠ 0 :=
   Complex.Gamma_ne_zero_of_re_pos (by simpa using half_pos hℓ)
 
@@ -68,7 +68,8 @@ theorem schwartz_mul_norm_cpow_integrable {d : ℕ} (hd : 0 < d) (f : TestFuncti
 
 /-! ### The Gaussian pairing `Φ_f(a) = ∫ f(x) e^{-a|x|²} dx` -/
 
-/-- The Gaussian pairing `Φ_f(a) = ∫ f(x) e^{-a|x|²} dx` of a test function. -/
+/-- The Gaussian pairing `Φ_f(a) = ∫ f(x) e^{-a|x|²} dx` of a test function (not the report's
+log-radius profile `Φ_g` of §2.2). -/
 def gaussianPairing {d : ℕ} (f : TestFunction d) (a : ℝ) : ℂ :=
   ∫ x, f x * Complex.exp (-(a * (‖x‖ : ℂ) ^ 2))
 
@@ -221,7 +222,7 @@ theorem radial_fourier_mellin_strip {d : ℕ} (hd : 0 < d) (f : TestFunction d) 
     refine Complex.Gamma_ne_zero_of_re_pos ?_
     simp
     linarith
-  have hS : (sphereArea d : ℂ) ≠ 0 := Complex.ofReal_ne_zero.2 (radialSurfaceArea_pos hd).ne'
+  have hS : (sphereArea d : ℂ) ≠ 0 := Complex.ofReal_ne_zero.2 (sphereArea_pos hd).ne'
   have h := fourier_riesz_pairing hd f hs hsd
   rw [integral_radialProfile_cpow hd _ (gaussianMellin_fourier_radial hf),
     show -s = (d - s) - d by ring, integral_radialProfile_cpow hd f hf, Complex.real_smul,

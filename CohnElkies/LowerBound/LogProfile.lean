@@ -25,7 +25,7 @@ def L1norm {d : ℕ} (g : TestFunction d) : ℝ := ∫ x : Euclidean d, ‖g x�
 theorem L1norm_nonneg {d : ℕ} (g : TestFunction d) : 0 ≤ L1norm g :=
   integral_nonneg fun _ ↦ norm_nonneg _
 
-theorem radialL1Mass_pos {d : ℕ} (g : TestFunction d) (hg : g ≠ 0) : 0 < L1norm g := by
+theorem L1norm_pos_of_ne_zero {d : ℕ} (g : TestFunction d) (hg : g ≠ 0) : 0 < L1norm g := by
   obtain ⟨x, hx⟩ := DFunLike.ne_iff.mp hg
   exact integral_pos_of_integrable_nonneg_nonzero g.continuous.norm g.integrable.norm
     (fun _ ↦ norm_nonneg _) (norm_ne_zero_iff.mpr (by simpa using hx))
@@ -119,7 +119,7 @@ theorem abs_logProfile {d : ℕ} (hd : 0 < d) (g : TestFunction d) (hreal : IsRe
     |φ_g hd g R v| = sphereArea d / L1norm g *
       ((R * exp v) * ((R * exp v) ^ (d - 1) * ‖radialProfile hd g (R * exp v)‖)) := by
   simp only [φ_g, norm_radialProfile_eq_abs_re hd g hreal, abs_mul, abs_pow]
-  rw [abs_of_nonneg (div_nonneg (radialSurfaceArea_pos hd).le (L1norm_nonneg g)), abs_of_pos hR,
+  rw [abs_of_nonneg (div_nonneg (sphereArea_pos hd).le (L1norm_nonneg g)), abs_of_pos hR,
     abs_of_pos (exp_pos v), ← mul_pow_sub_one hd.ne' (R * exp v)]
   ring
 
@@ -128,7 +128,7 @@ theorem integral_abs_logProfile {d : ℕ} (hd : 0 < d) (g : TestFunction d) (hra
     (hreal : IsRealValued g) (hnonzero : g ≠ 0) {R : ℝ} (hR : 0 < R) :
     (∫ v : ℝ, |φ_g hd g R v|) = 1 := by
   rw [integral_logProfile_weight hd g hradial hR (‖·‖) _ (abs_logProfile hd g hreal hR)]
-  exact div_self (radialL1Mass_pos g hnonzero).ne'
+  exact div_self (L1norm_pos_of_ne_zero g hnonzero).ne'
 
 /-- Report (13): the mass of `φ_g` on `(-∞, 0]` is the mass of `g` in the ball of radius `R`,
 relative to `‖g‖₁`. -/
@@ -166,8 +166,8 @@ theorem logProfile_nonneg_of_exterior {d : ℕ} (hd : 0 < d) (g : TestFunction d
     rw [norm_smul, norm_radialUnitDirection hd, mul_one, Real.norm_eq_abs, abs_of_pos hradius]
     exact le_mul_of_one_le_right hR.le (one_le_exp hv)
   unfold φ_g
-  exact mul_nonneg (mul_nonneg (div_pos (radialSurfaceArea_pos hd)
-    (radialL1Mass_pos g hnonzero)).le (pow_nonneg hradius.le _)) (houtside _ hpoint)
+  exact mul_nonneg (mul_nonneg (div_pos (sphereArea_pos hd)
+    (L1norm_pos_of_ne_zero g hnonzero)).le (pow_nonneg hradius.le _)) (houtside _ hpoint)
 
 /-! ### The normalized profile of a radial eigenfunction (report (13)) -/
 
@@ -176,7 +176,7 @@ namespace RadialEigenfunction
 variable {d : ℕ} {ς : ℤˣ}
 
 theorem L1norm_pos (g : RadialEigenfunction d ς) : 0 < L1norm g.toFun :=
-  radialL1Mass_pos g.toFun g.ne_zero
+  L1norm_pos_of_ne_zero g.toFun g.ne_zero
 
 theorem integrable_logProfile (hd : 0 < d) (g : RadialEigenfunction d ς) {R : ℝ} (hR : 0 < R) :
     Integrable (φ_g hd g.toFun R) :=

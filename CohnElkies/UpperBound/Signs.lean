@@ -39,18 +39,18 @@ def SaddleSourceEventualSigns : Prop := ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), �
 def saddleOrderedUpperConstruction (hschwartz : SaddleSourceSchwartzRealization)
     (hsigns : SaddleSourceEventualSigns) : OrderedEpsilonUpperConstruction :=
   let hex := mem_nhdsGT_iff_exists_Ioo_subset.mp
-    (eventually_upper_shortCutoff_le_shortEndpoint.and hsigns)
+    (eventually_upper_a₀ε_le_Aε.and hsigns)
   { epsilonBound := hex.choose
     epsilonBound_pos := hex.choose_spec.1
     normalizedRadius := fun ε d ↦ R_ε ε d / √(d : ℝ)
     limitingRadius := α_ε
-    limitingRadius_tendsto := tendsto_limitingSaddleRadius
-    normalizedRadius_tendsto := fun _ hε _ ↦ tendsto_saddleSourceRadius_normalized hε
+    limitingRadius_tendsto := tendsto_α_ε
+    normalizedRadius_tendsto := fun _ hε _ ↦ tendsto_R_ε_normalized hε
     admissibleWitness := fun ε hε hsmall ↦ by
       obtain ⟨horder, hsignε⟩ := hex.choose_spec.2 ⟨hε, hsmall⟩
       filter_upwards [hsignε, eventually_gt_atTop 0] with d hsign hd
       obtain ⟨fminus, fplus, hminus, hplus⟩ := hschwartz ε hε horder d hd
-      exact ⟨_, (saddleSourceAdmissible_normalizedCost hε hd horder (saddleSourceRadius_pos ε d)
+      exact ⟨_, (saddleSourceAdmissible_normalizedCost hε hd horder (R_ε_pos ε d)
         fminus fplus hminus hplus hsign.1 hsign.2).le⟩ }
 
 end
@@ -89,30 +89,30 @@ theorem eventually_scale_le_of_le {u₀ : ℝ} (hu₀ : -1 < u₀) :
 /-- Report §4.3, first branch: at the saddle point of height `u` (`-1 < u ≤ 1 + ε/2`, with
 `log λ / 4 ≤ λ(1 + u)`) the profile `f_P` of a saddle polynomial with range bounds on `u ≥ u₀`
 has the sign of `P(iu)`, whatever its origin value `c`. -/
-theorem eventually_mellinProfile_re_mul_pos_firstBranch : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_f_P_re_mul_pos_firstBranch : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ (P : ℂ → ℂ) (u₀ : ℝ), IsSaddlePolynomial ε P → SaddleRangeBounds P u₀ →
       ∀ᶠ d : ℕ in atTop, ∀ (c u : ℝ), -1 < u → u ≤ 1 + ε / 2 →
         log ((d : ℝ) / 2) / 4 ≤ (d : ℝ) / 2 * (1 + u) → u₀ ≤ u →
         0 < (P (I * (u : ℂ))).re *
-          (mellinProfile ε ((d : ℝ) / 2) P c (exp (logRadius ε d u))).re := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
+          (f_P ε ((d : ℝ) / 2) P c (exp (logRadius ε d u))).re := by
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
     eventually_firstBranch_fullGaussianError] with ε hε horder hfull
   intro P u₀ hP hrange
   filter_upwards [tendsto_saddleResidue_dimension_half.eventually (hfull P u₀ hP hrange),
     eventually_gt_atTop 0] with d hdimen hd c u hu hupper hscale hu₀
   have hℓ : (0 : ℝ) < (d : ℝ) / 2 := by positivity
-  rw [← saddleSourceStationaryLogRadius_eq_saddleLogRadius]
-  exact mellinProfile_exp_re_mul_pos_of_gaussian_error hε hℓ hu horder hP c
+  rw [← v_ℓ_eq_logRadius]
+  exact f_P_exp_re_mul_pos_of_gaussian_error hε hℓ hu horder hP c
     (hdimen u hu hupper hscale hu₀)
 
 /-- Report §4.3, second branch: at the saddle point of height `u ≥ 1 + ε/2` the profile `f_P` of
 a saddle polynomial with range bounds on `u ≥ u₀` has the sign of `P(iu)`. -/
-theorem eventually_mellinProfile_re_mul_pos_secondBranch : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_f_P_re_mul_pos_secondBranch : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ (P : ℂ → ℂ) (u₀ : ℝ), IsSaddlePolynomial ε P → SaddleRangeBounds P u₀ →
       ∀ᶠ d : ℕ in atTop, ∀ (c u : ℝ), 1 + ε / 2 ≤ u → u₀ ≤ u →
         0 < (P (I * (u : ℂ))).re *
-          (mellinProfile ε ((d : ℝ) / 2) P c (exp (logRadius ε d u))).re := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
+          (f_P ε ((d : ℝ) / 2) P c (exp (logRadius ε d u))).re := by
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
     eventually_secondBranch_fullGaussianError] with ε hε horder hfull
   intro P u₀ hP hrange
   filter_upwards [tendsto_saddleResidue_dimension_half.eventually (hfull P u₀ hP hrange),
@@ -122,21 +122,21 @@ theorem eventually_mellinProfile_re_mul_pos_secondBranch : ∀ᶠ ε : ℝ in �
   have hidentity : 1 + (u - 1) = u := by ring
   have hulower : -1 < u := by linarith
   have hℓ : (0 : ℝ) < (d : ℝ) / 2 := by positivity
-  rw [← saddleSourceStationaryLogRadius_eq_saddleLogRadius]
-  refine mellinProfile_exp_re_mul_pos_of_gaussian_error hε hℓ hulower horder hP c ?_
+  rw [← v_ℓ_eq_logRadius]
+  refine f_P_exp_re_mul_pos_of_gaussian_error hε hℓ hulower horder hP c ?_
   simpa only [hidentity] using hdimen (u - 1) hδ (by rwa [hidentity])
 
 /-- Report §4.3 with Corollary 4.9: for a saddle polynomial `P` with range bounds on `u ≥ u₀`
 (`u₀ > -1`) whose values `P(iu)`, `u ≥ u₀`, have the sign `s`, the profile `f_P` has the sign
 `s` at every radius `r ≥ e^{v(u₀)}`, for small `ε` and large `d`. -/
-theorem eventually_mellinProfile_re_mul_pos_of_radius : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_f_P_re_mul_pos_of_radius : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ (P : ℂ → ℂ) (u₀ s : ℝ), IsSaddlePolynomial ε P → SaddleRangeBounds P u₀ → -1 < u₀ →
       (∀ u : ℝ, u₀ ≤ u → 0 < s * (P (I * (u : ℂ))).re) →
       ∀ᶠ d : ℕ in atTop, ∀ (c r : ℝ), exp (logRadius ε d u₀) ≤ r →
-        0 < s * (mellinProfile ε ((d : ℝ) / 2) P c r).re := by
-  filter_upwards [eventually_saddleLogRadius_covers_Ici,
-    eventually_mellinProfile_re_mul_pos_firstBranch,
-    eventually_mellinProfile_re_mul_pos_secondBranch] with ε hcoverage hfirst hsecond
+        0 < s * (f_P ε ((d : ℝ) / 2) P c r).re := by
+  filter_upwards [eventually_logRadius_covers_Ici,
+    eventually_f_P_re_mul_pos_firstBranch,
+    eventually_f_P_re_mul_pos_secondBranch] with ε hcoverage hfirst hsecond
   intro P u₀ s hP hrange hu₀ hs
   filter_upwards [hfirst P u₀ hP hrange, hsecond P u₀ hP hrange, eventually_gt_atTop 0,
     tendsto_saddleResidue_dimension_half.eventually (eventually_scale_le_of_le hu₀)]
@@ -144,7 +144,7 @@ theorem eventually_mellinProfile_re_mul_pos_of_radius : ∀ᶠ ε : ℝ in 𝓝[
   obtain ⟨u, hu, hlog⟩ := hcoverage d hd u₀ hu₀ r hr
   rw [← show exp (logRadius ε d u) = r by rw [hlog, exp_log ((exp_pos _).trans_le hr)]]
   have hmul : 0 < (P (I * (u : ℂ))).re *
-      (mellinProfile ε ((d : ℝ) / 2) P c (exp (logRadius ε d u))).re := by
+      (f_P ε ((d : ℝ) / 2) P c (exp (logRadius ε d u))).re := by
     rcases le_or_gt u (1 + ε / 2) with hbranch | hbranch
     · exact hfirst_d c u (by linarith) hbranch (hscale u hu) hu
     · exact hsecond_d c u hbranch.le hu
@@ -156,39 +156,39 @@ theorem eventually_mellinProfile_re_mul_pos_of_radius : ∀ᶠ ε : ℝ in 𝓝[
 theorem eventually_fPlus_re_pos_firstBranch : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ᶠ d : ℕ in atTop,
     ∀ u : ℝ, u_star ε d ≤ u → u ≤ 1 + ε / 2 →
       0 < (fPlus ε ((d : ℝ) / 2) (exp (logRadius ε d u))).re := by
-  filter_upwards [self_mem_nhdsWithin, eventually_mellinProfile_re_mul_pos_firstBranch]
+  filter_upwards [self_mem_nhdsWithin, eventually_f_P_re_mul_pos_firstBranch]
     with ε hε hfirst
   filter_upwards [hfirst (PPlus ε) (-1) (isSaddlePolynomial_PPlus ε) (saddleRangeBounds_PPlus hε),
-    eventually_saddleSmallRadiusStarOrdinate_gt_neg_one ε, eventually_gt_atTop 0]
+    eventually_u_star_gt_neg_one ε, eventually_gt_atTop 0]
     with d hfirst_d hstar hd u hu hupper
   have hulower : -1 < u := hstar.trans_le hu
-  rw [fPlus_eq_mellinProfile]
+  rw [fPlus_eq_f_P]
   exact (pos_iff_pos_of_mul_pos (hfirst_d (originValue ε ((d : ℝ) / 2)) u hulower hupper
-    (scale_le_of_star_le hd ε hu) hulower.le)).mp (plusPolynomial_imaginary_re_pos hε hulower)
+    (scale_le_of_star_le hd ε hu) hulower.le)).mp (PPlus_imaginary_re_pos hε hulower)
 
 /-- `Re f₊ > 0` at the saddles of the second branch `1 + ε/2 ≤ u`. -/
 theorem eventually_fPlus_re_pos_secondBranch : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ᶠ d : ℕ in atTop,
     ∀ u : ℝ, 1 + ε / 2 ≤ u → 0 < (fPlus ε ((d : ℝ) / 2) (exp (logRadius ε d u))).re := by
-  filter_upwards [self_mem_nhdsWithin, eventually_mellinProfile_re_mul_pos_secondBranch]
+  filter_upwards [self_mem_nhdsWithin, eventually_f_P_re_mul_pos_secondBranch]
     with ε hε hsecond
   filter_upwards [hsecond (PPlus ε) (-1) (isSaddlePolynomial_PPlus ε)
     (saddleRangeBounds_PPlus hε)] with d hsecond_d u hu
   change 0 < ε at hε
   have hulower : -1 < u := by linarith
-  rw [fPlus_eq_mellinProfile]
+  rw [fPlus_eq_f_P]
   exact (pos_iff_pos_of_mul_pos (hsecond_d (originValue ε ((d : ℝ) / 2)) u hu hulower.le)).mp
-    (plusPolynomial_imaginary_re_pos hε hulower)
+    (PPlus_imaginary_re_pos hε hulower)
 
 /-- `Re f₊ ≥ 0` beyond the small radius `r_*`, covering both saddle branches. -/
 theorem eventually_fPlus_nonneg_of_star : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ᶠ d : ℕ in atTop,
     ∀ r : ℝ, r_star ε d ≤ r → 0 ≤ (fPlus ε ((d : ℝ) / 2) r).re := by
-  filter_upwards [eventually_saddleSmallRadiusStar_log_coverage,
+  filter_upwards [eventually_r_star_log_coverage,
     eventually_fPlus_re_pos_firstBranch, eventually_fPlus_re_pos_secondBranch]
     with ε hcoverage hfirst hsecond
   filter_upwards [hcoverage, hfirst, hsecond] with d hcov hfirst_d hsecond_d r hr
   obtain ⟨u, hu, hlog⟩ := hcov r hr
   rw [← show exp (logRadius ε d u) = r by
-    rw [hlog, exp_log ((saddleSmallRadiusStar_pos ε d).trans_le hr)]]
+    rw [hlog, exp_log ((r_star_pos ε d).trans_le hr)]]
   rcases le_or_gt u (1 + ε / 2) with hbranch | hbranch
   · exact (hfirst_d u hu hbranch).le
   · exact (hsecond_d u hbranch.le).le
@@ -196,14 +196,14 @@ theorem eventually_fPlus_nonneg_of_star : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), 
 /-- Report §4.3: `Re f₋ < 0` beyond the source radius `R_ε`, covering both saddle branches. -/
 theorem eventually_fMinus_re_neg_of_radius : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ᶠ d : ℕ in atTop,
     ∀ r : ℝ, R_ε ε d ≤ r → (fMinus ε ((d : ℝ) / 2) r).re < 0 := by
-  filter_upwards [self_mem_nhdsWithin, eventually_mellinProfile_re_mul_pos_of_radius]
+  filter_upwards [self_mem_nhdsWithin, eventually_f_P_re_mul_pos_of_radius]
     with ε hε hradius
   change 0 < ε at hε
   have hsign : ∀ u : ℝ, 1 + ε / 4 ≤ u → 0 < (-1 : ℝ) * (PMinus ε (I * (u : ℂ))).re :=
-    fun u hu ↦ by linarith [minusPolynomial_imaginary_re_neg hε hu]
+    fun u hu ↦ by linarith [PMinus_imaginary_re_neg hε hu]
   filter_upwards [hradius (PMinus ε) (1 + ε / 4) (-1) (isSaddlePolynomial_PMinus ε)
     (saddleRangeBounds_PMinus hε) (by linarith) hsign] with d hd r hr
-  rw [fMinus_eq_mellinProfile]
+  rw [fMinus_eq_f_P]
   linarith [hd (originValue ε ((d : ℝ) / 2)) r hr]
 
 /-- `Re f₋ ≤ 0` beyond the source radius `R_ε`. -/
@@ -216,7 +216,7 @@ theorem eventually_fMinus_nonpos_of_radius : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ
 /-- Report §4: for small `ε` and large `d` the pair `f_ε^±` has the Cohn–Elkies sign pattern. -/
 theorem saddleSourceEventualSigns : SaddleSourceEventualSigns := by
   unfold SaddleSourceEventualSigns
-  filter_upwards [eventually_plusSaddleProfile_re_pos_on_star, eventually_fPlus_nonneg_of_star,
+  filter_upwards [eventually_fPlus_re_pos_on_star, eventually_fPlus_nonneg_of_star,
     eventually_fMinus_nonpos_of_radius] with ε hsmall hlarge hminus
   filter_upwards [hsmall, hlarge, hminus] with d hsmall_d hlarge_d hminus_d
   refine ⟨fun x ↦ ?_, fun x hx ↦ hminus_d ‖x‖ hx⟩

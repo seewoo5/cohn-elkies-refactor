@@ -247,7 +247,7 @@ alignment:
       lean: "CohnElkies.saddleSourceEventualSigns"
       module: "CohnElkies/UpperBound/Signs.lean"
       status: "proved"
-      note: "f₀: CohnElkies.fZero, fourier_zeroSaddleSchwartz, eventually_fZero_re_pos_of_radius (CohnElkies/UpperBound/SelfFourier.lean)"
+      note: "f₀: CohnElkies.fZero, fourier_fZeroSchwartz, eventually_fZero_re_pos_of_radius (CohnElkies/UpperBound/SelfFourier.lean)"
     - source: "Section 2.1 (radial reduction of the linear program)"
       lean: "CohnElkies.LP_eq_radial"
       module: "CohnElkies/Admissible/Radialization.lean"

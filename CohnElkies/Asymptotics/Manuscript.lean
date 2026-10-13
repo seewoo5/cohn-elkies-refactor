@@ -62,7 +62,7 @@ theorem manuscriptPackingDeficit_le (d : ℕ) :
     manuscriptPackingDeficit d ≤ criticalPackingBase := by
   rw [manuscriptPackingDeficit]
   refine max_le criticalPackingBase_pos.le ?_
-  have : 0 ≤ (LP d) ^ ((d : ℝ)⁻¹) := rpow_nonneg (linearProgram_nonneg d) _
+  have : 0 ≤ (LP d) ^ ((d : ℝ)⁻¹) := rpow_nonneg (LP_nonneg d) _
   linarith
 
 /-- Manuscript Corollary: a universal lower bound on every quotient, with an `o(1)` deficit. -/
@@ -78,7 +78,7 @@ theorem manuscriptUniversalQuotientBound {d : ℕ} (hd : 0 < d) (f : Admissible 
     linarith
   have hpow : (criticalPackingBase - manuscriptPackingDeficit d) ^ d ≤ LP d := by
     have h := pow_le_pow_left₀ hbase hroot d
-    rwa [rpow_inv_natCast_pow (linearProgram_nonneg d) hd.ne'] at h
+    rwa [rpow_inv_natCast_pow (LP_nonneg d) hd.ne'] at h
   have hLP : LP d ≤ unitBallVolume d / 2 ^ d * quotient f :=
     mul_le_mul_of_nonneg_left (csInf_le (quotientSet_bddBelow d) ⟨f, rfl⟩)
       (geometricFactor_pos d).le
@@ -111,7 +111,7 @@ theorem exists_manuscriptPackingIsLittleO : ∃ e : ℕ → ℝ,
   refine ⟨manuscriptPackingRootError, manuscriptPackingRootError_isLittleO, fun d hd ↦ ?_⟩
   rw [show criticalPackingBase + manuscriptPackingRootError d = (LP d) ^ ((d : ℝ)⁻¹) from by
       rw [manuscriptPackingRootError]; ring,
-    rpow_inv_natCast_pow (linearProgram_nonneg d) hd.ne']
+    rpow_inv_natCast_pow (LP_nonneg d) hd.ne']
 
 /-- The manuscript's error term `-(log₂ LP_d)/d - (1/2) log₂ (2π/e)`. -/
 def manuscriptBinaryExponentError (d : ℕ) : ℝ :=
@@ -129,7 +129,7 @@ theorem exists_manuscriptBinaryIsLittleO : ∃ e : ℕ → ℝ,
       ∀ᶠ d : ℕ in atTop, LP d = (2 : ℝ) ^ (-(criticalBinaryExponent + e d) * (d : ℝ)) := by
   refine ⟨manuscriptBinaryExponentError, manuscriptBinaryExponentError_isLittleO, ?_⟩
   filter_upwards [eventually_gt_atTop 0,
-    eventually_linearProgram_pos_of_sharpQuotient sharpQuotientAsymptotic] with d hd hpositive
+    eventually_LP_pos_of_sharpQuotient sharpQuotientAsymptotic] with d hd hpositive
   have hdreal : (d : ℝ) ≠ 0 := Nat.cast_ne_zero.2 hd.ne'
   rw [show -(criticalBinaryExponent + manuscriptBinaryExponentError d) * (d : ℝ)
       = logb 2 (LP d) from by rw [manuscriptBinaryExponentError]; field_simp; ring,

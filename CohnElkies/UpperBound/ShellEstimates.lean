@@ -43,53 +43,53 @@ theorem norm_imaginary_cubic_growth {P : ℂ → ℂ} {u b c : ℝ} (hb : 0 < b)
     nlinarith [hbig h]
 
 /-- Lemma 4.2: `β ≤ ‖P₊(iu)‖` for `u ≥ -1`. -/
-theorem plusPolynomial_imaginary_norm_ge_beta {ε u : ℝ} (hε : 0 < ε) (hu : -1 ≤ u) :
+theorem PPlus_imaginary_norm_ge_β {ε u : ℝ} (hε : 0 < ε) (hu : -1 ≤ u) :
     β ε ≤ ‖PPlus ε (I * u)‖ := by
-  have hb := beta_pos hε
+  have hb := β_pos hε
   have hterm : 0 ≤ (1 - u) ^ 2 * (1 + u) := mul_nonneg (sq_nonneg _) (by linarith)
   have hnorm : ‖PPlus ε (I * u)‖ = |β ε + (1 - u) ^ 2 * (1 + u)| := by
-    rw [plusPolynomial_imaginary]; norm_cast
+    rw [PPlus_imaginary]; norm_cast
   rw [hnorm, abs_of_pos (by linarith : 0 < β ε + (1 - u) ^ 2 * (1 + u))]
   linarith
 
 /-- Lemma 4.2: `3β ≤ ‖P₋(iu)‖` for `u ≥ 1 + ε/4`. -/
-theorem minusPolynomial_imaginary_norm_ge_three_beta {ε u : ℝ} (hε : 0 < ε)
+theorem PMinus_imaginary_norm_ge_three_β {ε u : ℝ} (hε : 0 < ε)
     (hu : 1 + ε / 4 ≤ u) : 3 * β ε ≤ ‖PMinus ε (I * u)‖ := by
-  have hb := beta_pos hε
+  have hb := β_pos hε
   have hbeta : β ε ≤ u - 1 := by unfold β; linarith
   have hsq : 0 ≤ (u - 1) * ((1 + u) ^ 2 - 4) :=
     mul_nonneg (by linarith) (by nlinarith [sq_nonneg (u - 1)])
   have hnorm : ‖PMinus ε (I * u)‖ = |β ε + (1 - u) * (1 + u) ^ 2| := by
-    rw [minusPolynomial_imaginary]; norm_cast
+    rw [PMinus_imaginary]; norm_cast
   rw [hnorm, abs_of_neg (by nlinarith : β ε + (1 - u) * (1 + u) ^ 2 < 0)]
   nlinarith
 
-theorem plusPolynomial_imaginary_cubic_growth_le {ε u : ℝ} (hε : 0 < ε) (hu : -1 ≤ u) :
+theorem PPlus_imaginary_cubic_growth_le {ε u : ℝ} (hε : 0 < ε) (hu : -1 ≤ u) :
     (1 + |u|) ^ 3 ≤ (27 / β ε + 9) * ‖PPlus ε (I * u)‖ := by
-  have hb := beta_pos hε
+  have hb := β_pos hε
   refine norm_imaginary_cubic_growth (P := PPlus ε) hb (by norm_num) hu
-    (plusPolynomial_imaginary_norm_ge_beta hε hu) fun h ↦ ?_
+    (PPlus_imaginary_norm_ge_β hε hu) fun h ↦ ?_
   have hterm : 0 ≤ (1 - u) ^ 2 * (1 + u) := mul_nonneg (sq_nonneg _) (by linarith)
   have hnorm : ‖PPlus ε (I * u)‖ = |β ε + (1 - u) ^ 2 * (1 + u)| := by
-    rw [plusPolynomial_imaginary]; norm_cast
+    rw [PPlus_imaginary]; norm_cast
   rw [hnorm, abs_of_pos (by linarith : 0 < β ε + (1 - u) ^ 2 * (1 + u))]
   nlinarith [mul_nonneg (mul_nonneg (by linarith : (0 : ℝ) ≤ 1 + u)
     (by linarith : (0 : ℝ) ≤ 4 * u - 2)) (by linarith : (0 : ℝ) ≤ 2 * u - 4)]
 
-theorem minusPolynomial_imaginary_cubic_growth_le {ε u : ℝ} (hε : 0 < ε) (hu : 1 + ε / 4 ≤ u) :
+theorem PMinus_imaginary_cubic_growth_le {ε u : ℝ} (hε : 0 < ε) (hu : 1 + ε / 4 ≤ u) :
     (1 + |u|) ^ 3 ≤ (9 / β ε + 6) * ‖PMinus ε (I * u)‖ := by
-  have hb := beta_pos hε
+  have hb := β_pos hε
   have hbeta : β ε ≤ u - 1 := by unfold β; linarith
   have hbig : 2 < u → (1 + u) ^ 3 ≤ 6 * ‖PMinus ε (I * u)‖ := fun h ↦ by
     have hsq : 0 ≤ (u - 1) * ((1 + u) ^ 2 - 4) := mul_nonneg (by linarith) (by nlinarith)
     have hnorm : ‖PMinus ε (I * u)‖ = |β ε + (1 - u) * (1 + u) ^ 2| := by
-      rw [minusPolynomial_imaginary]; norm_cast
+      rw [PMinus_imaginary]; norm_cast
     rw [hnorm, abs_of_neg (by nlinarith : β ε + (1 - u) * (1 + u) ^ 2 < 0)]
     nlinarith [mul_nonneg (by nlinarith : (0 : ℝ) ≤ (1 + u) ^ 2 - 9)
       (by linarith : (0 : ℝ) ≤ 5 * u - 7)]
   have key := norm_imaginary_cubic_growth (P := PMinus ε) (b := 3 * β ε) (by linarith)
     (by norm_num : (0 : ℝ) ≤ 6) (by linarith)
-    (minusPolynomial_imaginary_norm_ge_three_beta hε hu) hbig
+    (PMinus_imaginary_norm_ge_three_β hε hu) hbig
   rwa [show (27 : ℝ) / (3 * β ε) = 9 / β ε from
     (div_eq_div_iff (mul_ne_zero three_ne_zero hb.ne') hb.ne').2 (by ring)] at key
 
@@ -118,24 +118,24 @@ theorem norm_div_norm_imaginary_le {P : ℂ → ℂ} {M c u : ℝ} (hM : 0 ≤ M
     _ = 4 * M * c * (1 + |T| ^ 3) * ‖P (I * u)‖ := by ring
 
 /-- Lemma 4.4 for `P₊`: `‖P₊(T + iu)‖ / ‖P₊(iu)‖ ≪ 1 + |T|³`, uniformly in `u ≥ -1`. -/
-theorem exists_plusPolynomial_uniform_norm_ratio {ε : ℝ} (hε : 0 < ε) :
+theorem exists_PPlus_uniform_norm_ratio {ε : ℝ} (hε : 0 < ε) :
     ∃ C : ℝ, 0 < C ∧ ∀ u : ℝ, -1 ≤ u → ∀ T : ℝ,
       ‖PPlus ε ((T : ℂ) + I * u)‖ / ‖PPlus ε (I * u)‖ ≤ C * (1 + |T| ^ 3) := by
-  have hb := beta_pos hε
+  have hb := β_pos hε
   exact ⟨4 * (1 + β ε) * (27 / β ε + 9), by positivity, fun u hu T ↦
     norm_div_norm_imaginary_le (P := PPlus ε) (M := 1 + β ε) (c := 27 / β ε + 9) (by positivity)
-      (fun z ↦ by simpa [abs_of_pos hb] using norm_plusPolynomial_le ε z)
-      (plusPolynomial_imaginary_cubic_growth_le hε hu) T⟩
+      (fun z ↦ by simpa [abs_of_pos hb] using norm_PPlus_le ε z)
+      (PPlus_imaginary_cubic_growth_le hε hu) T⟩
 
 /-- Lemma 4.4 for `P₋`: `‖P₋(T + iu)‖ / ‖P₋(iu)‖ ≪ 1 + |T|³`, uniformly in `u ≥ 1 + ε/4`. -/
-theorem exists_minusPolynomial_uniform_norm_ratio {ε : ℝ} (hε : 0 < ε) :
+theorem exists_PMinus_uniform_norm_ratio {ε : ℝ} (hε : 0 < ε) :
     ∃ C : ℝ, 0 < C ∧ ∀ u : ℝ, 1 + ε / 4 ≤ u → ∀ T : ℝ,
       ‖PMinus ε ((T : ℂ) + I * u)‖ / ‖PMinus ε (I * u)‖ ≤ C * (1 + |T| ^ 3) := by
-  have hb := beta_pos hε
+  have hb := β_pos hε
   exact ⟨4 * (1 + β ε) * (9 / β ε + 6), by positivity, fun u hu T ↦
     norm_div_norm_imaginary_le (P := PMinus ε) (M := 1 + β ε) (c := 9 / β ε + 6) (by positivity)
-      (fun z ↦ by simpa [abs_of_pos hb] using norm_minusPolynomial_le ε z)
-      (minusPolynomial_imaginary_cubic_growth_le hε hu) T⟩
+      (fun z ↦ by simpa [abs_of_pos hb] using norm_PMinus_le ε z)
+      (PMinus_imaginary_cubic_growth_le hε hu) T⟩
 
 /-- Bounds for the linear and quadratic Taylor coefficients of `P₊` (`σ = I`) and `P₋`
 (`σ = -I`) at a point `z`. -/
@@ -196,28 +196,28 @@ theorem norm_sub_div_norm_imaginary_le {P : ℂ → ℂ} {A B C : ℂ} {c u : �
     _ = 9 * c * (|T| + |T| ^ 3) * ‖P (I * u)‖ := by ring
 
 /-- Lemma 4.5 for `P₊`: `‖P₊(T + iu) - P₊(iu)‖ / ‖P₊(iu)‖ ≪ |T| + |T|³`. -/
-theorem exists_plusPolynomial_uniform_difference_ratio {ε : ℝ} (hε : 0 < ε) :
+theorem exists_PPlus_uniform_difference_ratio {ε : ℝ} (hε : 0 < ε) :
     ∃ C : ℝ, 0 < C ∧ ∀ u : ℝ, -1 ≤ u → ∀ T : ℝ,
       ‖PPlus ε ((T : ℂ) + I * u) - PPlus ε (I * u)‖ / ‖PPlus ε (I * u)‖ ≤
         C * (|T| + |T| ^ 3) := by
-  have hb := beta_pos hε
+  have hb := β_pos hε
   refine ⟨9 * (27 / β ε + 9), by positivity, fun u hu T ↦ ?_⟩
   obtain ⟨hA, hB⟩ := norm_translation_coeffs (σ := I) (z := I * (u : ℂ)) (by simp)
   rw [show ‖I * (u : ℂ)‖ = |u| by simp] at hA hB
   exact norm_sub_div_norm_imaginary_le (P := PPlus ε) (C := I) hA hB (by simp)
-    (fun T ↦ by unfold PPlus; ring) (plusPolynomial_imaginary_cubic_growth_le hε hu) T
+    (fun T ↦ by unfold PPlus; ring) (PPlus_imaginary_cubic_growth_le hε hu) T
 
 /-- Lemma 4.5 for `P₋`: `‖P₋(T + iu) - P₋(iu)‖ / ‖P₋(iu)‖ ≪ |T| + |T|³`. -/
-theorem exists_minusPolynomial_uniform_difference_ratio {ε : ℝ} (hε : 0 < ε) :
+theorem exists_PMinus_uniform_difference_ratio {ε : ℝ} (hε : 0 < ε) :
     ∃ C : ℝ, 0 < C ∧ ∀ u : ℝ, 1 + ε / 4 ≤ u → ∀ T : ℝ,
       ‖PMinus ε ((T : ℂ) + I * u) - PMinus ε (I * u)‖ / ‖PMinus ε (I * u)‖ ≤
         C * (|T| + |T| ^ 3) := by
-  have hb := beta_pos hε
+  have hb := β_pos hε
   refine ⟨9 * (9 / β ε + 6), by positivity, fun u hu T ↦ ?_⟩
   obtain ⟨hA, hB⟩ := norm_translation_coeffs (σ := -I) (z := I * (u : ℂ)) (by simp)
   rw [show ‖I * (u : ℂ)‖ = |u| by simp] at hA hB
   exact norm_sub_div_norm_imaginary_le (P := PMinus ε) (C := -I) hA hB (by simp)
-    (fun T ↦ by unfold PMinus; ring) (minusPolynomial_imaginary_cubic_growth_le hε hu) T
+    (fun T ↦ by unfold PMinus; ring) (PMinus_imaginary_cubic_growth_le hε hu) T
 
 /-! ### The Gamma factors at the negative half-integers -/
 
@@ -242,7 +242,7 @@ theorem upperNegativeHalfGammaArgument_succ_add_one (N : ℕ) (s : ℝ) :
 /-! ### Domination of the short shell by the positive shell (Lemma 4.6) -/
 
 /-- `ε (1 + A_ε) → 0` as `ε ↓ 0`, where `A_ε = log (1/ε)`. -/
-theorem tendsto_mul_one_add_shortEndpoint :
+theorem tendsto_mul_one_add_Aε :
     Tendsto (fun ε : ℝ ↦ ε * (1 + Aε ε)) (𝓝[>] (0 : ℝ)) (𝓝 0) := by
   have hlog := tendsto_log_mul_rpow_nhdsGT_zero (by norm_num : (0 : ℝ) < 1)
   simp only [Real.rpow_one] at hlog
@@ -261,10 +261,10 @@ theorem tendsto_mul_one_add_shortEndpoint :
   · norm_num
 
 /-- Lemma 4.6: the short-shell margin `b_ε(a)` stays above `1/2` on `[a₀, A]` for small `ε`. -/
-theorem eventually_upper_shortMargin_positive : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_upper_bε_positive : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ a ∈ Set.Icc (a₀ε ε) (Aε ε), (1 / 2 : ℝ) ≤ bε ε a := by
   filter_upwards [self_mem_nhdsWithin,
-    (tendsto_mul_one_add_shortEndpoint.const_mul (2 : ℝ)).eventually
+    (tendsto_mul_one_add_Aε.const_mul (2 : ℝ)).eventually
       (Iio_mem_nhds (by norm_num : (2 : ℝ) * 0 < 1 / 2))] with ε hε hbound a ha
   change 0 < ε at hε
   change 2 * (ε * (1 + Aε ε)) < 1 / 2 at hbound
@@ -272,12 +272,12 @@ theorem eventually_upper_shortMargin_positive : ∀ᶠ ε : ℝ in 𝓝[>] (0 : 
   nlinarith [mul_le_mul_of_nonneg_left (show 1 + a ≤ 1 + Aε ε by linarith [ha.2]) hε.le]
 
 /-- For small `ε` the positive shell `[B, B + 1]` lies beyond the short-shell endpoint `A`. -/
-theorem eventually_upper_shellLocation_gt_shortEndpoint : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_upper_Bε_gt_Aε : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     Aε ε + 1 < Bε ε := by
   have hid : Tendsto (fun ε : ℝ ↦ ε) (𝓝[>] (0 : ℝ)) (𝓝 0) :=
     tendsto_id.mono_left nhdsWithin_le_nhds
   have hpow : Tendsto (fun ε : ℝ ↦ ε ^ 2 * (ε * (1 + Aε ε))) (𝓝[>] (0 : ℝ)) (𝓝 0) := by
-    simpa using (hid.pow 2).mul tendsto_mul_one_add_shortEndpoint
+    simpa using (hid.pow 2).mul tendsto_mul_one_add_Aε
   filter_upwards [self_mem_nhdsWithin,
     hpow.eventually (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1))] with ε hε hbound
   change 0 < ε at hε
@@ -285,12 +285,13 @@ theorem eventually_upper_shellLocation_gt_shortEndpoint : ∀ᶠ ε : ℝ in �
   have hinv : ε ^ 3 * Bε ε = 1 := by unfold Bε; field_simp
   nlinarith [pow_pos hε 3]
 
-/-- The size `A_ε + a₀_ε⁻¹` of the short shell. -/
-def upperShellShortCoefficient (ε : ℝ) : ℝ := Aε ε + (a₀ε ε)⁻¹
+/-- The constant `C₀ = A + a₀⁻¹` of report §4.2, the size of the negative shell. -/
+def C₀ε (ε : ℝ) : ℝ := Aε ε + (a₀ε ε)⁻¹
 
-/-- The ratio of report (61) comparing the short shell with the positive shell. -/
+/-- The ratio of report (61) comparing the negative shell with the positive shell: `5000 ρ_ε`, where
+`ρ_ε = C₀ Q⁻¹ e^{-ε(B - A)/2}` is the separation error of report §4.3. -/
 def upperShellMarginRatio (ε : ℝ) : ℝ :=
-  5000 * upperShellShortCoefficient ε * Real.exp (ε / 2 * Aε ε) /
+  5000 * C₀ε ε * Real.exp (ε / 2 * Aε ε) /
     (Qε ε * Real.exp (ε / 2 * Bε ε))
 
 theorem tendsto_upperShellMarginRatio : Tendsto upperShellMarginRatio (𝓝[>] (0 : ℝ)) (𝓝 0) := by
@@ -342,38 +343,38 @@ theorem tendsto_upperShellMarginRatio : Tendsto upperShellMarginRatio (𝓝[>] (
     congr 1
     field_simp
     ring
-  unfold upperShellMarginRatio upperShellShortCoefficient
+  unfold upperShellMarginRatio C₀ε
   rw [hA, hB, hQ, show (a₀ε x⁻¹)⁻¹ = x ^ 2 by simp [a₀ε], eq_div_iff (by positivity), hsplit]
   ring
 
 /-- Lemma 4.6: for small `ε` the short shell carries at most `1/5000` of the positive shell. -/
 theorem eventually_upper_shell_parameter_margin : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
-    upperShellShortCoefficient ε * Real.exp ((ε / 2) * Aε ε) ≤
+    C₀ε ε * Real.exp ((ε / 2) * Aε ε) ≤
       (1 / 5000 : ℝ) * Qε ε * Real.exp ((ε / 2) * Bε ε) := by
   filter_upwards [tendsto_upperShellMarginRatio.eventually
     (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1))] with ε hε
   unfold upperShellMarginRatio at hε
   have hden : 0 < Qε ε * Real.exp (ε / 2 * Bε ε) :=
-    mul_pos (shellWeight_pos ε) (Real.exp_pos _)
+    mul_pos (Qε_pos ε) (Real.exp_pos _)
   nlinarith [(div_lt_one hden).mp hε]
 
 /-! ### The short-shell damping `D_s` (report (59)) -/
 
 /-- The short-shell cutoff `a₀ = ε²` is positive. -/
-theorem shortCutoff_pos {ε : ℝ} (hε : 0 < ε) : 0 < a₀ε ε := by unfold a₀ε; positivity
+theorem a₀ε_pos {ε : ℝ} (hε : 0 < ε) : 0 < a₀ε ε := by unfold a₀ε; positivity
 
 /-- The short-shell density `w_s ε` is continuous on the short shell `[a₀, A]`. -/
-theorem continuousOn_shortShellDensity {ε : ℝ} (hε : 0 < ε) :
+theorem continuousOn_w_s {ε : ℝ} (hε : 0 < ε) :
     ContinuousOn (w_s ε) (Set.Icc (a₀ε ε) (Aε ε)) := by
   have hn : Continuous fun a : ℝ ↦ bε ε a * Real.exp (-2 * a) := by unfold bε; fun_prop
   have hd : Continuous fun a : ℝ ↦ 2 * a ^ 2 * Real.cosh a := by fun_prop
   unfold w_s
   exact (hn.continuousOn.div hd.continuousOn fun a ha ↦ by
-    have : 0 < a := (shortCutoff_pos hε).trans_le ha.1
+    have : 0 < a := (a₀ε_pos hε).trans_le ha.1
     positivity).neg
 
 /-- `w_s ε a ≤ 0` wherever the short-shell margin `b_ε(a)` is nonnegative. -/
-theorem neg_shortShellDensity_nonneg {ε a : ℝ} (ha : 0 < a) (hb : 0 ≤ bε ε a) :
+theorem neg_w_s_nonneg {ε a : ℝ} (ha : 0 < a) (hb : 0 ≤ bε ε a) :
     0 ≤ -w_s ε a := by
   unfold w_s
   simpa using div_nonneg (mul_nonneg hb (Real.exp_pos _).le)
@@ -405,7 +406,7 @@ theorem upper_shortShell_oscillation_div_sq_le {a : ℝ} (ha : 0 < a) (T : ℝ) 
   · calc (1 - Real.cos (a * T)) / (2 * a ^ 2) ≤ 2 / (2 * a ^ 2) := by gcongr
       _ = (a ^ 2)⁻¹ := by field_simp
 
-theorem upper_shortShellDensity_damping_le {ε δ a A : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ)
+theorem upper_w_s_damping_le {ε δ a A : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ)
     (ha : 0 < a) (haA : a ≤ A) (hmargin : 0 ≤ bε ε a) (T : ℝ) :
     (-w_s ε a) * Real.cosh ((1 + δ) * a) * (1 - Real.cos (a * T)) ≤
       Real.exp (δ * A) * min (T ^ 2) 1 * (1 + (a ^ 2)⁻¹) := by
@@ -449,16 +450,16 @@ theorem upper_intervalIntegral_one_add_inv_sq {a b : ℝ} (ha : 0 < a) (hab : a 
   ring
 
 /-- Report (59): the short shell contributes at most `λ (A + a₀⁻¹) e^{δA} min(T², 1)`. -/
-theorem upperShortShellDamping_global_bound {ε ℓ δ T : ℝ} (hε : 0 < ε) (hℓ : 0 ≤ ℓ) (hδ : 0 ≤ δ)
+theorem D_s_global_bound {ε ℓ δ T : ℝ} (hε : 0 < ε) (hℓ : 0 ≤ ℓ) (hδ : 0 ≤ δ)
     (horder : a₀ε ε ≤ Aε ε) (hmargin : ∀ a ∈ Set.Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) :
-    D_s ε ℓ δ T ≤ ℓ * upperShellShortCoefficient ε * Real.exp (δ * Aε ε) * min (T ^ 2) 1 := by
-  have ha₀ := shortCutoff_pos hε
+    D_s ε ℓ δ T ≤ ℓ * C₀ε ε * Real.exp (δ * Aε ε) * min (T ^ 2) 1 := by
+  have ha₀ := a₀ε_pos hε
   have hA : 0 < Aε ε := ha₀.trans_le horder
   have hK : (0 : ℝ) ≤ Real.exp (δ * Aε ε) * min (T ^ 2) 1 :=
     mul_nonneg (Real.exp_pos _).le (le_min (sq_nonneg T) (by norm_num))
   have hleft : ContinuousOn (fun a : ℝ ↦ (-w_s ε a) * Real.cosh ((1 + δ) * a) *
       (1 - Real.cos (a * T))) (Set.Icc (a₀ε ε) (Aε ε)) :=
-    ((continuousOn_shortShellDensity hε).neg.mul (by fun_prop : Continuous fun a : ℝ ↦
+    ((continuousOn_w_s hε).neg.mul (by fun_prop : Continuous fun a : ℝ ↦
       Real.cosh ((1 + δ) * a)).continuousOn).mul
       (by fun_prop : Continuous fun a : ℝ ↦ 1 - Real.cos (a * T)).continuousOn
   have hright : ContinuousOn (fun a : ℝ ↦ Real.exp (δ * Aε ε) * min (T ^ 2) 1 *
@@ -467,13 +468,13 @@ theorem upperShortShellDamping_global_bound {ε ℓ δ T : ℝ} (hε : 0 < ε) (
       ((continuous_id.pow 2).continuousOn.inv₀ fun a ha ↦ (pow_pos (ha₀.trans_le ha.1) 2).ne'))
   have hmono := intervalIntegral.integral_mono_on (μ := volume) horder
     (hleft.intervalIntegrable_of_Icc horder) (hright.intervalIntegrable_of_Icc horder)
-    fun a ha ↦ upper_shortShellDensity_damping_le hε hδ (ha₀.trans_le ha.1) ha.2 (hmargin a ha) T
+    fun a ha ↦ upper_w_s_damping_le hε hδ (ha₀.trans_le ha.1) ha.2 (hmargin a ha) T
   rw [intervalIntegral.integral_const_mul,
     upper_intervalIntegral_one_add_inv_sq ha₀ horder] at hmono
   have hcoefficient : Aε ε - a₀ε ε + (a₀ε ε)⁻¹ - (Aε ε)⁻¹ ≤ Aε ε + (a₀ε ε)⁻¹ := by
     have := (inv_pos.mpr hA).le
     linarith
-  unfold D_s upperShellShortCoefficient
+  unfold D_s C₀ε
   calc ℓ * ∫ a in a₀ε ε..Aε ε, (-w_s ε a) * Real.cosh ((1 + δ) * a) * (1 - Real.cos (a * T))
       ≤ ℓ * (Real.exp (δ * Aε ε) * min (T ^ 2) 1 *
         (Aε ε - a₀ε ε + (a₀ε ε)⁻¹ - (Aε ε)⁻¹)) := mul_le_mul_of_nonneg_left hmono hℓ
@@ -481,25 +482,25 @@ theorem upperShortShellDamping_global_bound {ε ℓ δ T : ℝ} (hε : 0 < ε) (
     _ = ℓ * (Aε ε + (a₀ε ε)⁻¹) * Real.exp (δ * Aε ε) * min (T ^ 2) 1 := by ring
 
 /-- For small `ε` the short shell `[a₀, A]` is nonempty. -/
-theorem eventually_upper_shortCutoff_le_shortEndpoint : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
+theorem eventually_upper_a₀ε_le_Aε : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     a₀ε ε ≤ Aε ε := by
-  filter_upwards [tendsto_shortCutoff.eventually (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1)),
-    tendsto_shortEndpoint.eventually_ge_atTop (1 : ℝ)] with ε hl hu
+  filter_upwards [tendsto_a₀ε.eventually (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1)),
+    tendsto_Aε.eventually_ge_atTop (1 : ℝ)] with ε hl hu
   linarith
 
 /-- Propagation of the margin of Lemma 4.6 from `δ = ε/2` to any larger `δ`. -/
 theorem upper_shell_parameter_margin_propagate {ε δ : ℝ} (hδ : ε / 2 ≤ δ)
     (hseparation : Aε ε ≤ Bε ε)
-    (hmargin : upperShellShortCoefficient ε * Real.exp ((ε / 2) * Aε ε) ≤
+    (hmargin : C₀ε ε * Real.exp ((ε / 2) * Aε ε) ≤
         (1 / 5000 : ℝ) * Qε ε * Real.exp ((ε / 2) * Bε ε)) :
-    upperShellShortCoefficient ε * Real.exp (δ * Aε ε) ≤ (1 / 5000 : ℝ) * Qε ε *
+    C₀ε ε * Real.exp (δ * Aε ε) ≤ (1 / 5000 : ℝ) * Qε ε *
         Real.exp (δ * Bε ε) := by
   have hexp : Real.exp ((δ - ε / 2) * Aε ε) ≤ Real.exp ((δ - ε / 2) * Bε ε) :=
     Real.exp_le_exp.mpr (mul_le_mul_of_nonneg_left hseparation (by linarith))
   have hfactor : (0 : ℝ) ≤ (1 / 5000 : ℝ) * Qε ε * Real.exp ((ε / 2) * Bε ε) :=
-    mul_nonneg (mul_nonneg (by norm_num) (shellWeight_pos ε).le) (Real.exp_pos _).le
-  calc upperShellShortCoefficient ε * Real.exp (δ * Aε ε)
-      = upperShellShortCoefficient ε * Real.exp ((ε / 2) * Aε ε) *
+    mul_nonneg (mul_nonneg (by norm_num) (Qε_pos ε).le) (Real.exp_pos _).le
+  calc C₀ε ε * Real.exp (δ * Aε ε)
+      = C₀ε ε * Real.exp ((ε / 2) * Aε ε) *
         Real.exp ((δ - ε / 2) * Aε ε) := by
         rw [mul_assoc, ← Real.exp_add]
         congr 2
@@ -516,21 +517,21 @@ theorem upper_shell_parameter_margin_propagate {ε δ : ℝ} (hδ : ε / 2 ≤ �
 /-- Report (61): the short-shell damping is at most `1/100` of the positive-shell damping. -/
 theorem eventually_upper_shortShell_domination : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 0 ≤ ℓ →
     ∀ δ : ℝ, ε / 2 ≤ δ → ∀ T : ℝ, D_s ε ℓ δ T ≤ (1 / 100 : ℝ) * D_B ε ℓ δ T := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
-      eventually_upper_shortMargin_positive,
-      eventually_upper_shellLocation_gt_shortEndpoint,
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
+      eventually_upper_bε_positive,
+      eventually_upper_Bε_gt_Aε,
       eventually_upper_shell_parameter_margin]
     with ε hε horder hshortmargin hseparation hmargin
   change 0 < ε at hε
   intro ℓ hℓ δ hδ T
   have hδnonneg : 0 ≤ δ := by nlinarith
-  have hshort := upperShortShellDamping_global_bound (T := T) hε hℓ hδnonneg horder
+  have hshort := D_s_global_bound (T := T) hε hℓ hδnonneg horder
     fun a ha ↦ by linarith [hshortmargin a ha]
   have hpropagate := upper_shell_parameter_margin_propagate hδ (by linarith) hmargin
-  have hpositive := positiveShellDamping_lower_bound (ε := ε) (ℓ := ℓ) (δ := δ) (T := T)
+  have hpositive := D_B_lower_bound (ε := ε) (ℓ := ℓ) (δ := δ) (T := T)
       hε hℓ hδnonneg
   have hfreq : (0 : ℝ) ≤ min (T ^ 2) 1 := le_min (sq_nonneg T) (by norm_num)
-  calc D_s ε ℓ δ T ≤ ℓ * upperShellShortCoefficient ε * Real.exp (δ * Aε ε) * min (T ^ 2) 1 :=
+  calc D_s ε ℓ δ T ≤ ℓ * C₀ε ε * Real.exp (δ * Aε ε) * min (T ^ 2) 1 :=
         hshort
     _ ≤ ℓ * ((1 / 5000 : ℝ) * Qε ε * Real.exp (δ * Bε ε)) * min (T ^ 2) 1 := by
         convert! mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left hpropagate hℓ)
@@ -544,14 +545,14 @@ theorem eventually_upper_shortShell_domination : ∀ᶠ ε : ℝ in 𝓝[>] (0 :
 def V_B (ε δ : ℝ) : ℝ := ∫ a in Bε ε..Bε ε + 1, w_B ε a * a ^ 2 * Real.cosh ((1 + δ) * a)
 
 /-- Report (45): two-sided bounds for the positive-shell variance `V_B`. -/
-theorem upperPositiveShellVariance_bounds {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ) :
+theorem V_B_bounds {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ) :
     (1 / 2 : ℝ) * (Bε ε) ^ 2 * Qε ε * Real.exp (δ * Bε ε) ≤ V_B ε δ ∧
       V_B ε δ ≤ (Bε ε + 1) ^ 2 * Qε ε * Real.exp (δ * (Bε ε + 1)) := by
   have hB : (0 : ℝ) ≤ Bε ε := by unfold Bε; positivity
-  have hQ : 0 < Qε ε := shellWeight_pos ε
+  have hQ : 0 < Qε ε := Qε_pos ε
   have horder : Bε ε ≤ Bε ε + 1 := by linarith
   have hcont : Continuous fun a : ℝ ↦ w_B ε a * a ^ 2 * Real.cosh ((1 + δ) * a) := by
-    have hdensity := positiveShellDensity_continuous ε
+    have hdensity := w_B_continuous ε
     fun_prop
   have hlopoint : ∀ a ∈ Set.Icc (Bε ε) (Bε ε + 1),
       (1 / 2 : ℝ) * (Bε ε) ^ 2 * Qε ε * Real.exp (δ * Bε ε) ≤
@@ -589,7 +590,7 @@ theorem upperPositiveShellVariance_bounds {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 
 /-- Variance `V_s` carried by the short shell on the contour of height `1 + δ`. -/
 def V_s (ε δ : ℝ) : ℝ := ∫ a in a₀ε ε..Aε ε, (-w_s ε a) * a ^ 2 * Real.cosh ((1 + δ) * a)
 
-theorem upper_shortShellDensity_variance_le {ε δ a A : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ)
+theorem upper_w_s_variance_le {ε δ a A : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ)
     (ha : 0 < a) (haA : a ≤ A) :
     (-w_s ε a) * a ^ 2 * Real.cosh ((1 + δ) * a) ≤ (1 / 2 : ℝ) * Real.exp (δ * A) := by
   have hmargin : bε ε a ≤ 1 := by
@@ -606,20 +607,20 @@ theorem upper_shortShellDensity_variance_le {ε δ a A : ℝ} (hε : 0 < ε) (h�
     _ = (1 / 2 : ℝ) * Real.exp (δ * A) := by ring
 
 /-- Report (45): the short-shell variance is at most `(A + a₀⁻¹) e^{δA} / 2`. -/
-theorem upperShortShellVariance_global_bound {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ)
+theorem V_s_global_bound {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ)
     (horder : a₀ε ε ≤ Aε ε) :
-    V_s ε δ ≤ (1 / 2 : ℝ) * upperShellShortCoefficient ε * Real.exp (δ * Aε ε) := by
-  have ha₀ := shortCutoff_pos hε
+    V_s ε δ ≤ (1 / 2 : ℝ) * C₀ε ε * Real.exp (δ * Aε ε) := by
+  have ha₀ := a₀ε_pos hε
   have hK : (0 : ℝ) ≤ (1 / 2 : ℝ) * Real.exp (δ * Aε ε) := by positivity
   have hleft : ContinuousOn (fun a : ℝ ↦ (-w_s ε a) * a ^ 2 * Real.cosh ((1 + δ) * a))
       (Set.Icc (a₀ε ε) (Aε ε)) :=
-    ((continuousOn_shortShellDensity hε).neg.mul (continuous_id.pow 2).continuousOn).mul
+    ((continuousOn_w_s hε).neg.mul (continuous_id.pow 2).continuousOn).mul
       (by fun_prop : Continuous fun a : ℝ ↦ Real.cosh ((1 + δ) * a)).continuousOn
   have hmono := intervalIntegral.integral_mono_on (μ := volume) horder
     (hleft.intervalIntegrable_of_Icc horder) intervalIntegrable_const
-    fun a ha ↦ upper_shortShellDensity_variance_le hε hδ (ha₀.trans_le ha.1) ha.2
+    fun a ha ↦ upper_w_s_variance_le hε hδ (ha₀.trans_le ha.1) ha.2
   rw [intervalIntegral.integral_const, smul_eq_mul] at hmono
-  unfold V_s upperShellShortCoefficient
+  unfold V_s C₀ε
   calc (∫ a in a₀ε ε..Aε ε, (-w_s ε a) * a ^ 2 * Real.cosh ((1 + δ) * a))
       ≤ (Aε ε - a₀ε ε) * ((1 / 2 : ℝ) * Real.exp (δ * Aε ε)) := hmono
     _ ≤ (Aε ε + (a₀ε ε)⁻¹) * ((1 / 2 : ℝ) * Real.exp (δ * Aε ε)) :=
@@ -635,11 +636,11 @@ open scoped Topology
 /-! ### The net shell variance and third moment (report (46)) -/
 
 /-- The short-shell variance is nonnegative when the margin `b_ε` is. -/
-theorem upperShortShellVariance_nonneg {ε δ : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
+theorem V_s_nonneg {ε δ : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
     (hmargin : ∀ a ∈ Set.Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) : 0 ≤ V_s ε δ := by
   unfold V_s
   exact intervalIntegral.integral_nonneg horder fun a ha ↦ mul_nonneg (mul_nonneg
-    (neg_shortShellDensity_nonneg ((shortCutoff_pos hε).trans_le ha.1) (hmargin a ha))
+    (neg_w_s_nonneg ((a₀ε_pos hε).trans_le ha.1) (hmargin a ha))
     (sq_nonneg a)) (Real.cosh_pos _).le
 
 /-- The short-shell variance is at most `1/100` of the positive-shell variance. -/
@@ -648,8 +649,8 @@ theorem eventually_upper_shortShellVariance_domination : ∀ᶠ ε : ℝ in 𝓝
   have hsmall : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ε < 1 :=
     (tendsto_id.mono_left (nhdsWithin_le_nhds (s := Set.Ioi (0 : ℝ)))).eventually
       (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1))
-  filter_upwards [self_mem_nhdsWithin, hsmall, eventually_upper_shortCutoff_le_shortEndpoint,
-      eventually_upper_shellLocation_gt_shortEndpoint, eventually_upper_shell_parameter_margin]
+  filter_upwards [self_mem_nhdsWithin, hsmall, eventually_upper_a₀ε_le_Aε,
+      eventually_upper_Bε_gt_Aε, eventually_upper_shell_parameter_margin]
     with ε hε hεone horder hseparation hmargin
   change 0 < ε at hε
   change ε < 1 at hεone
@@ -663,16 +664,16 @@ theorem eventually_upper_shortShellVariance_domination : ∀ᶠ ε : ℝ in 𝓝
   have hBsq : 1 ≤ (Bε ε) ^ 2 := by nlinarith
   have hpropagate := upper_shell_parameter_margin_propagate hδ (by linarith) hmargin
   have hqexp : (0 : ℝ) ≤ Qε ε * Real.exp (δ * Bε ε) :=
-    mul_nonneg (shellWeight_pos ε).le (Real.exp_pos _).le
-  calc V_s ε δ ≤ (1 / 2 : ℝ) * upperShellShortCoefficient ε * Real.exp (δ * Aε ε) :=
-        upperShortShellVariance_global_bound hε hδnonneg horder
+    mul_nonneg (Qε_pos ε).le (Real.exp_pos _).le
+  calc V_s ε δ ≤ (1 / 2 : ℝ) * C₀ε ε * Real.exp (δ * Aε ε) :=
+        V_s_global_bound hε hδnonneg horder
     _ ≤ (1 / 2 : ℝ) * ((1 / 5000 : ℝ) * Qε ε * Real.exp (δ * Bε ε)) := by
         convert! mul_le_mul_of_nonneg_left hpropagate (by norm_num : (0 : ℝ) ≤ 1 / 2) using 1
         ring
     _ ≤ (1 / 100 : ℝ) * ((1 / 2 : ℝ) * (Bε ε) ^ 2 * Qε ε * Real.exp (δ * Bε ε)) := by
         nlinarith [mul_le_mul_of_nonneg_right hBsq hqexp]
     _ ≤ (1 / 100 : ℝ) * V_B ε δ :=
-        mul_le_mul_of_nonneg_left (upperPositiveShellVariance_bounds hε hδnonneg).1 (by norm_num)
+        mul_le_mul_of_nonneg_left (V_B_bounds hε hδnonneg).1 (by norm_num)
 
 /-- The net shell variance `V_B - V_s` of report (46). -/
 def upperNetShellVariance (ε δ : ℝ) : ℝ := V_B ε δ - V_s ε δ
@@ -680,12 +681,12 @@ def upperNetShellVariance (ε δ : ℝ) : ℝ := V_B ε δ - V_s ε δ
 /-- Report (46): the net shell variance is between `99/100` and `1` times `V_B`. -/
 theorem eventually_upper_netShellVariance_bounds : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ δ : ℝ, ε / 2 ≤ δ →
     (99 / 100 : ℝ) * V_B ε δ ≤ upperNetShellVariance ε δ ∧ upperNetShellVariance ε δ ≤ V_B ε δ := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
-      eventually_upper_shortMargin_positive, eventually_upper_shortShellVariance_domination]
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
+      eventually_upper_bε_positive, eventually_upper_shortShellVariance_domination]
     with ε hε horder hmargin hdom
   change 0 < ε at hε
   intro δ hδ
-  have hnonneg := upperShortShellVariance_nonneg (δ := δ) hε horder
+  have hnonneg := V_s_nonneg (δ := δ) hε horder
     fun a ha ↦ by linarith [hmargin a ha]
   have hupper := hdom δ hδ
   unfold upperNetShellVariance
@@ -721,8 +722,8 @@ theorem upperPositiveShellThirdMoment_le {ε δ : ℝ} :
     upperPositiveShellThirdMoment ε δ ≤ (Bε ε + 1) * V_B ε δ := by
   unfold upperPositiveShellThirdMoment V_B
   exact intervalIntegral_thirdMoment_le (w := w_B ε) (by linarith)
-    (fun a _ ↦ div_nonneg (shellWeight_pos ε).le (Real.cosh_pos a).le)
-    (positiveShellDensity_continuous ε).continuousOn
+    (fun a _ ↦ div_nonneg (Qε_pos ε).le (Real.cosh_pos a).le)
+    (w_B_continuous ε).continuousOn
 
 /-- Third moment carried by the short shell on the contour of height `1 + δ`. -/
 def upperShortShellThirdMoment (ε δ : ℝ) : ℝ :=
@@ -734,17 +735,17 @@ theorem upperShortShellThirdMoment_le {ε δ : ℝ} (hε : 0 < ε) (horder : a�
     upperShortShellThirdMoment ε δ ≤ Aε ε * V_s ε δ := by
   unfold upperShortShellThirdMoment V_s
   exact intervalIntegral_thirdMoment_le (w := fun a ↦ -w_s ε a) horder
-    (fun a ha ↦ neg_shortShellDensity_nonneg ((shortCutoff_pos hε).trans_le ha.1) (hmargin a ha))
-    (continuousOn_shortShellDensity hε).neg
+    (fun a ha ↦ neg_w_s_nonneg ((a₀ε_pos hε).trans_le ha.1) (hmargin a ha))
+    (continuousOn_w_s hε).neg
 
 theorem eventually_upper_shortShellThirdMoment_domination : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ),
     ∀ δ : ℝ, ε / 2 ≤ δ → upperShortShellThirdMoment ε δ ≤ (Aε ε / 100) * V_B ε δ := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
-      eventually_upper_shortMargin_positive, eventually_upper_shortShellVariance_domination]
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
+      eventually_upper_bε_positive, eventually_upper_shortShellVariance_domination]
     with ε hε horder hmargin hdom
   change 0 < ε at hε
   intro δ hδ
-  have hA : (0 : ℝ) ≤ Aε ε := ((shortCutoff_pos hε).trans_le horder).le
+  have hA : (0 : ℝ) ≤ Aε ε := ((a₀ε_pos hε).trans_le horder).le
   calc upperShortShellThirdMoment ε δ ≤ Aε ε * V_s ε δ :=
         upperShortShellThirdMoment_le (δ := δ) hε horder fun a ha ↦ by linarith [hmargin a ha]
     _ ≤ Aε ε * ((1 / 100 : ℝ) * V_B ε δ) := mul_le_mul_of_nonneg_left (hdom δ hδ) hA
@@ -918,20 +919,20 @@ theorem upperGammaMoment_bounds {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η) (
           ring
 
 /-- Report (48): `1/(2η) ≤ V_γ ≤ 1/(2η) + 1/(λη²)`. -/
-theorem upperGammaVariance_bounds {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η) :
+theorem V_γ_bounds {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η) :
     1 / (2 * η) ≤ V_γ ℓ η ∧ V_γ ℓ η ≤ 1 / (2 * η) + 1 / (ℓ * η ^ 2) := by
   simpa [V_γ, Nat.factorial] using upperGammaMoment_bounds hℓ hη 0
 
 /-- Report (48): `1/(2η²) ≤ M₃_γ ≤ 1/(2η²) + 2/(λη³)`. -/
-theorem upperGammaThirdMoment_bounds {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η) :
+theorem M₃_γ_bounds {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η) :
     1 / (2 * η ^ 2) ≤ M₃_γ ℓ η ∧ M₃_γ ℓ η ≤ 1 / (2 * η ^ 2) + 2 / (ℓ * η ^ 3) := by
   simpa [M₃_γ, Nat.factorial] using upperGammaMoment_bounds hℓ hη 1
 
 /-! ### The small-radius expansion of `f₊` (report Lemma 4.4) -/
 
-theorem plusPolynomial_negative_imaginary_residue (ε s : ℝ) :
+theorem PPlus_negative_imaginary_residue (ε s : ℝ) :
     PPlus ε (I * ((-(1 + s) : ℝ) : ℂ)) = ((β ε - s * (2 + s) ^ 2 : ℝ) : ℂ) := by
-  rw [plusPolynomial_imaginary]
+  rw [PPlus_imaginary]
   push_cast
   ring
 
@@ -947,21 +948,21 @@ def A_ℓn (ε ℓ : ℝ) (n : ℕ) : ℝ :=
   Real.exp (ℓ * (h_εI ε (1 + 2 * (n : ℝ) / ℓ) - h_εI ε 1) - 2 * (n : ℝ) * h₁' ε) *
     ((β ε - (2 * (n : ℝ) / ℓ) * (2 + 2 * (n : ℝ) / ℓ) ^ 2) / β ε)
 
-theorem plusSaddlePoleResidue_explicit_real {ε ℓ : ℝ} (hℓ : 0 < ℓ) (n : ℕ) :
-    plusSaddlePoleResidue ε ℓ n = ((2 * (-1 : ℝ) ^ n / (n.factorial : ℝ) *
+theorem poleResiduePlus_explicit_real {ε ℓ : ℝ} (hℓ : 0 < ℓ) (n : ℕ) :
+    poleResiduePlus ε ℓ n = ((2 * (-1 : ℝ) ^ n / (n.factorial : ℝ) *
         (π ^ (ℓ / 2 + (n : ℝ)) * Real.exp (ℓ * h_εI ε (1 + 2 * (n : ℝ) / ℓ))) *
         (β ε - (2 * (n : ℝ) / ℓ) * (2 + 2 * (n : ℝ) / ℓ) ^ 2) : ℝ) : ℂ) := by
-  unfold plusSaddlePoleResidue
-  rw [plusSaddleRegularMellinFactor_neg_even hℓ n, plusPolynomial_negative_imaginary_residue]
+  unfold poleResiduePlus
+  rw [regularMellinFactorPlus_neg_even hℓ n, PPlus_negative_imaginary_residue]
   push_cast
   ring
 
 /-- The small-radius variable `y_r` is nonnegative. -/
-theorem saddleSmallRadiusVariable_nonneg (ε r : ℝ) : 0 ≤ y_r ε r := by
+theorem y_r_nonneg (ε r : ℝ) : 0 ≤ y_r ε r := by
   unfold y_r
   positivity
 
-theorem saddleSmallRadiusVariable_neg_pow (ε r : ℝ) (n : ℕ) : (-y_r ε r) ^ n =
+theorem y_r_neg_pow (ε r : ℝ) (n : ℕ) : (-y_r ε r) ^ n =
       (-1 : ℝ) ^ n * π ^ n * Real.exp (2 * h₁' ε) ^ n * r ^ (2 * n) := by
   rw [show -y_r ε r = -1 * π * Real.exp (2 * h₁' ε) * r ^ 2 by unfold y_r; ring]
   ring
@@ -974,34 +975,34 @@ theorem saddleSmallRadiusPhase_pole_factorization (ε ℓ : ℝ) (n : ℕ) :
       (ℓ * (h_εI ε (1 + 2 * (n : ℝ) / ℓ) - h_εI ε 1) - 2 * (n : ℝ) * h₁' ε) by ring,
     Real.exp_add, Real.exp_add, Real.exp_nat_mul]
 
-theorem plusSaddlePoleResidue_mul_pow_eq_smallCoefficient {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem poleResiduePlus_mul_pow_eq_smallCoefficient {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (n : ℕ) (r : ℝ) :
-    plusSaddlePoleResidue ε ℓ n * (r ^ (2 * n) : ℂ) = ((originValue ε ℓ *
+    poleResiduePlus ε ℓ n * (r ^ (2 * n) : ℂ) = ((originValue ε ℓ *
         ((-y_r ε r) ^ n / (n.factorial : ℝ)) * A_ℓn ε ℓ n : ℝ) : ℂ) := by
   have hfac : (n.factorial : ℝ) ≠ 0 := by exact_mod_cast Nat.factorial_ne_zero n
-  rw [plusSaddlePoleResidue_explicit_real hℓ n, ← Complex.ofReal_pow, ← Complex.ofReal_mul]
+  rw [poleResiduePlus_explicit_real hℓ n, ← Complex.ofReal_pow, ← Complex.ofReal_mul]
   refine congrArg Complex.ofReal ?_
   unfold originValue A_ℓn
   rw [Real.rpow_add_natCast Real.pi_ne_zero (ℓ / 2) n,
-    saddleSmallRadiusPhase_pole_factorization ε ℓ n, saddleSmallRadiusVariable_neg_pow ε r n]
-  field_simp [(beta_pos hε).ne', hfac]
+    saddleSmallRadiusPhase_pole_factorization ε ℓ n, y_r_neg_pow ε r n]
+  field_simp [(β_pos hε).ne', hfac]
 
 /-- Report Lemma 4.4: the small-radius residue expansion of `f₊ / f₊(0)`. -/
-theorem plusSaddleProfile_div_origin_eq_small_radius_residue_series {ε ℓ r : ℝ} (hε : 0 < ε)
+theorem fPlus_div_origin_eq_small_radius_residue_series {ε ℓ r : ℝ} (hε : 0 < ε)
     (hℓ : 0 < ℓ) (horder : a₀ε ε ≤ Aε ε) (hr : 0 < r) (N : ℕ) :
     fPlus ε ℓ r / (originValue ε ℓ : ℂ) = ((∑ n ∈ Finset.range (N + 1),
         (-y_r ε r) ^ n / (n.factorial : ℝ) * A_ℓn ε ℓ n : ℝ) : ℂ) +
-      plusSaddleTaylorRemainder ε ℓ N r / (originValue ε ℓ : ℂ) := by
-  have hzero : (originValue ε ℓ : ℂ) ≠ 0 := by exact_mod_cast (saddleOriginValue_pos hε ℓ).ne'
+      taylorRemainderPlus ε ℓ N r / (originValue ε ℓ : ℂ) := by
+  have hzero : (originValue ε ℓ : ℂ) ≠ 0 := by exact_mod_cast (originValue_pos hε ℓ).ne'
   have hseries : fPlus ε ℓ r = (originValue ε ℓ : ℂ) * ((∑ n ∈ Finset.range (N + 1),
         (-y_r ε r) ^ n / (n.factorial : ℝ) * A_ℓn ε ℓ n : ℝ) : ℂ) +
-      plusSaddleTaylorRemainder ε ℓ N r := by
-    rw [plusSaddleProfile_eq_residue_sum_add_remainder hε hℓ horder hr N]
+      taylorRemainderPlus ε ℓ N r := by
+    rw [fPlus_eq_residue_sum_add_remainder hε hℓ horder hr N]
     congr 1
     push_cast
     rw [Finset.mul_sum]
     refine Finset.sum_congr rfl fun n _ ↦ ?_
-    have hterm := plusSaddlePoleResidue_mul_pow_eq_smallCoefficient hε hℓ n r
+    have hterm := poleResiduePlus_mul_pow_eq_smallCoefficient hε hℓ n r
     push_cast at hterm
     simpa only [mul_assoc] using hterm
   rw [hseries]
@@ -1010,17 +1011,17 @@ theorem plusSaddleProfile_div_origin_eq_small_radius_residue_series {ε ℓ r : 
 /-! ### The shell phase on the imaginary axis -/
 
 /-- The shell phase `h_ε` restricted to the imaginary axis is smooth. -/
-theorem realHyperbolicShellPhase_contDiff {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
+theorem h_εI_contDiff {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
     (n : WithTop ℕ∞) : ContDiff ℝ n (h_εI ε) := by
   have hcomplex : ContDiff ℝ n (h_ε ε) :=
-    ((mellinShellPhase_analyticOnNhd hε horder).restrictScalars (𝕜 := ℝ)).contDiff
+    ((h_ε_analyticOnNhd hε horder).restrictScalars (𝕜 := ℝ)).contDiff
   have harg : ContDiff ℝ n fun u : ℝ ↦ I * (u : ℂ) :=
     contDiff_const.mul Complex.ofRealCLM.contDiff
   have hphase : ContDiff ℝ n fun u : ℝ ↦ h_ε ε (I * (u : ℂ)) := by
     simpa only [Function.comp_apply] using! hcomplex.comp harg
   have hre : ContDiff ℝ n fun u : ℝ ↦ (h_ε ε (I * (u : ℂ))).re := by
     simpa only [Function.comp_apply] using! Complex.reCLM.contDiff.comp hphase
-  simpa only [mellinShellPhase_imaginary, Complex.ofReal_re] using! hre
+  simpa only [h_ε_imaginary, Complex.ofReal_re] using! hre
 
 theorem realHyperbolicShellInterval_hasDerivAt (w : ℝ → ℝ) (hw : Continuous w)
     {a b : ℝ} (hab : a ≤ b) (u : ℝ) :
@@ -1060,11 +1061,11 @@ theorem realHyperbolicShellInterval_hasDerivAt (w : ℝ → ℝ) (hw : Continuou
     (Eventually.of_forall fun x v _ ↦ hderiv x v)).2
 
 /-- Derivative of the shell phase on the imaginary axis, by differentiation under `∫`. -/
-theorem realHyperbolicShellPhase_hasDerivAt {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
+theorem h_εI_hasDerivAt {ε : ℝ} (hε : 0 < ε) (horder : a₀ε ε ≤ Aε ε)
     (u : ℝ) :
     HasDerivAt (h_εI ε) ((∫ a in a₀ε ε..Aε ε, w_s ε a * a * Real.sinh (a * u)) +
       (∫ a in Bε ε..Bε ε + 1, w_B ε a * a * Real.sinh (a * u))) u := by
-  have hmax (a : ℝ) : 0 < max a (a₀ε ε) := (shortCutoff_pos hε).trans_le (le_max_right _ _)
+  have hmax (a : ℝ) : 0 < max a (a₀ε ε) := (a₀ε_pos hε).trans_le (le_max_right _ _)
   have hw : Continuous fun a : ℝ ↦ w_s ε (max a (a₀ε ε)) := by
     have hn : Continuous fun a : ℝ ↦ bε ε (max a (a₀ε ε)) * Real.exp (-2 * max a (a₀ε ε)) := by
       unfold bε
@@ -1091,18 +1092,18 @@ theorem realHyperbolicShellPhase_hasDerivAt {ε : ℝ} (hε : 0 < ε) (horder : 
     rw [hfun, hderivfun]
     exact realHyperbolicShellInterval_hasDerivAt _ hw horder u
   exact hshort.add (realHyperbolicShellInterval_hasDerivAt (w_B ε)
-    (positiveShellDensity_continuous ε) (by linarith) u)
+    (w_B_continuous ε) (by linarith) u)
 
 /-- Report Lemma 4.4: a quadratic Taylor remainder for the shell phase on `[1, 2]`. -/
-theorem exists_realHyperbolicShellPhase_quadratic_remainder {ε : ℝ} (hε : 0 < ε)
+theorem exists_h_εI_quadratic_remainder {ε : ℝ} (hε : 0 < ε)
     (horder : a₀ε ε ≤ Aε ε) :
     ∃ C : ℝ, 0 ≤ C ∧ ∀ x ∈ Set.Icc (1 : ℝ) 2,
       |h_εI ε x - h_εI ε 1 - (x - 1) * h₁' ε| ≤ C * (x - 1) ^ 2 := by
   obtain ⟨C, hC⟩ := exists_taylor_mean_remainder_bound (f := h_εI ε) (n := 1)
     (by norm_num : (1 : ℝ) ≤ 2)
-    (realHyperbolicShellPhase_contDiff hε horder (2 : WithTop ℕ∞)).contDiffOn
+    (h_εI_contDiff hε horder (2 : WithTop ℕ∞)).contDiffOn
   have hwithin : derivWithin (h_εI ε) (Set.Icc (1 : ℝ) 2) 1 = h₁' ε :=
-    ((realHyperbolicShellPhase_hasDerivAt hε horder 1).hasDerivWithinAt.derivWithin
+    ((h_εI_hasDerivAt hε horder 1).hasDerivWithinAt.derivWithin
       ((uniqueDiffOn_Icc (by norm_num : (1 : ℝ) < 2)) 1 (by constructor <;> norm_num))).trans
       (by simp [h₁'])
   refine ⟨max C 0, le_max_right _ _, fun x hx ↦ ?_⟩
@@ -1121,7 +1122,7 @@ theorem exists_plusSaddleSmallRadiusPhase_error {ε : ℝ} (hε : 0 < ε)
     ∃ C : ℝ, 0 ≤ C ∧ ∀ (ℓ : ℝ), 0 < ℓ → ∀ n : ℕ, 2 * (n : ℝ) ≤ ℓ →
       |ℓ * (h_εI ε (1 + 2 * (n : ℝ) / ℓ) - h_εI ε 1) - 2 * (n : ℝ) * h₁' ε| ≤
         C * (n : ℝ) ^ 2 / ℓ := by
-  obtain ⟨C, hCnonneg, hC⟩ := exists_realHyperbolicShellPhase_quadratic_remainder hε horder
+  obtain ⟨C, hCnonneg, hC⟩ := exists_h_εI_quadratic_remainder hε horder
   refine ⟨4 * C, by positivity, fun ℓ hℓ n hn ↦ ?_⟩
   set x : ℝ := 1 + 2 * (n : ℝ) / ℓ with hxdef
   have hratio : (0 : ℝ) ≤ 2 * (n : ℝ) / ℓ := by positivity
@@ -1143,7 +1144,7 @@ theorem plusSaddleSmallRadiusPolynomial_error {ε ℓ : ℝ} (hε : 0 < ε) (h�
     (n : ℕ) (hn : 2 * (n : ℝ) ≤ ℓ) :
     |((β ε - (2 * (n : ℝ) / ℓ) * (2 + 2 * (n : ℝ) / ℓ) ^ 2) / β ε) - 1| ≤
       (18 / β ε) * ((n : ℝ) / ℓ) := by
-  have hb : 0 < β ε := beta_pos hε
+  have hb : 0 < β ε := β_pos hε
   set s : ℝ := 2 * (n : ℝ) / ℓ with hsdef
   have hs : (0 : ℝ) ≤ s := by rw [hsdef]; positivity
   have hsone : s ≤ 1 := by rw [hsdef]; exact (div_le_iff₀ hℓ).mpr (by simpa using hn)
@@ -1173,13 +1174,13 @@ theorem abs_exp_sub_one_le_abs_mul_exp_abs (t : ℝ) :
     rw [abs_of_nonpos (sub_nonpos.mpr hexp), abs_of_nonpos ht]
     nlinarith [mul_nonneg hnegt (sub_nonneg.mpr hexpneg), Real.add_one_le_exp t]
 
-theorem plusSaddleSmallRadiusCoefficient_error_of_phase {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem A_ℓn_error_of_phase {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (n : ℕ) (hn : 2 * (n : ℝ) ≤ ℓ) {C : ℝ} (hC : 0 ≤ C)
     (hphase : |ℓ * (h_εI ε (1 + 2 * (n : ℝ) / ℓ) - h_εI ε 1) - 2 * (n : ℝ) * h₁' ε| ≤
         C * (n : ℝ) ^ 2 / ℓ) :
     |A_ℓn ε ℓ n - 1| ≤
       (C * (n : ℝ) ^ 2 / ℓ + (18 / β ε) * ((n : ℝ) / ℓ)) * Real.exp (C * (n : ℝ) ^ 2 / ℓ) := by
-  have hb : 0 < β ε := beta_pos hε
+  have hb : 0 < β ε := β_pos hε
   set E : ℝ := ℓ * (h_εI ε (1 + 2 * (n : ℝ) / ℓ) - h_εI ε 1) - 2 * (n : ℝ) * h₁' ε
   set q : ℝ := C * (n : ℝ) ^ 2 / ℓ with hqdef
   set k : ℝ := 18 / β ε * ((n : ℝ) / ℓ) with hkdef
@@ -1204,11 +1205,11 @@ theorem plusSaddleSmallRadiusCoefficient_error_of_phase {ε ℓ : ℝ} (hε : 0 
     _ = (q + k) * Real.exp q := by ring
 
 /-- Report Lemma 4.4: `A_{λ,n} = 1 + O((n + n²)/λ)` for `2n ≤ λ`. -/
-theorem exists_plusSaddleSmallRadiusCoefficient_error {ε : ℝ} (hε : 0 < ε)
+theorem exists_A_ℓn_error {ε : ℝ} (hε : 0 < ε)
     (horder : a₀ε ε ≤ Aε ε) :
     ∃ C : ℝ, 0 ≤ C ∧ ∀ (ℓ : ℝ), 0 < ℓ → ∀ n : ℕ, 2 * (n : ℝ) ≤ ℓ →
       |A_ℓn ε ℓ n - 1| ≤ (C * ((n : ℝ) + (n : ℝ) ^ 2) / ℓ) * Real.exp (C * (n : ℝ) ^ 2 / ℓ) := by
-  have hb : 0 < β ε := beta_pos hε
+  have hb : 0 < β ε := β_pos hε
   obtain ⟨C, hC, hphase⟩ := exists_plusSaddleSmallRadiusPhase_error hε horder
   have hK : (0 : ℝ) ≤ 18 / β ε := by positivity
   refine ⟨C + 18 / β ε, by positivity, fun ℓ hℓ n hn ↦ ?_⟩
@@ -1222,7 +1223,7 @@ theorem exists_plusSaddleSmallRadiusCoefficient_error {ε : ℝ} (hε : 0 < ε)
   have hq : C * (n : ℝ) ^ 2 / ℓ ≤ (C + 18 / β ε) * (n : ℝ) ^ 2 / ℓ := by
     gcongr
     exact le_add_of_nonneg_right hK
-  exact (plusSaddleSmallRadiusCoefficient_error_of_phase hε hℓ n hn hC
+  exact (A_ℓn_error_of_phase hε hℓ n hn hC
     (hphase ℓ hℓ n hn)).trans (mul_le_mul hpoly (Real.exp_le_exp.mpr hq) (Real.exp_pos _).le
       (by positivity))
 
@@ -1346,7 +1347,7 @@ theorem exists_plusSaddleSmallRadius_relativeFiniteResidue_error {ε : ℝ} (hε
             exp (-y)| ≤
           (C / ℓ) * exp (C * (N : ℝ) ^ 2 / ℓ) * (2 * y + y ^ 2) * exp (2 * y) +
             2 * exp y * (y ^ (N + 1) / ((N + 1).factorial : ℝ)) := by
-  obtain ⟨C, hC, hcoeff⟩ := exists_plusSaddleSmallRadiusCoefficient_error hε horder
+  obtain ⟨C, hC, hcoeff⟩ := exists_A_ℓn_error hε horder
   refine ⟨C, hC, fun ℓ hℓ N hN y hy hyratio ↦ ?_⟩
   set K : ℝ := C / ℓ * exp (C * (N : ℝ) ^ 2 / ℓ) with hK
   have hKnonneg : 0 ≤ K := by rw [hK]; positivity

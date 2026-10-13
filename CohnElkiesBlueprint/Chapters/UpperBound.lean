@@ -17,7 +17,7 @@ sign changes occur at the same radius. Throughout, $`\ll` denotes an inequality 
 constant, $`\ll_\epsilon` up to a constant depending only on $`\epsilon`, and $`\asymp` means both
 $`\ll` and $`\gg`. The chapter corresponds to the modules `CohnElkies/UpperBound/*.lean`; the
 construction is generic in the polynomial factor (`CohnElkies.IsSaddlePolynomial`,
-`CohnElkies.mellinProfile`), the Fourier pair $`(f_-, f_+)` being the case $`P = P_\pm` and the
+`CohnElkies.f_P`), the Fourier pair $`(f_-, f_+)` being the case $`P = P_\pm` and the
 self-Fourier function $`f_0` the case $`P = P_0` (module `CohnElkies.UpperBound.SelfFourier`,
 `CohnElkies.fZero`, `CohnElkies.PZero`).
 
@@ -34,7 +34,7 @@ Fourier scaling ({uses "def_fourier_convention"}[]) gives $`\widehat F(\xi) = R^
 $`F(x) = f_-(Rx) \le 0` for $`|x| \ge 1`, and $`F(0)/\widehat F(0) = R^df_-(0)/f_+(0) = R^d`.
 :::
 
-:::lemma_ "lemma_sign_uncertainty_reduction" (lean := "CohnElkies.RadialEigenfunction.signUncertaintyConstant_le_of_nonneg_outside, CohnElkies.minusSaddleEigenfunction, CohnElkies.zeroSaddleEigenfunction")
+:::lemma_ "lemma_sign_uncertainty_reduction" (lean := "CohnElkies.RadialEigenfunction.signUncertaintyConstant_le_of_nonneg_outside, CohnElkies.gMinus, CohnElkies.gPlus")
 If $`g` is a real radial Schwartz function with $`\widehat g = \varsigma g`, $`g(0) = 0`, $`g \ne 0`
 and $`g(x) \ge 0` for $`|x| \ge R`, then $`g \in \mathcal{E}_\varsigma(d)` with $`r(g) \le R`, so
 $`\mathsf{A}_\varsigma(d) \le R` (see {uses "def_sign_eigenfunction_class"}[],
@@ -72,7 +72,7 @@ The functions $`f_-, f_+, f_0` are constructed through their Mellin transforms o
 line, which are then inverted ({bpref "eq_8_mellin_inversion"}[]); by (10) the Fourier symmetries
 become reflections of the frequency. The ansatz perturbs the Mellin transform of a Gaussian.
 
-:::lemma_ "lemma_gaussian_mellin" (lean := "CohnElkies.mellinMultiplier_mul_E_neg, CohnElkies.saddleEnvelope_conj, CohnElkies.mellinMultiplier_mul_spectrum_neg")
+:::lemma_ "lemma_gaussian_mellin" (lean := "CohnElkies.m_ℓ_mul_E_neg, CohnElkies.E_conj, CohnElkies.m_ℓ_mul_X_P_neg")
 The Gaussian $`g_G(r) = 2\pi^{\lambda/2}e^{-\pi r^2}` has critical-line Mellin transform
 ({uses "def_radial_mellin"}[])
 $`E^G_\lambda(t) = X_{g_G}(t) = \pi^{it/2}\Gamma\bigl(\tfrac{\lambda - it}{2}\bigr)`
@@ -213,7 +213,7 @@ The signed density $`w` of {uses "eq_35_positive_shell"}[] determines the even e
 $`h_\epsilon(\zeta) = \int_0^\infty w(a)\bigl(\cos(a\zeta) - 1\bigr)\,da` (equation (36)).
 :::
 
-:::lemma_ "lemma_mellin_perturbation_axes" (lean := "CohnElkies.mellinShellPhase_neg, CohnElkies.mellinShellPhase_ofReal, CohnElkies.mellinShellPhase_imaginary, CohnElkies.h_εI, CohnElkies.saddleSourceShellDerivative") (parent := "grp_mellin_ansatz")
+:::lemma_ "lemma_mellin_perturbation_axes" (lean := "CohnElkies.h_ε_neg, CohnElkies.h_ε_ofReal, CohnElkies.h_ε_imaginary, CohnElkies.h_εI, CohnElkies.H_ε") (parent := "grp_mellin_ansatz")
 The perturbation $`h_\epsilon` of {uses "eq_36_mellin_perturbation"}[] is even and real on the
 real and imaginary axes, with
 $`h_\epsilon(iu) = \int_0^\infty w(a)(\cosh(au) - 1)\,da` and
@@ -311,20 +311,20 @@ With $`\beta` from {uses "eq_34_parameters"}[], the polynomials are (equation (3
 $`P_\pm(\zeta) = 1 + \zeta^2 + \beta \pm i\zeta(1+\zeta^2)`, $`P_0(\zeta) = -(1+\zeta^2)`.
 :::
 
-:::definition "eq_38_mellin_data" (lean := "CohnElkies.spectrum, CohnElkies.XPlus, CohnElkies.XMinus, CohnElkies.XZero") (parent := "grp_mellin_ansatz")
+:::definition "eq_38_mellin_data" (lean := "CohnElkies.X_P, CohnElkies.XPlus, CohnElkies.XMinus, CohnElkies.XZero") (parent := "grp_mellin_ansatz")
 For $`j \in \{-, 0, +\}` the Mellin data are (equation (38))
 $`X_{f_j}(t) = E_\lambda(t)P_j(t/\lambda)`, with $`E_\lambda` from {uses "eq_38_envelope"}[] and
 $`P_j` from {uses "eq_38_envelope_polynomials"}[].
 :::
 
-:::definition "eq_38_profiles" (lean := "CohnElkies.mellinProfile, CohnElkies.fPlus, CohnElkies.fMinus, CohnElkies.fZero") (parent := "grp_mellin_ansatz")
+:::definition "eq_38_profiles" (lean := "CohnElkies.f_P, CohnElkies.fPlus, CohnElkies.fMinus, CohnElkies.fZero") (parent := "grp_mellin_ansatz")
 The radial profiles are the inverse Mellin transforms of {uses "eq_38_mellin_data"}[]
 (equation (38)),
 $`f_j(r) = \dfrac{r^{-\lambda}}{2\pi}\int_{\mathbb{R}}X_{f_j}(t)r^{it}\,dt` ($`r > 0`),
 extended to $`r = 0` by the value (42) of {bpref "lemma_4_3_origin"}[].
 :::
 
-:::lemma_ "eq_39_polynomial_symmetries" (lean := "CohnElkies.minusPolynomial_neg, CohnElkies.PZero_neg, CohnElkies.plusPolynomial_conj, CohnElkies.minusPolynomial_conj, CohnElkies.PZero_conj, CohnElkies.plusPolynomial_neg_I, CohnElkies.minusPolynomial_neg_I, CohnElkies.PZero_neg_I") (parent := "grp_mellin_ansatz")
+:::lemma_ "eq_39_polynomial_symmetries" (lean := "CohnElkies.PMinus_neg, CohnElkies.PZero_neg, CohnElkies.PPlus_conj, CohnElkies.PMinus_conj, CohnElkies.PZero_conj, CohnElkies.PPlus_neg_I, CohnElkies.PMinus_neg_I, CohnElkies.PZero_neg_I") (parent := "grp_mellin_ansatz")
 The polynomials of {uses "eq_38_envelope_polynomials"}[] satisfy $`P_-(-\zeta) = P_+(\zeta)`,
 $`P_0(-\zeta) = P_0(\zeta)`, $`\overline{P_j(\zeta)} = P_j(-\bar\zeta)`,
 $`P_\pm(-i) = \beta > 0` and $`P_0(-i) = 0`.
@@ -334,7 +334,7 @@ $`P_\pm(-i) = \beta > 0` and $`P_0(-i) = 0`.
 Direct substitution of $`-\zeta`, $`\bar\zeta` and $`\zeta = -i`.
 :::
 
-:::lemma_ "eq_39_polynomial_values" (lean := "CohnElkies.plusPolynomial_imaginary, CohnElkies.minusPolynomial_imaginary, CohnElkies.PZero_imaginary, CohnElkies.plusPolynomial_imaginary_re_pos, CohnElkies.minusPolynomial_imaginary_re_neg, CohnElkies.PZero_imaginary_re_pos") (parent := "grp_mellin_ansatz")
+:::lemma_ "eq_39_polynomial_values" (lean := "CohnElkies.PPlus_imaginary, CohnElkies.PMinus_imaginary, CohnElkies.PZero_imaginary, CohnElkies.PPlus_imaginary_re_pos, CohnElkies.PMinus_imaginary_re_neg, CohnElkies.PZero_imaginary_re_pos") (parent := "grp_mellin_ansatz")
 On the imaginary axis the polynomials of {uses "eq_38_envelope_polynomials"}[] are real
 (equation (39)):
 $`P_+(iu) = \beta + (1-u)^2(1+u)`, $`P_-(iu) = \beta + (1-u)(1+u)^2`, $`P_0(iu) = u^2 - 1`.
@@ -347,7 +347,7 @@ signs persist for all $`u \ge u_0`.
 Direct substitution of $`\zeta = iu`.
 :::
 
-:::lemma_ "lemma_4_3" (lean := "CohnElkies.plusSaddleSchwartz, CohnElkies.minusSaddleSchwartz, CohnElkies.zeroSaddleSchwartz, CohnElkies.mellinProfileSchwartz") (parent := "grp_mellin_ansatz")
+:::lemma_ "lemma_4_3" (lean := "CohnElkies.fPlusSchwartz, CohnElkies.fMinusSchwartz, CohnElkies.fZeroSchwartz, CohnElkies.f_PSchwartz") (parent := "grp_mellin_ansatz")
 For every sufficiently small $`\epsilon > 0` and every integer $`d \ge 1`, with $`\lambda = d/2`,
 the inverse Mellin integrals of {uses "eq_38_profiles"}[], initially defined for $`r > 0`,
 extend to $`f_j \in \mathcal{S}_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})` for $`j \in \{-,0,+\}`.
@@ -355,7 +355,7 @@ More generally the pole $`t = -i(\lambda+2n)`, $`n \ge 0`, contributes to $`f_j(
 (equation (41))
 $`2\pi^{\lambda/2+n}\,r^{2n}\,\dfrac{(-1)^n}{n!}\,e^{\lambda h_\epsilon(\zeta_n)}\,P_j(\zeta_n)`,
 where $`\zeta_n = -i(1 + 2n/\lambda)` (`CohnElkies.poleResidue`,
-`CohnElkies.mellinData_nthPole_decomposition`).
+`CohnElkies.M_P_nthPole_decomposition`).
 :::
 
 :::proof "lemma_4_3"
@@ -380,7 +380,7 @@ real $`t` (from {uses "eq_39_polynomial_symmetries"}[], realness of $`h_\epsilon
 and $`\Gamma(\bar z) = \overline{\Gamma(z)}`) makes the extension real.
 :::
 
-:::lemma_ "lemma_4_3_fourier" (lean := "CohnElkies.saddleSource_fourier_minus_eq_plus, CohnElkies.fourier_zeroSaddleSchwartz") (parent := "grp_mellin_ansatz")
+:::lemma_ "lemma_4_3_fourier" (lean := "CohnElkies.saddleSource_fourier_minus_eq_plus, CohnElkies.fourier_fZeroSchwartz") (parent := "grp_mellin_ansatz")
 The extensions of {uses "lemma_4_3"}[] satisfy (equation (40))
 $`\widehat{f_-} = f_+` and $`\widehat{f_0} = f_0`.
 :::
@@ -423,7 +423,7 @@ $`m \ge \lambda(1+u_*)/2 = \tfrac18\log\lambda`
 for $`u \ge u_*`.
 :::
 
-:::definition "eq_44_stationary_radius" (lean := "CohnElkies.vℓ, CohnElkies.logRadius, CohnElkies.saddleLogRadius_eq_digamma_add_shellDerivative") (parent := "grp_saddle_geometry")
+:::definition "eq_44_stationary_radius" (lean := "CohnElkies.v_ℓ, CohnElkies.logRadius, CohnElkies.logRadius_eq_digamma_add_H_ε") (parent := "grp_saddle_geometry")
 On the contour $`t = \lambda(T + iu)`, the logarithm of $`E_\lambda(t)r^{it}`
 ({uses "eq_38_envelope"}[]) is
 $`\tfrac{i\lambda(T+iu)}{2}\log\pi + \log\Gamma\bigl(m - \tfrac{i\lambda T}{2}\bigr)`
@@ -436,7 +436,7 @@ $`v(u) = -\tfrac12\log\pi + \tfrac12\psi(m) + \int_0^\infty w(a)\,a\sinh(ua)\,da
 Uses {uses "eq_43_saddle_parameters"}[], {uses "eq_36_mellin_perturbation"}[].
 :::
 
-:::definition "eq_44_saddle_variance" (lean := "CohnElkies.upperSaddleVariance, CohnElkies.V_γ, CohnElkies.V_s, CohnElkies.V_B") (parent := "grp_saddle_geometry")
+:::definition "eq_44_saddle_variance" (lean := "CohnElkies.V_u, CohnElkies.V_uδ, CohnElkies.V_γ, CohnElkies.V_s, CohnElkies.V_B") (parent := "grp_saddle_geometry")
 The saddle variance is $`V(u) = V_\gamma - V_s + V_B` with the moments of
 {bpref "eq_48_moments"}[] (formally $`V = v'` for $`v` of {uses "eq_44_stationary_radius"}[]).
 :::
@@ -471,7 +471,7 @@ $`D_\gamma(T) := -\operatorname{Re}G_{\lambda,\eta}(T) = \int_0^\infty(1 - \cos(
 ({uses "eq_45_log_gamma_phase"}[]).
 :::
 
-:::lemma_ "lemma_gamma_damping_nonneg" (lean := "CohnElkies.upperGammaDamping_nonneg") (parent := "grp_saddle_geometry")
+:::lemma_ "lemma_gamma_damping_nonneg" (lean := "CohnElkies.D_γ_nonneg") (parent := "grp_saddle_geometry")
 $`D_\gamma(T) \ge 0` for every $`T` ({uses "eq_45_gamma_damping"}[]): the gamma function in the
 Mellin envelope always damps the integrand away from $`T = 0`.
 :::
@@ -493,7 +493,7 @@ Uses {uses "eq_44_stationary_radius"}[], {uses "eq_45_log_gamma_phase"}[] and
 {uses "eq_45_log_gamma_integral"}[].
 :::
 
-:::definition "eq_47_total_damping" (lean := "CohnElkies.D_u, CohnElkies.saddleSourceContourDamping") (parent := "grp_saddle_geometry")
+:::definition "eq_47_total_damping" (lean := "CohnElkies.D_u, CohnElkies.D_uδ") (parent := "grp_saddle_geometry")
 The total damping is (equation (47))
 $`D_u(T) := -\operatorname{Re}\mathcal{L}_u(T) = D_\gamma(T)`
 $`+ \lambda\int_0^\infty w(a)\cosh(ua)(1 - \cos(aT))\,da`
@@ -532,7 +532,7 @@ The globally valid Taylor estimates $`e^{ix} - 1 - ix = -x^2/2 + O(|x|^3)` and
 $`x - \sin x = O(|x|^3)`, applied to (45) and (46) with $`|\sinh(ua)| \le \cosh(ua)`.
 :::
 
-:::lemma_ "eq_51_gamma_moments" (lean := "CohnElkies.upperGammaVariance_bounds, CohnElkies.upperGammaThirdMoment_bounds") (parent := "grp_saddle_geometry")
+:::lemma_ "eq_51_gamma_moments" (lean := "CohnElkies.V_γ_bounds, CohnElkies.M₃_γ_bounds") (parent := "grp_saddle_geometry")
 For $`\lambda, \eta > 0` the gamma moments of {uses "eq_48_moments"}[] satisfy (equations
 (51)–(52))
 $`\dfrac{1}{2\eta} \le V_\gamma \le \dfrac{1}{2\eta} + \dfrac{1}{\lambda\eta^2}`,
@@ -545,7 +545,7 @@ Both follow from $`x \le e^x - 1 \le xe^x` applied to the density $`\mu_{\lambda
 polygamma estimates into the polygamma expressions of the moments).
 :::
 
-:::lemma_ "eq_53_gamma_damping_lower" (lean := "CohnElkies.upperGammaDamping_lower_bound") (parent := "grp_saddle_geometry")
+:::lemma_ "eq_53_gamma_damping_lower" (lean := "CohnElkies.D_γ_lower_bound") (parent := "grp_saddle_geometry")
 For $`\lambda, \eta > 0` and all $`T` (equation (53)),
 $`D_\gamma(T) \ge \dfrac{\lambda}{8e}\min\Bigl(\dfrac{T^2}{\eta}, |T|\Bigr)`
 ({uses "eq_45_gamma_damping"}[]).
@@ -562,7 +562,7 @@ Lemma 4.4 and (51)–(53) control the gamma contribution and cubic remainder. Fo
 shell removes at most a $`(1 - c\epsilon)`-fraction of the gamma damping, while $`w_B` contributes
 nonnegative damping.
 
-:::lemma_ "lemma_4_5" (lean := "CohnElkies.upperFirstBranchSaddleDamping_lower_bound") (parent := "grp_saddle_geometry")
+:::lemma_ "lemma_4_5" (lean := "CohnElkies.upperFirstBranch_D_u_lower_bound") (parent := "grp_saddle_geometry")
 For every $`0 < \epsilon \le 1/4`, $`\lambda > 0` and $`-1 < u \le U`, the total damping of
 {uses "eq_47_total_damping"}[] satisfies (equation (55))
 $`D_u(T) \ge 2\epsilon D_\gamma(T)` for all $`T`.
@@ -576,7 +576,7 @@ $`D_u(T) \ge D_\gamma(T) - (1-2\epsilon)\int_{a_0}^A(1-\cos(aT))\mu_{\lambda,\et
 $`\ge 2\epsilon D_\gamma(T)`.
 :::
 
-:::lemma_ "eq_56_first_branch_variance" (lean := "CohnElkies.upperFirstBranch_shortVariance_le_gamma, CohnElkies.upperFirstBranch_saddleSourceGaussianVariance_lower_bound, CohnElkies.eventually_saddleSourceGaussianVariance_firstBranch_pos") (parent := "grp_saddle_geometry")
+:::lemma_ "eq_56_first_branch_variance" (lean := "CohnElkies.upperFirstBranch_shortVariance_le_gamma, CohnElkies.upperFirstBranch_V_u_lower_bound, CohnElkies.eventually_V_u_firstBranch_pos") (parent := "grp_saddle_geometry")
 For every $`0 < \epsilon \le 1/4`, $`\lambda > 0` and $`-1 < u \le U`, with $`\eta = 1 + u`,
 the variances of {uses "eq_49_shell_contributions"}[] and {uses "eq_44_saddle_variance"}[]
 satisfy (equation (56))
@@ -589,7 +589,7 @@ $`V_s \le (1 - 2\epsilon)V_\gamma`, hence $`V(u) \ge 2\epsilon V_\gamma + V_B \g
 (51) of {uses "eq_51_gamma_moments"}[].
 :::
 
-:::lemma_ "eq_57_first_branch_third_moment" (lean := "CohnElkies.upperFirstBranch_saddleSourceThirdMoment_scaled_le") (parent := "grp_saddle_geometry")
+:::lemma_ "eq_57_first_branch_third_moment" (lean := "CohnElkies.upperFirstBranch_M₃_scaled_le") (parent := "grp_saddle_geometry")
 There is $`\epsilon_0 > 0` such that, for every $`0 < \epsilon < \epsilon_0`, there are
 constants $`C_\epsilon, \lambda_\epsilon > 0` with: for every $`\lambda \ge \lambda_\epsilon` and
 $`u_* \le u \le U` (equation (57)), $`M_3 \le C_\epsilon V(u)` ({uses "eq_48_moments"}[],
@@ -622,7 +622,7 @@ $`= C_0Q^{-1}e^{-(U-1)(B-A)}`;
 {bpref "lemma_4_2_separation"}[] gives $`\rho_\epsilon = O(e^{-c/\epsilon^2}) = o(1)` as
 $`\epsilon \downarrow 0`.
 
-:::lemma_ "eq_59_60_shell_damping_bounds" (lean := "CohnElkies.upperShortShellDamping_global_bound, CohnElkies.positiveShellDamping_lower_bound") (parent := "grp_saddle_geometry")
+:::lemma_ "eq_59_60_shell_damping_bounds" (lean := "CohnElkies.D_s_global_bound, CohnElkies.D_B_lower_bound") (parent := "grp_saddle_geometry")
 For $`\lambda \ge 0`, $`u = 1 + \delta \ge 1` and all $`T`, the shell dampings of
 {uses "eq_49_shell_contributions"}[] satisfy (equations (59)–(60))
 $`D_s(T) \le \lambda C_0e^{\delta A}\min(T^2, 1)` and
@@ -644,7 +644,7 @@ $`\gg \lambda Qe^{\delta B}\min(T^2,1)`,
 which is (60).
 :::
 
-:::lemma_ "lemma_4_6" (lean := "CohnElkies.eventually_upper_shortShell_domination, CohnElkies.eventually_upperSaddleDamping_gamma_add_shell") (parent := "grp_saddle_geometry")
+:::lemma_ "lemma_4_6" (lean := "CohnElkies.eventually_upper_shortShell_domination, CohnElkies.eventually_D_uδ_gamma_add_shell") (parent := "grp_saddle_geometry")
 There is $`\epsilon_0 > 0` such that, for every $`0 < \epsilon < \epsilon_0`, every
 $`\lambda \ge 0`, every $`u \ge U` and every $`T \in \mathbb{R}` (equations (61)–(62)),
 $`D_s(T) \le \dfrac{1}{100}D_B(T)`, hence $`D_u(T) \ge D_\gamma(T) + \dfrac{99}{100}D_B(T)`
@@ -658,7 +658,7 @@ $`D_s(T)/D_B(T) \ll C_0Q^{-1}e^{-\delta(B-A)} \le \rho_\epsilon`, and
 at $`T = 0` both damping terms vanish. Then $`D_u = D_\gamma - D_s + D_B` proves (62).
 :::
 
-:::lemma_ "eq_64_positive_shell_variance" (lean := "CohnElkies.upperPositiveShellVariance_bounds") (parent := "grp_saddle_geometry")
+:::lemma_ "eq_64_positive_shell_variance" (lean := "CohnElkies.V_B_bounds") (parent := "grp_saddle_geometry")
 For $`u = 1 + \delta \ge 1` the positive-shell variance of {uses "eq_49_shell_contributions"}[]
 satisfies (equation (64))
 $`\tfrac12B^2Qe^{\delta B} \le V_B \le (B+1)^2Qe^{\delta(B+1)}`.
@@ -668,7 +668,7 @@ $`\tfrac12B^2Qe^{\delta B} \le V_B \le (B+1)^2Qe^{\delta(B+1)}`.
 Integrate $`w_B(a)\cosh(ua) \asymp Qe^{\delta a}` against $`a^2` over $`[B, B+1]`.
 :::
 
-:::lemma_ "eq_66_second_branch_variance" (lean := "CohnElkies.eventually_upper_shortShellVariance_domination, CohnElkies.eventually_upperSaddleVariance_bounds, CohnElkies.eventually_upperSaddleVariance_pos, CohnElkies.eventually_upperSaddleThirdMoment_le_variance") (parent := "grp_saddle_geometry")
+:::lemma_ "eq_66_second_branch_variance" (lean := "CohnElkies.eventually_upper_shortShellVariance_domination, CohnElkies.eventually_V_uδ_bounds, CohnElkies.eventually_V_uδ_pos, CohnElkies.eventually_M₃_le_variance") (parent := "grp_saddle_geometry")
 There is $`\epsilon_0 > 0` such that, for every $`0 < \epsilon < \epsilon_0`, there is
 $`C_\epsilon > 0` with: for every $`\lambda \ge 1` and $`u \ge U` (equations (63), (65)–(66)),
 $`V_s \le \dfrac{1}{100}V_B`, hence
@@ -728,7 +728,7 @@ The damping bounds now determine the exterior signs of $`f_+, f_-, f_0`. On each
 centered phase is quadratic near $`T = 0`, the factor $`P_j(T+iu)` is asymptotic to $`P_j(iu)`, and
 the remaining contour is negligible.
 
-:::lemma_ "lemma_4_8" (lean := "CohnElkies.eventually_firstBranch_fullGaussianError, CohnElkies.eventually_secondBranch_fullGaussianError, CohnElkies.eventually_mellinProfile_re_mul_pos_firstBranch, CohnElkies.eventually_mellinProfile_re_mul_pos_secondBranch")
+:::lemma_ "lemma_4_8" (lean := "CohnElkies.eventually_firstBranch_fullGaussianError, CohnElkies.eventually_secondBranch_fullGaussianError, CohnElkies.eventually_f_P_re_mul_pos_firstBranch, CohnElkies.eventually_f_P_re_mul_pos_secondBranch")
 Fix $`0 < \epsilon < \epsilon_0`, let $`\lambda = d/2`, and recall $`u_0, U` from
 {uses "eq_34_parameters"}[] and $`u_*` from {uses "eq_43_saddle_parameters"}[]. For $`u > -1` and
 $`P \in \{P_+, P_-, P_0\}` put
@@ -840,7 +840,7 @@ $`r \ge e^{v(u_*)}` and $`[u_0,\infty)` every radius $`r \ge e^{v(u_0)}`
 give (76).
 :::
 
-:::lemma_ "lemma_saddle_radius_coverage" (lean := "CohnElkies.eventually_saddleLogRadius_covers_Ici, CohnElkies.logRadius_continuousOn_Ici")
+:::lemma_ "lemma_saddle_radius_coverage" (lean := "CohnElkies.eventually_logRadius_covers_Ici, CohnElkies.logRadius_continuousOn_Ici")
 For every sufficiently small $`\epsilon`, every $`d \ge 1` and every $`u_0 > -1`, the map
 $`u \mapsto v(u)` of {uses "eq_44_stationary_radius"}[] is continuous on $`[u_0, \infty)` and
 every radius $`r \ge e^{v(u_0)}` is attained: $`r = e^{v(u)}` for some $`u \ge u_0`.
@@ -871,7 +871,7 @@ $`A_{\lambda,n} = e^{\lambda[h_\epsilon(\zeta_n) - h_\epsilon(i)] - 2nh_1'}\,P_+
 $`\zeta_n = -i(1+2n/\lambda)`.
 :::
 
-:::lemma_ "eq_78_residue_expansion" (lean := "CohnElkies.plusSaddleProfile_div_origin_eq_small_radius_residue_series")
+:::lemma_ "eq_78_residue_expansion" (lean := "CohnElkies.fPlus_div_origin_eq_small_radius_residue_series")
 With the notation of {uses "def_small_radius_expansion"}[], the residue expansion (41) of
 {uses "lemma_4_3"}[] splits, for $`r > 0` and every $`N`,
 $`\dfrac{f_+(r)}{f_+(0)} = \sum_{n=0}^N\dfrac{(-y)^n}{n!}A_{\lambda,n} + \mathcal{R}_{\lambda,N}(r)`
@@ -886,7 +886,7 @@ $`t = -i(\lambda + 2n)`, $`0 \le n \le N`, and evaluate the residues by (41) and
 {uses "lemma_4_10"}[].
 :::
 
-:::lemma_ "lemma_4_10" (lean := "CohnElkies.eventually_plusSaddleSmallRadius_relativeFiniteResidue_lt_half_on_star, CohnElkies.eventually_plusSaddleTaylorRemainder_relative_lt_half_on_star, CohnElkies.eventually_plusSaddleProfile_re_pos_on_star")
+:::lemma_ "lemma_4_10" (lean := "CohnElkies.eventually_plusSaddleSmallRadius_relativeFiniteResidue_lt_half_on_star, CohnElkies.eventually_taylorRemainderPlus_relative_lt_half_on_star, CohnElkies.eventually_fPlus_re_pos_on_star")
 With the notation of {uses "def_small_radius_expansion"}[] and {uses "eq_78_residue_expansion"}[],
 for all sufficiently large $`d`, uniformly on $`0 \le r \le r_*`,
 $`e^y\Bigl|\sum_{n=0}^N\dfrac{(-y)^n}{n!}A_{\lambda,n} - e^{-y}\Bigr| < \tfrac12` and
@@ -969,7 +969,7 @@ $`\dfrac{f_+(r)}{f_+(0)}`
 $`= e^{-y}\Bigl(1 + O_\epsilon\Bigl(\dfrac{(\log\lambda)^2}{\lambda^{3/4}}\Bigr)\Bigr) > 0`.
 :::
 
-:::lemma_ "eq_84_saddle_radius_limit" (lean := "CohnElkies.R_ε, CohnElkies.α_ε, CohnElkies.tendsto_saddleSourceRadius_normalized")
+:::lemma_ "eq_84_saddle_radius_limit" (lean := "CohnElkies.R_ε, CohnElkies.α_ε, CohnElkies.tendsto_R_ε_normalized")
 Set $`R_{\epsilon,d} = e^{v(u_0)}` with $`v` from {uses "eq_44_stationary_radius"}[]. For fixed
 $`\epsilon` (equation (84)),
 $`\lim_{d\to\infty}\dfrac{R_{\epsilon,d}}{\sqrt d}`
@@ -981,7 +981,7 @@ The saddle equation (44) and the digamma asymptotic
 $`\psi(\lambda(1+u_0)/2) = \log(d(1+u_0)/4) + o(1)` ({uses "lemma_gamma_asymptotics"}[]).
 :::
 
-:::lemma_ "eq_85_critical_radius" (lean := "CohnElkies.tendsto_limitingSaddleRadius, CohnElkies.tendsto_limitingSaddleRadius_wallisIntegral")
+:::lemma_ "eq_85_critical_radius" (lean := "CohnElkies.tendsto_α_ε, CohnElkies.tendsto_α_ε_wallisIntegral")
 With $`\alpha_\epsilon` from {uses "eq_84_saddle_radius_limit"}[] (equation (85)),
 $`\lim_{\epsilon\downarrow0}\lim_{d\to\infty}R_{\epsilon,d}/\sqrt d`
 $`= \lim_{\epsilon\downarrow0}\alpha_\epsilon = 1/\pi`.

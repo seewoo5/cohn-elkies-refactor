@@ -8,7 +8,7 @@ import CohnElkiesForMathlib.Analysis.SpecialFunctions.FrullaniIntegral
 The normalized radius `α_ε = exp (-(log π)/2 + ∫ shell contributions)` of the saddle-point
 construction and its limit as `ε → 0⁺`: the positive-shell contribution tends to zero, the
 short-shell contribution tends to the Laplace integral of report (33), which equals `log (π/2)`
-by the Wallis product, so that `α_ε → 1/π` (`tendsto_limitingSaddleRadius`).
+by the Wallis product, so that `α_ε → 1/π` (`tendsto_α_ε`).
 -/
 
 namespace CohnElkies
@@ -110,7 +110,7 @@ theorem tendsto_shortShellRadiusIntegrand {a : ℝ} (ha : 0 < a) :
   simpa [hvalue] using
     (hc.continuousAt (x := (0 : ℝ))).tendsto.mono_left (nhdsWithin_le_nhds (s := Set.Ioi (0 : ℝ)))
 
-theorem shortMargin_abs_le_exp {ε a : ℝ} (hε0 : 0 ≤ ε) (hε1 : ε ≤ 1) (ha : 0 ≤ a) :
+theorem bε_abs_le_exp {ε a : ℝ} (hε0 : 0 ≤ ε) (hε1 : ε ≤ 1) (ha : 0 ≤ a) :
     |bε ε a| ≤ 11 * exp a := by
   calc |bε ε a| = |1 - 2 * ε * (1 + a)| := rfl
     _ ≤ |(1 : ℝ)| + |2 * ε * (1 + a)| := abs_sub _ _
@@ -155,7 +155,7 @@ theorem shortShellRadiusIntegrand_abs_le {ε a : ℝ} (hε0 : 0 ≤ ε) (hε1 : 
   calc |bε ε a| * exp (-2 * a) * (sinh ((1 + ε / 4) * a) / cosh a) / (2 * a)
       ≤ (11 * exp a) * exp (-2 * a) * ((5 / 4 : ℝ) * a * exp (a / 4)) / (2 * a) := by
         gcongr
-        · exact shortMargin_abs_le_exp hε0 hε1 ha.le
+        · exact bε_abs_le_exp hε0 hε1 ha.le
         · exact shortShellHyperbolicRatio_le hε0 hε1 ha.le
     _ = (55 / 8 : ℝ) * exp (-(3 / 4 : ℝ) * a) := by
         rw [show -(3 / 4 : ℝ) * a = a + -2 * a + a / 4 by ring, Real.exp_add, Real.exp_add]
@@ -178,13 +178,13 @@ theorem shortShellRadiusIntegrand_measurable (ε : ℝ) :
   unfold shortShellRadiusIntegrand w_s bε
   fun_prop
 
-theorem tendsto_shortCutoff : Tendsto a₀ε (𝓝[>] (0 : ℝ)) (𝓝 0) := by
+theorem tendsto_a₀ε : Tendsto a₀ε (𝓝[>] (0 : ℝ)) (𝓝 0) := by
   have ht : Tendsto (fun ε : ℝ ↦ ε) (𝓝[>] (0 : ℝ)) (𝓝 0) :=
     tendsto_id.mono_left (nhdsWithin_le_nhds (s := Set.Ioi (0 : ℝ)))
   change Tendsto (fun ε : ℝ ↦ ε ^ 2) (𝓝[>] (0 : ℝ)) (𝓝 0)
   simpa using ht.pow 2
 
-theorem tendsto_shortEndpoint : Tendsto Aε (𝓝[>] (0 : ℝ)) atTop := by
+theorem tendsto_Aε : Tendsto Aε (𝓝[>] (0 : ℝ)) atTop := by
   have ht : Tendsto (fun ε : ℝ ↦ log ε⁻¹) (𝓝[>] (0 : ℝ)) atTop :=
     Real.tendsto_log_atTop.comp tendsto_inv_nhdsGT_zero
   change Tendsto (fun ε : ℝ ↦ log (1 / ε)) (𝓝[>] (0 : ℝ)) atTop
@@ -201,8 +201,8 @@ theorem tendsto_supportedShortShellRadiusIntegrand {a : ℝ} (ha : 0 < a) :
     Tendsto (fun ε : ℝ ↦ supportedShortShellRadiusIntegrand ε a) (𝓝[>] (0 : ℝ))
       (𝓝 (wallisRadiusIntegrand a)) := by
   refine (tendsto_shortShellRadiusIntegrand ha).congr' ?_
-  filter_upwards [tendsto_shortCutoff.eventually (Iio_mem_nhds ha),
-    tendsto_shortEndpoint.eventually_ge_atTop a] with ε hlower hupper
+  filter_upwards [tendsto_a₀ε.eventually (Iio_mem_nhds ha),
+    tendsto_Aε.eventually_ge_atTop a] with ε hlower hupper
   simp [supportedShortShellRadiusIntegrand,
     Set.indicator_of_mem (show a ∈ Set.Ioc (a₀ε ε) (Aε ε) from ⟨hlower, hupper⟩)]
 
@@ -239,8 +239,8 @@ theorem tendsto_shortShellRadiusContribution :
       (𝓝 (∫ a in Set.Ioi (0 : ℝ), wallisRadiusIntegrand a)) := by
   refine tendsto_supportedShortShellRadiusIntegral.congr' ?_
   filter_upwards [self_mem_nhdsWithin,
-    tendsto_shortCutoff.eventually (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1)),
-    tendsto_shortEndpoint.eventually_ge_atTop (1 : ℝ)] with ε hε hcutoff hendpoint
+    tendsto_a₀ε.eventually (Iio_mem_nhds (by norm_num : (0 : ℝ) < 1)),
+    tendsto_Aε.eventually_ge_atTop (1 : ℝ)] with ε hε hcutoff hendpoint
   exact (shortShellRadiusContribution_eq_supported hε (hcutoff.le.trans hendpoint)).symm
 
 theorem wallisRadiusIntegrand_eq_laplace (a : ℝ) :
@@ -272,7 +272,7 @@ def α_ε (ε : ℝ) : ℝ :=
   √((2 + ε / 4) / (4 * π)) *
     exp (shortShellRadiusContribution ε + positiveShellRadiusContribution ε)
 
-theorem tendsto_limitingSaddleRadius_wallisIntegral : Tendsto α_ε (𝓝[>] (0 : ℝ))
+theorem tendsto_α_ε_wallisIntegral : Tendsto α_ε (𝓝[>] (0 : ℝ))
     (𝓝 (√(1 / (2 * π)) * exp (∫ a in Set.Ioi (0 : ℝ), wallisRadiusIntegrand a))) := by
   have hε : Tendsto (fun ε : ℝ ↦ ε) (𝓝[>] (0 : ℝ)) (𝓝 0) :=
     tendsto_id.mono_left (nhdsWithin_le_nhds (s := Set.Ioi (0 : ℝ)))
@@ -302,9 +302,9 @@ theorem saddleRadius_wallis_constant :
   nlinarith
 
 /-- Report (32)–(33): the saddle radius tends to the critical radius `1 / π` as `ε → 0⁺`. -/
-theorem tendsto_limitingSaddleRadius : Tendsto α_ε (𝓝[>] (0 : ℝ)) (𝓝 criticalRadius) := by
+theorem tendsto_α_ε : Tendsto α_ε (𝓝[>] (0 : ℝ)) (𝓝 criticalRadius) := by
   simpa only [integral_wallisRadiusIntegrand, saddleRadius_wallis_constant] using
-    tendsto_limitingSaddleRadius_wallisIntegral
+    tendsto_α_ε_wallisIntegral
 
 end
 

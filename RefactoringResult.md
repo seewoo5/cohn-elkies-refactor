@@ -82,7 +82,8 @@ Lean 4 identifiers cannot contain `λ` (a keyword), `₊`, `₋`, or superscript
 letters such as `A`, `B`, `Q`, `b`, `v`, `V`, `E` occur as bound variables in hundreds of
 declarations. Hence: `ℓ` stands for `λ = d/2`; `Aε`, `Bε`, `Qε`, `a₀ε`, `bε` for the
 ε-dependent parameters; `PPlus`/`PMinus`/`fPlus`/`fMinus` for `P₊`/`P₋`/`f₊`/`f₋` (with the
-notations `P₊`, `P₋`, `f₊`, `f₋`, `f₀` available for statements). Definitions renamed globally
+notations `P₊`, `P₋`, `f₊`, `f₋`, `f₀` available for statements; these notations were dropped later).
+The renaming was completed on 2026-10-13 (§11). Definitions renamed globally
 (theorem names were renamed module by module, see the per-module notes):
 
 | Report | Original Lean name | New Lean name |
@@ -141,7 +142,7 @@ notations `P₊`, `P₋`, `f₊`, `f₋`, `f₀` available for statements). Defi
 | Z (12) | `normalizedRadialMellinStrip` | `Z_g` |
 | X_f (8), complex argument | `radialMellinStrip` | `X_f` |
 | m_λ (10) | `mellinMultiplier` | `m_ℓ` |
-| v(u) with real λ | `saddleSourceStationaryLogRadius` | `vℓ` |
+| v(u) with real λ | `saddleSourceStationaryLogRadius` | `v_ℓ` (`vℓ` until 2026-10-13) |
 | anti-self-Fourier witness (Thm 3.8) | `AntiFourierWitness` | `AntiSelfFourierWitness` |
 | α_ε = lim R_{ε,d}/√d (84) | `limitingSaddleRadius` | `α_ε` |
 | z = λ(1+u) − iλT | `saddleSourceMellinContour` | `z_contour` |
@@ -149,7 +150,7 @@ notations `P₊`, `P₋`, `f₊`, `f₋`, `f₀` available for statements). Defi
 | G_{λ,η} (45) | `upperGammaCenteredPhase` | `G_ℓη` |
 | L_u (46) | `saddleSourceCenteredPhase` | `L_u` |
 | D_γ (45) | `upperGammaDamping` | `D_γ` |
-| D_u (47) | `upperSaddleDamping` | `D_u` |
+| D_u (47) at u = 1 + δ | `upperSaddleDamping` | `D_uδ` (`D_u` until 2026-10-13; `D_u` is now the version in `u`, see §11) |
 | D_s (49) | `upperShortShellDamping` | `D_s` |
 | D_B (49) | `positiveShellDamping` | `D_B` |
 | V_s (49) | `upperShortShellVariance` | `V_s` |
@@ -300,14 +301,14 @@ lattice with Schwartz functions.
   actually used: `IsSaddlePolynomial ε P` (entire, `‖P z‖ ≤ (1+|β|)(1+‖z‖)³`,
   `conj (P z) = P (-conj z)`) and, on the saddle range `u ≥ u₀`, `SaddleRangeBounds P u₀`
   (`0 < ‖P(iu)‖`, `‖P(T+iu) − P(iu)‖ ≤ C(|T|+|T|³)‖P(iu)‖`); the objects `spectrum` (`X_P`),
-  `mellinData`, `mellinProfile` (`f_P`, with a prescribed origin value), `mellinProfileSchwartz`,
-  `fourier_eq_of_mellinProfile` (`𝓕 f_P = f_Q` when `P(−z) = Q(z)`), and the sign chain
-  `eventually_mellinProfile_re_mul_pos_of_radius` (`0 < s·Re f_P(r)` for `r ≥ R_{ε,d}` whenever
+  `M_P`, `f_P` (with a prescribed origin value), `f_PSchwartz`,
+  `fourier_eq_of_f_P` (`𝓕 f_P = f_Q` when `P(−z) = Q(z)`), and the sign chain
+  `eventually_f_P_re_mul_pos_of_radius` (`0 < s·Re f_P(r)` for `r ≥ R_{ε,d}` whenever
   `0 < s·Re P(iu)` on the range) replace about forty `plus…`/`minus…` pairs; `f₊`, `f₋` are the
   specializations `P = P₊, P₋` (by `rfl`). The new module `CohnElkies/UpperBound/SelfFourier.lean`
   defines `PZero z = -(1+z²)`, `XZero`, `MZero`, `fZero` (origin value `0`, since
-  `P₀(−i) = 0` kills the residue at `z = 0`), the Schwartz realization `zeroSaddleSchwartz` with
-  `fourier_zeroSaddleSchwartz : 𝓕 f₀ = f₀` (from `P₀(−z) = P₀(z)`), and the strict exterior
+  `P₀(−i) = 0` kills the residue at `z = 0`), the Schwartz realization `fZeroSchwartz` with
+  `fourier_fZeroSchwartz : 𝓕 f₀ = f₀` (from `P₀(−z) = P₀(z)`), and the strict exterior
   positivity `eventually_fZero_re_pos_of_radius` (for all small `ε`, large `d`, `r ≥ R_{ε,d}`),
   bundled as `eventually_exists_radialEigenfunction_fZero : ∃ g : RadialEigenfunction d 1, …`.
   Since `P₀` has degree 2, its range bounds are proved directly rather than through the degree-3
@@ -501,7 +502,7 @@ modules, 2,193 lines.
 | `SchwartzTools` | `dilate`, `IsRadial.fourier`, `IsRealValued.fourier_of_radial`, exponential tilts, the change of variables `r = R e^v` |
 | `Admissible/{Nonempty, Radialization}` | `𝒜_d^rad ≠ ∅` via a bump autocorrelation; the radial reduction of report §2.1 (`Admissible.radialize`, `LP_eq_radial`) |
 | `LowerBound/{Balanced, LogProfile, MellinStrip, PoissonKernel, GammaBoundary, LimitingDensity, CappedMajorant, StripToHalfPlane, CappedMajorization, CenteredMax, Main, LogMomentDigamma, PhragmenLindelofMajorization}` | report §3: `φ_g`, `Z_g`, the strip and its boundary values, `P_σ`, `h_ℓ`, the conformal map strip → upper half-plane and the harmonic-measure identity, the Poisson principle for the strip (the report's proof, through the half-plane) and Lemma 3.2 (capped), Lemma 3.3–3.6, Propositions 3.1 and 3.7; the log-moment identity (22); the alternative Phragmén–Lindelöf proof of the strip principle (leaf module) |
-| `UpperBound/{Envelope, MellinProfile, Residues, WallisRadius, ShellEstimates, SaddleDamping, FourierPair, SmallRadius, Schwartz, SaddleContour, GammaPhase, SaddleTails, GaussianError, Coverage, Signs, SelfFourier}` | report §4: envelope and generic `mellinProfile`, residues, the radius `R_{ε,d}`, Lemmas 4.2–4.10 (generic in the polynomial), `f₊`, `f₋`, `f₀`, exterior signs |
+| `UpperBound/{Envelope, MellinProfile, Residues, WallisRadius, ShellEstimates, SaddleDamping, FourierPair, SmallRadius, Schwartz, SaddleContour, GammaPhase, SaddleTails, GaussianError, Coverage, Signs, SelfFourier}` | report §4: envelope and generic `f_P`, residues, the radius `R_{ε,d}`, Lemmas 4.2–4.10 (generic in the polynomial), `f₊`, `f₋`, `f₀`, exterior signs |
 | `Asymptotics/{Framework, Stirling, Main, Manuscript}` | the sandwich argument, Stirling for `v_d`, Theorem 1.1 in all its forms |
 | `SpherePacking/{Basic, Periodic, PeriodicApproximation, CohnElkiesBound, Radialization}` | packings, periodic packings, the Cohn–Elkies bound via Poisson summation, the `O(d)` radial symmetrization of test functions |
 | `PackingBound`, `Manuscript` | `Δ_d ≤ LP_d` and Theorem 1.1 in the form of the comparator (`PackingBounds.*`), the manuscript conclusions |
@@ -546,7 +547,7 @@ Mathlib-style names) is in the scratchpad file `rename_table.md`; merged duplica
 `SpherePacking.Alternative.{Ambient, Schwartz, IsRealValued, IsRadial, quotient, IsAdmissible,
 IsUnrestrictedAdmissible}` → `CohnElkies.{Euclidean, TestFunction, IsRealValued, IsRadial,
 quotient, Admissible}`, `PackingBounds.FullAdmissible` (with `FullAdmissible.radialization`),
-`upperFirstBranchSaddleDamping` → `saddleSourceContourDamping`, three proofs of `IsRadial (𝓕 f)`
+`upperFirstBranchSaddleDamping` → `D_u`, three proofs of `IsRadial (𝓕 f)`
 → `IsRadial.fourier`. `Numerics.lean` (empty after the removal of the decimal certificate) is gone.
 
 Lake targets: `defaultTargets = ["CohnElkiesForMathlib", "CohnElkies", "ComparatorChallenges",
@@ -635,7 +636,7 @@ proof formalized, no `sorry`, no incomplete dependency.
   `mellinEnvelope_mul_shiftedLine_bound`, generic in `P` under the single hypothesis
   `‖P z‖ ≤ (1 + |β|)(1 + ‖z‖)³`. `try dsimp`/`simpa using!` removed throughout; `open Real`.
 - **B02 (UpperBound/Envelope1)**: 1,500 → 910 lines. New generic layer for an arbitrary
-  polynomial `P` (`regularMellinFactor`, `mellinData`, `nthPoleNumerator`, `poleResidue`,
+  polynomial `P` (`regularMellinFactor`, `M_P`, `nthPoleNumerator`, `poleResidue`,
   `nthPoleRegularPart` and their meromorphy/pole-decomposition lemmas), of which the plus/minus
   statements are one-line corollaries; continuity results now come from
   `Differentiable.continuous` instead of parametric-integral arguments; the `sinc` bounds and the
@@ -644,8 +645,8 @@ proof formalized, no `sorry`, no incomplete dependency.
 - **B04 (UpperBound/Envelope3)**: 1,351 → 699 lines, 73 → 49 declarations. Growth/integrability of
   the Mellin data on horizontal lines, the rectangular contour shifts and the Fourier
   representation of the profiles are now stated once for an abstract Mellin datum
-  (`shiftedLine_moment_integrable`, `IsRapidContourIntegrand`, `spectrum_norm_moment_integrable`,
-  `mellinInv_eq_fourier`, `contDiffOn_profile`, `mellinData_conj_vertical`); the plus/minus
+  (`shiftedLine_moment_integrable`, `IsRapidContourIntegrand`, `X_P_norm_moment_integrable`,
+  `mellinInv_eq_fourier`, `contDiffOn_profile`, `M_P_conj_vertical`); the plus/minus
   results are corollaries. `HasDerivAt.congr_deriv`, `tendsto_nhds_unique`, `pow_le_one₀`,
   `one_le_pow₀` replaced ad-hoc arguments.
 - **B05 (UpperBound/Residues, UpperBound/WallisRadius)**: 1,620 → 1,054 lines. The residue
@@ -663,18 +664,18 @@ proof formalized, no `sorry`, no incomplete dependency.
   exponential-tilt derivative lemmas are stated at function level. Mathlib: `DFunLike.ne_iff`,
   `mul_pow_sub_one`, `Complex.ofReal_cpow`, `VectorFourier.fourierIntegral_const_smul`.
 - **B07 (LowerBound/PoissonKernel, LowerBound/GammaBoundary1)**: 1,960 → 1,205 lines. The
-  strip Cayley map `E_ℓ` and the Poisson primitive `Q_σ` carry the kernel computations; the
+  strip Cayley map `stripConformalMap` and the Poisson primitive `Q_σ` carry the kernel computations; the
   pos/neg halves of the regularized holomorphic kernel and of the half-line integrability
   arguments were merged (`K'_ℓ_eq`, `integrable_of_even`); the ∫_{v≤0}|φ| ≥ ½ chain and the
   Fourier-inversion bound of Lemma 3.6 became two lemmas (`half_le_setIntegral_Iic_abs`,
   `negativeHalfline_le_of_fourierInversion`). Observation: the hypothesis `y ≠ 0` of
-  `lowerGammaBoundaryLog_halfInteger_factorized` is unnecessary (kept for the contract).
+  `h_ℓ_halfInteger_factorized` is unnecessary (kept for the contract).
 - **B08 (LowerBound/GammaBoundary2, LowerBound/ComplexFrullani)**: 1,315 → 833 lines. Shared
   helpers for the even/odd dimension dispatch (`natCast_div_two_cases`), the monotone Riemann
   bracketing of Lemma 3.3 (`monotone_riemann_bracket`, from `MonotoneOn.sum_le_integral`), and
   the `log √(c² + (x/2)²)` monotonicity. Mathlib: `Real.log_two_gt_d9`, `inv_le_comm₀`,
   `abs_choice`. Unused hypothesis found: `hd : 0 < d` in
-  `lowerGammaBoundaryLog_dimension_exp_integrable` (kept for the contract).
+  `h_ℓ_dimension_exp_integrable` (kept for the contract).
 - **B09 (LowerBound/LimitingDensity)**: 1,378 → 821 lines. The two Wallis phase kernels
   (plain and regularized) became one kernel `wallisPhaseKernel a` with a parameter, halving the
   moment/tail estimates behind Lemma 3.4; `wallisComplexLogPhase` names the antiderivative
@@ -691,7 +692,7 @@ proof formalized, no `sorry`, no incomplete dependency.
   exponential-series tail estimates of Lemma 4.10 (79)–(81) collapsed into two lemmas
   (`hasSum_expSeries_polynomialMoment`, `expSeries_alternating_tail_bound`); the identification of
   the radial Mellin transform with the Fourier datum and the Fourier-pair proof (40) are generic in
-  the profile (`criticalLogProfile_eq_fourierInv`, `radialMellinFrequency_of_source`,
+  the profile (`criticalLogProfile_eq_fourierInv`, `X_fℝ_of_source`,
   `isRadial_of_source`), so `f₀` can reuse them. Mathlib: `sum_le_hasSum`,
   `Finset.abs_sum_le_sum_abs`, `SchwartzMap.ext`, `gcongr`. Not in Mathlib: exponential-series
   tail bounds in the regime `2y ≤ m + 1` (`Real.exp_bound` needs `|x| ≤ 1`).
@@ -708,7 +709,7 @@ proof formalized, no `sorry`, no incomplete dependency.
   `saddleOuterSchwartz`), with one differentiation-under-the-integral lemma
   (`saddlePositiveContourMoment_hasDerivAt_of_bounds`) and a generic `Cⁿ`-by-induction helper;
   the contour identity (71) is generic in `P`. Mathlib: `hasDerivAt_ofReal_cpow_const`
-  replaces a 37-line derivative computation. Observation: `saddleSourceContourDamping` is
+  replaces a 37-line derivative computation. Observation: `D_u` is
   definitionally `upperFirstBranchSaddleDamping` (duplicate definition; to be merged).
 - **B14 (UpperBound/GammaPhase)**: 1,595 → 849 lines. The Taylor estimate for `e^{ix}` is one
   lemma on `uIcc 0 x` (`norm_expI_sub_taylor_le`, via
@@ -729,7 +730,7 @@ proof formalized, no `sorry`, no incomplete dependency.
   Gaussian error of Lemma 4.8 is one lemma `fullLine_error_lt_gaussian`; the tail integrals of the
   centered integrand are generic in `P` (`centered_tail_integral_le`,
   `gaussianIntegrand_tail_norm_eq`); the wrapper chain of Corollary 4.9's coverage argument
-  (`v(u) → ∞`, continuity, intermediate values) collapsed into `eventually_saddleLogRadius_covers_Ici`.
+  (`v(u) → ∞`, continuity, intermediate values) collapsed into `eventually_logRadius_covers_Ici`.
   Mathlib: `integral_gaussian`, `integral_add_compl`, `setIntegral_mono_set`,
   `Tendsto.atTop_div_const`, `Real.exp_half`.
 - **B17 (Asymptotics/Framework, LowerBound/CappedMajorant, LowerBound/PhragmenLindelof)**:
@@ -909,7 +910,7 @@ Rename table (old → new; "deleted: …" means subsumed):
 | `SpherePacking.Alternative.radialSymmetrizationAverage_nonpos_of_one_le_norm` | `SpherePacking.Alternative.radialSymmetrizationAverage_nonpos_of_le_norm` (any radius) |
 | `SpherePacking.Alternative.fourier_radialSymmetrization` | unchanged, moved to `SpherePacking/Radialization.lean` |
 | `CohnElkies.autocorrelationAdmissible`, `saddleSourceAdmissible` | unchanged names, type `RadialAdmissible d` |
-| `CohnElkies.balancingScale`, `balanced`, … , `normalizedCost_ge_of_no_antiFourierWitness` (`LowerBound/Balanced`) | unchanged names, argument `f : RadialAdmissible d`, costs of `f.toAdmissible` |
+| `CohnElkies.balancingScale`, `balanced`, … , `normalizedCost_ge_of_no_antiSelfFourierWitness` (`LowerBound/Balanced`) | unchanged names, argument `f : RadialAdmissible d`, costs of `f.toAdmissible` |
 | module `CohnElkies.FullAdmissible` | deleted |
 
 ### 5.1 One rotational average (2026-09-14, task R2)
@@ -1038,7 +1039,7 @@ only on Mathlib, standard axioms; the line counts are after the `/cleanup` pass 
   into `limsup log ‖f‖ ≤ c`.
 
 **The conformal transfer** (`CohnElkies/LowerBound/StripToHalfPlane.lean`, 328 lines):
-`stripToHalfPlane ℓ t = exp(π(t + iℓ)/(2ℓ))` (`= E_ℓ ℓ t 0`) and its inverse
+`stripToHalfPlane ℓ t = exp(π(t + iℓ)/(2ℓ))` (`= stripConformalMap ℓ t 0`) and its inverse
 `halfPlaneToStrip ℓ w = (2ℓ/π) log w − iℓ` (principal branch; analytic on `ℍ`, mapping `ℍ` into
 the open strip, continuous up to `ℝ ∖ {0}` with `w → x > 0 ↦ (2ℓ/π) log x − iℓ` on the lower edge
 and `w → x < 0 ↦ (2ℓ/π) log(−x) + iℓ` on the upper edge, by
@@ -1159,7 +1160,7 @@ directory `CohnElkiesForMathlib/Analysis/Complex/Subharmonic/` was kept: it mirr
   `Radialization.lean` lost 22 lines.
 - **`Xline` removed.** `X_fℝ hd f t` is defined directly as `mellin (radialProfile hd f) (d/2 - I t)`
   (`Radial.lean`); the general-line version `Xline ℓ g t` and its lemma `mellinFrequency_eq_fourier`
-  had no other use (`radialMellinFrequency_eq_fourier` now calls Mathlib's `mellin_eq_fourier`).
+  had no other use (`X_fℝ_eq_fourier` now calls Mathlib's `mellin_eq_fourier`).
 - **Structure fields documented.** Every field of `PackingBounds.FullAdmissible`, `SpherePacking`,
   `PeriodicSpherePacking` and `CohnElkies.SignEigenfunction` carries a docstring, so that the
   Verso blueprint no longer warns (`'… is not documented'`) when it renders these structures.
@@ -1173,7 +1174,7 @@ directory `CohnElkiesForMathlib/Analysis/Complex/Subharmonic/` was kept: it mirr
   linked to its own declaration (several tightly related declarations may share a node through
   `(lean := "A, B")`). Examples: (13) is four lemmas (`integral_abs_logProfile`,
   `integral_logProfile`, `setIntegral_Iic_abs_logProfile`,
-  `normalizedRadialMellinStrip_shifted_eq_fourier`); (15)/(18) are `def_strip_poisson_kernel`
+  `Z_g_shifted_eq_fourier`); (15)/(18) are `def_strip_poisson_kernel`
   (`P_σ`, `θ`), `lemma_strip_poisson_kernel_properties`, `def_strip_poisson_mass` (`M_σ`),
   `def_strip_poisson_majorant` (`H_σ`); Lemma 3.2 is holomorphy/boundedness, (16), (17) and the
   interior bound `norm_Z_g_le_exp_H_σ`; Lemmas 3.3–3.6, the harmonic-measure lemma, the
@@ -1244,3 +1245,69 @@ directory `CohnElkiesForMathlib/Analysis/Complex/Subharmonic/` was kept: it mirr
 - **Single file.** `scripts/assemble_single_file.py` now gives `SpherePackingRefactored.lean` the
   union of the modules' Mathlib imports, without those implied by others (32 imports; the import
   graph is read from the sources in `.lake/packages`).
+
+## 11. Names in the report's notation (2026-10-13)
+
+Owner's rule: the names of `CohnElkiesForMathlib` (meant for Mathlib) are unchanged; a
+project-specific definition with a symbol in the report is named after that symbol, unless its
+name is already self-explanatory (`radialProfile`, `sphereArea`, `rotationalAverage`,
+`tailIntegral`, ...); the comparator block of `CohnElkies/Basic.lean` and the five comparator
+theorems are untouched. Lean spelling as in §1.2 (`ℓ` for `λ`, `Plus`/`Minus`/`Zero` for `₊`/`₋`/`₀`,
+an `ε` suffix for the parameters of (34), `star` for `∗`).
+
+**Definitions (30).**
+
+| Report | Old name | New name |
+|---|---|---|
+| X_{f_j}(t) = E_λ(t) P_j(t/λ) (38), any polynomial factor P | `spectrum` | `X_P` |
+| Mellin transform M_{f_j}(z) of f_j (38) | `mellinData` | `M_P` |
+| f_j(r) (38) | `mellinProfile` | `f_P` |
+| x ↦ f_j(\|x\|) | `mellinProfileFun` | `f_PFun` |
+| f_j ∈ 𝒮(ℝ^d) (Lemma 4.3) | `mellinProfileSchwartz` | `f_PSchwartz` |
+| f₊, f₋, f₀ ∈ 𝒮(ℝ^d) | `plusSaddleSchwartz`, `minusSaddleSchwartz`, `zeroSaddleSchwartz` | `fPlusSchwartz`, `fMinusSchwartz`, `fZeroSchwartz` |
+| g_{ε,d,+} = f₀, g_{ε,d,−} = f₊ − f₋ (proof of Theorem 1.2) | `zeroSaddleEigenfunction`, `minusSaddleEigenfunction` | `gPlus`, `gMinus` |
+| the f₊ instances of the generic pole factor, residues (41) and remainder (78) | `plusSaddleRegularMellinFactor`, `plusSaddlePoleResidue`, `plusSaddleTaylorRemainder` | `regularMellinFactorPlus`, `poleResiduePlus`, `taylorRemainderPlus` |
+| h_ε on the real axis | `realOscillatoryShellPhase` | `h_εℝ` (cf. `h_εI`) |
+| H(u) = ∫ w(a) a sinh(ua) da (proof of Lemma 4.10) | `saddleSourceShellDerivative` | `H_ε` |
+| C₀ = A + a₀⁻¹ (§4.2) | `upperShellShortCoefficient` | `C₀ε` |
+| T₀ = (2(B + 1))⁻¹ (§4.3) | `secondBranchFreq` | `T₀ε` |
+| κ = 1 + 2p/λ, p = N + 1/2 (proof of Lemma 4.10) | `saddleNegativeContourOrdinate` | `κ_ℓ` |
+| D_u(T) (47), as a function of u | `saddleSourceContourDamping` | `D_u` |
+| D_u(T) at u = 1 + δ, as a function of δ | `D_u` | `D_uδ` |
+| V(u) (44) at u = 1 + δ, as a function of δ | `upperSaddleVariance` | `V_uδ` (`V_u` is the function of u) |
+| v(u) (44) for real λ | `vℓ` | `v_ℓ` (as `m_ℓ`, `h_ℓ`, `μ_ℓ`, `N_ℓ`) |
+| T_* = K/√(λV(u)) (proof of Lemma 4.8), K = (λ(1+u))^{1/12} resp. λ^{1/12} | `saddleSourceFirstBranchCentralRadius`, `saddleSourceSecondBranchCentralRadius` | `T_star₁`, `T_star₂` |
+| κ_n, η_n (§2.1) | `gaussianKernel`, `gaussianCutoff` | `κ_n`, `η_n` |
+| q_n, p_n (§2.1) | `approximant`, `projected` | `q_n`, `p_n` |
+| (none) the conformal map z ↦ exp(π(z − y + iλ)/(2λ)) (proof of Lemma 3.2) | `E_ℓ` | `stripConformalMap` |
+| (none) its derivative kernel | `stripRegularizedHolomorphicPoissonKernelDeriv` | `K'_ℓDeriv` |
+
+`E_ℓ` was renamed because it read as the report's envelope `E_λ` (which is `E`); the report does
+not name the conformal map. The damping `D_u` and the variance are now named as in the report in
+the variable `u` (`D_u`, `V_u`), and their versions in `δ = u − 1` — the variable of the shell
+quantities `D_s`, `D_B`, `V_s`, `V_B`, `M₃` on the second branch — carry a `δ` (`D_uδ`, `V_uδ`).
+
+**Theorems (351).** Theorem names still contained the pre-refactoring names of definitions renamed
+in §1.2 (e.g. `normalizedRadialMellinStrip_diffContOnCl`, `lowerGammaBoundaryLog_continuousOn`,
+`saddleSourceRadius_pos`, `plusPolynomial_imaginary`) or the old names of the 30 definitions above;
+each such component was replaced by the current definition name (`Z_g_diffContOnCl`,
+`h_ℓ_continuousOn`, `R_ε_pos`, `PPlus_imaginary`, `M_P_eq`, `f_P_zero`, `κ_n_nonneg`, ...).
+A few names that referred to removed definitions or to compound old names were chosen by hand
+(`integrable_K'_ℓ_mul_h_ℓ`, `integrable_K'_ℓ_mul_h_ℓD`, `V_B_nonneg`, `D_B_local_variance_lower`,
+`upperFirstBranch_D_u_lower_bound`, `logRadius_eq_digamma_add_H_ε`, `eventually_T_star₁_lt`,
+`normalizedCost_ge_of_no_antiSelfFourierWitness`); `radialL1Mass_pos` became
+`L1norm_pos_of_ne_zero` (`RadialEigenfunction.L1norm_pos` exists). `gaussianKernel_normalized_tail_le`
+keeps its name: its Gaussian is the one of (71), not `κ_n`. No deprecated aliases were added (the
+project has no downstream users). Statements are unchanged.
+
+**Method.** The renaming was mechanical: identifier components were replaced in Lean code, in
+`(lean := "...")` links and in backtick code spans of comments, docstrings and the blueprint, but
+not in prose or in mathematics (the blueprint's `$`-math), where e.g. `D_u` and "spectrum" keep
+their meaning.
+Lines pushed over 100 characters were rewrapped.
+
+**Docstrings corrected on the way.** `lowerPoissonEndpointExpectation` is `J_σ − 1`, not `J_σ`
+(the endpoint phase is `−1 − ∫₀¹ f_T`), whence the limit `log(π/2) − 1`; `logRadius` is `v(u)` of
+(44), not of (83); `upperShellMarginRatio` is `5000 ρ_ε`; `radialCriticalLogProfile` is the
+reflection `u ↦ Φ_g(−u)` of the report's `Φ_g`, and the Gaussian pairing `Φ_f` of
+`MellinFourier.lean` is not the report's `Φ_g`.

@@ -72,7 +72,7 @@ theorem tendsto_stripNormalizedPoissonKernel (T : ℝ) :
 
 theorem stripNormalizedPoissonKernel_integrable {σ : ℝ} (hbelow : -1 < σ) (habove : σ < 1) :
     Integrable (stripNormalizedPoissonKernel σ) :=
-  (stripPoissonKernel_integrable hbelow habove).div_const _
+  (P_σ_integrable hbelow habove).div_const _
 
 /-- The `σ`-uniform exponential majorant `(π/2) e^{-π|T|/2}` of `P_σ / M_σ`. -/
 def stripPoissonExponentialMajorant (T : ℝ) : ℝ := π / 2 * exp (-(π / 2) * |T|)
@@ -343,11 +343,12 @@ theorem tendsto_integral_stripNormalizedPoissonKernel_mul (f : ℝ → ℝ)
       abs_of_nonneg hb.1]
     exact mul_le_mul_of_nonneg_right hb.2 (norm_nonneg _)
 
-/-- `J_σ`, the expectation of the endpoint phase against `P_σ / M_σ`; report Lemma 3.3. -/
+/-- The expectation of the endpoint phase against `P_σ / M_σ`. Since the endpoint phase is
+`-1 - ∫₀¹ f_T(x) dx`, this is `J_σ - 1` for the `J_σ` of report Lemma 3.3. -/
 def lowerPoissonEndpointExpectation (σ : ℝ) : ℝ :=
   ∫ T : ℝ, stripNormalizedPoissonKernel σ T * lowerEndpointPhase T
 
-/-- The limit of `J_σ` as `σ ↑ 1`; report Lemma 3.4. -/
+/-- The limit of `J_σ - 1` as `σ ↑ 1` (`lowerPoissonEndpointExpectation`); report Lemma 3.4. -/
 def limitingPoissonEndpointExpectation : ℝ :=
   ∫ T : ℝ, limitingStripPoissonDensity T * lowerEndpointPhase T
 

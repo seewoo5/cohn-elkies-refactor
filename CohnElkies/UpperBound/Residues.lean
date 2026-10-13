@@ -6,7 +6,7 @@ import CohnElkies.UpperBound.MellinProfile
 Principal values across a pole, the Gaussian-weighted correction terms, and the expansion of
 `f_P(r)` as the sum of the residues `r^{2n} poleResidue n` at the poles `z = -2n`, `n ≤ N`, plus the
 remainder integral along the Taylor contour `Re z = -(2N + 1)`
-(`mellinProfile_eq_residue_sum_add_remainder`, `plusSaddleProfile_eq_residue_sum_add_remainder`).
+(`f_P_eq_residue_sum_add_remainder`, `fPlus_eq_residue_sum_add_remainder`).
 -/
 
 namespace CohnElkies
@@ -441,47 +441,47 @@ theorem mellinInv_eq_normalized (M : ℂ → ℂ) (σ r : ℝ) :
   ring
 
 /-- `f_P(r)`, `r > 0`, as the normalized vertical integral of `r^{-z} M_P(z)` over `Re z = λ`. -/
-theorem mellinProfile_eq_normalized_vertical_integral {ε ℓ r : ℝ} (P : ℂ → ℂ) (c : ℝ)
+theorem f_P_eq_normalized_vertical_integral {ε ℓ r : ℝ} (P : ℂ → ℂ) (c : ℝ)
     (hr : 0 < r) :
-    mellinProfile ε ℓ P c r = (2 * π : ℂ)⁻¹ * (∫ t : ℝ, saddleMellinInversePower r
-        ((ℓ : ℂ) + t * I) * mellinData ε ℓ P ((ℓ : ℂ) + t * I)) := by
-  rw [mellinProfile_of_ne_zero ε ℓ P c hr.ne', mellinInv_eq_normalized]
+    f_P ε ℓ P c r = (2 * π : ℂ)⁻¹ * (∫ t : ℝ, saddleMellinInversePower r
+        ((ℓ : ℂ) + t * I) * M_P ε ℓ P ((ℓ : ℂ) + t * I)) := by
+  rw [f_P_of_ne_zero ε ℓ P c hr.ne', mellinInv_eq_normalized]
 
 /-- The remainder of report (78): the inverse Mellin integral of `M_P` over the Taylor contour. -/
 def taylorRemainder (ε ℓ : ℝ) (P : ℂ → ℂ) (N : ℕ) (r : ℝ) : ℂ := (2 * π : ℂ)⁻¹ *
     (∫ t : ℝ, saddleMellinInversePower r ((saddleTaylorContour N : ℂ) + (t : ℂ) * I) *
-        mellinData ε ℓ P ((saddleTaylorContour N : ℂ) + (t : ℂ) * I))
+        M_P ε ℓ P ((saddleTaylorContour N : ℂ) + (t : ℂ) * I))
 
 /-- The remainder of report (78) for `f₊`; definitionally `taylorRemainder ε ℓ (PPlus ε) N r`. -/
-def plusSaddleTaylorRemainder (ε ℓ : ℝ) (N : ℕ) (r : ℝ) : ℂ := (2 * π : ℂ)⁻¹ *
+def taylorRemainderPlus (ε ℓ : ℝ) (N : ℕ) (r : ℝ) : ℂ := (2 * π : ℂ)⁻¹ *
     (∫ t : ℝ, saddleMellinInversePower r ((saddleTaylorContour N : ℂ) + (t : ℂ) * I) *
         MPlus ε ℓ ((saddleTaylorContour N : ℂ) + (t : ℂ) * I))
 
 /-- Report (78): `f_P(r) = ∑_{n ≤ N} Res_n r ^ (2n) + remainder`. -/
-theorem mellinProfile_eq_residue_sum_add_remainder {ε ℓ r : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem f_P_eq_residue_sum_add_remainder {ε ℓ r : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (c : ℝ) (hr : 0 < r)
     (N : ℕ) :
-    mellinProfile ε ℓ P c r = (∑ n ∈ Finset.range (N + 1), poleResidue ε ℓ P n *
+    f_P ε ℓ P c r = (∑ n ∈ Finset.range (N + 1), poleResidue ε ℓ P n *
         (r ^ (2 * n) : ℂ)) + taylorRemainder ε ℓ P N r := by
-  rw [mellinProfile_eq_normalized_vertical_integral P c hr, taylorRemainder]
-  exact normalized_eq_residue_sum_add_remainder hℓ hr (M := mellinData ε ℓ P)
-    (G := rapidPoleRegularPart (mellinData ε ℓ P) (poleResidue ε ℓ P) N) (poleResidue ε ℓ P) N
-    (mellinData_shiftedLine_weighted_integrable hε hℓ horder hP (saddleTaylorContour_ne_pole N)
+  rw [f_P_eq_normalized_vertical_integral P c hr, taylorRemainder]
+  exact normalized_eq_residue_sum_add_remainder hℓ hr (M := M_P ε ℓ P)
+    (G := rapidPoleRegularPart (M_P ε ℓ P) (poleResidue ε ℓ P) N) (poleResidue ε ℓ P) N
+    (M_P_shiftedLine_weighted_integrable hε hℓ horder hP (saddleTaylorContour_ne_pole N)
       hr)
-    (mellinData_shiftedLine_weighted_integrable hε hℓ horder hP (saddlePositiveContour_ne_pole hℓ)
+    (M_P_shiftedLine_weighted_integrable hε hℓ horder hP (saddlePositiveContour_ne_pole hℓ)
       hr)
     (fun _ hz hpole ↦ rapidPoleRegularPart_eq_of_not_pole
-      (isPoleDatum_mellinData hε horder ℓ hP.differentiable) hz hpole)
-    (mellinData_rapidContourIntegrand_vertical_integral_eq hε hℓ horder hP hr N
+      (isPoleDatum_M_P hε horder ℓ hP.differentiable) hz hpole)
+    (M_P_rapidContourIntegrand_vertical_integral_eq hε hℓ horder hP hr N
       (saddleTaylorContour_mem_halfPlane N) (saddleTaylorContour_le hℓ N)
       (saddleTaylorContour_ne_pole N) (saddlePositiveContour_ne_pole hℓ))
 
 /-- Report (78): `f₊(r) = ∑_{n ≤ N} Res_n r ^ (2n) + remainder`. -/
-theorem plusSaddleProfile_eq_residue_sum_add_remainder {ε ℓ r : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem fPlus_eq_residue_sum_add_remainder {ε ℓ r : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) (hr : 0 < r) (N : ℕ) :
-    fPlus ε ℓ r = (∑ n ∈ Finset.range (N + 1), plusSaddlePoleResidue ε ℓ n *
-        (r ^ (2 * n) : ℂ)) + plusSaddleTaylorRemainder ε ℓ N r :=
-  mellinProfile_eq_residue_sum_add_remainder hε hℓ horder (isSaddlePolynomial_PPlus ε)
+    fPlus ε ℓ r = (∑ n ∈ Finset.range (N + 1), poleResiduePlus ε ℓ n *
+        (r ^ (2 * n) : ℂ)) + taylorRemainderPlus ε ℓ N r :=
+  f_P_eq_residue_sum_add_remainder hε hℓ horder (isSaddlePolynomial_PPlus ε)
     (originValue ε ℓ) hr N
 
 /-- On the line `Re z = a` the weight `r ^ (-z)` has constant modulus `r ^ (-a)`. -/

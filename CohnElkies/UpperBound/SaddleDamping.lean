@@ -19,7 +19,7 @@ open scoped Topology
 
 /-! ### The gamma damping `D_γ` and the saddle moments of report (45)–(48) -/
 
-theorem upperGammaMeasureDensity_pos {ℓ η a : ℝ} (hℓ : 0 < ℓ) (ha : 0 < a) : 0 < μ_ℓ ℓ η a := by
+theorem μ_ℓ_pos {ℓ η a : ℝ} (hℓ : 0 < ℓ) (ha : 0 < a) : 0 < μ_ℓ ℓ η a := by
   have hx : 0 < 2 * a / ℓ := by positivity
   unfold μ_ℓ
   exact div_pos (exp_pos _) (mul_pos ha (sub_pos.2 (exp_lt_one_iff.2 (by linarith))))
@@ -46,7 +46,7 @@ theorem upperGammaDampingIntegrand_integrable {ℓ η : ℝ} (hℓ : 0 < ℓ) (h
   refine ((upperGammaVarianceDensity_integrable hℓ hη).const_mul (T ^ 2 / 2)).mono'
     hmeas.aestronglyMeasurable ?_
   filter_upwards [ae_restrict_mem measurableSet_Ioi] with a ha
-  have hdensity := (upperGammaMeasureDensity_pos (η := η) hℓ ha).le
+  have hdensity := (μ_ℓ_pos (η := η) hℓ ha).le
   have hcos : 0 ≤ 1 - cos (a * T) := sub_nonneg.2 (cos_le_one _)
   have hquad : 1 - cos (a * T) ≤ (a * T) ^ 2 / 2 := by
     nlinarith [Real.one_sub_sq_div_two_le_cos (x := a * T)]
@@ -57,10 +57,10 @@ theorem upperGammaDampingIntegrand_integrable {ℓ η : ℝ} (hℓ : 0 < ℓ) (h
       mul_le_mul_of_nonneg_right hquad hdensity
     _ = T ^ 2 / 2 * (a ^ 2 * μ_ℓ ℓ η a) := by ring
 
-theorem upperGammaDamping_nonneg {ℓ η : ℝ} (hℓ : 0 < ℓ) (T : ℝ) : 0 ≤ D_γ ℓ η T := by
+theorem D_γ_nonneg {ℓ η : ℝ} (hℓ : 0 < ℓ) (T : ℝ) : 0 ≤ D_γ ℓ η T := by
   unfold D_γ
   refine setIntegral_nonneg measurableSet_Ioi fun a ha ↦ ?_
-  exact mul_nonneg (sub_nonneg.2 (cos_le_one _)) (upperGammaMeasureDensity_pos (η := η) hℓ ha).le
+  exact mul_nonneg (sub_nonneg.2 (cos_le_one _)) (μ_ℓ_pos (η := η) hℓ ha).le
 
 /-- On the window `0 < a ≤ min (η⁻¹, |T|⁻¹)` the gamma integrand is at least `λT²/(8e)`. -/
 theorem upperGammaDampingIntegrand_lower_on_window {ℓ η T a : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η)
@@ -90,10 +90,10 @@ theorem upperGammaDampingIntegrand_lower_on_window {ℓ η T a : ℝ} (hℓ : 0 
     _ = (a * T) ^ 2 / 4 * μ_ℓ ℓ η a := by ring
     _ ≤ (1 - cos (a * T)) * μ_ℓ ℓ η a :=
       mul_le_mul_of_nonneg_right (upper_one_sub_cos_quadratic_lower hTa)
-        (upperGammaMeasureDensity_pos (η := η) hℓ ha).le
+        (μ_ℓ_pos (η := η) hℓ ha).le
 
 /-- Report (45): `λ/(8e) · min (T²/η, |T|) ≤ D_γ(T)`. -/
-theorem upperGammaDamping_lower_bound {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η) (T : ℝ) :
+theorem D_γ_lower_bound {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 < η) (T : ℝ) :
     ℓ / (8 * exp 1) * min (T ^ 2 / η) |T| ≤ D_γ ℓ η T := by
   rcases eq_or_ne T 0 with rfl | hT
   · simp [D_γ, upperGammaDampingIntegrand]
@@ -110,7 +110,7 @@ theorem upperGammaDamping_lower_bound {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 <
   have hnonneg : 0 ≤ᵐ[volume.restrict (Ioi (0 : ℝ))] upperGammaDampingIntegrand ℓ η T := by
     filter_upwards [ae_restrict_mem measurableSet_Ioi] with a ha
     exact mul_nonneg (sub_nonneg.2 (cos_le_one _))
-      (upperGammaMeasureDensity_pos (η := η) hℓ ha).le
+      (μ_ℓ_pos (η := η) hℓ ha).le
   have hrestrict := setIntegral_mono_set hfull hnonneg
     (Filter.Eventually.of_forall fun a ha ↦ hsubset ha)
   have hconstint : (∫ _a : ℝ in Ioc (0 : ℝ) q, c) = q * c := by
@@ -134,46 +134,49 @@ theorem upperGammaDamping_lower_bound {ℓ η : ℝ} (hℓ : 0 < ℓ) (hη : 0 <
     _ ≤ ∫ a : ℝ in Ioi 0, upperGammaDampingIntegrand ℓ η T a := hrestrict
     _ = D_γ ℓ η T := rfl
 
-/-- The total damping `D_u = D_γ + D_B - D_s` of report (47). -/
-def D_u (ε ℓ δ T : ℝ) : ℝ := D_γ ℓ (2 + δ) T + D_B ε ℓ δ T - D_s ε ℓ δ T
+/-- The total damping `D_u = D_γ - D_s + D_B` of report (47) on the contour `u = 1 + δ`, as a
+function of `δ = u - 1` (the variable of the shell quantities `D_s`, `D_B`); `D_u` is the same
+quantity as a function of `u`. -/
+def D_uδ (ε ℓ δ T : ℝ) : ℝ := D_γ ℓ (2 + δ) T + D_B ε ℓ δ T - D_s ε ℓ δ T
 
-/-- The saddle variance `V_γ + (V_B - V_s)` of report (48). -/
-def upperSaddleVariance (ε ℓ δ : ℝ) : ℝ := V_γ ℓ (2 + δ) + upperNetShellVariance ε δ
+/-- The saddle variance `V(u) = V_γ - V_s + V_B` of report (44), (49) on the contour `u = 1 + δ`,
+as a function of `δ = u - 1`; `V_u` is the same quantity as a function of `u`. -/
+def V_uδ (ε ℓ δ : ℝ) : ℝ := V_γ ℓ (2 + δ) + upperNetShellVariance ε δ
 
 /-- The saddle third moment `M₃_γ + (M₃_B - M₃_s)` of report (48). -/
 def M₃ (ε ℓ δ : ℝ) : ℝ := M₃_γ ℓ (2 + δ) + upperNetShellThirdMoment ε δ
 
-theorem eventually_upperSaddleDamping_gamma_add_shell :
+theorem eventually_D_uδ_gamma_add_shell :
     ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 0 < ℓ → ∀ δ : ℝ, ε / 2 ≤ δ → ∀ T : ℝ,
-      D_γ ℓ (2 + δ) T + 99 / 100 * D_B ε ℓ δ T ≤ D_u ε ℓ δ T := by
+      D_γ ℓ (2 + δ) T + 99 / 100 * D_B ε ℓ δ T ≤ D_uδ ε ℓ δ T := by
   filter_upwards [eventually_upper_shortShell_domination] with ε hdom ℓ hℓ δ hδ T
-  unfold D_u
+  unfold D_uδ
   linarith [hdom ℓ hℓ.le δ hδ T]
 
-theorem eventually_upperSaddleVariance_bounds :
+theorem eventually_V_uδ_bounds :
     ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 0 < ℓ → ∀ δ : ℝ, ε / 2 ≤ δ →
-      1 / (2 * (2 + δ)) + 99 / 100 * V_B ε δ ≤ upperSaddleVariance ε ℓ δ ∧
-        upperSaddleVariance ε ℓ δ ≤ (1 / (2 * (2 + δ)) + 1 / (ℓ * (2 + δ) ^ 2)) + V_B ε δ := by
+      1 / (2 * (2 + δ)) + 99 / 100 * V_B ε δ ≤ V_uδ ε ℓ δ ∧
+        V_uδ ε ℓ δ ≤ (1 / (2 * (2 + δ)) + 1 / (ℓ * (2 + δ) ^ 2)) + V_B ε δ := by
   filter_upwards [self_mem_nhdsWithin, eventually_upper_netShellVariance_bounds]
     with ε hε hnet ℓ hℓ δ hδ
   change 0 < ε at hε
-  obtain ⟨hγlow, hγhigh⟩ := upperGammaVariance_bounds hℓ (show (0 : ℝ) < 2 + δ by nlinarith)
+  obtain ⟨hγlow, hγhigh⟩ := V_γ_bounds hℓ (show (0 : ℝ) < 2 + δ by nlinarith)
   obtain ⟨hslow, hshigh⟩ := hnet δ hδ
   exact ⟨add_le_add hγlow hslow, add_le_add hγhigh hshigh⟩
 
-theorem upperPositiveShellVariance_pos {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ) : 0 < V_B ε δ := by
+theorem V_B_pos {ε δ : ℝ} (hε : 0 < ε) (hδ : 0 ≤ δ) : 0 < V_B ε δ := by
   have hB : 0 < Bε ε := by unfold Bε; positivity
-  refine lt_of_lt_of_le ?_ (upperPositiveShellVariance_bounds hε hδ).1
-  exact mul_pos (mul_pos (mul_pos (by norm_num) (sq_pos_of_pos hB)) (shellWeight_pos ε))
+  refine lt_of_lt_of_le ?_ (V_B_bounds hε hδ).1
+  exact mul_pos (mul_pos (mul_pos (by norm_num) (sq_pos_of_pos hB)) (Qε_pos ε))
     (exp_pos _)
 
-theorem eventually_upperSaddleVariance_pos : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 0 < ℓ →
-    ∀ δ : ℝ, ε / 2 ≤ δ → 0 < upperSaddleVariance ε ℓ δ := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upperSaddleVariance_bounds]
+theorem eventually_V_uδ_pos : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 0 < ℓ →
+    ∀ δ : ℝ, ε / 2 ≤ δ → 0 < V_uδ ε ℓ δ := by
+  filter_upwards [self_mem_nhdsWithin, eventually_V_uδ_bounds]
     with ε hε hbound ℓ hℓ δ hδ
   change 0 < ε at hε
   have hδ0 : (0 : ℝ) ≤ δ := by nlinarith
-  have hshell := upperPositiveShellVariance_pos hε hδ0
+  have hshell := V_B_pos hε hδ0
   have hpositive : 0 < 1 / (2 * (2 + δ)) + 99 / 100 * V_B ε δ := by positivity
   exact hpositive.trans_le (hbound ℓ hℓ δ hδ).1
 
@@ -181,10 +184,10 @@ theorem eventually_upperSaddleVariance_pos : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ
 def upperSaddleShellThirdCoefficient (ε : ℝ) : ℝ := Bε ε + 1 + Aε ε / 100
 
 /-- Report (48): the saddle third moment is dominated by the saddle variance. -/
-theorem eventually_upperSaddleThirdMoment_le_variance : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 1 ≤ ℓ →
+theorem eventually_M₃_le_variance : ∀ᶠ ε : ℝ in 𝓝[>] (0 : ℝ), ∀ ℓ : ℝ, 1 ≤ ℓ →
     ∀ δ : ℝ, ε / 2 ≤ δ → M₃ ε ℓ δ ≤
-      (2 + (100 / 99 : ℝ) * upperSaddleShellThirdCoefficient ε) * upperSaddleVariance ε ℓ δ := by
-  filter_upwards [self_mem_nhdsWithin, eventually_upper_shortCutoff_le_shortEndpoint,
+      (2 + (100 / 99 : ℝ) * upperSaddleShellThirdCoefficient ε) * V_uδ ε ℓ δ := by
+  filter_upwards [self_mem_nhdsWithin, eventually_upper_a₀ε_le_Aε,
     eventually_upper_netShellVariance_bounds, eventually_upper_netShellThirdMoment_bound]
     with ε hε horder hnet hthird ℓ hℓ δ hδ
   change 0 < ε at hε
@@ -192,11 +195,11 @@ theorem eventually_upperSaddleThirdMoment_le_variance : ∀ᶠ ε : ℝ in 𝓝[
   have hδ0 : 0 ≤ δ := by nlinarith
   have hηpos : (0 : ℝ) < 2 + δ := by linarith
   obtain ⟨hnetlower, hnetupper⟩ := hnet δ hδ
-  have hpositiveShell := upperPositiveShellVariance_pos hε hδ0
+  have hpositiveShell := V_B_pos hε hδ0
   have hnetnonneg : 0 ≤ upperNetShellVariance ε δ := by linarith
   have hgammavariance : 0 ≤ V_γ ℓ (2 + δ) :=
     le_trans (by positivity : (0 : ℝ) ≤ 1 / (2 * (2 + δ)))
-      (upperGammaVariance_bounds hℓpos hηpos).1
+      (V_γ_bounds hℓpos hηpos).1
   have hgamma : M₃_γ ℓ (2 + δ) ≤ 2 * V_γ ℓ (2 + δ) := by
     have hsquare : (4 : ℝ) ≤ ℓ * (2 + δ) ^ 2 := by
       nlinarith [mul_nonneg (show (0 : ℝ) ≤ ℓ - 1 by linarith) (sq_nonneg (2 + δ))]
@@ -206,8 +209,8 @@ theorem eventually_upperSaddleThirdMoment_le_variance : ∀ᶠ ε : ℝ in 𝓝[
     have hsecond : 2 / (ℓ * (2 + δ) ^ 3) ≤ 1 / (2 * (2 + δ)) := by
       rw [div_le_div_iff₀ (by positivity) (by positivity)]
       nlinarith [mul_le_mul_of_nonneg_right hsquare hηpos.le]
-    linarith [(upperGammaThirdMoment_bounds hℓpos hηpos).2,
-      (upperGammaVariance_bounds hℓpos hηpos).1]
+    linarith [(M₃_γ_bounds hℓpos hηpos).2,
+      (V_γ_bounds hℓpos hηpos).1]
   have hC : 0 ≤ upperSaddleShellThirdCoefficient ε := by
     have hB : 0 ≤ Bε ε := by unfold Bε; positivity
     have hA : 0 ≤ Aε ε := ((show 0 < a₀ε ε by unfold a₀ε; positivity).trans_le horder).le
@@ -219,13 +222,13 @@ theorem eventually_upperSaddleThirdMoment_le_variance : ∀ᶠ ε : ℝ in 𝓝[
     have h : upperNetShellThirdMoment ε δ ≤ upperSaddleShellThirdCoefficient ε * V_B ε δ :=
       hthird δ hδ
     nlinarith [mul_le_mul_of_nonneg_left htransfer hC]
-  unfold M₃ upperSaddleVariance
+  unfold M₃ V_uδ
   nlinarith [mul_nonneg hC hgammavariance, mul_nonneg hC hnetnonneg]
 
 /-! ### The first-branch saddle damping of report (49) -/
 
 /-- The short-shell margin factor `b(a) e^{εa}` is at most its value `1 - 2ε` at `a = 0`. -/
-theorem shortMargin_mul_exp_le {ε a : ℝ} (hε : 0 < ε) (ha : 0 ≤ a) :
+theorem bε_mul_exp_le {ε a : ℝ} (hε : 0 < ε) (ha : 0 ≤ a) :
     bε ε a * exp (ε * a) ≤ 1 - 2 * ε := by
   have hderiv (x : ℝ) : HasDerivAt (fun t : ℝ ↦ bε ε t * exp (ε * t))
       (ε * exp (ε * x) * (bε ε x - 2)) x := by
@@ -276,7 +279,7 @@ theorem upperFirstBranch_shortRatio_le {ε u a : ℝ} (hε : 0 < ε) (ha : 0 ≤
         congr 1
         ring_nf
       _ ≤ bε ε a * exp (ε * a) := mul_le_mul_of_nonneg_left hdouble hmargin
-      _ ≤ 1 - 2 * ε := shortMargin_mul_exp_le hε ha
+      _ ≤ 1 - 2 * ε := bε_mul_exp_le hε ha
       _ ≤ 1 - 2 * ε := by linarith
 
 /-- Report (49): pointwise, the short shell is dominated by `(1 - 2ε)` times the gamma density. -/
@@ -304,23 +307,23 @@ theorem upperFirstBranch_shortMeasure_pointwise {ε ℓ u a : ℝ} (hε : 0 < ε
         (by positivity)
     _ ≤ (1 - 2 * ε) * μ_ℓ ℓ (1 + u) a := mul_le_mul_of_nonneg_left hbase (by linarith)
 
-theorem positiveShellDamping_nonneg {ε ℓ δ T : ℝ} (hℓ : 0 ≤ ℓ) : 0 ≤ D_B ε ℓ δ T := by
+theorem D_B_nonneg {ε ℓ δ T : ℝ} (hℓ : 0 ≤ ℓ) : 0 ≤ D_B ε ℓ δ T := by
   unfold D_B
   refine mul_nonneg hℓ (intervalIntegral.integral_nonneg (by linarith) fun a ha ↦ ?_)
   unfold w_B
-  exact mul_nonneg (mul_nonneg (div_nonneg (shellWeight_pos ε).le (cosh_pos a).le)
+  exact mul_nonneg (mul_nonneg (div_nonneg (Qε_pos ε).le (cosh_pos a).le)
     (cosh_pos _).le) (sub_nonneg.2 (cos_le_one _))
 
-/-- The damping exponent `D(u, T) = D_γ + D_B - D_s` of the contour `z = λ(1 + u) - iλT`,
-report (46) and (49). -/
-def saddleSourceContourDamping (ε ℓ u T : ℝ) : ℝ :=
+/-- The total damping `D_u(T) = -Re L_u(T) = D_γ(T) - D_s(T) + D_B(T)` of report (47) on the
+contour `z = λ(1 + u) - iλT` (see also `D_uδ`, the same quantity as a function of `δ = u - 1`). -/
+def D_u (ε ℓ u T : ℝ) : ℝ :=
   D_γ ℓ (1 + u) T + D_B ε ℓ (u - 1) T - D_s ε ℓ (u - 1) T
 
 /-- Report (49): on the first branch the saddle damping dominates `2ε D_γ`. -/
-theorem upperFirstBranchSaddleDamping_lower_bound {ε ℓ u : ℝ} (hε : 0 < ε) (hεsmall : ε ≤ 1 / 4)
+theorem upperFirstBranch_D_u_lower_bound {ε ℓ u : ℝ} (hε : 0 < ε) (hεsmall : ε ≤ 1 / 4)
     (hℓ : 0 < ℓ) (hulower : -1 < u) (huupper : u ≤ 1 + ε / 2) (horder : a₀ε ε ≤ Aε ε)
     (hmargin : ∀ a ∈ Icc (a₀ε ε) (Aε ε), 0 ≤ bε ε a) (T : ℝ) :
-    2 * ε * D_γ ℓ (1 + u) T ≤ saddleSourceContourDamping ε ℓ u T := by
+    2 * ε * D_γ ℓ (1 + u) T ≤ D_u ε ℓ u T := by
   have hη : (0 : ℝ) < 1 + u := by linarith
   have ha₀ : 0 < a₀ε ε := by unfold a₀ε; positivity
   have hsubset : Ioc (a₀ε ε) (Aε ε) ⊆ Ioi (0 : ℝ) := fun a ha ↦ ha₀.trans ha.1
@@ -328,7 +331,7 @@ theorem upperFirstBranchSaddleDamping_lower_bound {ε ℓ u : ℝ} (hε : 0 < ε
   have hshortOn : IntegrableOn (fun a : ℝ ↦ ℓ * (-w_s ε a) * cosh (u * a) *
       (1 - cos (a * T))) (Ioc (a₀ε ε) (Aε ε)) := by
     refine (intervalIntegrable_iff_integrableOn_Ioc_of_le horder).mp ?_
-    exact ((((shortShellDensity_intervalIntegrable hε horder).neg.const_mul ℓ).mul_continuousOn
+    exact ((((w_s_intervalIntegrable hε horder).neg.const_mul ℓ).mul_continuousOn
         (by fun_prop : Continuous fun a : ℝ ↦ cosh (u * a)).continuousOn).mul_continuousOn
       (by fun_prop : Continuous fun a : ℝ ↦ 1 - cos (a * T)).continuousOn)
   have hmono := setIntegral_mono_on hshortOn ((hgamma.mono_set hsubset).const_mul (1 - 2 * ε))
@@ -339,7 +342,7 @@ theorem upperFirstBranchSaddleDamping_lower_bound {ε ℓ u : ℝ} (hε : 0 < ε
           (sub_nonneg.2 (cos_le_one (a * T)))
   have hnonneg : 0 ≤ᵐ[volume.restrict (Ioi (0 : ℝ))] upperGammaDampingIntegrand ℓ (1 + u) T := by
     filter_upwards [ae_restrict_mem measurableSet_Ioi] with a ha
-    exact mul_nonneg (sub_nonneg.2 (cos_le_one _)) (upperGammaMeasureDensity_pos hℓ ha).le
+    exact mul_nonneg (sub_nonneg.2 (cos_le_one _)) (μ_ℓ_pos hℓ ha).le
   have hrestrict := mul_le_mul_of_nonneg_left (setIntegral_mono_set hgamma hnonneg
     (Filter.Eventually.of_forall fun a ha ↦ hsubset ha)) (show (0 : ℝ) ≤ 1 - 2 * ε by linarith)
   have hshort : D_s ε ℓ (u - 1) T ≤ (1 - 2 * ε) * D_γ ℓ (1 + u) T := by
@@ -356,8 +359,8 @@ theorem upperFirstBranchSaddleDamping_lower_bound {ε ℓ u : ℝ} (hε : 0 < ε
           upperGammaDampingIntegrand ℓ (1 + u) T a := integral_const_mul _ _
       _ ≤ (1 - 2 * ε) * ∫ a : ℝ in Ioi 0, upperGammaDampingIntegrand ℓ (1 + u) T a := hrestrict
       _ = (1 - 2 * ε) * D_γ ℓ (1 + u) T := rfl
-  unfold saddleSourceContourDamping
-  nlinarith [positiveShellDamping_nonneg (ε := ε) (δ := u - 1) (T := T) hℓ.le]
+  unfold D_u
+  nlinarith [D_B_nonneg (ε := ε) (δ := u - 1) (T := T) hℓ.le]
 
 /-! ### The shell phase on the shifted contour (report (49)) -/
 
@@ -391,7 +394,7 @@ theorem saddle_complexShellInterval_re (w : ℝ → ℝ) {a b : ℝ} (hab : a �
       rw [Complex.mul_re, Complex.sub_re, hcosre]
       simp
 
-theorem shortShellDensity_continuousOn_support {ε : ℝ} (hε : 0 < ε) :
+theorem w_s_continuousOn_support {ε : ℝ} (hε : 0 < ε) :
     ContinuousOn (w_s ε) (Icc (a₀ε ε) (Aε ε)) := by
   have hn : Continuous fun a : ℝ ↦ bε ε a * exp (-2 * a) := by unfold bε; fun_prop
   have hd : Continuous fun a : ℝ ↦ 2 * a ^ 2 * cosh a := by fun_prop
@@ -422,9 +425,9 @@ theorem saddleShellPhase_damping_identity {ε : ℝ} (hε : 0 < ε) (horder : a�
       D_B ε ℓ (u - 1) T - D_s ε ℓ (u - 1) T := by
   have hB : Bε ε ≤ Bε ε + 1 := by linarith
   have hshort := saddle_shellInterval_hyperbolic_sub_oscillatory (w_s ε) horder
-    (shortShellDensity_continuousOn_support hε) T u
+    (w_s_continuousOn_support hε) T u
   have hpos := saddle_shellInterval_hyperbolic_sub_oscillatory (w_B ε) hB
-    (positiveShellDensity_continuous ε).continuousOn T u
+    (w_B_continuous ε).continuousOn T u
   have hre : (h_ε ε ((T : ℂ) + I * (u : ℂ))).re =
       (∫ a in a₀ε ε..Aε ε, w_s ε a * (cos (a * T) * cosh (a * u) - 1)) +
         ∫ a in Bε ε..Bε ε + 1, w_B ε a * (cos (a * T) * cosh (a * u) - 1) := by
@@ -432,9 +435,9 @@ theorem saddleShellPhase_damping_identity {ε : ℝ} (hε : 0 < ε) (horder : a�
     rw [Complex.add_re]
     congr 1
     · exact saddle_complexShellInterval_re (w_s ε) horder
-        (shortShellDensity_continuousOn_support hε) T u
+        (w_s_continuousOn_support hε) T u
     · exact saddle_complexShellInterval_re (w_B ε) hB
-        (positiveShellDensity_continuous ε).continuousOn T u
+        (w_B_continuous ε).continuousOn T u
   have hneg : (∫ a in a₀ε ε..Aε ε, -w_s ε a * cosh (u * a) * (1 - cos (a * T))) =
       -∫ a in a₀ε ε..Aε ε, w_s ε a * cosh (u * a) * (1 - cos (a * T)) := by
     rw [← intervalIntegral.integral_neg]

@@ -81,7 +81,7 @@ The substitution $`r = Re^v` of {uses "eq_13_normalization"}[], where $`v < 0` c
 $`r < R`.
 :::
 
-:::lemma_ "eq_13_mellin_fourier" (lean := "CohnElkies.normalizedRadialMellinStrip_shifted_eq_fourier")
+:::lemma_ "eq_13_mellin_fourier" (lean := "CohnElkies.Z_g_shifted_eq_fourier")
 In the setting of {uses "def_normalized_profile"}[] (equation (13)),
 $`Z(t) = \int_{\mathbb{R}}\varphi(v)e^{-(\lambda+it)v}\,dv` for every complex $`t` for which the
 integral converges absolutely, in particular for real $`t`: on the horizontal line
@@ -110,7 +110,7 @@ kernel (equation (15))
 $`P_\sigma(T) = \dfrac{\sin\theta}{4(\cosh(\pi T/2) - \cos\theta)}`.
 :::
 
-:::lemma_ "lemma_strip_poisson_kernel_properties" (lean := "CohnElkies.stripPoissonKernel_pos, CohnElkies.stripPoissonKernel_neg, CohnElkies.stripPoissonKernel_antitone_abs, CohnElkies.integral_stripPoissonKernel, CohnElkies.stripPoissonKernel_le_mass_mul_exponential") (parent := "grp_mellin_strip")
+:::lemma_ "lemma_strip_poisson_kernel_properties" (lean := "CohnElkies.P_σ_pos, CohnElkies.P_σ_neg, CohnElkies.P_σ_antitone_abs, CohnElkies.integral_P_σ, CohnElkies.P_σ_le_mass_mul_exponential") (parent := "grp_mellin_strip")
 For $`-1 < \sigma < 1` the kernel $`P_\sigma` of {uses "def_strip_poisson_kernel"}[] is positive,
 even and decreasing in $`|T|`, and integrable with
 $`\int_{\mathbb{R}}P_\sigma(T)\,dT = \dfrac{1-\sigma}{2}`. For $`0 \le \sigma < 1`,
@@ -356,7 +356,7 @@ $`\Lambda(T) = -\int_0^1 f_T(x)\,dx - 1` of {bpref "lemma_3_3_one_sided"}[], so 
 $`\log(2\pi c^2) + J_\sigma = \log(2\pi ec^2) + J^{\mathrm{Lean}}_\sigma`.
 :::
 
-:::lemma_ "lemma_3_3_max_at_zero" (lean := "CohnElkies.lowerStripPoissonMajorant_dimension_centered_max") (parent := "grp_mellin_strip")
+:::lemma_ "lemma_3_3_max_at_zero" (lean := "CohnElkies.H_σ_dimension_centered_max") (parent := "grp_mellin_strip")
 In the setting of {uses "def_normalized_profile"}[] with $`d \ge 2`, for every $`-1 < \sigma < 1`
 and every $`s \in \mathbb{R}`, $`H_\sigma(s) \le H_\sigma(0)`, with $`H_\sigma` from
 {uses "def_strip_poisson_majorant"}[] and $`h_\lambda` from {uses "def_lower_boundary_majorant"}[].
@@ -368,7 +368,7 @@ $`h_\lambda'(y)`
 $`= \tfrac12\bigl(\operatorname{Im}\psi(\lambda + iy/2) - \operatorname{Im}\psi(iy/2)\bigr) < 0`,
 because $`\sum_k b/((k+\lambda)^2+b^2) < \sum_k b/(k^2+b^2)` termwise for $`b = y/2 > 0`; the
 formalization instead reads off the monotonicity from the product formulas of
-{uses "eq_7_gamma_identities"}[] (`CohnElkies.lowerGammaBoundaryLog_dimension_antitoneOn`).
+{uses "eq_7_gamma_identities"}[] (`CohnElkies.h_ℓ_dimension_antitoneOn`).
 Thus $`h_\lambda` is even and decreasing on $`(0,\infty)`, and so is $`P_\sigma`. For $`N > 0`,
 the function $`q_N(u) = \max\{h_\lambda(\lambda u) + N, 0\}` is nonnegative, even, decreasing on
 $`(0,\infty)`, and integrable (the singularity at $`0` is logarithmic and
@@ -383,7 +383,7 @@ $`N \to \infty` by dominated convergence (exponential decay of $`P_\sigma`). Hen
 $`H_\sigma(s) \le H_\sigma(0)`.
 :::
 
-:::lemma_ "lemma_3_3" (lean := "CohnElkies.lowerStripPoissonMajorant_dimension_central_bound") (parent := "grp_mellin_strip")
+:::lemma_ "lemma_3_3" (lean := "CohnElkies.H_σ_dimension_central_bound") (parent := "grp_mellin_strip")
 For every $`0 \le \sigma < 1` there is $`E_\sigma < \infty`, independent of $`d`, $`c` and $`g`,
 such that in the setting of {uses "def_normalized_profile"}[] (with $`d \ge 2`), with $`J_\sigma`
 from {uses "def_lower_endpoint_expectation"}[] (equation (20)),
@@ -513,7 +513,7 @@ From now on fix $`\sigma = \sigma(c)` and $`\delta_c > 0` as in (23). We first b
 horizontal line $`\operatorname{Im} t = \sigma\lambda`, and then use that bound to control the mass
 of $`g` inside $`B(0,c\sqrt d)`.
 
-:::lemma_ "lemma_3_5" (lean := "CohnElkies.exists_lowerStripPoissonMajorant_uniform_negative") (parent := "grp_mellin_strip")
+:::lemma_ "lemma_3_5" (lean := "CohnElkies.exists_H_σ_uniform_negative") (parent := "grp_mellin_strip")
 There is $`\gamma_c > 0`, depending only on $`c` (not on $`d`, $`g`, or $`\varsigma`), such that
 for every sufficiently large $`d`, with $`\sigma = \sigma(c)` from
 {uses "eq_23_sharp_coefficient"}[] and $`H_\sigma` from {uses "def_strip_poisson_majorant"}[]
@@ -528,7 +528,7 @@ $`H_\sigma(s) \le -\lambda M_\sigma\delta_c + O_\sigma(\log\lambda) \le -\gamma_
 $`s` once $`d` is large, with $`\gamma_c > 0` independent of $`s`, $`g` and $`\varsigma`.
 :::
 
-:::lemma_ "eq_25_logarithmic_tail" (lean := "CohnElkies.exists_lowerStripPoissonMajorant_logarithmic_tail") (parent := "grp_mellin_strip")
+:::lemma_ "eq_25_logarithmic_tail" (lean := "CohnElkies.exists_H_σ_logarithmic_tail") (parent := "grp_mellin_strip")
 For every $`0 \le \sigma < 1` there are $`B_c, C_c, \kappa_c > 0`, depending only on $`c` and
 $`\sigma`, such that for all $`d \ge 2` and all $`|S| \ge B_c`, in the setting of
 {uses "def_normalized_profile"}[] and with $`H_\sigma` from {uses "def_strip_poisson_majorant"}[],
@@ -542,7 +542,7 @@ $`|b| = \lambda|U|/2` at $`y = \lambda U`, so in both parities
 $`h_\lambda(\lambda U) \le \lambda\log\dfrac{4\pi c^2}{|U|} + E_\lambda(U)` for $`U \ne 0`, where
 $`E_\lambda(U) = 0` for $`\lambda \in \mathbb{N}` and
 $`E_\lambda(U) = \tfrac12\log\coth(\pi\lambda|U|/2)` for $`\lambda \in \mathbb{N} + \tfrac12`
-(`CohnElkies.lowerGammaBoundaryLog_dimension_scaled_log_tail`). Expanding $`\log\coth x` in its
+(`CohnElkies.h_ℓ_dimension_scaled_log_tail`). Expanding $`\log\coth x` in its
 odd exponential series gives
 $`\int_{\mathbb{R}}E_\lambda(U)\,dU = \frac{2}{\pi\lambda}\int_0^\infty\log\coth x\,dx`
 $`= \frac{\pi}{4\lambda}`,

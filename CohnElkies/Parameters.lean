@@ -43,33 +43,33 @@ def PPlus (ε : ℝ) (z : ℂ) : ℂ := 1 + z ^ 2 + β ε + I * z * (1 + z ^ 2)
 /-- The polynomial `P₋(ζ) = 1 + ζ² + β - iζ(1 + ζ²)` of the report. -/
 def PMinus (ε : ℝ) (z : ℂ) : ℂ := 1 + z ^ 2 + β ε - I * z * (1 + z ^ 2)
 
-theorem shellWeight_pos (ε : ℝ) : 0 < Qε ε := exp_pos _
+theorem Qε_pos (ε : ℝ) : 0 < Qε ε := exp_pos _
 
-theorem beta_pos {ε : ℝ} (hε : 0 < ε) : 0 < β ε := div_pos hε (by norm_num)
+theorem β_pos {ε : ℝ} (hε : 0 < ε) : 0 < β ε := div_pos hε (by norm_num)
 
 /-- `P₊(iu) = β + (1 - u)² (1 + u)` is real. -/
-theorem plusPolynomial_imaginary (ε u : ℝ) :
+theorem PPlus_imaginary (ε u : ℝ) :
     PPlus ε (I * u) = β ε + (1 - u) ^ 2 * (1 + u) := by
   -- `simp` closes the imaginary-part goal, so the `<;>` (not `;`) is needed here; the
   -- `linter.unnecessarySeqFocus` suggestion does not apply.
   apply Complex.ext <;> simp [PPlus, pow_two] <;> ring
 
 /-- `P₋(iu) = β + (1 - u) (1 + u)²` is real. -/
-theorem minusPolynomial_imaginary (ε u : ℝ) :
+theorem PMinus_imaginary (ε u : ℝ) :
     PMinus ε (I * u) = β ε + (1 - u) * (1 + u) ^ 2 := by
   -- `simp` closes the imaginary-part goal, so the `<;>` (not `;`) is needed here; the
   -- `linter.unnecessarySeqFocus` suggestion does not apply.
   apply Complex.ext <;> simp [PMinus, pow_two] <;> ring
 
-theorem plusPolynomial_imaginary_re_pos {ε u : ℝ} (hε : 0 < ε) (hu : -1 < u) :
+theorem PPlus_imaginary_re_pos {ε u : ℝ} (hε : 0 < ε) (hu : -1 < u) :
     0 < (PPlus ε (I * u)).re := by
-  rw [plusPolynomial_imaginary]
+  rw [PPlus_imaginary]
   norm_cast
-  exact add_pos_of_pos_of_nonneg (beta_pos hε) (mul_nonneg (sq_nonneg _) (by linarith))
+  exact add_pos_of_pos_of_nonneg (β_pos hε) (mul_nonneg (sq_nonneg _) (by linarith))
 
-theorem minusPolynomial_imaginary_re_neg {ε u : ℝ} (hε : 0 < ε) (hu : 1 + ε / 4 ≤ u) :
+theorem PMinus_imaginary_re_neg {ε u : ℝ} (hε : 0 < ε) (hu : 1 + ε / 4 ≤ u) :
     (PMinus ε (I * u)).re < 0 := by
-  rw [minusPolynomial_imaginary]
+  rw [PMinus_imaginary]
   norm_cast
   rw [β]
   have hs : 4 ≤ (1 + u) ^ 2 := by nlinarith [sq_nonneg (u - 1)]

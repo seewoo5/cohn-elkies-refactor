@@ -6,8 +6,8 @@ import CohnElkies.UpperBound.Residues
 Contour moments of the inverse Mellin kernel `(max u 0)^z` and their derivatives, smoothness of
 the profiles at the origin (the residue expansion shows `f_P(r)` is a smooth function of `r²`),
 the vertical contour moved into the right half-plane, derivatives of the contour moment far from
-the origin, and the Schwartz decay, giving the test functions `plusSaddleSchwartz`,
-`minusSaddleSchwartz` (and `mellinProfileSchwartz` for a general saddle polynomial).
+the origin, and the Schwartz decay, giving the test functions `fPlusSchwartz`,
+`fMinusSchwartz` (and `f_PSchwartz` for a general saddle polynomial).
 -/
 
 namespace CohnElkies
@@ -329,19 +329,19 @@ theorem saddleProfile_eq_squaredTaylor {f : ℝ → ℂ} {M : ℂ → ℂ} {c : 
 
 theorem taylorRemainder_eq_squaredContour (ε ℓ : ℝ) (P : ℂ → ℂ) (N : ℕ) {r : ℝ} (hr : 0 < r) :
     taylorRemainder ε ℓ P N r =
-      saddleSquaredContour (mellinData ε ℓ P) (saddleTaylorContour N) (r ^ 2) :=
-  saddleSquaredContour_eq (mellinData ε ℓ P) _ hr
+      saddleSquaredContour (M_P ε ℓ P) (saddleTaylorContour N) (r ^ 2) :=
+  saddleSquaredContour_eq (M_P ε ℓ P) _ hr
 
 /-- Report (78) in the variable `u = r²`: `f_P(r) = ∑_{n ≤ N} Res_n (r²)^n + remainder`, for a
 profile whose origin value is the residue at `z = 0`. -/
-theorem mellinProfile_eq_squaredTaylor {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem f_P_eq_squaredTaylor {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) {c : ℝ}
     (hc : (c : ℂ) = poleResidue ε ℓ P 0) (N : ℕ) {r : ℝ} (hr : 0 ≤ r) :
-    mellinProfile ε ℓ P c r = saddleSquaredResiduePolynomial (poleResidue ε ℓ P) N (r ^ 2) +
-      saddleSquaredContour (mellinData ε ℓ P) (saddleTaylorContour N) (r ^ 2) :=
-  saddleProfile_eq_squaredTaylor (by rw [mellinProfile_zero]; exact hc)
+    f_P ε ℓ P c r = saddleSquaredResiduePolynomial (poleResidue ε ℓ P) N (r ^ 2) +
+      saddleSquaredContour (M_P ε ℓ P) (saddleTaylorContour N) (r ^ 2) :=
+  saddleProfile_eq_squaredTaylor (by rw [f_P_zero]; exact hc)
     (fun r hr ↦ by
-      rw [mellinProfile_eq_residue_sum_add_remainder hε hℓ horder hP c hr N,
+      rw [f_P_eq_residue_sum_add_remainder hε hℓ horder hP c hr N,
         taylorRemainder_eq_squaredContour ε ℓ P N hr]) hr
 
 theorem saddleTaylorContour_smoothShift (n : ℕ) :
@@ -379,13 +379,13 @@ theorem saddleFunction_contDiff {d : ℕ} {F : Euclidean d → ℂ} {M : ℂ →
       (by simpa using hx))).of_le (mod_cast le_top))
 
 /-- Lemma 4.3: `x ↦ f_P(‖x‖)` is smooth on `ℝᵈ` when `f_P(0)` is the residue at `z = 0`. -/
-theorem mellinProfileFun_contDiff {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
+theorem f_PFun_contDiff {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) {c : ℝ}
-    (hc : (c : ℂ) = poleResidue ε (d / 2 : ℝ) P 0) : ContDiff ℝ ∞ (mellinProfileFun ε d P c) :=
-  saddleFunction_contDiff (mellinProfileFun_contDiffOn hε hd horder hP c)
-    (fun N k ↦ mellinData_shiftedLine_moment_integrable hε (dimension_half_pos hd) horder hP
+    (hc : (c : ℂ) = poleResidue ε (d / 2 : ℝ) P 0) : ContDiff ℝ ∞ (f_PFun ε d P c) :=
+  saddleFunction_contDiff (f_PFun_contDiffOn hε hd horder hP c)
+    (fun N k ↦ M_P_shiftedLine_moment_integrable hε (dimension_half_pos hd) horder hP
       (saddleTaylorContour_ne_pole N) k)
-    fun N y ↦ mellinProfile_eq_squaredTaylor hε (dimension_half_pos hd) horder hP hc N
+    fun N y ↦ f_P_eq_squaredTaylor hε (dimension_half_pos hd) horder hP hc N
       (norm_nonneg y)
 
 end
@@ -445,26 +445,26 @@ theorem saddleMellinData_vertical_integral_eq {M : ℂ → ℂ} {r : ℝ} (hr : 
 
 /-- Report §4.2: `f_P(r)` is the inverse Mellin integral of `M_P` over **any** vertical line in the
 open right half-plane. -/
-theorem mellinProfile_eq_positive_contour {ε ℓ r a : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem f_P_eq_positive_contour {ε ℓ r a : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (c : ℝ) (hr : 0 < r)
     (ha : 0 < a) :
-    mellinProfile ε ℓ P c r = (2 * π : ℂ)⁻¹ * (∫ t : ℝ, saddleMellinInversePower r
-        ((a : ℂ) + (t : ℂ) * I) * mellinData ε ℓ P ((a : ℂ) + (t : ℂ) * I)) := by
-  rw [mellinProfile_eq_normalized_vertical_integral P c hr]
+    f_P ε ℓ P c r = (2 * π : ℂ)⁻¹ * (∫ t : ℝ, saddleMellinInversePower r
+        ((a : ℂ) + (t : ℂ) * I) * M_P ε ℓ P ((a : ℂ) + (t : ℂ) * I)) := by
+  rw [f_P_eq_normalized_vertical_integral P c hr]
   congr 1
   exact saddleMellinData_vertical_integral_eq hr
-    (mellinData_differentiableOn_rightHalfPlane hε horder ℓ hP.differentiable)
-    (fun b hb ↦ mellinData_shiftedLine_weighted_integrable hε hℓ horder hP
+    (M_P_differentiableOn_rightHalfPlane hε horder ℓ hP.differentiable)
+    (fun b hb ↦ M_P_shiftedLine_weighted_integrable hε hℓ horder hP
       (saddlePositiveContour_ne_pole hb) hr)
-    (fun A B hAB s hs ↦ mellinData_weighted_horizontalIntegral_tendsto_zero hε hℓ horder hP hr
+    (fun A B hAB s hs ↦ M_P_weighted_horizontalIntegral_tendsto_zero hε hℓ horder hP hr
       hAB s hs) ha hℓ
 
-theorem mellinProfile_eq_positive_squaredContour {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
+theorem f_P_eq_positive_squaredContour {ε ℓ : ℝ} (hε : 0 < ε) (hℓ : 0 < ℓ)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) (c : ℝ) (r a : ℝ)
     (hr : 0 < r) (ha : 0 < a) :
-    mellinProfile ε ℓ P c r = saddleSquaredContour (mellinData ε ℓ P) a (r ^ 2) := by
-  rw [mellinProfile_eq_positive_contour hε hℓ horder hP c hr ha,
-    saddleSquaredContour_eq (mellinData ε ℓ P) a hr]
+    f_P ε ℓ P c r = saddleSquaredContour (M_P ε ℓ P) a (r ^ 2) := by
+  rw [f_P_eq_positive_contour hε hℓ horder hP c hr ha,
+    saddleSquaredContour_eq (M_P ε ℓ P) a hr]
 
 /-! ### Derivatives of the contour moment far from the origin -/
 
@@ -727,48 +727,48 @@ theorem schwartz_decay_of_hasCompactSupport {d : ℕ} {F : Euclidean d → ℂ} 
 
 /-- Report Lemma 4.3: `x ↦ f_P(‖x‖)` is a Schwartz function on `ℝᵈ` for every saddle polynomial
 `P`, when `f_P(0)` is the residue at `z = 0`. -/
-def mellinProfileSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε)
+def f_PSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε)
     {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) {c : ℝ}
     (hc : (c : ℂ) = poleResidue ε (d / 2 : ℝ) P 0) : TestFunction d where
-  toFun := mellinProfileFun ε d P c
-  smooth' := mellinProfileFun_contDiff hε hd horder hP hc
+  toFun := f_PFun ε d P c
+  smooth' := f_PFun_contDiff hε hd horder hP hc
   decay' := by
     have hℓ : (0 : ℝ) < (d : ℝ) / 2 := dimension_half_pos hd
     have hmom : ∀ a : ℝ, 0 < a → ∀ j : ℕ, Integrable fun t : ℝ ↦
-        (t : ℂ) ^ j * mellinData ε ((d : ℝ) / 2) P ((a : ℂ) + (t : ℂ) * I) :=
-      fun a ha j ↦ mellinData_shiftedLine_moment_integrable hε hℓ horder hP
+        (t : ℂ) ^ j * M_P ε ((d : ℝ) / 2) P ((a : ℂ) + (t : ℂ) * I) :=
+      fun a ha j ↦ M_P_shiftedLine_moment_integrable hε hℓ horder hP
         (saddlePositiveContour_ne_pole ha) j
-    have hprof := mellinProfile_eq_positive_squaredContour hε hℓ horder hP c
+    have hprof := f_P_eq_positive_squaredContour hε hℓ horder hP c
     intro k n
     exact schwartz_decay_of_hasCompactSupport (saddleOuterSchwartz hmom hprof d)
-      (mellinProfileFun_contDiff hε hd horder hP hc)
+      (f_PFun_contDiff hε hd horder hP hc)
       (saddleOuterDifference_hasCompactSupport hmom hprof d) k n
 
-@[simp] theorem mellinProfileSchwartz_apply {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
+@[simp] theorem f_PSchwartz_apply {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
     (horder : a₀ε ε ≤ Aε ε) {P : ℂ → ℂ} (hP : IsSaddlePolynomial ε P) {c : ℝ}
     (hc : (c : ℂ) = poleResidue ε (d / 2 : ℝ) P 0) (x : Euclidean d) :
-    mellinProfileSchwartz hε hd horder hP hc x = mellinProfileFun ε d P c x := rfl
+    f_PSchwartz hε hd horder hP hc x = f_PFun ε d P c x := rfl
 
 /-- Report Lemma 4.3: `f₊` is a Schwartz function on `ℝᵈ`. -/
-def plusSaddleSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε) :
+def fPlusSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε) :
     TestFunction d :=
-  mellinProfileSchwartz hε hd horder (isSaddlePolynomial_PPlus ε)
+  f_PSchwartz hε hd horder (isSaddlePolynomial_PPlus ε)
     (poleResidue_PPlus_zero (dimension_half_pos hd)).symm
 
 /-- Report Lemma 4.3: `f₋` is a Schwartz function on `ℝᵈ`. -/
-def minusSaddleSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε) :
+def fMinusSchwartz {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d) (horder : a₀ε ε ≤ Aε ε) :
     TestFunction d :=
-  mellinProfileSchwartz hε hd horder (isSaddlePolynomial_PMinus ε)
+  f_PSchwartz hε hd horder (isSaddlePolynomial_PMinus ε)
     (poleResidue_PMinus_zero (dimension_half_pos hd)).symm
 
-theorem plusSaddleSchwartz_apply {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
+theorem fPlusSchwartz_apply {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
     (horder : a₀ε ε ≤ Aε ε) (x : Euclidean d) :
-    plusSaddleSchwartz hε hd horder x = fPlusFun ε d x :=
+    fPlusSchwartz hε hd horder x = fPlusFun ε d x :=
   rfl
 
-theorem minusSaddleSchwartz_apply {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
+theorem fMinusSchwartz_apply {ε : ℝ} (hε : 0 < ε) {d : ℕ} (hd : 0 < d)
     (horder : a₀ε ε ≤ Aε ε) (x : Euclidean d) :
-    minusSaddleSchwartz hε hd horder x = fMinusFun ε d x :=
+    fMinusSchwartz hε hd horder x = fMinusFun ε d x :=
   rfl
 
 end

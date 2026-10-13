@@ -273,7 +273,7 @@ theorem integral_rpow_mul_profile :
     simp only [hg x y hxy, hxy]
   have h := g.integral_mul_norm_rpow_eq_zero hd
   rw [integral_eq_sphereArea_mul_of_radial hd hrad] at h
-  refine Eq.trans ?_ ((mul_eq_zero.1 h).resolve_left (radialSurfaceArea_pos hd).ne')
+  refine Eq.trans ?_ ((mul_eq_zero.1 h).resolve_left (sphereArea_pos hd).ne')
   refine setIntegral_congr_fun measurableSet_Ioi fun r hr ↦ ?_
   simp only [norm_smul, norm_radialUnitDirection hd, mul_one,
     Real.norm_of_nonneg (mem_Ioi.1 hr).le]

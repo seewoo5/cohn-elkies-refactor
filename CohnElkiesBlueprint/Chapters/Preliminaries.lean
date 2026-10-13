@@ -285,7 +285,7 @@ vanishes on every sphere of radius at least $`R`, i.e. outside $`B(0,R)`. Then
 {uses "lemma_compactly_supported_eigenfunction_zero"}[] forces $`g = 0`, a contradiction.
 :::
 
-:::definition "def_schwartz_approximation" (lean := "CohnElkies.approximant, CohnElkies.projected") (parent := "grp_radial_reduction")
+:::definition "def_schwartz_approximation" (lean := "CohnElkies.q_n, CohnElkies.p_n") (parent := "grp_radial_reduction")
 Let $`g \in L^1_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})` (continuous representative) satisfy
 $`\widehat g = \varsigma g` and $`g(0) = 0`, $`\varsigma \in \{-1,+1\}`. Let $`\varphi` be the
 normalized flat bump, $`\varphi(x) = c\,e^{-1/(1-4|x|^2)}` for $`|x| < 1/2` and $`\varphi(x) = 0`
@@ -296,7 +296,7 @@ $`q_n = (\eta_n g) * \varphi_n`, $`p_n = \tfrac12(q_n + \varsigma\widehat{q_n})`
 $`\varphi_n`; see the final chapter.)
 :::
 
-:::lemma_ "lemma_approximant_properties" (lean := "CohnElkies.approximant_real, CohnElkies.approximant_radial, CohnElkies.fourier_approximant_apply, CohnElkies.tendsto_approximant, CohnElkies.tendsto_fourier_approximant") (parent := "grp_radial_reduction")
+:::lemma_ "lemma_approximant_properties" (lean := "CohnElkies.q_n_real, CohnElkies.q_n_radial, CohnElkies.fourier_q_n_apply, CohnElkies.tendsto_q_n, CohnElkies.tendsto_fourier_q_n") (parent := "grp_radial_reduction")
 In the situation of {uses "def_schwartz_approximation"}[], $`q_n` is a real radial Schwartz
 function with $`\widehat{q_n} = \varsigma\,(g * \kappa_n)\,\widehat{\varphi_n}`, and $`q_n \to g`,
 $`\widehat{q_n} \to \varsigma g` in $`L^1` as $`n \to \infty`.
@@ -313,7 +313,7 @@ and since $`g*\kappa_n \to g` in $`L^1` and $`\widehat{\varphi_n} \to 1` bounded
 $`\widehat{q_n} \to \varsigma g` in $`L^1`.
 :::
 
-:::lemma_ "lemma_projected_properties" (lean := "CohnElkies.projected_real, CohnElkies.projected_radial, CohnElkies.fourier_projected, CohnElkies.tendsto_projected, CohnElkies.tendsto_projected_zero") (parent := "grp_radial_reduction")
+:::lemma_ "lemma_projected_properties" (lean := "CohnElkies.p_n_real, CohnElkies.p_n_radial, CohnElkies.fourier_p_n, CohnElkies.tendsto_p_n, CohnElkies.tendsto_p_n_zero") (parent := "grp_radial_reduction")
 In the situation of {uses "def_schwartz_approximation"}[], $`p_n` is a real radial Schwartz
 function with $`\widehat{p_n} = \varsigma p_n`, $`p_n \to g` in $`L^1` and $`p_n(0) \to 0`.
 :::
@@ -425,7 +425,7 @@ profile is Schwartz as the composition of $`g` with the isometry $`r \mapsto re_
 $`\Phi_g`, an exponential tilt of a Schwartz function, and its Fourier transform are integrable.)
 :::
 
-:::lemma_ "eq_8_mellin_fourier" (lean := "CohnElkies.radialMellinFrequency_eq_fourier, CohnElkies.radialMellinFrequency_eq_criticalLogFourier") (parent := "grp_radial_mellin")
+:::lemma_ "eq_8_mellin_fourier" (lean := "CohnElkies.X_fℝ_eq_fourier, CohnElkies.X_fℝ_eq_criticalLogFourier") (parent := "grp_radial_mellin")
 For $`g \in \mathcal{S}_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})`, with the notation of
 {uses "def_radial_mellin"}[] and {uses "def_critical_log_profile"}[],
 $`X_g(t) = \int_{\mathbb{R}}\Phi_g(v)e^{-itv}\,dv`: $`X_g` is the Fourier transform of $`\Phi_g`
@@ -436,7 +436,7 @@ $`X_g(t) = \int_{\mathbb{R}}\Phi_g(v)e^{-itv}\,dv`: $`X_g` is the Fourier transf
 The substitution $`r = e^v` in $`M_g(\lambda - it) = \int_0^\infty g(r)r^{\lambda-it-1}\,dr`.
 :::
 
-:::lemma_ "eq_8_mellin_inversion" (lean := "CohnElkies.radialMellinFrequency_injective, CohnElkies.criticalLogProfile_eq_fourierInv") (parent := "grp_radial_mellin")
+:::lemma_ "eq_8_mellin_inversion" (lean := "CohnElkies.X_fℝ_injective, CohnElkies.criticalLogProfile_eq_fourierInv") (parent := "grp_radial_mellin")
 For $`g \in \mathcal{S}_{\mathrm{rad}}(\mathbb{R}^d;\mathbb{R})`,
 $`\Phi_g(v) = \dfrac{1}{2\pi}\int_{\mathbb{R}}X_g(t)e^{itv}\,dt`, so that Mellin inversion reads
 $`g(r) = \dfrac{r^{-\lambda}}{2\pi}\int_{\mathbb{R}} X_g(t)\,r^{it}\,dt`
