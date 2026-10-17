@@ -55,7 +55,7 @@ set `s` is at most `μ s ^ (1 / p) * M`. -/
 theorem eLpNorm_indicator_le_of_ae_norm_le (hs : MeasurableSet s) (hf : AEStronglyMeasurable f μ)
     (hM : ∀ᵐ x ∂μ, ‖f x‖ ≤ M) :
     eLpNorm (s.indicator f) p μ ≤ μ s ^ p.toReal⁻¹ * ENNReal.ofReal M := by
-  rw [eLpNorm_indicator_eq_eLpNorm_restrict hs, ← Measure.restrict_apply_univ s]
+  rw [eLpNorm_indicator_eq_eLpNorm_restrict hs.nullMeasurableSet, ← Measure.restrict_apply_univ s]
   exact eLpNorm_le_of_ae_bound hf.restrict (ae_restrict_of_ae hM)
 
 /-- A bounded measurable function vanishing outside a set of finite measure lies in every `Lᵖ`. -/
@@ -76,12 +76,6 @@ theorem MeasureTheory.Integrable.continuous_fourier {f : V → E} (hf : Integrab
   VectorFourier.fourierIntegral_continuous Real.continuous_fourierChar (innerSL ℝ).continuous₂ hf
 
 namespace Real
-
-/-- The Fourier transform is bounded by the `L¹` norm: `‖𝓕 f ξ‖ ≤ ∫ ‖f‖`. -/
-theorem norm_fourier_le_integral_norm (f : V → E) (ξ : V) : ‖𝓕 f ξ‖ ≤ ∫ x, ‖f x‖ := by
-  rw [fourier_eq]
-  refine (norm_integral_le_integral_norm _).trans (le_of_eq ?_)
-  simp_rw [Circle.norm_smul]
 
 /-- The Fourier transform of `s.indicator f` is the Fourier integral of `f` over `s`. -/
 theorem fourier_indicator_eq_setIntegral {s : Set V} (hs : MeasurableSet s) (f : V → E) (ξ : V) :

@@ -461,7 +461,7 @@ theorem tendsto_setIntegral_of_tendsto_integral_mul
     {s : Set (Euclidean d)} (hs : MeasurableSet s) (hμs : volume s ≠ ∞) :
     Tendsto (fun n ↦ ∫ x in s, f n x) atTop (𝓝 (∫ x in s, g x)) := by
   have hz : MemLp (s.indicator fun _ ↦ (1 : ℝ)) 2 volume :=
-    memLp_indicator_const 2 hs 1 (Or.inr hμs)
+    memLp_indicator_const 2 hs.nullMeasurableSet 1 (Or.inr hμs)
   have e : ∀ w : Euclidean d → ℝ, ∫ x, s.indicator (fun _ ↦ (1 : ℝ)) x * w x = ∫ x in s, w x := by
     intro w
     rw [← integral_indicator hs]

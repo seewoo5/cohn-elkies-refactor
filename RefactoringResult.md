@@ -1311,3 +1311,30 @@ Lines pushed over 100 characters were rewrapped.
 (44), not of (83); `upperShellMarginRatio` is `5000 ρ_ε`; `radialCriticalLogProfile` is the
 reflection `u ↦ Φ_g(−u)` of the report's `Φ_g`, and the Gaussian pairing `Φ_f` of
 `MellinFourier.lean` is not the report's `Φ_g`.
+
+## 12. Toolchain update to Lean/Mathlib `v4.35.0` (2026-10-17)
+
+At the owner's request the project moved from Lean/Mathlib `v4.34.0` to `v4.35.0`
+(`lean-toolchain`; `lakefile.toml`: `mathlib` and `Comparator` at their `v4.35.0` tags,
+`VersoBlueprint` at its `v4.35.0` branch, the release line started on `v4.35.0-rc4`, which pins
+Verso at `v4.35.0-rc4`; `lake update`, which now fetches the Mathlib cache itself). The changes
+needed:
+
+- `CohnElkiesForMathlib`: Mathlib's indicator lemmas (`eLpNorm_indicator_eq_eLpNorm_restrict`,
+  `memLp_indicator_const`, …) now take a `NullMeasurableSet` (pass `hs.nullMeasurableSet`);
+  `Real.norm_fourier_le_integral_norm` is now in Mathlib (`Analysis/Fourier/FourierTransform.lean`)
+  with the same statement, so the local copy in `EigenfunctionConcentration.lean` was removed (its
+  call sites are unchanged).
+- `CohnElkies`: `memLp_indicator_const` as above (`SignUncertainty/AppendixA.lean`); the
+  unused-tactic linter now flags `<;>` (Mathlib #44387), so the trailing `<;> ring` of the three
+  `*_imaginary` lemmas of `Parameters.lean`, which only ever saw one goal, became a plain `ring`.
+  No deprecation warnings.
+- New in this toolchain: Lake warns at each import of a Mathlib module that has moved to the
+  module system ("consider adding `module` to the start of this file"). These warnings are
+  cosmetic and were left alone.
+- Blueprint and comparator: unchanged sources.
+
+Full gate (`LEAN_NUM_THREADS=3 lake build`, 3542 jobs), blueprint library and site
+(`scripts/ci-pages.sh`) pass; the comparator (run on macOS with Comparator's development
+`fake-landrun.sh` in place of `landrun`, and `lean4export` rebuilt with the new toolchain)
+accepts the five challenge statements with both the nanoda and the Lean kernel.
